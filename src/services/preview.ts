@@ -6,6 +6,7 @@ import type {
   CaseInput,
   ProceedingInput,
   ProgramKind,
+  CalendarEvent,
 } from '../domain/types';
 import { dateKey } from '../domain/calendar';
 
@@ -49,6 +50,7 @@ const data: Workspace = {
     },
   ],
   workRecords: [],
+  calendarEvents: [],
 };
 function findCase(id: string): CaseFile {
   const value = data.cases.find((c) => c.id === id);
@@ -62,6 +64,19 @@ export async function previewCommand<K extends keyof Commands>(
   const a = args as Record<string, unknown>;
   let result: unknown = null;
   switch (name) {
+    case 'storage_info':
+      result = { portable: false, dataDirectory: '浏览器界面预览，不写入磁盘' };
+      break;
+    case 'save_calendar_event': {
+      const input = a.input as CalendarEvent;
+      const existing = data.calendarEvents.find((event) => event.id === input.id);
+      if (existing) Object.assign(existing, input);
+      else data.calendarEvents.push({ ...input });
+      break;
+    }
+    case 'delete_calendar_event':
+      data.calendarEvents = data.calendarEvents.filter((event) => event.id !== a.id);
+      break;
     case 'load_workspace':
       result = data;
       break;
@@ -98,6 +113,14 @@ export async function previewCommand<K extends keyof Commands>(
       const input = a.input as CaseInput;
       if (!input.title.trim()) throw new Error('请输入案件名称');
       Object.assign(findCase(input.id), input);
+      break;
+    }
+    case 'set_case_status': {
+      const item = findCase(a.id as string);
+      if (item.deletedAt || !data.statuses.some((status) => status.id === a.statusId))
+        throw new Error('案件或目标状态无效');
+      item.statusId = a.statusId as string;
+      item.updatedAt = new Date().toISOString();
       break;
     }
     case 'add_proceeding': {

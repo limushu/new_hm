@@ -1,0 +1,224 @@
+import { useEffect, useRef, useState } from 'react';
+import { CalendarDays, Clock3, MapPin, Trash2, X } from 'lucide-react';
+import type { CalendarEvent, CaseFile, SaveAction } from '../../domain/types';
+import { validateEvent } from './schedule';
+import CaseAssociation from './CaseAssociation';
+
+interface Props {
+  event: CalendarEvent;
+  existing: boolean;
+  cases: CaseFile[];
+  save: SaveAction;
+  onClose: () => void;
+  onSaved: (date: string) => void;
+}
+
+export default function EventEditor({ event, existing, cases, save, onClose, onSaved }: Props) {
+  const [value, setValue] = useState(event);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const inFlight = useRef(false);
+  const dialog = useRef<HTMLDialogElement>(null);
+  const title = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    dialog.current?.showModal();
+    title.current?.focus();
+  }, []);
+  const update = (patch: Partial<CalendarEvent>) =>
+    setValue((current) => ({ ...current, ...patch }));
+  async function submit() {
+    if (inFlight.current) return;
+    const invalid = validateEvent(value);
+    if (invalid) {
+      setError(invalid);
+      return;
+    }
+    inFlight.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      await save('save_calendar_event', { input: { ...value, title: value.title.trim() } });
+      onSaved(value.startDate);
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
+  async function remove() {
+    if (inFlight.current) return;
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    inFlight.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      await save('delete_calendar_event', { id: value.id });
+      onClose();
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
+  return (
+    <dialog
+      ref={dialog}
+      className="event-editor"
+      aria-labelledby="event-editor-heading"
+      onCancel={(e) => {
+        e.preventDefault();
+        if (!inFlight.current) onClose();
+      }}
+    >
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          void submit();
+        }}
+      >
+        <header>
+          <span id="event-editor-heading">{existing ? '编辑日程' : '新建日程'}</span>
+          <button
+            type="button"
+            className="icon-button"
+            aria-label="关闭日程"
+            onClick={onClose}
+            disabled={busy}
+          >
+            <X />
+          </button>
+        </header>
+        <fieldset disabled={busy}>
+          <input
+            ref={title}
+            className="event-title-input"
+            aria-label="日程名称"
+            placeholder="添加日程名称"
+            value={value.title}
+            maxLength={200}
+            onChange={(e) => update({ title: e.target.value })}
+            required
+          />
+          <label className="all-day-switch">
+            <Clock3 />
+            <span>全天</span>
+            <input
+              type="checkbox"
+              aria-label="全天日程"
+              checked={value.startTime === null}
+              onChange={(e) =>
+                update(
+                  e.target.checked
+                    ? { startTime: null, endTime: null }
+                    : { startTime: '09:00', endTime: '09:30' },
+                )
+              }
+            />
+          </label>
+          <div className="event-date-fields">
+            <CalendarDays />
+            <div>
+              <label>
+                <span>开始</span>
+                <input
+                  type="date"
+                  aria-label="开始日期"
+                  value={value.startDate}
+                  required
+                  onChange={(e) =>
+                    update({
+                      startDate: e.target.value,
+                      endDate: value.endDate < e.target.value ? e.target.value : value.endDate,
+                    })
+                  }
+                />
+                {value.startTime !== null && (
+                  <input
+                    type="time"
+                    aria-label="开始时间"
+                    required
+                    value={value.startTime}
+                    onChange={(e) => update({ startTime: e.target.value })}
+                  />
+                )}
+              </label>
+              <label>
+                <span>结束</span>
+                <input
+                  type="date"
+                  aria-label="结束日期"
+                  value={value.endDate}
+                  required
+                  min={value.startDate}
+                  onChange={(e) => update({ endDate: e.target.value })}
+                />
+                {value.endTime !== null && (
+                  <input
+                    type="time"
+                    aria-label="结束时间"
+                    required
+                    value={value.endTime}
+                    onChange={(e) => update({ endTime: e.target.value })}
+                  />
+                )}
+              </label>
+            </div>
+          </div>
+          <CaseAssociation
+            value={value.caseId}
+            cases={cases}
+            onChange={(caseId) => update({ caseId })}
+          />
+          <label className="event-property">
+            <MapPin />
+            <input
+              aria-label="地点"
+              placeholder="添加地点"
+              maxLength={500}
+              value={value.location}
+              onChange={(e) => update({ location: e.target.value })}
+            />
+          </label>
+          <textarea
+            aria-label="日程备注"
+            placeholder="添加备注…"
+            maxLength={20000}
+            rows={3}
+            value={value.notes}
+            onChange={(e) => update({ notes: e.target.value })}
+          />
+        </fieldset>
+        {error && (
+          <p className="error-message" role="alert">
+            {error}
+          </p>
+        )}
+        <footer>
+          {existing && (
+            <button
+              type="button"
+              className={`event-delete ${confirmDelete ? 'confirming' : ''}`}
+              disabled={busy}
+              onClick={() => void remove()}
+            >
+              <Trash2 />
+              {confirmDelete ? '确认删除' : '删除'}
+            </button>
+          )}
+          <button type="button" className="event-cancel" onClick={onClose} disabled={busy}>
+            取消
+          </button>
+          <button type="submit" className="calendar-primary" disabled={busy || !value.title.trim()}>
+            {busy ? '保存中…' : '保存日程'}
+          </button>
+        </footer>
+      </form>
+    </dialog>
+  );
+}

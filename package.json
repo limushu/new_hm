@@ -1,7 +1,7 @@
 {
   "name": "hm-workspace",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.4",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -22,7 +22,8 @@
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
     "artifacts:debug": "node scripts/collect-artifacts.mjs debug",
-    "artifacts:release": "node scripts/collect-artifacts.mjs release"
+    "artifacts:release": "node scripts/collect-artifacts.mjs release",
+    "artifacts:portable": "node scripts/collect-portable.mjs"
   },
   "dependencies": {
     "@tauri-apps/api": "^2.12.4",

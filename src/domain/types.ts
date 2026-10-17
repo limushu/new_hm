@@ -43,7 +43,23 @@ export interface Workspace {
   proceedings: Proceeding[];
   tasks: Task[];
   workRecords: WorkRecord[];
+  calendarEvents: CalendarEvent[];
 }
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  startDate: string;
+  endDate: string;
+  startTime: string | null;
+  endTime: string | null;
+  caseId: string | null;
+  location: string;
+  notes: string;
+}
+export type SaveAction = <K extends keyof Commands>(
+  name: K,
+  args: Commands[K]['args'],
+) => Promise<Commands[K]['result']>;
 export interface CaseInput {
   id: string;
   title: string;
@@ -52,9 +68,16 @@ export interface CaseInput {
 }
 export type ProceedingInput = Omit<Proceeding, 'caseId' | 'kind'>;
 export interface Commands {
+  storage_info: {
+    args: Record<string, never>;
+    result: { portable: boolean; dataDirectory: string };
+  };
   load_workspace: { args: Record<string, never>; result: Workspace };
+  save_calendar_event: { args: { input: CalendarEvent }; result: null };
+  delete_calendar_event: { args: { id: string }; result: null };
   create_case: { args: { input: CaseInput }; result: CaseFile };
   update_case: { args: { input: CaseInput }; result: null };
+  set_case_status: { args: { id: string; statusId: string }; result: null };
   add_proceeding: { args: { caseId: string; kind: ProgramKind }; result: string };
   select_proceeding: { args: { caseId: string; proceedingId: string }; result: null };
   update_proceeding: { args: { input: ProceedingInput }; result: null };
@@ -79,4 +102,5 @@ export const emptyWorkspace: Workspace = {
   proceedings: [],
   tasks: [],
   workRecords: [],
+  calendarEvents: [],
 };

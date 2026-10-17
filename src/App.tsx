@@ -2,20 +2,27 @@ import { useCallback, useEffect, useState } from 'react';
 import { CalendarDays, Folder, Settings, Trash2, RotateCcw } from 'lucide-react';
 import { command, desktopRuntime, previewMode } from './services/repository';
 import { emptyWorkspace } from './domain/types';
-import type { CaseFile, Commands, Workspace } from './domain/types';
-import CasePage, { type SaveAction } from './features/cases/CasePage';
+import type { CaseFile, Commands, SaveAction, Workspace } from './domain/types';
+import CasePage from './features/cases/CasePage';
 import Calendar from './features/calendar/Calendar';
 import CaseBoard from './features/cases/CaseBoard';
+import MiniCalendar from './features/calendar/MiniCalendar';
+import { dateKey } from './domain/calendar';
 
 export default function App() {
   const [data, setData] = useState<Workspace>(emptyWorkspace);
   const [page, setPage] = useState('today');
+  const [calendarDate, setCalendarDate] = useState(() => dateKey(new Date()));
+  const [calendarView, setCalendarView] = useState<'week' | 'day' | 'month'>(() =>
+    matchMedia('(max-width: 760px)').matches ? 'day' : 'week',
+  );
   const [query, setQuery] = useState('');
   const [opened, setOpened] = useState<string | null>(null);
   const [draft, setDraft] = useState<CaseFile | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [storage, setStorage] = useState<Commands['storage_info']['result'] | null>(null);
   const refresh = useCallback(async () => {
     const workspace = await command('load_workspace', {});
     setData(workspace);
@@ -23,6 +30,11 @@ export default function App() {
   }, []);
   useEffect(() => {
     let canceled = false;
+    void command('storage_info', {})
+      .then((value) => {
+        if (!canceled) setStorage(value);
+      })
+      .catch(() => {});
     command('load_workspace', {})
       .then((value) => {
         if (!canceled) setData(value);
@@ -98,6 +110,7 @@ export default function App() {
             回收站
           </button>
         </nav>
+        {page === 'today' && <MiniCalendar selected={calendarDate} onSelect={setCalendarDate} />}
         <div className="sidebar-caption">最近案件</div>
         <div className="recent-cases">
           {activeCases.slice(0, 5).map((c) => (
@@ -113,7 +126,13 @@ export default function App() {
           </button>
           <span className="storage-indicator">
             <i />
-            {previewMode ? '界面预览 · 不保存' : desktopRuntime ? '本地工作空间' : '浏览器预览'}
+            {previewMode
+              ? '界面预览 · 不保存'
+              : desktopRuntime
+                ? storage?.portable
+                  ? '绿色版 · 本地保存'
+                  : '本地工作空间'
+                : '浏览器预览'}
           </span>
         </div>
       </aside>
@@ -145,6 +164,12 @@ export default function App() {
             openCase={setOpened}
             newCase={() => create()}
             findCases={() => setPage('cases')}
+            save={save}
+            loading={loading}
+            selected={calendarDate}
+            onSelect={setCalendarDate}
+            view={calendarView}
+            onViewChange={setCalendarView}
           />
         )}
         {page === 'cases' && (
@@ -155,6 +180,17 @@ export default function App() {
             onQueryChange={setQuery}
             onCreate={create}
             onOpen={setOpened}
+            onMove={async (id, statusId) => {
+              await command('set_case_status', { id, statusId });
+              setData((current) => ({
+                ...current,
+                cases: current.cases.map((item) =>
+                  item.id === id
+                    ? { ...item, statusId, updatedAt: new Date().toISOString() }
+                    : item,
+                ),
+              }));
+            }}
           />
         )}
         {page === 'trash' && (
@@ -190,8 +226,16 @@ export default function App() {
             <section className="case-section">
               <h3>本地工作空间</h3>
               <p className="page-description">
-                无需注册登录。桌面应用将案件、办理程序、待办和工作记录保存到当前用户的应用数据目录。
+                {storage?.portable
+                  ? '绿色模式：案件、日程和记录保存在程序旁的 data 文件夹，完整退出后可整包携带。'
+                  : '无需注册登录。案件、日程和记录保存在当前用户的应用数据目录。'}
               </p>
+              {storage && (
+                <p className="storage-path">
+                  <span>数据目录</span>
+                  <code>{storage.dataDirectory}</code>
+                </p>
+              )}
               <p className="page-description">
                 第一版正在开发。材料归档、通知提醒和自动备份将分步接入。
               </p>

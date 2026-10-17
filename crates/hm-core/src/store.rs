@@ -4,7 +4,7 @@ use std::{path::Path, time::Duration};
 use uuid::Uuid;
 
 pub struct Store {
-    connection: Connection,
+    pub(crate) connection: Connection,
 }
 
 fn text(value: &str, label: &str, max: usize) -> Result<String> {
@@ -58,22 +58,22 @@ impl Store {
             "PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;",
         )?;
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        match version {
-            0 => {
-                let tx = connection.transaction()?;
+        if version > 2 {
+            return Err(Error::Validation(
+                "数据库来自较新版本，请使用新版软件打开".into(),
+            ));
+        }
+        if version < 2 {
+            let tx = connection.transaction()?;
+            if version == 0 {
                 tx.execute_batch(include_str!("../migrations/001_initial.sql"))?;
-                tx.commit()?;
             }
-            1 => {}
-            _ => {
-                return Err(Error::Validation(
-                    "数据库来自较新版本，请使用新版软件打开".into(),
-                ))
-            }
+            tx.execute_batch(include_str!("../migrations/002_calendar_events.sql"))?;
+            tx.commit()?;
         }
         Ok(Self { connection })
     }
-    fn active_case(&self, id: &str) -> Result<()> {
+    pub(crate) fn active_case(&self, id: &str) -> Result<()> {
         let exists: bool = self.connection.query_row(
             "SELECT EXISTS(SELECT 1 FROM cases WHERE id=?1 AND deleted_at IS NULL)",
             [id],
@@ -144,6 +144,7 @@ impl Store {
             proceedings,
             tasks,
             work_records,
+            calendar_events: self.calendar_events()?,
         })
     }
     pub fn create_case(&mut self, input: CreateCase) -> Result<Case> {
@@ -177,6 +178,17 @@ impl Store {
         self.status(&input.status_id)?;
         self.active_case(&input.id)?;
         self.connection.execute("UPDATE cases SET title=?1,case_type=?2,status_id=?3,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?4",params![title,input.case_type,input.status_id,input.id])?;
+        Ok(())
+    }
+    pub fn set_case_status(&self, id: &str, status_id: &str) -> Result<()> {
+        self.status(status_id)?;
+        let changed = self.connection.execute(
+            "UPDATE cases SET status_id=?1,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?2 AND deleted_at IS NULL",
+            params![status_id, id],
+        )?;
+        if changed == 0 {
+            return Err(Error::NotFound);
+        }
         Ok(())
     }
     pub fn add_proceeding(&mut self, case_id: &str, program_kind: &str) -> Result<String> {

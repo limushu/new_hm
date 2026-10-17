@@ -1,6 +1,9 @@
 pub mod models;
+mod schedule;
+mod storage_location;
 pub mod store;
 pub use models::*;
+pub use storage_location::StorageLocation;
 pub use store::Store;
 
 #[derive(Debug, thiserror::Error)]

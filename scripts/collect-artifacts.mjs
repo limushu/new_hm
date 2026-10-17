@@ -4,6 +4,7 @@ import {
   existsSync,
   mkdirSync,
   readdirSync,
+  readFileSync,
   statSync,
   writeFileSync,
 } from 'node:fs';
@@ -11,18 +12,21 @@ import { createHash } from 'node:crypto';
 import { join, resolve } from 'node:path';
 
 const flavor = process.argv[2] === 'release' ? 'release' : 'debug';
+const { version } = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
 const label = flavor === 'release' ? 'release-preview' : 'preview';
 const base = resolve('target', flavor);
 const out = resolve('artifacts/windows');
 mkdirSync(out, { recursive: true });
 const binary = join(base, 'hm-app.exe');
 if (!existsSync(binary)) throw new Error(`未找到程序：${binary}`);
-const paths = [[binary, join(out, `律师工作台-0.1.0-${label}.exe`)]];
+const paths = [[binary, join(out, `律师工作台-${version}-${label}.exe`)]];
 const bundleDir = join(base, 'bundle/nsis');
 if (existsSync(bundleDir)) {
-  const installer = readdirSync(bundleDir).find((n) => n.endsWith('-setup.exe'));
+  const installer = readdirSync(bundleDir).find(
+    (n) => n.includes(`_${version}_`) && n.endsWith('-setup.exe'),
+  );
   if (installer)
-    paths.push([join(bundleDir, installer), join(out, `律师工作台-0.1.0-${label}-setup.exe`)]);
+    paths.push([join(bundleDir, installer), join(out, `律师工作台-${version}-${label}-setup.exe`)]);
 }
 for (const [source, destination] of paths) {
   copyFileSync(source, destination);

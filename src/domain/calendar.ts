@@ -8,3 +8,20 @@ export function monthDays(year: number, month: number): Date[] {
   const weeks = Math.ceil((offset + count) / 7);
   return Array.from({ length: weeks * 7 }, (_, i) => new Date(year, month, 1 - offset + i, 12));
 }
+
+export function parseDate(value: string): Date {
+  const [year, month, day] = value.split('-').map(Number);
+  return new Date(year, month - 1, day, 12);
+}
+
+export function shiftDate(value: string, days: number): string {
+  const date = parseDate(value);
+  date.setDate(date.getDate() + days);
+  return dateKey(date);
+}
+
+export function weekDates(value: string): string[] {
+  const date = parseDate(value);
+  const offset = (date.getDay() + 6) % 7;
+  return Array.from({ length: 7 }, (_, index) => shiftDate(value, index - offset));
+}

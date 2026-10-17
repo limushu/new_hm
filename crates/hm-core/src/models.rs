@@ -58,6 +58,21 @@ pub struct Workspace {
     pub proceedings: Vec<Proceeding>,
     pub tasks: Vec<Task>,
     pub work_records: Vec<WorkRecord>,
+    pub calendar_events: Vec<CalendarEvent>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CalendarEvent {
+    pub id: String,
+    pub title: String,
+    pub start_date: String,
+    pub end_date: String,
+    pub start_time: Option<String>,
+    pub end_time: Option<String>,
+    pub case_id: Option<String>,
+    pub location: String,
+    pub notes: String,
 }
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]

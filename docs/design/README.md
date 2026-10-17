@@ -14,6 +14,15 @@
 
 ## 当前参考
 
+0.1.4 案件看板按 10 月 18 日提供的 Notion 截图调整：状态胶囊、12px 卡片圆角、标题优先、柔和的中性/蓝/绿分组，列高跟随内容，保持页面留白。卡片没有常驻“⋯”，首列底部保留文字新建入口，各列标题提供小型“＋”。[当前看板](current/case-board-app-0.1.4.png)、[拖拽反馈](current/case-board-drag-app-0.1.4.png)、[窄屏布局](current/case-board-mobile-app-0.1.4.png)均使用虚构案件。跨列拖拽与键盘移动已接入正式存储，自定义状态仍未实现。
+
+
+0.1.3 保留已认可的小月历＋周时间表布局，按最新反馈统一为暗蓝色（#162D46）卡片与蓝色（#295A8C）细侧边，保留深灰整体背景；参考用户提供的日历截图，整点使用细实线、半点使用更弱的虚线，红色仅保留给 1px 当前时间线。重叠日程仍等宽并排，不按案件关联或优先级区分卡片风格。时间线带时间标记，今天可定位当前时段；点击半小时格默认半小时。关联入口改为“＋ 关联案件”，按需搜索选择，选中后显示名称与“×”清除。[当前周视图](current/calendar-week-app-0.1.3.png)、[日程编辑](current/calendar-editor-app-0.1.3.png)、[加号关联入口](current/calendar-plus-association-0.1.3.png)使用虚构数据，当前配色仍待用户评审。
+
+0.1.2 的灰色卡片已由上述蓝色修订替代，历史[周视图截图](archive/explorations/calendar-week-app-0.1.2.png)、[编辑截图](archive/explorations/calendar-editor-app-0.1.2.png)保留供追溯。
+
+正式应用 0.1.1 已实现月历内创建和编辑日程：日期格“+”/双击空白处、轻量编辑面板、时间与全天分层、日程/待办筛选，以及下方当天详情。此版为待用户评审的实现，不将旧月历效果图视为当前页面的精确规格；通知提醒仍待实现。
+
 - [打开案件原型](prototypes/case-board.html)：案件看板、侧页新建、展开案件工作区。
 - [看板](current/case-board-neutral-v4.png)、[侧页详情](current/case-board-detail-neutral-v4.png)。
 - [空白新建侧页](current/create-case-sidepage-v5.png)、[输入名称后](current/create-case-sidepage-filled-v5.png)。

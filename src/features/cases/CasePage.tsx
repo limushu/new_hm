@@ -1,12 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, ChevronsRight, Expand, Folder, Plus, X } from 'lucide-react';
-import type { CaseFile, CaseInput, Commands, ProgramKind, Workspace } from '../../domain/types';
+import type { CaseFile, CaseInput, ProgramKind, SaveAction, Workspace } from '../../domain/types';
 import { programLabels } from '../../domain/types';
 
-export type SaveAction = <K extends keyof Commands>(
-  name: K,
-  args: Commands[K]['args'],
-) => Promise<Commands[K]['result']>;
 interface Props {
   item: CaseFile;
   data: Workspace;

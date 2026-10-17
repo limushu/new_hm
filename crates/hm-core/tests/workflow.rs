@@ -158,3 +158,31 @@ fn newer_database_is_not_downgraded() {
     drop(db);
     assert!(Store::open(&path).is_err());
 }
+
+#[test]
+fn moving_case_between_columns_persists_without_changing_case_details() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("board.sqlite3");
+    let mut store = Store::open(&path).unwrap();
+    let item = create(&mut store, "拖拽保存测试");
+    let proceeding = item.current_proceeding_id.clone();
+    store.add_record(&item.id, "原有记录").unwrap();
+    store.set_case_status(&item.id, "in_progress").unwrap();
+    store.set_case_status(&item.id, "closed").unwrap();
+    drop(store);
+    let store = Store::open(&path).unwrap();
+    let data = store.workspace().unwrap();
+    assert_eq!(data.cases[0].status_id, "closed");
+    assert_eq!(data.cases[0].title, item.title);
+    assert_eq!(data.cases[0].case_type, "civil");
+    assert_eq!(data.cases[0].current_proceeding_id, proceeding);
+    assert_eq!(data.work_records[0].body, "原有记录");
+    assert!(store.set_case_status(&item.id, "missing").is_err());
+    assert_eq!(store.workspace().unwrap().cases[0].status_id, "closed");
+    store.trash_case(&item.id).unwrap();
+    assert!(store.set_case_status(&item.id, "in_progress").is_err());
+    assert!(store.set_case_status("missing", "in_progress").is_err());
+    store.restore_case(&item.id).unwrap();
+    store.set_case_status(&item.id, "not_started").unwrap();
+    assert_eq!(store.workspace().unwrap().cases[0].status_id, "not_started");
+}
