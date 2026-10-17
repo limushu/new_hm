@@ -128,6 +128,19 @@ try {
   let workspace = await invoke(page, 'load_workspace');
   const item = workspace.cases[0];
   if (workspace.stages.length !== 5) throw new Error('Default stages missing');
+  const typography = await page.context().newCDPSession(page);
+  await typography.send('DOM.enable');
+  await typography.send('CSS.enable');
+  const { root: documentRoot } = await typography.send('DOM.getDocument');
+  const { nodeId } = await typography.send('DOM.querySelector', {
+    nodeId: documentRoot.nodeId,
+    selector: '.sidebar nav button:nth-child(3)',
+  });
+  const { fonts } = await typography.send('CSS.getPlatformFontsForNode', { nodeId });
+  console.log('Native Chinese UI font:', fonts.map((font) => font.familyName).join(', '));
+  if (fonts.some((font) => /SimSun|Times New Roman/i.test(font.familyName)))
+    throw new Error('Native UI unexpectedly uses serif fallback');
+  await typography.detach();
   await page.getByRole('combobox', { name: '案件状态', exact: true }).click();
   await expect(page.getByRole('listbox', { name: '案件状态选项', exact: true })).toBeVisible();
   await page.screenshot({ path: join(root, 'case-menu.png') });
