@@ -1,8 +1,13 @@
+import Contacts, { ContactDetail } from './features/contacts/Contacts';
+import SettingsPage from './features/settings/Settings';
+import GlobalSearch from './components/GlobalSearch';
+import Notifications from './components/Notifications';
+import Trash from './components/Trash';
 import { useCallback, useEffect, useState } from 'react';
-import { CalendarDays, Folder, Settings, Trash2, RotateCcw } from 'lucide-react';
+import { CalendarDays, Folder, Settings, Trash2, Users, Search, Bell } from 'lucide-react';
 import { command, desktopRuntime, previewMode } from './services/repository';
 import { emptyWorkspace } from './domain/types';
-import type { CaseFile, Commands, SaveAction, Workspace } from './domain/types';
+import type { CaseFile, Commands, Contact, SaveAction, Workspace } from './domain/types';
 import CasePage from './features/cases/CasePage';
 import Calendar from './features/calendar/Calendar';
 import CaseBoard from './features/cases/CaseBoard';
@@ -20,7 +25,11 @@ export default function App() {
   const [opened, setOpened] = useState<string | null>(null);
   const [draft, setDraft] = useState<CaseFile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState<Contact | null>(null);
+  const [initialTab, setInitialTab] = useState('overview');
+  const [focusMaterialId, setFocusMaterialId] = useState<string | undefined>();
   const [error, setError] = useState('');
   const [storage, setStorage] = useState<Commands['storage_info']['result'] | null>(null);
   const refresh = useCallback(async () => {
@@ -55,6 +64,8 @@ export default function App() {
     return result;
   };
   function create(statusId = 'not_started') {
+    setInitialTab('overview');
+    setFocusMaterialId(undefined);
     if (draft) {
       setOpened(draft.id);
       return;
@@ -78,16 +89,21 @@ export default function App() {
     ? data.cases.find((c) => c.id === opened && !c.deletedAt) ||
       (draft?.id === opened ? draft : null)
     : null;
-  async function restore(id: string) {
-    setBusy(true);
-    try {
-      await save('restore_case', { id });
-    } catch (e) {
-      setError(String(e));
-    } finally {
-      setBusy(false);
-    }
+  function navigateCase(id: string, tab = 'overview', materialId?: string) {
+    setFocusMaterialId(materialId);
+    setInitialTab(tab);
+    setOpened(id);
   }
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'k') {
+        event.preventDefault();
+        setSearchOpen(true);
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, []);
 
   return (
     <div className="app-shell">
@@ -95,6 +111,15 @@ export default function App() {
         <div className="brand">
           <Folder />
           律师工作台
+        </div>
+        <div className="sidebar-search-row">
+          <button onClick={() => setSearchOpen(true)}>
+            <Search />
+            搜索<kbd>Ctrl K</kbd>
+          </button>
+          <button aria-label="日程提醒" title="日程提醒" onClick={() => setNotificationsOpen(true)}>
+            <Bell />
+          </button>
         </div>
         <nav>
           <button className={page === 'today' ? 'active' : ''} onClick={() => setPage('today')}>
@@ -105,25 +130,35 @@ export default function App() {
             <Folder />
             案件
           </button>
+          <button
+            className={page === 'contacts' ? 'active' : ''}
+            onClick={() => setPage('contacts')}
+          >
+            <Users />
+            联系对象
+          </button>
           <button className={page === 'trash' ? 'active' : ''} onClick={() => setPage('trash')}>
             <Trash2 />
             回收站
+          </button>
+          <button
+            className={page === 'settings' ? 'active' : ''}
+            onClick={() => setPage('settings')}
+          >
+            <Settings />
+            设置
           </button>
         </nav>
         {page === 'today' && <MiniCalendar selected={calendarDate} onSelect={setCalendarDate} />}
         <div className="sidebar-caption">最近案件</div>
         <div className="recent-cases">
           {activeCases.slice(0, 5).map((c) => (
-            <button key={c.id} onClick={() => setOpened(c.id)} title={c.title}>
+            <button key={c.id} onClick={() => navigateCase(c.id)} title={c.title}>
               {c.title}
             </button>
           ))}
         </div>
         <div className="sidebar-bottom">
-          <button onClick={() => setPage('settings')}>
-            <Settings />
-            设置
-          </button>
           <span className="storage-indicator">
             <i />
             {previewMode
@@ -142,6 +177,14 @@ export default function App() {
             界面预览 · 虚构示例 · 刷新后重置。桌面应用使用 SQLite 保存数据。
           </div>
         )}
+        <div className="mobile-utilities">
+          <button aria-label="搜索工作区" onClick={() => setSearchOpen(true)}>
+            <Search />
+          </button>
+          <button aria-label="查看日程提醒" onClick={() => setNotificationsOpen(true)}>
+            <Bell />
+          </button>
+        </div>
         {error && (
           <div className="app-error" role="alert">
             <p>{error}</p>
@@ -161,7 +204,7 @@ export default function App() {
         {page === 'today' && (
           <Calendar
             data={data}
-            openCase={setOpened}
+            openCase={navigateCase}
             newCase={() => create()}
             findCases={() => setPage('cases')}
             save={save}
@@ -179,7 +222,8 @@ export default function App() {
             loading={loading}
             onQueryChange={setQuery}
             onCreate={create}
-            onOpen={setOpened}
+            onOpen={navigateCase}
+            save={save}
             onMove={async (id, statusId) => {
               await command('set_case_status', { id, statusId });
               setData((current) => ({
@@ -193,61 +237,18 @@ export default function App() {
             }}
           />
         )}
-        {page === 'trash' && (
-          <div className="simple-page">
-            <h1>
-              <Trash2 />
-              回收站
-            </h1>
-            <p className="page-description">
-              案件信息、办理程序与记录会一起保留，恢复后可继续办理。
-            </p>
-            {!data.cases.some((c) => c.deletedAt) && <p className="empty-text">回收站为空。</p>}
-            {data.cases
-              .filter((c) => c.deletedAt)
-              .map((c) => (
-                <div className="trash-item" key={c.id}>
-                  <Folder />
-                  <span>{c.title}</span>
-                  <button disabled={busy} onClick={() => void restore(c.id)}>
-                    <RotateCcw />
-                    恢复
-                  </button>
-                </div>
-              ))}
-          </div>
-        )}
-        {page === 'settings' && (
-          <div className="simple-page">
-            <h1>
-              <Settings />
-              设置
-            </h1>
-            <section className="case-section">
-              <h3>本地工作空间</h3>
-              <p className="page-description">
-                {storage?.portable
-                  ? '绿色模式：案件、日程和记录保存在程序旁的 data 文件夹，完整退出后可整包携带。'
-                  : '无需注册登录。案件、日程和记录保存在当前用户的应用数据目录。'}
-              </p>
-              {storage && (
-                <p className="storage-path">
-                  <span>数据目录</span>
-                  <code>{storage.dataDirectory}</code>
-                </p>
-              )}
-              <p className="page-description">
-                第一版正在开发。材料归档、通知提醒和自动备份将分步接入。
-              </p>
-            </section>
-          </div>
-        )}
+        {page === 'contacts' && <Contacts data={data} save={save} onCase={navigateCase} />}
+        {page === 'trash' && <Trash data={data} save={save} />}
+        {page === 'settings' && <SettingsPage save={save} storage={storage} />}
       </main>
       {openItem && (
         <CasePage
-          key={openItem.id}
+          key={openItem.id + initialTab + (focusMaterialId ?? '')}
           item={openItem}
           data={data}
+          onCase={navigateCase}
+          initialTab={initialTab}
+          focusMaterialId={focusMaterialId}
           draft={!data.cases.some((c) => c.id === openItem.id)}
           save={save}
           close={() => {
@@ -258,6 +259,29 @@ export default function App() {
             setDraft(null);
             setOpened(id);
           }}
+        />
+      )}
+      {searchOpen && (
+        <GlobalSearch
+          data={data}
+          onClose={() => setSearchOpen(false)}
+          onCase={navigateCase}
+          onContact={setContactOpen}
+        />
+      )}
+      {notificationsOpen && (
+        <Notifications
+          data={data}
+          onClose={() => setNotificationsOpen(false)}
+          onCase={navigateCase}
+        />
+      )}
+      {contactOpen && (
+        <ContactDetail
+          contact={contactOpen}
+          data={data}
+          onCase={navigateCase}
+          onClose={() => setContactOpen(null)}
         />
       )}
     </div>

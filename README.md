@@ -1,82 +1,59 @@
-# 律师个人工作平台
+# 律师工作台
 
-面向中国大陆二三线城市小型律所中独立执业律师的本地工作软件，重点是简单易用的案件管理、日程安排和资料归档。产品名称尚未确定，“律案”为设计稿占位名。
+面向独立执业律师的本地工作应用：案件、办理程序、材料归档、日程、联系人和简单收支。无需登录，离线使用。技术栈为 Tauri 2、React/TypeScript、Rust、SQLite。
 
-第一版优先 Windows，后续目标为 macOS、iOS 和 Android。正式工程采用 Tauri 2、React/TypeScript、Rust 与 SQLite；业务和存储层独立于窗口，可跨平台复用。
+当前交付版本 **1.0.0，Windows x64 安装版**。macOS、Android、iOS 是后续目标，尚未做发布验收。视觉延续已确认的 Notion 式深灰、圆角和舒展留白。
 
-## 当前进度
+## 使用与验收
 
-截至 2026 年 10 月 18 日（北京时间），已进入正式研发，完成第一条本地数据流程与 Windows 预览程序构建：建案、办理程序、待办、工作记录、案件回收站和月历。0.1.1 增加可直接创建、编辑和删除的日程，支持个人/案件关联、全天及跨日安排。材料复制归档、通知提醒、联系人、收支与备份等仍在后续范围。
+安装包、签名与更新清单位于本地 artifacts/windows/1.0.0/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
 
-0.1.2 的桌面日历默认周时间表，提供小月历、日/周/月切换、空闲时间新建及重叠安排并排显示；手机默认日视图。关联案件完全可选，不继承上一次选择。新增 Windows 绿色 ZIP，解压后直接运行，业务数据与界面缓存保存在程序旁的 `data/`；见[绿色版说明](docs/portable-release.md)。
+详见[1.0 使用与验收](docs/v1.0-acceptance.md)：功能检查、数据位置、备份、提醒与升级边界。软件尚无 Windows 发布者代码签名证书，在线升级使用独立签名验证。
 
-0.1.3 修正半小时格默认时长为半小时；统一暗蓝色（#162D46）日程卡片与蓝色（#295A8C）细侧边，增强今天的当前时间线并自动定位当前时段。可选关联改为“＋ 关联案件”，支持搜索选择和“×”清除。
+- 案件：Notion 式侧页新建、跨状态拖拽、自定义状态、办理程序与阶段、事件、待办及工作记录。
+- 材料：复制导入、拖入、同名保留、文件夹、程序归属、PDF/图片预览、音频播放、系统打开、导出、回收站。
+- 录音、联系人与案件身份、双向关系、关系图、整数金额收支与报销记录。
+- 日/周/月日历、半小时创建、可选案件关联、重叠布局、当前时间线及提前提醒。
+- 名称搜索、每天完整备份、手动备份、校验恢复、托盘、可选自启动、用户确认在线升级。
 
-0.1.4 打磨案件看板：圆角状态标签、标题优先的卡片层级及随内容展开的状态列；支持鼠标/触屏跨列拖拽与键盘移动，保存失败回到原列，案件信息和办理程序保持不变。
+## 开发
 
-## 运行与构建
+需要 Node.js 22.13+（22.x）、Rust 1.90+，Windows 还需 MSVC、Windows SDK 与 WebView2。可运行 npm run doctor 检查。
 
-需要 Node.js 22.12+（22.x）、Rust 1.90+，以及对应平台的 Tauri 构建依赖。Windows 已安装 MSVC 与 Windows SDK，其他机器可运行 `npm run doctor` 检查。
-
-```powershell
+~~~powershell
 npm ci
 npm run desktop:dev
 
-npm run build
+npm run check
+npm run format:check
+npm run docs:check
 npm test
 npm run test:core
 npm run test:ui
-npm run format:check
-npm run docs:check
-npm run desktop:build
-npm run artifacts:portable
-```
 
-Node/npm 用于开发和构建，发布的软件运行时不需要 Node 或 Rust。正式桌面应用使用 Rust 和 SQLite 保存到当前用户的应用数据目录，无需注册登录。
+npm run desktop:build -- --ci
+npm run artifacts:release
+~~~
 
-- 首批 Windows 产物整理到 `artifacts/windows/`（不纳入 Git）；构建原始产物在 `target/debug/` 或 `target/release/`。
-- 仅查看前端：`npm run dev` 后打开 `http://127.0.0.1:1420/?preview=1`。此入口是明确标注的内存预览，刷新即重置，不能代替桌面持久化验证。
-- [技术架构与首个里程碑](docs/architecture.md)：工程结构、数据约束、跨平台计划和已实现范围。
-- [预览版试用说明](docs/preview-release.md)：如何分发、使用与反馈。
+发布构建需要升级签名私钥，见[发布流程](docs/releasing.md)。仅检查桌面编译可用 npx tauri build --no-bundle --ci。
 
-## 项目资料
+前端独立预览：npm run dev 后打开 http://127.0.0.1:1420/?preview=1，仅开发可用，数据在内存，不能代替桌面持久化验收。正式程序通过 Rust 使用 SQLite，绝不用浏览器存储代替数据库。
 
-- [案件页可交互视觉原型](docs/design/prototypes/case-board.html)：以最新 Notion 参考调整的评审稿，可在浏览器打开，使用临时虚构数据，不保存业务数据。
-
-- [第一版需求](docs/requirements.md)：已确认范围、后续能力与待细化事项。
-- [设计说明与交互流程](docs/design/archive/decisions-2026-10-17.md)：视觉原则、页面状态和全部高保真图索引。
-- [项目进度与下一步](docs/progress.md)：当前成果、未决事项和继续工作的位置。
-
-## 文件与目录约定
+## 工程资料与目录
 
 | 目录 | 用途 |
 | --- | --- |
-| `src/features/` | 按功能组织的正式界面：`cases/` 案件，`calendar/` 月历 |
-| `src/domain/`、`src/services/` | 共享类型、日期工具及调用 Rust 的接口 |
-| `crates/hm-core/` | Rust 业务逻辑、SQLite 存储、迁移和核心测试 |
-| `src-tauri/` | 应用启动、系统命令、权限、图标和各平台配置 |
-| `tests/ui/` | 界面流程回归测试；小工具测试就近放在源码旁 |
-| `docs/design/current/` | 当前设计参考和原型截图 |
-| `docs/design/archive/` | 历史探索、生成提示词与完整评审记录 |
-| `docs/design/prototypes/` | 独立 HTML 交互原型，不作为正式应用代码 |
-| `scripts/` | 环境检查、交付整理和文档链接检查 |
-| `artifacts/windows/` | 对外试用的程序和安装包，本地生成，不提交 Git |
-| `.local/` | 临时截图、安装日志和开发调试文件，不提交 Git |
+| src/features/ | 案件、日历、材料、联系人、收支、设置 |
+| src/components/ | 共用弹窗、全局搜索、回收站和通知 |
+| src/domain/、src/services/ | 类型、工具、Tauri 调用与开发预览适配器 |
+| crates/hm-core/ | Rust 业务、SQLite 迁移、文件服务和核心测试 |
+| src-tauri/ | 桌面 IPC、系统集成、权限及平台配置 |
+| tests/ui/ | 界面流程回归；小工具测试就近放源码 |
+| scripts/ | 构建、PDF 离线资源、发布整理与文档检查 |
+| docs/design/current/ | 当前设计和应用截图 |
+| docs/design/archive/、docs/design/prototypes/ | 历史评审及独立 HTML 原型 |
+| artifacts/、.local/ | 本地交付与调试文件，不提交 |
 
-`node_modules/`、`dist/`、`target/` 和测试报告均为自动生成内容，已排除提交。用户数据库位于系统应用数据目录，不放入源码或安装包。根目录保留 Node、Rust、Tauri 构建所需的工程配置，不再另建重复的应用目录。
+[架构](docs/architecture.md) · [需求](docs/requirements.md) · [进度](docs/progress.md) · [验收清单](docs/v1.0-checklist.md)。node_modules、dist、target、PDF 自动生成资源、测试报告均不提交。用户数据位于系统应用数据目录，不进入源码或安装包。
 
-修改前端后运行 `npm run format`；`npm run format:check` 和 `npm run docs:check` 已纳入 CI。Rust 代码使用 `cargo fmt --all`。
-
-## 已认可的视觉方向
-
-中性深色背景、舒展留白、轻量字体、少量柔和强调色；参考 Apple、Notion 与 Notion Calendar。
-
-### 月历首页
-
-![已认可的月历首页](docs/design/current/home-calendar-dark-draft.png)
-
-### 案件概览
-
-![已认可的案件概览方向](docs/design/current/case-overview-dark.png)
-
-图片用于视觉和布局评审，尚未实现为可交互软件。图中文字、日期和文件信息均为演示数据；生成图中的错字和局部细节以需求文档为准。
+保留 DESIGN-NOTION-COLOR 和 DESIGN-NOTION-DETAIL：配色、圆角、字体与图标继续打磨。历史效果图和 HTML 是设计依据，当前能力以实际应用与验收说明为准。

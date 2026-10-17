@@ -1,5 +1,13 @@
+mod backup;
+mod example;
+mod ledger;
+mod materials;
 pub mod models;
+mod people;
+mod records;
+mod reminders;
 mod schedule;
+mod stages;
 mod storage_location;
 pub mod store;
 pub use models::*;
@@ -16,5 +24,7 @@ pub enum Error {
     Database(#[from] rusqlite::Error),
     #[error("本地文件操作失败：{0}")]
     Io(#[from] std::io::Error),
+    #[error("本地数据格式无效：{0}")]
+    Json(#[from] serde_json::Error),
 }
 pub type Result<T> = std::result::Result<T, Error>;

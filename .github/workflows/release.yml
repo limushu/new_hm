@@ -1,0 +1,42 @@
+name: Windows release
+on:
+  workflow_dispatch:
+  push:
+    tags: ['v*']
+permissions:
+  contents: write
+jobs:
+  release:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+      - run: npm ci
+      - run: npm run check
+      - run: npm run format:check
+      - run: npm run docs:check
+      - run: cargo test --locked -p hm-core
+      - run: npm test
+      - name: Build signed updater and installer
+        run: npm run desktop:build -- --ci
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+      - run: npm run artifacts:release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: artifacts/windows/*/*
+      - name: Publish tagged version
+        if: startsWith(github.ref, 'refs/tags/v')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $version = (Get-Content package.json | ConvertFrom-Json).version
+          if ($env:GITHUB_REF_NAME -ne "v$version") { throw 'Tag and package version differ' }
+          gh release create $env:GITHUB_REF_NAME artifacts/windows/$version/* --title "律师工作台 $version" --notes-file docs/release-notes.md --verify-tag

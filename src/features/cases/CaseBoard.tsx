@@ -1,12 +1,14 @@
+import Dialog from '../../components/Dialog';
 import { useId, useRef, useState, type CSSProperties } from 'react';
-import { ArrowRightCircle, Folder, Plus, Search } from 'lucide-react';
+import { ArrowRightCircle, Folder, Plus, Search, MoreHorizontal } from 'lucide-react';
 import { programLabels } from '../../domain/types';
-import type { CaseFile, Workspace } from '../../domain/types';
+import type { CaseFile, CaseStatus, SaveAction, Workspace } from '../../domain/types';
 import { useBoardDrag } from './useBoardDrag';
 import './case-board.css';
 
 interface Props {
   data: Workspace;
+  save: SaveAction;
   query: string;
   loading: boolean;
   onQueryChange: (value: string) => void;
@@ -50,7 +52,36 @@ export default function CaseBoard({
   onCreate,
   onOpen,
   onMove,
+  save,
 }: Props) {
+  const [exampleId] = useState(() => crypto.randomUUID());
+  const [exampleBusy, setExampleBusy] = useState(false);
+  const [statusEdit, setStatusEdit] = useState<CaseStatus | null>(null);
+  const [statusName, setStatusName] = useState('');
+  const [statusColor, setStatusColor] = useState('#768b9a');
+  function editStatus(status: CaseStatus) {
+    setStatusEdit(status);
+    setStatusName(status.name);
+    setStatusColor(status.color);
+  }
+  const tone = (id: string) =>
+    ((data.statuses.find((s) => s.id === id)?.color ?? '').toLowerCase() ===
+    (
+      { not_started: '#96938b', in_progress: '#7098b9', closed: '#7e9b85' } as Record<
+        string,
+        string
+      >
+    )[id]
+      ? palettes[id]
+      : undefined) ??
+    ({
+      '--column-bg': (data.statuses.find((s) => s.id === id)?.color ?? '#768b9a') + '12',
+      '--card-bg': (data.statuses.find((s) => s.id === id)?.color ?? '#768b9a') + '20',
+      '--card-border': (data.statuses.find((s) => s.id === id)?.color ?? '#768b9a') + '40',
+      '--status-bg': (data.statuses.find((s) => s.id === id)?.color ?? '#768b9a') + '60',
+      '--status-dot': data.statuses.find((s) => s.id === id)?.color ?? '#768b9a',
+      '--status-accent': data.statuses.find((s) => s.id === id)?.color ?? '#768b9a',
+    } as CSSProperties);
   const board = useRef<HTMLDivElement>(null);
   const instructionId = useId();
   const [pending, setPending] = useState<{ id: string; statusId: string } | null>(null);
@@ -136,6 +167,28 @@ export default function CaseBoard({
         <Folder />
         案件
       </h1>
+      {!loading && !data.cases.length && (
+        <p className="onboarding-note">
+          直接新建案件开始，也可以先
+          <button
+            disabled={exampleBusy}
+            onClick={async () => {
+              if (exampleBusy) return;
+              setExampleBusy(true);
+              try {
+                await save('seed_example', { id: exampleId });
+              } catch (error) {
+                setError(String(error));
+              } finally {
+                setExampleBusy(false);
+              }
+            }}
+          >
+            添加虚构示例案件
+          </button>
+          熟悉功能。
+        </p>
+      )}
       <div className="board-toolbar">
         <span className="view-pill">
           <ArrowRightCircle />
@@ -176,7 +229,7 @@ export default function CaseBoard({
             return (
               <section
                 className={`case-column ${drag?.over === status.id ? 'is-drop-target' : ''}`}
-                style={palettes[status.id]}
+                style={tone(status.id)}
                 key={status.id}
                 data-status-id={status.id}
                 aria-label={`${status.name}案件`}
@@ -187,6 +240,13 @@ export default function CaseBoard({
                     {status.name}
                   </span>
                   <small>{cases.length}</small>
+                  <button
+                    className="icon-button column-menu"
+                    title={`编辑${status.name}状态`}
+                    onClick={() => editStatus(status)}
+                  >
+                    <MoreHorizontal />
+                  </button>
                   <button
                     className="icon-button column-create"
                     title={`在${status.name}中新建案件`}
@@ -235,6 +295,13 @@ export default function CaseBoard({
               </section>
             );
           })}
+          <button
+            className="add-status"
+            title="新增状态"
+            onClick={() => editStatus({ id: crypto.randomUUID(), name: '', color: '#768b9a' })}
+          >
+            <Plus />
+          </button>
         </div>
       )}
       {drag && dragItem && !drag.keyboard && (
@@ -242,7 +309,7 @@ export default function CaseBoard({
           className="case-card case-drag-preview"
           aria-hidden="true"
           style={{
-            ...palettes[drag.over ?? statusOf(dragItem)],
+            ...tone(drag.over ?? statusOf(dragItem)),
             left: drag.x,
             top: drag.y,
             width: drag.width,
@@ -250,6 +317,55 @@ export default function CaseBoard({
         >
           {content(dragItem)}
         </div>
+      )}
+      {statusEdit && (
+        <Dialog
+          title={statusEdit.name ? '编辑案件状态' : '新增案件状态'}
+          onClose={() => setStatusEdit(null)}
+          onSubmit={async () => {
+            await save('save_case_status', {
+              input: { ...statusEdit, name: statusName, color: statusColor },
+            });
+          }}
+        >
+          <label>
+            状态名称
+            <input
+              aria-label="状态名称"
+              required
+              maxLength={30}
+              value={statusName}
+              onChange={(e) => setStatusName(e.target.value)}
+            />
+          </label>
+          <label>
+            状态颜色
+            <input
+              aria-label="状态颜色"
+              type="color"
+              value={statusColor}
+              onChange={(e) => setStatusColor(e.target.value)}
+            />
+          </label>
+          {!['not_started', 'in_progress', 'closed'].includes(statusEdit.id) &&
+            data.statuses.some((s) => s.id === statusEdit.id) && (
+              <button
+                type="button"
+                className="inline-link danger"
+                onClick={async () => {
+                  try {
+                    await save('delete_case_status', { id: statusEdit.id });
+                    setStatusEdit(null);
+                  } catch (error) {
+                    setError(String(error));
+                    setStatusEdit(null);
+                  }
+                }}
+              >
+                删除空状态列
+              </button>
+            )}
+        </Dialog>
       )}
     </div>
   );

@@ -8,8 +8,18 @@ import type {
   ProgramKind,
   CalendarEvent,
 } from '../domain/types';
+import type { MaterialTarget, RecordInput } from '../domain/types';
 import { dateKey } from '../domain/calendar';
 
+const previewFiles = new Map<string, { name: string; url: string; size: number }>();
+export function registerPreviewFiles(files: File[]) {
+  return files.map((file) => {
+    const id = crypto.randomUUID();
+    previewFiles.set(id, { name: file.name, url: URL.createObjectURL(file), size: file.size });
+    return id;
+  });
+}
+const settings: Record<string, string> = { close_to_tray: 'true', notifications: 'true' };
 const now = new Date().toISOString();
 const data: Workspace = {
   statuses: [
@@ -51,6 +61,14 @@ const data: Workspace = {
   ],
   workRecords: [],
   calendarEvents: [],
+  materials: [],
+  contacts: [],
+  contactLinks: [],
+  ledgerEntries: [],
+  caseDetails: [],
+  stages: [],
+  caseEvents: [],
+  deletedRecords: [],
 };
 function findCase(id: string): CaseFile {
   const value = data.cases.find((c) => c.id === id);
@@ -64,6 +82,240 @@ export async function previewCommand<K extends keyof Commands>(
   const a = args as Record<string, unknown>;
   let result: unknown = null;
   switch (name) {
+    case 'seed_example':
+      result = 'demo';
+      break;
+    case 'get_settings':
+      result = settings;
+      break;
+    case 'set_setting':
+      settings[a.key as string] = a.value as string;
+      break;
+    case 'background_status':
+      result = {};
+      break;
+    case 'autostart_status':
+      result = false;
+      break;
+    case 'due_reminders':
+      result = [];
+      break;
+    case 'acknowledge_reminder':
+      break;
+    case 'save_contact':
+    case 'save_contact_link':
+    case 'save_ledger':
+    case 'save_case_detail':
+    case 'save_stage':
+    case 'save_case_event': {
+      const input = a.input as Record<string, unknown>;
+      const key = (
+        {
+          save_contact: 'contacts',
+          save_contact_link: 'contactLinks',
+          save_ledger: 'ledgerEntries',
+          save_case_detail: 'caseDetails',
+          save_stage: 'stages',
+          save_case_event: 'caseEvents',
+        } as const
+      )[
+        name as
+          | 'save_contact'
+          | 'save_contact_link'
+          | 'save_ledger'
+          | 'save_case_detail'
+          | 'save_stage'
+          | 'save_case_event'
+      ];
+      const rows = data[key] as unknown as Array<{ id?: string; caseId?: string }>;
+      const exists = rows.find((row) =>
+        name === 'save_case_detail' ? row.caseId === input.caseId : row.id === input.id,
+      );
+      if (name === 'save_stage' && input.state === 'current') {
+        data.stages
+          .filter(
+            (stage) =>
+              stage.proceedingId === input.proceedingId &&
+              stage.state === 'current' &&
+              stage.id !== input.id,
+          )
+          .forEach((stage) => (stage.state = 'done'));
+        const program = data.proceedings.find((program) => program.id === input.proceedingId);
+        if (program) program.stage = input.name as string;
+      }
+      if (exists) Object.assign(exists, input);
+      else rows.push({ ...input });
+      break;
+    }
+    case 'delete_contact':
+      data.contacts = data.contacts.filter((row) => row.id !== a.id);
+      break;
+    case 'delete_contact_link':
+      data.contactLinks = data.contactLinks.filter((row) => row.id !== a.id);
+      break;
+    case 'delete_ledger':
+      data.ledgerEntries = data.ledgerEntries.filter((row) => row.id !== a.id);
+      break;
+    case 'delete_stage':
+      data.stages = data.stages.filter((row) => row.id !== a.id);
+      break;
+    case 'reorder_stages':
+      (a.ids as string[]).forEach((id, index) => {
+        const row = data.stages.find((s) => s.id === id);
+        if (row) row.position = index;
+      });
+      break;
+    case 'save_case_status': {
+      const input = a.input as Workspace['statuses'][number];
+      const old = data.statuses.find((s) => s.id === input.id);
+      if (old) Object.assign(old, input);
+      else data.statuses.push({ ...input });
+      break;
+    }
+    case 'delete_case_status':
+      data.statuses = data.statuses.filter((row) => row.id !== a.id);
+      break;
+    case 'save_record': {
+      const input = a.input as RecordInput;
+      const old = data.workRecords.find((row) => row.id === input.id);
+      if (old) old.body = input.body;
+      else data.workRecords.unshift({ ...input, createdAt: new Date().toISOString() });
+      break;
+    }
+    case 'create_material_folder': {
+      const target = a.target as MaterialTarget;
+      const id = crypto.randomUUID();
+      data.materials.push({
+        id,
+        ...target,
+        recordId: target.recordId ?? null,
+        name: a.name as string,
+        kind: 'folder',
+        size: 0,
+        notes: '',
+        createdAt: new Date().toISOString(),
+        deletedAt: null,
+        trashGroup: null,
+      });
+      result = id;
+      break;
+    }
+    case 'import_material_paths': {
+      const target = a.target as MaterialTarget;
+      for (const path of a.paths as string[]) {
+        const file = previewFiles.get(path);
+        if (!file) throw new Error('预览文件不存在');
+        let name = file.name;
+        let index = 1;
+        while (
+          data.materials.some(
+            (m) =>
+              !m.deletedAt &&
+              m.caseId === target.caseId &&
+              m.parentId === target.parentId &&
+              m.proceedingId === target.proceedingId &&
+              m.name === name,
+          )
+        ) {
+          const dot = file.name.lastIndexOf('.');
+          name =
+            dot > 0
+              ? file.name.slice(0, dot) + ` (${index++})` + file.name.slice(dot)
+              : file.name + ` (${index++})`;
+        }
+        const id = crypto.randomUUID();
+        previewFiles.set(id, file);
+        data.materials.push({
+          id,
+          ...target,
+          recordId: target.recordId ?? null,
+          name,
+          kind: 'file',
+          size: file.size,
+          notes: '',
+          createdAt: new Date().toISOString(),
+          deletedAt: null,
+          trashGroup: null,
+        });
+      }
+      result = { imported: (a.paths as string[]).length, errors: [] };
+      break;
+    }
+    case 'material_preview':
+      result = previewFiles.get(a.id as string)?.url;
+      if (!result) throw new Error('预览文件不存在');
+      break;
+    case 'open_material':
+    case 'export_material':
+      throw new Error('系统打开和导出请在桌面应用中使用');
+    case 'rename_material': {
+      const row = data.materials.find((m) => m.id === a.id);
+      if (row) row.name = a.name as string;
+      break;
+    }
+    case 'update_material_notes': {
+      const row = data.materials.find((m) => m.id === a.id);
+      if (row) row.notes = a.notes as string;
+      break;
+    }
+    case 'move_material': {
+      const row = data.materials.find((m) => m.id === a.id);
+      if (row) Object.assign(row, a.target);
+      break;
+    }
+    case 'trash_item':
+    case 'restore_item':
+    case 'purge_item': {
+      const id = a.id as string;
+      if (a.kind === 'case') {
+        if (name === 'trash_item') findCase(id).deletedAt = new Date().toISOString();
+        else if (name === 'restore_item') findCase(id).deletedAt = null;
+        else data.cases = data.cases.filter((c) => c.id !== id);
+      } else if (a.kind === 'record') {
+        if (name === 'trash_item') {
+          const row = data.workRecords.find((r) => r.id === id);
+          if (row) data.deletedRecords.unshift(row);
+          data.workRecords = data.workRecords.filter((r) => r.id !== id);
+        } else if (name === 'restore_item') {
+          const row = data.deletedRecords.find((r) => r.id === id);
+          if (row) data.workRecords.unshift(row);
+          data.deletedRecords = data.deletedRecords.filter((r) => r.id !== id);
+        } else data.deletedRecords = data.deletedRecords.filter((r) => r.id !== id);
+      } else {
+        const ids = new Set([id]);
+        let changed = true;
+        while (changed) {
+          changed = false;
+          for (const row of data.materials)
+            if (row.parentId && ids.has(row.parentId) && !ids.has(row.id)) {
+              ids.add(row.id);
+              changed = true;
+            }
+        }
+        if (name === 'purge_item') data.materials = data.materials.filter((m) => !ids.has(m.id));
+        else
+          for (const row of data.materials) {
+            if (name === 'trash_item' && ids.has(row.id) && !row.deletedAt) {
+              row.deletedAt = new Date().toISOString();
+              row.trashGroup = id;
+            } else if (name === 'restore_item' && row.trashGroup === id) {
+              row.deletedAt = null;
+              row.trashGroup = null;
+            }
+          }
+      }
+      break;
+    }
+    case 'choose_backup_directory':
+    case 'run_backup':
+    case 'pick_restore_backup':
+    case 'apply_restore_backup':
+    case 'set_autostart':
+    case 'check_update':
+    case 'install_update':
+    case 'quit_app':
+      throw new Error('此操作需要桌面应用');
+
     case 'storage_info':
       result = { portable: false, dataDirectory: '浏览器界面预览，不写入磁盘' };
       break;
@@ -78,6 +330,22 @@ export async function previewCommand<K extends keyof Commands>(
       data.calendarEvents = data.calendarEvents.filter((event) => event.id !== a.id);
       break;
     case 'load_workspace':
+      for (const program of data.proceedings)
+        if (!data.stages.some((s) => s.proceedingId === program.id)) {
+          const current = program.stage || '材料准备';
+          const names = ['材料准备', '立案', '举证', '开庭', '裁判'];
+          if (!names.includes(current)) names.push(current);
+          program.stage = current;
+          names.forEach((name, position) =>
+            data.stages.push({
+              id: crypto.randomUUID(),
+              proceedingId: program.id,
+              name,
+              position,
+              state: name === current ? 'current' : 'pending',
+            }),
+          );
+        }
       result = data;
       break;
     case 'create_case': {

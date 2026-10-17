@@ -1,3 +1,9 @@
+import CaseLinks from './CaseLinks';
+import Finance from '../finance/Finance';
+import { CaseContacts } from '../contacts/Contacts';
+import Stages from './Stages';
+import Records from './Records';
+import Materials from '../materials/Materials';
 import { useEffect, useRef, useState } from 'react';
 import { ChevronRight, ChevronsRight, Expand, Folder, Plus, X } from 'lucide-react';
 import type { CaseFile, CaseInput, ProgramKind, SaveAction, Workspace } from '../../domain/types';
@@ -10,12 +16,25 @@ interface Props {
   save: SaveAction;
   close: () => void;
   created: (id: string) => void;
+  onCase: (id: string) => void;
+  initialTab?: string;
+  focusMaterialId?: string;
 }
-export default function CasePage({ item, data, draft, save, close, created }: Props) {
+export default function CasePage({
+  item,
+  data,
+  draft,
+  save,
+  close,
+  created,
+  onCase,
+  initialTab = 'overview',
+  focusMaterialId,
+}: Props) {
   const [title, setTitle] = useState(item.title);
   const [caseType, setCaseType] = useState(item.caseType);
   const [statusId, setStatusId] = useState(item.statusId);
-  const [tab, setTab] = useState('overview');
+  const [tab, setTab] = useState(initialTab);
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState('');
@@ -24,8 +43,6 @@ export default function CasePage({ item, data, draft, save, close, created }: Pr
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDate, setTaskDate] = useState('');
   const [taskForm, setTaskForm] = useState(false);
-  const [record, setRecord] = useState('');
-  const [recordForm, setRecordForm] = useState(false);
   const [saved, setSaved] = useState(!draft);
   const [caseMenu, setCaseMenu] = useState(false);
   const [taskOverrides, setTaskOverrides] = useState<Record<string, boolean>>({});
@@ -34,7 +51,6 @@ export default function CasePage({ item, data, draft, save, close, created }: Pr
   const programs = data.proceedings.filter((p) => p.caseId === item.id);
   const program = programs.find((p) => p.id === item.currentProceedingId);
   const tasks = data.tasks.filter((t) => t.caseId === item.id);
-  const records = data.workRecords.filter((r) => r.caseId === item.id);
   useEffect(() => {
     if (draft) titleInput.current?.focus();
   }, [draft]);
@@ -303,50 +319,7 @@ export default function CasePage({ item, data, draft, save, close, created }: Pr
                   </div>
                   <p className="empty-text">案件共用材料与程序材料分别管理。</p>
                 </section>
-                <section className="case-section">
-                  <div className="section-title">
-                    <h3>工作记录</h3>
-                    <button disabled={saving} onClick={() => setRecordForm(!recordForm)}>
-                      <Plus />
-                      记录
-                    </button>
-                  </div>
-                  {recordForm && (
-                    <form
-                      className="inline-form"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void act(async () => {
-                          await save('add_record', { caseId: item.id, body: record });
-                          setRecord('');
-                          setRecordForm(false);
-                        });
-                      }}
-                    >
-                      <textarea
-                        aria-label="工作记录内容"
-                        placeholder="记录沟通、进展或下一步安排…"
-                        value={record}
-                        onChange={(e) => setRecord(e.target.value)}
-                        required
-                        maxLength={20000}
-                        rows={4}
-                      />
-                      <div className="form-actions">
-                        <button disabled={saving || !record.trim()} type="submit">
-                          保存记录
-                        </button>
-                      </div>
-                    </form>
-                  )}
-                  {!records.length && !recordForm && <p className="empty-text">暂无工作记录</p>}
-                  {records.map((r) => (
-                    <article key={r.id} className="work-record">
-                      <p>{r.body}</p>
-                      <time>{new Date(r.createdAt).toLocaleString('zh-CN')}</time>
-                    </article>
-                  ))}
-                </section>
+                <Records caseId={item.id} data={data} save={save} />
               </>
             )}
             {tab === 'info' && (
@@ -391,7 +364,6 @@ export default function CasePage({ item, data, draft, save, close, created }: Pr
                   <div className="program-fields" key={program.id}>
                     {(
                       [
-                        ['stage', '当前阶段'],
                         ['caseNumber', '案号'],
                         ['court', '法院'],
                         ['judge', '法官'],
@@ -402,7 +374,7 @@ export default function CasePage({ item, data, draft, save, close, created }: Pr
                         <input
                           aria-label={label}
                           defaultValue={program[key]}
-                          maxLength={key === 'stage' ? 80 : 200}
+                          maxLength={200}
                           placeholder="未填写"
                           disabled={saving}
                           onBlur={(e) => {
@@ -427,22 +399,20 @@ export default function CasePage({ item, data, draft, save, close, created }: Pr
                 )}
               </section>
             )}
+            {tab === 'info' && (
+              <>
+                {' '}
+                {program && (
+                  <Stages caseId={item.id} proceedingId={program.id} data={data} save={save} />
+                )}
+                <CaseContacts caseId={item.id} data={data} save={save} onCase={onCase} />
+                <CaseLinks caseId={item.id} data={data} save={save} onCase={onCase} />
+              </>
+            )}
             {tab === 'materials' && (
-              <section className="case-section">
-                <h3>材料</h3>
-                <div className="feature-pending">
-                  <Folder />
-                  <p>正式文件归档正在接入</p>
-                  <span>先完成本地数据库与案件流程，再接入复制归档、预览和回收站。</span>
-                </div>
-              </section>
+              <Materials caseId={item.id} data={data} save={save} focusId={focusMaterialId} />
             )}
-            {tab === 'finance' && (
-              <section className="case-section">
-                <h3>收支</h3>
-                <p className="empty-text">案件收支将在后续版本接入。</p>
-              </section>
-            )}
+            {tab === 'finance' && <Finance caseId={item.id} data={data} save={save} />}
             <div className="case-footer">
               <button onClick={() => setCaseMenu(!caseMenu)}>案件操作</button>
               {caseMenu && (

@@ -12,6 +12,7 @@ fn event() -> CalendarEvent {
         case_id: None,
         location: "会议室".into(),
         notes: "核对材料".into(),
+        reminder_minutes: None,
     }
 }
 
@@ -30,6 +31,24 @@ fn version_one_upgrades_without_losing_existing_case_or_task() {
     .unwrap();
     drop(db);
     let store = Store::open(&path).unwrap();
+    let copies = std::fs::read_dir(dir.path().join("migration-backups"))
+        .unwrap()
+        .collect::<std::io::Result<Vec<_>>>()
+        .unwrap();
+    assert_eq!(copies.len(), 1);
+    let original = rusqlite::Connection::open(copies[0].path()).unwrap();
+    assert_eq!(
+        original
+            .query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
+            .unwrap(),
+        1
+    );
+    assert_eq!(
+        original
+            .query_row("SELECT title FROM cases", [], |r| r.get::<_, String>(0))
+            .unwrap(),
+        "旧案件"
+    );
     let data = store.workspace().unwrap();
     assert_eq!(data.cases[0].title, "旧案件");
     assert_eq!(data.tasks[0].title, "已有待办");
@@ -40,7 +59,7 @@ fn version_one_upgrades_without_losing_existing_case_or_task() {
     assert_eq!(
         db.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0))
             .unwrap(),
-        2
+        3
     );
     assert_eq!(
         db.query_row("PRAGMA integrity_check", [], |row| row.get::<_, String>(0))

@@ -1,10 +1,14 @@
 use crate::{models::*, Error, Result};
 use rusqlite::{params, Connection, OptionalExtension};
-use std::{path::Path, time::Duration};
+use std::{
+    path::{Path, PathBuf},
+    time::Duration,
+};
 use uuid::Uuid;
 
 pub struct Store {
     pub(crate) connection: Connection,
+    pub(crate) directory: Option<PathBuf>,
 }
 
 fn text(value: &str, label: &str, max: usize) -> Result<String> {
@@ -46,8 +50,28 @@ impl Store {
         if let Some(parent) = path.parent().filter(|p| !p.as_os_str().is_empty()) {
             std::fs::create_dir_all(parent)?;
         }
-        let connection = Connection::open(path)?;
-        Self::initialize(connection)
+        let directory = path
+            .parent()
+            .filter(|p| !p.as_os_str().is_empty())
+            .unwrap_or(Path::new("."));
+        let mut connection = Connection::open(path)?;
+        crate::backup::recover_on_open(&mut connection, directory)?;
+        let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
+        if version > 0 && version < 3 {
+            let safety = directory.join("migration-backups");
+            std::fs::create_dir_all(&safety)?;
+            connection.backup(
+                "main",
+                safety.join(format!(
+                    "before-v3-from-v{version}-{}.sqlite3",
+                    Uuid::new_v4()
+                )),
+                None,
+            )?;
+        }
+        let mut store = Self::initialize(connection)?;
+        store.directory = Some(directory.to_path_buf());
+        Ok(store)
     }
     pub fn memory() -> Result<Self> {
         Self::initialize(Connection::open_in_memory()?)
@@ -58,20 +82,26 @@ impl Store {
             "PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;",
         )?;
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 2 {
+        if version > 3 {
             return Err(Error::Validation(
                 "数据库来自较新版本，请使用新版软件打开".into(),
             ));
         }
-        if version < 2 {
+        if version < 3 {
             let tx = connection.transaction()?;
             if version == 0 {
                 tx.execute_batch(include_str!("../migrations/001_initial.sql"))?;
             }
-            tx.execute_batch(include_str!("../migrations/002_calendar_events.sql"))?;
+            if version < 2 {
+                tx.execute_batch(include_str!("../migrations/002_calendar_events.sql"))?;
+            }
+            tx.execute_batch(include_str!("../migrations/003_v1_workspace.sql"))?;
             tx.commit()?;
         }
-        Ok(Self { connection })
+        Ok(Self {
+            connection,
+            directory: None,
+        })
     }
     pub(crate) fn active_case(&self, id: &str) -> Result<()> {
         let exists: bool = self.connection.query_row(
@@ -127,7 +157,7 @@ impl Store {
         let work_records = self
             .connection
             .prepare(
-                "SELECT id,case_id,body,created_at FROM work_records ORDER BY created_at DESC,id",
+                "SELECT id,case_id,body,created_at FROM work_records WHERE deleted_at IS NULL ORDER BY created_at DESC,id",
             )?
             .query_map([], |r| {
                 Ok(WorkRecord {
@@ -145,6 +175,14 @@ impl Store {
             tasks,
             work_records,
             calendar_events: self.calendar_events()?,
+            materials: self.materials()?,
+            contacts: self.contacts()?,
+            contact_links: self.contact_links()?,
+            ledger_entries: self.ledger_entries()?,
+            case_details: self.case_details()?,
+            stages: self.stages()?,
+            case_events: self.case_events()?,
+            deleted_records: self.deleted_records()?,
         })
     }
     pub fn create_case(&mut self, input: CreateCase) -> Result<Case> {
@@ -168,6 +206,7 @@ impl Store {
                 "UPDATE cases SET current_proceeding_id=?1 WHERE id=?2",
                 params![id, input.id],
             )?;
+            crate::stages::seed_default_stages(&tx, &id, "first_instance")?;
         }
         tx.commit()?;
         Ok(self.connection.query_row("SELECT id,title,case_type,status_id,current_proceeding_id,created_at,updated_at,deleted_at FROM cases WHERE id=?1",[input.id],map_case)?)
@@ -204,6 +243,7 @@ impl Store {
             "UPDATE cases SET current_proceeding_id=?1 WHERE id=?2",
             params![id, case_id],
         )?;
+        crate::stages::seed_default_stages(&tx, &id, program_kind)?;
         tx.commit()?;
         Ok(id)
     }

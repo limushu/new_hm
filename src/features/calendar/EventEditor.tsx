@@ -170,6 +170,30 @@ export default function EventEditor({ event, existing, cases, save, onClose, onS
               </label>
             </div>
           </div>
+          <label className="event-reminder-field">
+            提醒
+            <select
+              aria-label="日程提醒时间"
+              value={value.reminderMinutes ?? 'none'}
+              onChange={(e) =>
+                update({
+                  reminderMinutes: e.target.value === 'none' ? null : Number(e.target.value),
+                })
+              }
+            >
+              <option value="none">不提醒</option>
+              <option value="0">开始时</option>
+              <option value="5">提前5分钟</option>
+              <option value="15">提前15分钟</option>
+              <option value="30">提前30分钟</option>
+              <option value="60">提前1小时</option>
+              <option value="1440">提前1天</option>
+              <option value="10080">提前1周</option>
+            </select>
+            {value.startTime === null &&
+              value.reminderMinutes !== undefined &&
+              value.reminderMinutes !== null && <small>全天安排以当天09:00为提醒基准</small>}
+          </label>
           <CaseAssociation
             value={value.caseId}
             cases={cases}
