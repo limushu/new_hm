@@ -1,0 +1,48 @@
+{
+  "name": "hm-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "desktop:dev": "tauri dev",
+    "desktop:build": "tauri build",
+    "check": "tsc -b && cargo fmt --all -- --check",
+    "format": "prettier --write src tests scripts *.ts *.json index.html .github/workflows/*.yml src-tauri/*.json src-tauri/capabilities/*.json",
+    "format:check": "prettier --check src tests scripts *.ts *.json index.html .github/workflows/*.yml src-tauri/*.json src-tauri/capabilities/*.json",
+    "docs:check": "node scripts/check-doc-links.mjs",
+    "test": "vitest run",
+    "test:core": "cargo test -p hm-core",
+    "doctor": "node scripts/doctor.mjs",
+    "test:ui": "playwright test",
+    "android:init": "tauri android init",
+    "android:dev": "tauri android dev",
+    "ios:init": "tauri ios init",
+    "ios:dev": "tauri ios dev",
+    "artifacts:debug": "node scripts/collect-artifacts.mjs debug",
+    "artifacts:release": "node scripts/collect-artifacts.mjs release"
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2.12.4",
+    "lucide-react": "^1.58.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@tauri-apps/cli": "^2.12.3",
+    "@types/node": "^26.6.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "prettier": "3.6.2",
+    "typescript": "^7.0.2",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  },
+  "engines": {
+    "node": ">=22.12.0 <23"
+  }
+}

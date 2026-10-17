@@ -1,0 +1,20 @@
+Use case: ui-mockup. Produce ONE carefully art-directed Chinese legal case management desktop app screenshot at 1586x992 aspect ratio. Input 1 supplies existing app shell and dark charcoal visual identity. Input 2 supplies GitHub Projects narrow-column board styling and restrained compact typography. Ignore the modal in input 2, do not show a dialog. Redesign MAIN PANE fully.
+
+CRITICAL COMPOSITION: keep sidebar at x0-228. Main pane title 案件 at x270,y90, modest 24px regular weight. Top right modest + 新建案件 control, NOT a large luminous blue block, use subdued slate-blue outlined button. Search box at x270,y142 width 620 height 34 with exact placeholder 搜索案件名称、案号. Single quiet rule under toolbar at y193. NO status tabs anywhere.
+
+Board starts x270,y224. THREE FIXED NARROW COLUMNS only 276px wide each, 18px gaps. Exact left edges 270,564,858; last column ends at 1134. A quiet + 添加状态 text control sits at x1160,y235. Leave the entire region x1280-1586 EMPTY. Most of lower screen y650-992 also EMPTY uninterrupted charcoal. NEVER stretch columns to fit main-pane width. NEVER draw full-height panel rectangles. Columns are small header plus content stack, no enclosing outer border or tall background. All content concentrated in upper-left portion of main pane, generous negative space below and right. Empty space is intentional and essential.
+
+Column 1 header small gray outlined status circle 未开始 and tiny count 2, small ellipsis at right. One short muted subtitle 尚未开始办理.
+Column 2 header small muted amber circle 进行中 and count 2, small ellipsis.
+Column 3 header small muted sage circle 已结案 and count 1, small ellipsis.
+Column header text 15px regular, counts 12px muted. Titles horizontally aligned. Column subtitle line occupies same height in all columns, other subtitles 正在办理 and 已完成办理.
+
+ONLY FIVE COMPACT CASE ITEMS. Approx width 276px, natural 90-110px height, padding 13px, 9px vertical gap, radius 5px, 1px subtle #34383d border, flat surface #222426 over charcoal #1c1e20, no shadow, no gradient. Titles 15px regular, secondary text 12px, high quality crisp Chinese. No oversized type, no bold heading inside cards, no calendar icons, no extra badges or large empty spaces inside items.
+未开始 item 1: title 林某合同纠纷; metadata 民商事诉讼; footer 尚未安排.
+未开始 item 2: title 赵某房屋租赁纠纷; metadata 民商事诉讼; footer 尚未安排.
+进行中 item 1: title 张某与李某借款纠纷; metadata 一审 · 庭前准备; footer 10月23日 · 举证期限 in very muted amber.
+进行中 item 2: title 王某劳动争议案; metadata 一审 · 等待开庭; footer 10月20日 · 会见当事人 in neutral gray.
+已结案 item 1: title 周某物业服务合同纠纷; metadata 民商事诉讼; footer 10月12日结案 in neutral gray.
+Each item has small ellipsis top right. Under first column stack quiet + 新建案件 text link; no add-item buttons in other columns.
+
+Keep sidebar nav 搜索 今天 案件 联系人, 案件 selected, bottom 设置 and 已保存到本地 as in shell reference. Use flat neutral dark surfaces throughout, a clean light-weight typography system, narrow GitHub-like issue-list proportions. This is a polished understated productivity tool. Do NOT fill available screen with panels. Do NOT reproduce giant two-column cards or two giant full-height boxes. Do NOT show a modal, default three filter tabs, fourth empty column, fictitious analytics, or browser chrome.

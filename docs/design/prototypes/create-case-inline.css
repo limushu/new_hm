@@ -1,0 +1,37 @@
+/* Provisional Notion reference study. Palette and radii remain under review. */
+.detail-drawer{width:min(1040px,calc((100vw - 216px)*.68));min-width:480px;box-shadow:-1px 0 0 #0001}
+.creation-pane{background:#202020;border-left:1px solid #303030}
+.creation-pane .drawer-toolbar{justify-content:flex-start;gap:12px;height:42px;padding:8px 13px}
+.creation-context{color:#77746e;font-size:11px}
+.creation-pane .drawer-body{padding:36px 66px 65px;max-width:1060px;margin:auto}
+.creation-pane .drawer-symbol{margin-bottom:9px;color:#5294ce}
+.creation-pane .drawer-symbol svg{width:31px;height:31px;stroke-width:1.7}
+.case-name-input{display:block;width:100%;font:650 30px/1.35 "Segoe UI","Microsoft YaHei",sans-serif;letter-spacing:-.5px;border:0;background:none;padding:0;margin:0;color:#e5e3df;outline:none;border-radius:0}
+.case-name-input::placeholder{color:#55534f}
+.case-name-input:focus-visible{outline:none}
+.creation-details{margin-top:14px;color:#86827b;font-size:12px}
+.creation-details summary{cursor:pointer;list-style:none;width:fit-content;padding:3px 0;border-radius:4px}
+.creation-details summary::-webkit-details-marker{display:none}
+.creation-details summary:hover{color:#bbb7ad}
+.inline-detail-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px 20px;margin:20px 0 25px}
+.inline-detail-grid label{font-size:11px;color:#8f8a80}
+.inline-detail-grid input{display:block;width:100%;font:13px/1.5 "Segoe UI","Microsoft YaHei",sans-serif;color:#cfcbc3;border:0;border-bottom:1px solid #38352f;background:none;padding:6px 0}
+.inline-properties{display:flex;flex-wrap:wrap;gap:20px 34px;margin:30px 0 33px}
+.inline-property{min-width:92px;max-width:180px}
+.inline-property label{display:flex;align-items:center;gap:5px;color:#99948b;font-size:11px;margin-bottom:9px}
+.inline-property label svg{width:13px;height:13px;color:#8d8981}
+.inline-property input,.inline-property select{width:150px;max-width:100%;font:13px/1.5 "Segoe UI","Microsoft YaHei",sans-serif;background:none;border:0;padding:0;color:#c5c0b5;border-radius:3px}
+.inline-property select{width:125px;appearance:none;cursor:pointer}
+.inline-property select option{background:#252525}
+.inline-property input::placeholder{color:#767169}
+.creation-status{display:inline-flex;align-items:center;gap:5px;padding:1px 8px;border-radius:12px;background:#44443e;color:#c6c4b8;font-size:12px;max-width:180px;overflow-wrap:anywhere}
+.creation-status i{width:6px;height:6px;background:#a6a699;border-radius:50%;flex-shrink:0}
+.creation-divider{height:1px;background:#30302d}
+.creation-section{margin-top:32px}
+.creation-section h3{font-size:16px;line-height:1.5;font-weight:550;color:#d5d1c9;margin:0 0 14px}
+.creation-section p{font-size:13px;color:#79756e;line-height:1.7;margin:0}
+.creation-empty{display:flex;align-items:center;gap:9px;border:1px solid #33322e;border-radius:7px;background:#242423;color:#88837a;font-size:12px;padding:13px 14px}
+.creation-empty svg{width:15px;height:15px;color:#85877f}
+.case.selected-case{border-color:#5c93c0;box-shadow:0 0 0 1px #5c93c022}
+.draft-placeholder{color:#898680;font-size:13px;min-height:40px;padding:9px 12px}
+@media(max-width:900px){.detail-drawer{width:calc(100vw - 180px);min-width:0}.creation-pane .drawer-body{padding:30px}.inline-properties{gap:20px}.case-name-input{font-size:27px}}
