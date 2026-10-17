@@ -179,6 +179,19 @@ try {
   await page.screenshot({ path: join(root, 'materials.png') });
   const audio = workspace.materials.find((m) => m.name === '中文会见录音.webm');
   if (!audio || audio.size === 0) throw new Error('Native recording bytes missing');
+  await page.getByRole('button', { name: '中文会见录音.webm', exact: true }).dblclick();
+  const player = page
+    .getByRole('dialog', { name: '预览 中文会见录音.webm', exact: true })
+    .locator('audio');
+  await expect
+    .poll(() => player.evaluate((element) => element.readyState))
+    .toBeGreaterThanOrEqual(2);
+  await player.evaluate(async (element) => {
+    element.muted = true;
+    await element.play();
+  });
+  await expect.poll(() => player.evaluate((element) => element.currentTime)).toBeGreaterThan(0);
+  await page.getByRole('button', { name: '关闭预览', exact: true }).click();
   const person = {
     id: crypto.randomUUID(),
     name: '虚构联系人乙',

@@ -15,7 +15,7 @@ const { version } = JSON.parse(readFileSync('package.json', 'utf8'));
 const tauri = JSON.parse(readFileSync('src-tauri/tauri.conf.json', 'utf8'));
 if (version !== tauri.version) throw new Error('应用版本不一致');
 const source = resolve('target/release/bundle/nsis');
-const installer = readdirSync(source).find((name) => name.includes(`_${version}_x64-setup.exe`));
+const installer = readdirSync(source).find((name) => name.endsWith(`_${version}_x64-setup.exe`));
 if (!installer || !existsSync(join(source, `${installer}.sig`)))
   throw new Error('缺少安装包或升级签名');
 const out = resolve('artifacts/windows', version);
@@ -39,9 +39,9 @@ writeFileSync(
     2,
   ) + '\n',
 );
-copyFileSync('docs/v1.0-acceptance.md', join(out, '使用与验收说明.md'));
+copyFileSync('docs/v1.0-acceptance.md', join(out, 'README.zh-CN.md'));
 const hashes = [];
-for (const name of [assetName, `${assetName}.sig`, 'latest.json', '使用与验收说明.md']) {
+for (const name of [assetName, `${assetName}.sig`, 'latest.json', 'README.zh-CN.md']) {
   const hash = createHash('sha256');
   for await (const chunk of createReadStream(join(out, name))) hash.update(chunk);
   hashes.push(`${hash.digest('hex')}  ${name}`);

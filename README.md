@@ -57,3 +57,5 @@ npm run artifacts:release
 [架构](docs/architecture.md) · [需求](docs/requirements.md) · [进度](docs/progress.md) · [验收清单](docs/v1.0-checklist.md)。node_modules、dist、target、PDF 自动生成资源、测试报告均不提交。用户数据位于系统应用数据目录，不进入源码或安装包。
 
 保留 DESIGN-NOTION-COLOR 和 DESIGN-NOTION-DETAIL：配色、圆角、字体与图标继续打磨。历史效果图和 HTML 是设计依据，当前能力以实际应用与验收说明为准。
+
+当前[案件看板预览](docs/design/current/case-board-preview-1.0.0.png)与[原生材料页](docs/design/current/materials-app-1.0.0.png)均使用虚构数据；原生截图在隔离目录运行，不读取个人工作区。
