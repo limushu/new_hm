@@ -61,3 +61,5 @@ npm run artifacts:release
 当前[案件看板预览](docs/design/current/case-board-preview-1.0.0.png)与[原生材料页](docs/design/current/materials-app-1.0.0.png)均使用虚构数据；原生截图在隔离目录运行，不读取个人工作区。
 
 1.0.1 已统一办理法院/法官的可复用关系，加入搜索选择、反向关联及局部关系图，支持点击案件侧页外返回。设计与数据规则见[对象关系优化](docs/relationship-design.md)；文档位于 docs 目录。
+
+[1.0.1 案件信息](docs/design/current/case-info-app-1.0.1.png) · [对象局部关系图](docs/design/current/object-relations-app-1.0.1.png)：Windows 正式构建的隔离验收截图。

@@ -257,6 +257,7 @@ try {
   await detail.getByRole('button', { name: '局部关系图', exact: true }).click();
   await page.screenshot({ path: join(root, 'relations.png') });
   await detail.getByRole('button', { name: '关闭', exact: true }).last().click();
+  await page.getByRole('textbox', { name: '案号', exact: true }).fill('原生案号-2026');
   await page
     .getByRole('button', { name: '返回主页面', exact: true })
     .click({ position: { x: 30, y: 300 } });
@@ -277,6 +278,12 @@ try {
     workspace.materials.length !== 4
   )
     throw new Error('Native restore mismatch');
+  if (
+    workspace.proceedings.find((p) => p.id === first)?.caseNumber !== '原生案号-2026' ||
+    workspace.proceedings.find((p) => p.id === first)?.court !== '虚构甲法院新名称' ||
+    workspace.contactRelations.length !== 1
+  )
+    throw new Error('Native relation or field flush did not survive restore');
   if (!existsSync(join(root, 'data', 'recovery'))) throw new Error('Recovery snapshot missing');
   await stop(page);
   page = await start();
