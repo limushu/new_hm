@@ -30,8 +30,7 @@ writeFileSync(
   JSON.stringify(
     {
       version,
-      notes:
-        '律师工作台 v1.0：案件与阶段、材料与录音、联系人与关系图、收支、日程提醒、备份恢复。安装前会备份当前工作区。',
+      notes: readFileSync('docs/release-notes.md', 'utf8').trim(),
       pub_date: new Date().toISOString(),
       platforms: { 'windows-x86_64': { signature, url: `${base}/${assetName}` } },
     },

@@ -1,6 +1,6 @@
 # 应用架构
 
-更新于 2026-10-18，版本 1.0.0。Windows x64 首发，其他平台需单独构建验收。
+更新于 2026-10-18，版本 1.0.1。Windows x64 首发，其他平台需单独构建验收。
 
 ## 层次
 
@@ -12,7 +12,7 @@ src/features 按 cases、calendar、materials、contacts、finance、settings �
 
 案件 → 办理程序 → 阶段。程序切换不覆盖历史，阶段结束不自动结案。状态移动只更新状态字段；稳定 UUID 与数据库事务保证建案重试不重复，默认程序和阶段同事务创建。自定义状态删除要求为空。
 
-SQLite 外键、WAL、FULL 同步、5 秒 busy timeout，user_version 当前为 3。迁移在事务内执行；旧版本 1/2 在迁移前用 SQLite 在线备份 API 保存数据库副本。更高版本拒绝打开。
+SQLite 外键、WAL、FULL 同步、5 秒 busy timeout，user_version 当前为 4。迁移在事务内执行；旧版本 1/2 在迁移前用 SQLite 在线备份 API 保存数据库副本。更高版本拒绝打开。
 
 003_v1_workspace.sql 增加材料、对象/案件身份、阶段、事件、整数分收支、案件补充信息、设置、提醒送达去重。工作记录和材料支持软删除，彻底删除须明确确认；案件删除不删除独立对象。全局名称搜索在已有工作区数据上按类型匹配，不搜索材料正文。
 
@@ -43,3 +43,5 @@ NSIS 当前用户安装；Tauri updater 从 GitHub Release 的 latest.json 检�
 核心测试独立于窗口；界面测试使用明确内存预览；原生测试仅新建隔离虚构数据目录，验证文件、PDF、录音、SQLite 备份恢复与重启。验收范围与限制见[使用说明](v1.0-acceptance.md)。
 
 移动端、macOS、云同步、协作、AI、全文检索、转写、重复日程、法定期限自动计算不作为此版本已验收能力。保留 DESIGN-NOTION-COLOR 与 DESIGN-NOTION-DETAIL 后续打磨。
+
+1.0.1：contact_relations 保存法官/法院关系，程序参与对象通过 contact_links 关联，显示名称随引用更新；搜索选择器替代法院和法官自由文本录入。关系图从真实案件/程序/对象边生成，不把案件的每个法院都直接混成一层。恢复版本 3 的完整备份时自动执行迁移 4，详见[对象关系优化](relationship-design.md)。

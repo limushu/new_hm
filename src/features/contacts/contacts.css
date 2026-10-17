@@ -1,0 +1,697 @@
+.contacts-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+.contacts-heading p {
+  font-size: 13px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+.contacts-heading .primary-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.contacts-tools {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 22px;
+}
+.contacts-tools > span {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--muted);
+}
+.contact-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  max-width: 380px;
+  color: #888;
+}
+.contact-search input {
+  border: 0;
+  background: none;
+  padding: 7px 0;
+  width: 100%;
+  outline: none;
+}
+.contacts-tools select {
+  border: 0;
+  background: transparent;
+  font-size: 12px;
+}
+.contacts-list .contact-directory-row {
+  gap: 14px;
+  padding: 17px 4px;
+}
+.entity-mark {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  background: #2a2b2c;
+  color: #9da9b1;
+  display: grid;
+  place-items: center;
+}
+.entity-mark.kind-court {
+  color: #b4afa4;
+}
+.entity-mark.kind-judge {
+  color: #92a9bc;
+}
+.contact-directory-row .row-main > span {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  font-weight: 500;
+}
+.row-main .inline-kind {
+  display: inline;
+  font-size: 11px;
+  font-weight: 400;
+  color: #878787;
+}
+.contact-directory-row .row-main > small {
+  margin-top: 5px;
+  color: #969696;
+  line-height: 1.5;
+}
+.backlink-count {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #9aabb7;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.backlink-count svg {
+  width: 13px;
+  height: 13px;
+}
+.contact-directory-row .row-actions {
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+.contact-directory-row:hover .row-actions,
+.contact-directory-row:focus-within .row-actions {
+  opacity: 1;
+}
+.contact-picker {
+  position: relative;
+  min-width: 0;
+  font-size: 13px;
+}
+.picker-input {
+  display: flex;
+  align-items: center;
+  border: 1px solid #393939;
+  border-radius: 7px;
+  background: #242424;
+  padding: 0 8px;
+  gap: 7px;
+  min-width: 0;
+}
+.picker-input.is-open {
+  border-color: #617d91;
+  box-shadow: 0 0 0 2px #63829a19;
+}
+.picker-input > svg {
+  width: 14px;
+  height: 14px;
+  color: #777;
+}
+.picker-input input {
+  width: 100%;
+  padding: 9px 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  outline: none !important;
+  min-width: 0;
+}
+.picker-input button {
+  padding: 3px;
+  display: grid;
+  place-items: center;
+  color: #999;
+  flex: none;
+}
+.picker-input button svg {
+  width: 13px;
+  height: 13px;
+}
+.picker-popover {
+  position: absolute;
+  inset: calc(100% + 6px) 0 auto;
+  z-index: 12;
+  min-width: 230px;
+  background: #282828;
+  border: 1px solid #424242;
+  box-shadow: 0 12px 32px #0005;
+  border-radius: 9px;
+  padding: 5px;
+}
+.picker-popover [role='listbox'] {
+  max-height: 230px;
+  overflow: auto;
+}
+.picker-caption {
+  padding: 7px 8px;
+  font-size: 11px;
+  color: #999;
+}
+.picker-popover [role='option'] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  width: 100%;
+  padding: 9px;
+  border-radius: 5px;
+  color: #ddd;
+}
+.picker-popover [role='option'].is-active,
+.picker-popover [role='option']:hover {
+  background: #343434;
+}
+.picker-popover small {
+  display: block;
+  color: #999;
+  font-size: 11px;
+  margin-top: 3px;
+}
+.picker-empty {
+  padding: 12px 9px;
+  color: #929292;
+  font-size: 12px;
+}
+.picker-create {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-top: 1px solid #3c3c3c;
+  width: 100%;
+  padding: 11px 8px;
+  text-align: left;
+  font-size: 12px;
+  color: #a5bed0;
+}
+.program-fields > .program-contacts {
+  grid-column: 1/-1;
+}
+.program-contacts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 18px;
+  margin-top: 8px;
+  min-width: 0;
+}
+.relation-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 8px;
+}
+.relation-label > svg {
+  width: 14px;
+  height: 14px;
+  color: #858585;
+}
+.relation-label button {
+  display: flex;
+  color: #91a3af;
+  margin-left: auto;
+  padding: 0;
+}
+.relation-label button svg {
+  width: 13px;
+  height: 13px;
+}
+.program-relation-hint {
+  grid-column: 1/-1;
+  font-size: 11px;
+  line-height: 1.65;
+  color: #8b8b8b;
+  margin-top: 0;
+}
+.program-contacts > .error-message {
+  grid-column: 1/-1;
+}
+.section-description {
+  font-size: 12px;
+  color: #8e8e8e;
+  margin-top: 7px;
+  line-height: 1.5;
+}
+.role-pill {
+  padding: 3px 7px;
+  border-radius: 5px;
+  background: #2b2b2b;
+  font-size: 11px;
+  color: #bbb;
+  white-space: nowrap;
+}
+.entity-open {
+  color: #7d929f;
+  display: flex;
+}
+.entity-open svg {
+  width: 14px;
+  height: 14px;
+}
+.court-memberships {
+  min-width: 0;
+}
+.field-label {
+  color: #aaa;
+  font-size: 12px;
+  display: block;
+  margin-bottom: 9px;
+}
+.entity-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.entity-chips > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #30353a;
+  color: #bccbd5;
+  border-radius: 5px;
+  font-size: 12px;
+  padding: 4px 7px;
+}
+.entity-chips button {
+  display: flex;
+  padding: 0;
+  color: #99a9b4;
+}
+.entity-chips svg {
+  width: 12px;
+  height: 12px;
+}
+.existing-suggestion {
+  background: #2b2b2b;
+  border-radius: 7px;
+  padding: 10px;
+}
+.existing-suggestion > span {
+  font-size: 11px;
+  color: #a4a4a4;
+}
+.existing-suggestion button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 7px 0;
+  color: #abc0d0;
+}
+.existing-suggestion small {
+  display: block;
+  font-size: 11px;
+  color: #888;
+}
+.contact-detail-dialog {
+  width: min(990px, calc(100vw - 40px));
+}
+.contact-detail-dialog > form {
+  padding: 26px 30px;
+}
+.contact-detail-dialog > form > header {
+  margin-bottom: 12px;
+}
+.contact-detail-dialog h2 {
+  font-size: 23px;
+  line-height: 1.45;
+  font-weight: 600;
+  letter-spacing: -0.35px;
+}
+.entity-context {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  flex-wrap: wrap;
+  color: #949494;
+  font-size: 12px;
+}
+.entity-context > span:first-child {
+  padding: 2px 7px;
+  background: #2e2e2e;
+  border-radius: 5px;
+  color: #bbb;
+}
+.entity-context > button {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: #a1b3bf;
+}
+.entity-context > button:first-of-type {
+  margin-left: auto;
+}
+.entity-context svg {
+  width: 12px;
+  height: 12px;
+}
+.entity-properties {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  font-size: 13px;
+  color: #b5b5b5;
+  padding: 9px 0;
+}
+.entity-properties > span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.entity-properties svg {
+  width: 14px;
+  height: 14px;
+  color: #888;
+}
+.contact-notes {
+  font-size: 13px;
+  white-space: pre-wrap;
+  line-height: 1.8;
+  color: #aaa;
+}
+.entity-view-tabs {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+  border-bottom: 1px solid #333;
+  margin-top: 13px;
+}
+.entity-view-tabs button {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 11px 0;
+  color: #999;
+  font-size: 12px;
+  border-bottom: 2px solid transparent;
+}
+.entity-view-tabs .active {
+  color: #ddd;
+  border-bottom-color: #a7a7a7;
+}
+.entity-view-tabs svg {
+  width: 14px;
+  height: 14px;
+}
+.entity-links-layout {
+  display: grid;
+  grid-template-columns: 1.25fr 1fr;
+  gap: 34px;
+  padding: 10px 0 14px;
+  min-height: 220px;
+}
+.entity-links-layout h3 {
+  font-size: 12px;
+  font-weight: 500;
+  color: #aaa;
+  display: flex;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+.entity-links-layout h3 span {
+  color: #6e6e6e;
+  font-variant-numeric: tabular-nums;
+}
+.entity-links-layout .backlink-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  width: 100%;
+  padding: 12px 9px;
+  margin: 0;
+  border-bottom: 1px solid #303030;
+  border-radius: 5px;
+  background: none;
+  gap: 12px;
+}
+.backlink-row:hover {
+  background: #292929;
+}
+.backlink-row > span {
+  font-size: 13px;
+  color: #d4d4d4;
+}
+.backlink-row small {
+  display: block;
+  font-size: 11px;
+  color: #8e8e8e;
+  line-height: 1.6;
+  margin-top: 5px;
+}
+.backlink-row svg {
+  width: 13px;
+  height: 13px;
+  color: #738995;
+}
+.entity-links-layout .quiet-empty {
+  line-height: 1.8;
+  font-size: 12px;
+  padding-top: 10px;
+}
+.local-graph {
+  border: 1px solid #333;
+  border-radius: 9px;
+  overflow: hidden;
+  background: #1c1d1e;
+}
+.graph-controls {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border-bottom: 1px solid #2c2d2e;
+  font-size: 12px;
+  color: #c1c1c1;
+}
+.graph-controls > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
+}
+.graph-controls small {
+  font-size: 11px;
+  color: #81878b;
+}
+.graph-controls > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: none;
+}
+.graph-controls label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+}
+.graph-controls select {
+  width: auto;
+  border: 0;
+  background: #2b2d2e;
+  padding: 3px 5px;
+  font-size: 11px;
+}
+.graph-controls button {
+  display: flex;
+  padding: 4px;
+  color: #a1a8ac;
+  border-radius: 4px;
+}
+.graph-controls button:hover {
+  background: #333;
+}
+.graph-controls svg {
+  width: 13px;
+  height: 13px;
+}
+.local-graph > svg {
+  width: 100%;
+  height: auto;
+  min-height: 280px;
+  max-height: 440px;
+  display: block;
+  touch-action: none;
+  cursor: grab;
+}
+.graph-edge path {
+  stroke: #414b52;
+  stroke-width: 1;
+  fill: none;
+}
+.graph-edge text {
+  fill: #68747c;
+  font-size: 10px;
+  paint-order: stroke;
+  stroke: #1c1d1e;
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+.graph-edge.is-lit path {
+  stroke: #8cabbf;
+  stroke-width: 1.4;
+}
+.graph-edge.is-lit text {
+  fill: #abbac4;
+}
+.graph-node {
+  cursor: pointer;
+  outline: none;
+}
+.graph-node circle {
+  fill: #a2acb3;
+  stroke: #242b30;
+  stroke-width: 5px;
+}
+.graph-node.kind-court circle {
+  fill: #b3a69b;
+}
+.graph-node.kind-judge circle {
+  fill: #89a9c0;
+}
+.graph-node.kind-program circle {
+  fill: #888;
+  stroke-width: 3px;
+}
+.graph-node.is-focused circle {
+  fill: #a4c6df;
+  stroke: #304654;
+  stroke-width: 7px;
+}
+.graph-node text {
+  fill: #c3c7ca;
+  font-size: 14px;
+  paint-order: stroke;
+  stroke: #1c1d1e;
+  stroke-width: 5px;
+  stroke-linejoin: round;
+}
+.graph-node:focus-visible circle,
+.graph-node:hover circle {
+  stroke: #718d9f;
+}
+.graph-node.is-focused text {
+  font-weight: 600;
+  fill: #e1e7ec;
+}
+.graph-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-top: 1px solid #2c2d2e;
+  padding: 10px 14px;
+  font-size: 10px;
+  color: #7b8389;
+}
+.graph-footer button {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  color: #a8bdcc;
+  font-size: 11px;
+}
+.graph-footer button svg {
+  width: 12px;
+  height: 12px;
+}
+@media (max-width: 760px) {
+  .contacts-heading {
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .contacts-heading p {
+    max-width: 200px;
+    font-size: 12px;
+  }
+  .contacts-heading h1 {
+    font-size: 25px;
+  }
+  .contacts-heading .primary-action {
+    white-space: nowrap;
+    font-size: 11px;
+  }
+  .contacts-tools {
+    gap: 7px;
+    flex-wrap: wrap;
+  }
+  .contacts-tools > span {
+    display: none;
+  }
+  .contact-directory-row .row-actions {
+    opacity: 1;
+    gap: 6px;
+  }
+  .contacts-list .contact-directory-row {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .contact-directory-row .row-main {
+    flex-basis: calc(100% - 60px);
+  }
+  .backlink-count {
+    margin-left: 40px;
+  }
+  .contact-directory-row .row-actions {
+    margin-left: auto;
+  }
+  .program-contacts {
+    grid-template-columns: 1fr;
+  }
+  .contact-detail-dialog {
+    width: calc(100vw - 20px);
+  }
+  .contact-detail-dialog > form {
+    padding: 20px 17px;
+  }
+  .contact-detail-dialog h2 {
+    font-size: 20px;
+  }
+  .entity-links-layout {
+    grid-template-columns: 1fr;
+    gap: 25px;
+  }
+  .entity-context {
+    gap: 9px;
+  }
+  .graph-controls {
+    flex-wrap: wrap;
+  }
+  .graph-controls > span {
+    flex-basis: 100%;
+  }
+  .local-graph > svg {
+    min-height: 245px;
+  }
+  .graph-footer > span {
+    max-width: 170px;
+  }
+  .picker-popover {
+    min-width: 0;
+    max-width: calc(100vw - 36px);
+  }
+}

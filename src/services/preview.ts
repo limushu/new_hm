@@ -64,6 +64,7 @@ const data: Workspace = {
   materials: [],
   contacts: [],
   contactLinks: [],
+  contactRelations: [],
   ledgerEntries: [],
   caseDetails: [],
   stages: [],
@@ -82,6 +83,37 @@ export async function previewCommand<K extends keyof Commands>(
   const a = args as Record<string, unknown>;
   let result: unknown = null;
   switch (name) {
+    case 'set_proceeding_contacts': {
+      const input = a.input as Commands['set_proceeding_contacts']['args']['input'];
+      const p = data.proceedings.find((p) => p.id === input.proceedingId)!;
+      if (input.judgeId && !input.courtId) throw new Error('请先选择办理法院');
+      data.contactLinks = data.contactLinks.filter(
+        (l) => !(l.proceedingId === p.id && ['法院', '法官'].includes(l.role)),
+      );
+      for (const [id, role] of [
+        [input.courtId, '法院'],
+        [input.judgeId, '法官'],
+      ])
+        if (id)
+          data.contactLinks.push({
+            id: crypto.randomUUID(),
+            caseId: p.caseId,
+            contactId: id,
+            proceedingId: p.id,
+            role: role!,
+          });
+      p.court = data.contacts.find((c) => c.id === input.courtId)?.name ?? '';
+      p.judge = data.contacts.find((c) => c.id === input.judgeId)?.name ?? '';
+      if (
+        input.courtId &&
+        input.judgeId &&
+        !data.contactRelations.some(
+          (r) => r.judgeId === input.judgeId && r.courtId === input.courtId,
+        )
+      )
+        data.contactRelations.push({ judgeId: input.judgeId, courtId: input.courtId });
+      break;
+    }
     case 'seed_example':
       result = 'demo';
       break;
@@ -109,6 +141,20 @@ export async function previewCommand<K extends keyof Commands>(
     case 'save_stage':
     case 'save_case_event': {
       const input = a.input as Record<string, unknown>;
+      if (name === 'save_contact') {
+        const courts = a.courtIds as string[] | undefined;
+        if (courts) {
+          data.contactRelations = data.contactRelations.filter((r) => r.judgeId !== input.id);
+          data.contactRelations.push(
+            ...courts.map((courtId) => ({ judgeId: input.id as string, courtId })),
+          );
+        }
+        for (const p of data.proceedings)
+          if (data.contactLinks.some((l) => l.proceedingId === p.id && l.contactId === input.id)) {
+            if (input.kind === 'court') p.court = input.name as string;
+            if (input.kind === 'judge') p.judge = input.name as string;
+          }
+      }
       const key = (
         {
           save_contact: 'contacts',

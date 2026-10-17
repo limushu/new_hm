@@ -280,6 +280,7 @@ export default function App() {
         <ContactDetail
           contact={contactOpen}
           data={data}
+          save={save}
           onCase={navigateCase}
           onClose={() => setContactOpen(null)}
         />

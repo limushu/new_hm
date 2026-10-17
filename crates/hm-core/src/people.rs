@@ -51,7 +51,26 @@ impl Store {
         let phone = checked_text(&input.phone, "电话", 80, false)?;
         let address = checked_text(&input.address, "地址", 500, false)?;
         let notes = checked_text(&input.notes, "备注", 20000, false)?;
+        let old: Option<String> = self
+            .connection
+            .query_row("SELECT kind FROM contacts WHERE id=?1", [&input.id], |r| {
+                r.get(0)
+            })
+            .optional()?;
+        if old.as_ref().is_some_and(|kind| kind != &input.kind) {
+            let referenced:bool=self.connection.query_row("SELECT EXISTS(SELECT 1 FROM contact_links WHERE contact_id=?1) OR EXISTS(SELECT 1 FROM contact_relations WHERE judge_id=?1 OR court_id=?1)",[&input.id],|r|r.get(0))?;
+            if referenced {
+                return Err(Error::Validation(
+                    "此对象已有关系，请先解除关联再更改类型".into(),
+                ));
+            }
+        }
         self.connection.execute("INSERT INTO contacts(id,name,kind,phone,address,notes) VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(id) DO UPDATE SET name=excluded.name,kind=excluded.kind,phone=excluded.phone,address=excluded.address,notes=excluded.notes",params![input.id,name,input.kind,phone,address,notes])?;
+        for (kind, field) in [("court", "court"), ("judge", "judge")] {
+            if input.kind == kind {
+                self.connection.execute(&format!("UPDATE proceedings SET {field}=?1 WHERE id IN (SELECT proceeding_id FROM contact_links WHERE contact_id=?2 AND role=?3)"),params![name,input.id,if kind=="court"{"法院"}else{"法官"}])?;
+            }
+        }
         Ok(())
     }
     pub fn save_contact_link(&self, input: ContactLink) -> Result<()> {
@@ -69,6 +88,24 @@ impl Store {
         let kind = kind.ok_or(Error::NotFound)?;
         if ["court", "judge"].contains(&kind.as_str()) && input.proceeding_id.is_none() {
             return Err(Error::Validation("法院和法官请关联到具体办理程序".into()));
+        }
+        if kind == "court" || kind == "judge" {
+            let program = input.proceeding_id.as_ref().unwrap();
+            let court = if kind == "court" {
+                Some(input.contact_id.clone())
+            } else {
+                crate::relations::primary(&self.connection, program, "court")?
+            };
+            let judge = if kind == "judge" {
+                Some(input.contact_id.clone())
+            } else {
+                None
+            };
+            return self.set_proceeding_contacts(ProceedingContacts {
+                proceeding_id: program.clone(),
+                court_id: court,
+                judge_id: judge,
+            });
         }
         let duplicate:bool=self.connection.query_row("SELECT EXISTS(SELECT 1 FROM contact_links WHERE contact_id=?1 AND case_id=?2 AND proceeding_id IS ?3 AND role=?4 AND id<>?5)",params![input.contact_id,input.case_id,input.proceeding_id,role,input.id],|r|r.get(0))?;
         if duplicate {
@@ -89,6 +126,29 @@ impl Store {
             .optional()?
             .ok_or(Error::NotFound)?;
         self.active_case(&case_id)?;
+        let program: Option<String> = self.connection.query_row(
+            "SELECT proceeding_id FROM contact_links WHERE id=?1",
+            [id],
+            |r| r.get(0),
+        )?;
+        let kind: String = self.connection.query_row(
+            "SELECT c.kind FROM contact_links l JOIN contacts c ON c.id=l.contact_id WHERE l.id=?1",
+            [id],
+            |r| r.get(0),
+        )?;
+        if let Some(program) = program {
+            if kind == "court" || kind == "judge" {
+                return self.set_proceeding_contacts(ProceedingContacts {
+                    court_id: if kind == "court" {
+                        None
+                    } else {
+                        crate::relations::primary(&self.connection, &program, "court")?
+                    },
+                    judge_id: None,
+                    proceeding_id: program,
+                });
+            }
+        }
         self.connection
             .execute("DELETE FROM contact_links WHERE id=?1", [id])?;
         Ok(())
@@ -101,6 +161,16 @@ impl Store {
         )?;
         if links > 0 {
             return Err(Error::Validation("此对象仍关联案件，请先解除关联".into()));
+        }
+        let related: bool = self.connection.query_row(
+            "SELECT EXISTS(SELECT 1 FROM contact_relations WHERE judge_id=?1 OR court_id=?1)",
+            [id],
+            |r| r.get(0),
+        )?;
+        if related {
+            return Err(Error::Validation(
+                "此对象仍有法院/法官关系，请先在对象详情中解除".into(),
+            ));
         }
         if self
             .connection

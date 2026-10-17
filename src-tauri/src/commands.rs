@@ -39,8 +39,19 @@ pub fn move_material(
 }
 
 #[tauri::command(async)]
-pub fn save_contact(state: State<'_, AppState>, input: Contact) -> std::result::Result<(), String> {
-    access(&state, |s| s.save_contact(input))
+pub fn save_contact(
+    state: State<'_, AppState>,
+    input: Contact,
+    court_ids: Option<Vec<String>>,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.save_contact_with_courts(input, court_ids))
+}
+#[tauri::command(async)]
+pub fn set_proceeding_contacts(
+    state: State<'_, AppState>,
+    input: ProceedingContacts,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.set_proceeding_contacts(input))
 }
 
 #[tauri::command(async)]

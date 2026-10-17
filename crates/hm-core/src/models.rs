@@ -62,6 +62,7 @@ pub struct Workspace {
     pub materials: Vec<Material>,
     pub contacts: Vec<Contact>,
     pub contact_links: Vec<ContactLink>,
+    pub contact_relations: Vec<ContactRelation>,
     pub ledger_entries: Vec<LedgerEntry>,
     pub case_details: Vec<CaseDetail>,
     pub stages: Vec<Stage>,
@@ -169,6 +170,19 @@ pub struct ContactLink {
     pub case_id: String,
     pub proceeding_id: Option<String>,
     pub role: String,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ContactRelation {
+    pub judge_id: String,
+    pub court_id: String,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ProceedingContacts {
+    pub proceeding_id: String,
+    pub court_id: Option<String>,
+    pub judge_id: Option<String>,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

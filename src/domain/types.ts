@@ -47,6 +47,7 @@ export interface Workspace {
   materials: Material[];
   contacts: Contact[];
   contactLinks: ContactLink[];
+  contactRelations: ContactRelation[];
   ledgerEntries: LedgerEntry[];
   caseDetails: CaseDetail[];
   stages: Stage[];
@@ -116,6 +117,7 @@ export const emptyWorkspace: Workspace = {
   materials: [],
   contacts: [],
   contactLinks: [],
+  contactRelations: [],
   ledgerEntries: [],
   caseDetails: [],
   stages: [],
@@ -157,6 +159,10 @@ export interface ContactLink {
   caseId: string;
   proceedingId: string | null;
   role: string;
+}
+export interface ContactRelation {
+  judgeId: string;
+  courtId: string;
 }
 export interface LedgerEntry {
   id: string;
@@ -225,7 +231,11 @@ export interface Commands {
   material_preview: { args: { id: string }; result: string };
   open_material: { args: { id: string }; result: null };
   export_material: { args: { id: string }; result: boolean };
-  save_contact: { args: { input: Contact }; result: null };
+  save_contact: { args: { input: Contact; courtIds?: string[] }; result: null };
+  set_proceeding_contacts: {
+    args: { input: { proceedingId: string; courtId: string | null; judgeId: string | null } };
+    result: null;
+  };
   save_contact_link: { args: { input: ContactLink }; result: null };
   delete_contact: { args: { id: string }; result: null };
   delete_contact_link: { args: { id: string }; result: null };

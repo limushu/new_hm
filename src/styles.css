@@ -1,6 +1,11 @@
 /* DESIGN-NOTION-COLOR / DESIGN-NOTION-DETAIL: provisional shared design tokens. */
 :root {
-  font-family: Inter, 'Segoe UI', 'Microsoft YaHei', sans-serif;
+  font-family:
+    'Segoe UI Variable Text', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei',
+    system-ui, sans-serif;
+  font-size: 14px;
+  line-height: 1.55;
+  font-weight: 400;
   color: #e6e6e6;
   background: #191919;
   font-synthesis: none;
@@ -79,7 +84,7 @@ p {
 }
 h1 {
   font-size: 29px;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.6px;
 }
 h3 {
@@ -276,6 +281,14 @@ h3 {
   overflow-y: auto;
   z-index: 4;
 }
+.case-dismiss-surface {
+  position: fixed;
+  inset: 0 0 0 216px;
+  z-index: 3;
+  padding: 0;
+  cursor: default;
+  background: transparent;
+}
 .case-page.expanded {
   left: 216px;
   width: auto;
@@ -328,7 +341,7 @@ h3 {
   width: 100%;
   font-size: 29px;
   line-height: 1.4;
-  font-weight: 650;
+  font-weight: 600;
   letter-spacing: -0.5px;
   color: #dedede;
   padding: 0;

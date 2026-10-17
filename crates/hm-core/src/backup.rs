@@ -93,7 +93,7 @@ fn inspect(path: &Path) -> Result<(PathBuf, Manifest)> {
     let version: i64 = db.query_row("PRAGMA user_version", [], |r| r.get(0))?;
     let integrity: String = db.query_row("PRAGMA integrity_check", [], |r| r.get(0))?;
     let foreign = db.prepare("PRAGMA foreign_key_check")?.exists([])?;
-    if version != 3 || integrity != "ok" || foreign {
+    if ![3, 4].contains(&version) || integrity != "ok" || foreign {
         return Err(Error::Validation("备份数据库版本或完整性检查失败".into()));
     }
     let cases = db.query_row("SELECT count(*) FROM cases", [], |r| r.get::<_, i64>(0))? as usize;
@@ -157,6 +157,7 @@ pub(crate) fn recover_on_open(connection: &mut Connection, directory: &Path) -> 
         backup.join("workspace.sqlite3"),
         None::<fn(rusqlite::backup::Progress)>,
     )?;
+    Store::migrate(connection)?;
     let generation_name = format!("materials-restore-{}", Uuid::new_v4());
     let generation = directory.join(&generation_name);
     rename_staged(&recovered, &generation)?;
@@ -328,6 +329,7 @@ impl Store {
                 root.join("workspace.sqlite3"),
                 None::<fn(rusqlite::backup::Progress)>,
             )?;
+            Store::migrate(&mut self.connection)?;
             self.connection.execute("INSERT INTO settings(key,value) VALUES('materials_directory',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[&generation_name])?;
             std::fs::remove_file(&journal_path)?;
             Ok(())

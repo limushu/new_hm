@@ -103,12 +103,13 @@ test('联系对象原位关联、关系图和双向案件跳转', async ({ page 
   await openCase(page);
   await page.getByRole('button', { name: '案件信息', exact: true }).click();
   await page.getByRole('button', { name: '关联对象', exact: true }).click();
-  await page.getByLabel('选择联系对象', { exact: true }).selectOption({ label: '虚构王甲 · 个人' });
+  await page.getByRole('combobox', { name: '选择联系对象', exact: true }).fill('虚构王甲');
+  await page.getByRole('option', { name: /虚构王甲/ }).click();
   await page.getByLabel('案件对象身份').fill('委托人');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('button', { name: '关系图', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '案件关系图', exact: true })).toBeVisible();
-  await page.locator('svg g[role="button"]').click();
+  await page.getByRole('button', { name: '查看虚构王甲', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '虚构王甲', exact: true })).toContainText('委托人');
   await page.getByRole('button', { name: /张某与李某借款纠纷（示例）.*委托人/ }).click();
   await expect(page.getByRole('textbox', { name: '案件名称', exact: true })).toHaveValue(caseTitle);

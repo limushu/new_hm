@@ -57,13 +57,13 @@ impl Store {
         let mut connection = Connection::open(path)?;
         crate::backup::recover_on_open(&mut connection, directory)?;
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 0 && version < 3 {
+        if version > 0 && version < 4 {
             let safety = directory.join("migration-backups");
             std::fs::create_dir_all(&safety)?;
             connection.backup(
                 "main",
                 safety.join(format!(
-                    "before-v3-from-v{version}-{}.sqlite3",
+                    "before-v4-from-v{version}-{}.sqlite3",
                     Uuid::new_v4()
                 )),
                 None,
@@ -81,13 +81,20 @@ impl Store {
         connection.execute_batch(
             "PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;",
         )?;
+        Self::migrate(&mut connection)?;
+        Ok(Self {
+            connection,
+            directory: None,
+        })
+    }
+    pub(crate) fn migrate(connection: &mut Connection) -> Result<()> {
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 3 {
+        if version > 4 {
             return Err(Error::Validation(
                 "数据库来自较新版本，请使用新版软件打开".into(),
             ));
         }
-        if version < 3 {
+        if version < 4 {
             let tx = connection.transaction()?;
             if version == 0 {
                 tx.execute_batch(include_str!("../migrations/001_initial.sql"))?;
@@ -95,13 +102,14 @@ impl Store {
             if version < 2 {
                 tx.execute_batch(include_str!("../migrations/002_calendar_events.sql"))?;
             }
-            tx.execute_batch(include_str!("../migrations/003_v1_workspace.sql"))?;
+            if version < 3 {
+                tx.execute_batch(include_str!("../migrations/003_v1_workspace.sql"))?;
+            }
+            tx.execute_batch(include_str!("../migrations/004_contact_relations.sql"))?;
+            crate::relations::backfill(&tx)?;
             tx.commit()?;
         }
-        Ok(Self {
-            connection,
-            directory: None,
-        })
+        Ok(())
     }
     pub(crate) fn active_case(&self, id: &str) -> Result<()> {
         let exists: bool = self.connection.query_row(
@@ -178,6 +186,7 @@ impl Store {
             materials: self.materials()?,
             contacts: self.contacts()?,
             contact_links: self.contact_links()?,
+            contact_relations: self.contact_relations()?,
             ledger_entries: self.ledger_entries()?,
             case_details: self.case_details()?,
             stages: self.stages()?,
@@ -271,10 +280,21 @@ impl Store {
         {
             return Err(Error::Validation("程序字段长度超出限制".into()));
         }
-        let changed=self.connection.execute("UPDATE proceedings SET stage=?1,case_number=?2,court=?3,judge=?4 WHERE id=?5 AND case_id IN (SELECT id FROM cases WHERE deleted_at IS NULL)",params![input.stage.trim(),input.case_number.trim(),input.court.trim(),input.judge.trim(),input.id])?;
+        let tx = self.connection.unchecked_transaction()?;
+        let court = crate::relations::primary(&tx, &input.id, "court")?
+            .map(|id| crate::relations::contact_name(&tx, &id, "court"))
+            .transpose()?
+            .unwrap_or(input.court.trim().into());
+        let judge = crate::relations::primary(&tx, &input.id, "judge")?
+            .map(|id| crate::relations::contact_name(&tx, &id, "judge"))
+            .transpose()?
+            .unwrap_or(input.judge.trim().into());
+        let changed=tx.execute("UPDATE proceedings SET stage=?1,case_number=?2,court=?3,judge=?4 WHERE id=?5 AND case_id IN (SELECT id FROM cases WHERE deleted_at IS NULL)",params![input.stage.trim(),input.case_number.trim(),court,judge,input.id])?;
         if changed == 0 {
             return Err(Error::NotFound);
         }
+        crate::relations::backfill_program(&tx, Some(&input.id))?;
+        tx.commit()?;
         Ok(())
     }
     pub fn add_task(&self, input: AddTask) -> Result<String> {

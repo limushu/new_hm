@@ -224,6 +224,43 @@ try {
       materialId: file.id,
     },
   });
+  const court = { ...person, id: crypto.randomUUID(), name: '虚构甲法院', kind: 'court' };
+  const other = { ...court, id: crypto.randomUUID(), name: '虚构乙法院' };
+  const judge = { ...person, id: crypto.randomUUID(), name: '虚构法官', kind: 'judge' };
+  await invoke(page, 'save_contact', { input: court });
+  await invoke(page, 'save_contact', { input: other });
+  await invoke(page, 'save_contact', { input: judge, courtIds: [court.id] });
+  const first = item.currentProceedingId;
+  await invoke(page, 'set_proceeding_contacts', {
+    input: { proceedingId: first, courtId: court.id, judgeId: judge.id },
+  });
+  const second = await invoke(page, 'add_proceeding', { caseId: item.id, kind: 'appeal' });
+  await invoke(page, 'set_proceeding_contacts', {
+    input: { proceedingId: second, courtId: other.id, judgeId: null },
+  });
+  await invoke(page, 'select_proceeding', { caseId: item.id, proceedingId: first });
+  await invoke(page, 'save_contact', { input: { ...court, name: '虚构甲法院新名称' } });
+  await page.reload();
+  await page.getByRole('button', { name: '案件', exact: true }).click();
+  await page.locator('.case-card').first().click();
+  await page.getByRole('button', { name: '案件信息', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(
+    '虚构甲法院新名称',
+  );
+  await expect(page.getByRole('combobox', { name: '承办法官', exact: true })).toHaveValue(
+    '虚构法官',
+  );
+  await page.screenshot({ path: join(root, 'case-info.png') });
+  await page.getByRole('button', { name: '查看法院关联', exact: true }).click();
+  const detail = page.getByRole('dialog', { name: '虚构甲法院新名称', exact: true });
+  await expect(detail).toContainText('虚构法官');
+  await detail.getByRole('button', { name: '局部关系图', exact: true }).click();
+  await page.screenshot({ path: join(root, 'relations.png') });
+  await detail.getByRole('button', { name: '关闭', exact: true }).last().click();
+  await page
+    .getByRole('button', { name: '返回主页面', exact: true })
+    .click({ position: { x: 30, y: 300 } });
+  await expect(page.locator('.case-page')).toHaveCount(0);
   await invoke(page, 'set_setting', { key: 'backup_directory', value: join(root, 'backups') });
   console.log('Before manual backup');
   const backup = await invoke(page, 'run_backup');
@@ -235,7 +272,7 @@ try {
   workspace = await invoke(page, 'load_workspace');
   if (
     workspace.cases[0].statusId !== 'not_started' ||
-    workspace.contacts.length !== 1 ||
+    workspace.contacts.length !== 4 ||
     workspace.ledgerEntries[0].amountCents !== 101 ||
     workspace.materials.length !== 4
   )
@@ -246,7 +283,7 @@ try {
   workspace = await invoke(page, 'load_workspace');
   if (
     workspace.materials.length !== 4 ||
-    workspace.contacts.length !== 1 ||
+    workspace.contacts.length !== 4 ||
     workspace.ledgerEntries.length !== 1
   )
     throw new Error('Persistence after restart failed');

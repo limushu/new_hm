@@ -99,6 +99,18 @@ pub fn run() {
     let portable =
         StorageLocation::portable_directory(&executable, cfg!(target_os = "windows")).is_some();
     if portable {
+        // A portable workspace has its own data directory. Its single-instance lock
+        // must not forward to an installed app (or another portable workspace).
+        let root = executable.parent().unwrap_or(std::path::Path::new("."));
+        let canonical = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+        let hash = canonical
+            .to_string_lossy()
+            .to_lowercase()
+            .bytes()
+            .fold(0xcbf29ce484222325u64, |hash, byte| {
+                (hash ^ u64::from(byte)).wrapping_mul(0x100000001b3)
+            });
+        context.config_mut().identifier = format!("com.limushu.hm.portable.p{hash:016x}");
         // Create the window in setup so its WebView profile can follow the portable data folder.
         for window in &mut context.config_mut().app.windows {
             window.create = false;
@@ -174,6 +186,7 @@ pub fn run() {
             commands::update_material_notes,
             commands::move_material,
             commands::save_contact,
+            commands::set_proceeding_contacts,
             commands::save_contact_link,
             commands::delete_contact,
             commands::delete_contact_link,

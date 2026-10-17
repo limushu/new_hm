@@ -7,6 +7,7 @@ export default function Dialog({
   onSubmit,
   submitLabel = '保存',
   danger = false,
+  className = '',
 }: {
   title: string;
   children: ReactNode;
@@ -14,6 +15,7 @@ export default function Dialog({
   onSubmit?: () => Promise<void>;
   submitLabel?: string;
   danger?: boolean;
+  className?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
   const inflight = useRef(false);
@@ -25,7 +27,7 @@ export default function Dialog({
   }, []);
   return (
     <dialog
-      className="workspace-dialog"
+      className={`workspace-dialog ${className}`}
       ref={dialog}
       onCancel={(event) => {
         event.preventDefault();

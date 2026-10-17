@@ -5,6 +5,7 @@ mod materials;
 pub mod models;
 mod people;
 mod records;
+mod relations;
 mod reminders;
 mod schedule;
 mod stages;
