@@ -101,7 +101,9 @@ export default function ContactDetail({
           }}
         />
       ) : (
-        <div className="entity-links-layout">
+        <div
+          className={`entity-links-layout ${['court', 'judge'].includes(current.kind) ? '' : 'single-column'}`}
+        >
           <section>
             <h3>
               关联案件 <span>{cases.length}</span>
@@ -133,37 +135,34 @@ export default function ContactDetail({
               </button>
             ))}
           </section>
-          <section>
-            <h3>
-              {current.kind === 'court'
-                ? '关联法官'
-                : current.kind === 'judge'
-                  ? '关联法院'
-                  : '共同联系'}{' '}
-              <span>{related.length}</span>
-            </h3>
-            {!related.length && (
-              <p className="quiet-empty">
-                {current.kind === 'judge'
-                  ? '编辑对象可添加法院关系。'
-                  : current.kind === 'court'
-                    ? '选择该法院办理的法官后自动形成关联。'
-                    : '法院、法官和案件身份会按关系呈现。'}
-              </p>
-            )}
-            {related.map((c) => (
-              <button type="button" key={c.id} className="backlink-row" onClick={() => go(c.id)}>
-                <span>
-                  {c.name}
-                  <small>
-                    {contactLabels[c.kind]}
-                    {c.phone ? ` · ${c.phone}` : ''}
-                  </small>
-                </span>
-                <ArrowUpRight />
-              </button>
-            ))}
-          </section>
+          {['court', 'judge'].includes(current.kind) && (
+            <section>
+              <h3>
+                {current.kind === 'court' ? '关联法官' : '关联法院'} <span>{related.length}</span>
+              </h3>
+              {!related.length && (
+                <p className="quiet-empty">
+                  {current.kind === 'judge'
+                    ? '编辑对象可添加法院关系。'
+                    : current.kind === 'court'
+                      ? '选择该法院办理的法官后自动形成关联。'
+                      : '法院、法官和案件身份会按关系呈现。'}
+                </p>
+              )}
+              {related.map((c) => (
+                <button type="button" key={c.id} className="backlink-row" onClick={() => go(c.id)}>
+                  <span>
+                    {c.name}
+                    <small>
+                      {contactLabels[c.kind]}
+                      {c.phone ? ` · ${c.phone}` : ''}
+                    </small>
+                  </span>
+                  <ArrowUpRight />
+                </button>
+              ))}
+            </section>
+          )}
         </div>
       )}
       {edit && (

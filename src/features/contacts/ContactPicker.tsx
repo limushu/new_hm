@@ -34,7 +34,7 @@ export default function ContactPicker({
   const id = useId();
   const selected = contacts.find((c) => c.id === value);
   const rows = contacts.filter((c) =>
-    `${c.name} ${c.phone} ${description?.(c) ?? ''}`
+    `${c.name} ${c.phone} ${c.address} ${description?.(c) ?? ''}`
       .toLowerCase()
       .includes(query.trim().toLowerCase()),
   );
@@ -151,7 +151,9 @@ export default function ContactPicker({
               >
                 <span>
                   {c.name}
-                  <small>{description?.(c) ?? contactLabels[c.kind]}</small>
+                  <small>
+                    {description?.(c) ?? (c.phone || c.address || contactLabels[c.kind])}
+                  </small>
                 </span>
                 {value === c.id && <Check />}
               </button>
