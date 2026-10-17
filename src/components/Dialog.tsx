@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 export default function Dialog({
   title,
   children,
@@ -25,12 +26,15 @@ export default function Dialog({
     dialog.current?.showModal();
     return () => dialog.current?.close();
   }, []);
-  return (
+  // Modal forms must be siblings in the DOM: a dialog opened from another
+  // dialog must not become a nested HTML form (which can navigate on submit).
+  return createPortal(
     <dialog
       className={`workspace-dialog ${className}`}
       ref={dialog}
       onCancel={(event) => {
         event.preventDefault();
+        event.stopPropagation();
         if (!inflight.current) onClose();
       }}
       aria-label={title}
@@ -87,6 +91,7 @@ export default function Dialog({
           )}
         </footer>
       </form>
-    </dialog>
+    </dialog>,
+    document.body,
   );
 }

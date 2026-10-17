@@ -349,6 +349,7 @@ try {
     .getByRole('dialog', { name: '删除联系对象', exact: true })
     .getByRole('button', { name: '删除', exact: true })
     .click();
+  await expect(page.getByRole('dialog', { name: '删除联系对象', exact: true })).toHaveCount(0);
   await expect(objectDetail).toHaveCount(0);
   workspace = await invoke(page, 'load_workspace');
   if (
@@ -359,7 +360,27 @@ try {
     workspace.proceedings.find((p) => p.id === deletionCase.currentProceedingId)?.court !==
       deletedCourt.name
   )
-    throw new Error('Deleting a linked object did not preserve independent data and history');
+    throw new Error(
+      'Deleting a linked object did not preserve independent data and history: ' +
+        JSON.stringify({
+          deletedCourt: deletedCourt.id,
+          retainedJudge: retainedJudge.id,
+          caseId: deletionCase.id,
+          contacts: workspace.contacts.map((c) => ({ id: c.id, name: c.name })),
+          links: workspace.contactLinks.filter((l) => l.caseId === deletionCase.id),
+          relations: workspace.contactRelations,
+          program: workspace.proceedings.find((p) => p.id === deletionCase.currentProceedingId),
+          dialogs: await page
+            .locator('dialog')
+            .evaluateAll((nodes) =>
+              nodes.map((n) => ({
+                label: n.getAttribute('aria-label'),
+                open: n.open,
+                text: n.textContent,
+              })),
+            ),
+        }),
+    );
   await invoke(page, 'delete_contact', { id: retainedJudge.id });
   await invoke(page, 'trash_case', { id: deletionCase.id });
   await invoke(page, 'purge_item', { kind: 'case', id: deletionCase.id, confirmed: true });

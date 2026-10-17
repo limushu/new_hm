@@ -21,6 +21,34 @@ test('对象名称先打开资料，筛选和表单菜单共用深色样式且 E
   await page.getByRole('button', { name: '反向关联', exact: true }).click();
   await expect(page.locator('.entity-links-layout')).toContainText('关联案件后');
 });
+test('从详情编辑、取消和删除时不嵌套表单、不刷新页面，列表删除仍可用', async ({ page }) => {
+  await page.getByRole('button', { name: '联系对象', exact: true }).click();
+  await page.getByRole('button', { name: '新建对象', exact: true }).click();
+  await page.getByLabel('对象名称', { exact: true }).fill('详情编辑验收');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await page.locator('.row-main').click();
+  await page.getByRole('button', { name: '编辑对象', exact: true }).click();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: '详情编辑验收', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '编辑对象', exact: true }).click();
+  await page.getByLabel('对象电话', { exact: true }).fill('编辑后保存的电话');
+  await page.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(page.getByRole('region', { name: '对象资料' })).toContainText('编辑后保存的电话');
+  await page.getByRole('button', { name: '删除对象', exact: true }).click();
+  await page.getByRole('button', { name: '取消', exact: true }).click();
+  const detail = page.getByRole('dialog', { name: '详情编辑验收', exact: true });
+  await expect(detail).toBeVisible();
+  expect(await page.locator('form form').count()).toBe(0);
+  await detail.getByRole('button', { name: '关闭', exact: true }).last().click();
+  await page.locator('.contact-directory-row').hover();
+  await page.getByRole('button', { name: '删除', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '删除联系对象', exact: true })
+    .getByRole('button', { name: '删除', exact: true })
+    .click();
+  await expect(page.locator('.contact-directory-row')).toHaveCount(0);
+  await expect(page).toHaveURL(/preview=1/);
+});
 test('有案件和法官关系的法院可直接删除，案件原记录保留', async ({ page }) => {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
@@ -40,8 +68,8 @@ test('有案件和法官关系的法院可直接删除，案件原记录保留',
   const row = page
     .locator('.contact-directory-row')
     .filter({ has: page.locator('.row-main > span').filter({ hasText: '可删除法院' }) });
-  await row.hover();
-  await row.getByRole('button', { name: '删除', exact: true }).click();
+  await row.locator('.row-main').click();
+  await page.getByRole('button', { name: '删除对象', exact: true }).click();
   const confirm = page.getByRole('dialog', { name: '删除联系对象', exact: true });
   await expect(confirm).toContainText('1 条案件关联和 1 条对象关系');
   await confirm.getByRole('button', { name: '删除', exact: true }).click();
