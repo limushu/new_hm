@@ -370,15 +370,13 @@ try {
           links: workspace.contactLinks.filter((l) => l.caseId === deletionCase.id),
           relations: workspace.contactRelations,
           program: workspace.proceedings.find((p) => p.id === deletionCase.currentProceedingId),
-          dialogs: await page
-            .locator('dialog')
-            .evaluateAll((nodes) =>
-              nodes.map((n) => ({
-                label: n.getAttribute('aria-label'),
-                open: n.open,
-                text: n.textContent,
-              })),
-            ),
+          dialogs: await page.locator('dialog').evaluateAll((nodes) =>
+            nodes.map((n) => ({
+              label: n.getAttribute('aria-label'),
+              open: n.open,
+              text: n.textContent,
+            })),
+          ),
         }),
     );
   await invoke(page, 'delete_contact', { id: retainedJudge.id });
