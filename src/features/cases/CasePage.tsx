@@ -48,6 +48,8 @@ export default function CasePage({
   const [caseMenu, setCaseMenu] = useState(false);
   const [taskOverrides, setTaskOverrides] = useState<Record<string, boolean>>({});
   const inFlight = useRef<Promise<boolean> | null>(null);
+  const pendingAction = useRef<Promise<boolean> | null>(null);
+  const section = useRef<HTMLElement>(null);
   const titleInput = useRef<HTMLInputElement>(null);
   const programs = data.proceedings.filter((p) => p.caseId === item.id);
   const program = programs.find((p) => p.id === item.currentProceedingId);
@@ -59,17 +61,28 @@ export default function CasePage({
     setSaved(!draft);
   }, [draft]);
 
-  async function act(action: () => Promise<unknown>) {
-    if (saving) return;
+  function act(action: () => Promise<unknown>): Promise<boolean> {
+    if (pendingAction.current) return pendingAction.current;
+    if (saving) return Promise.resolve(false);
     setSaving(true);
     setLocalError('');
-    try {
-      await action();
-    } catch (error) {
-      setLocalError(String(error));
-    } finally {
-      setSaving(false);
-    }
+    // Read event-bound values before React restores controlled inputs.
+    const task = (async () => {
+      try {
+        await action();
+        return true;
+      } catch (error) {
+        setLocalError(String(error));
+        return false;
+      } finally {
+        setSaving(false);
+      }
+    })();
+    pendingAction.current = task;
+    void task.finally(() => {
+      if (pendingAction.current === task) pendingAction.current = null;
+    });
+    return task;
   }
   function commit(overrides: Partial<CaseInput> = {}): Promise<boolean> {
     if (inFlight.current) return inFlight.current;
@@ -104,6 +117,10 @@ export default function CasePage({
     return promise;
   }
   async function onClose() {
+    // Light-dismiss must flush the active information field before unmounting it.
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && section.current?.contains(active)) active.blur();
+    if (pendingAction.current && !(await pendingAction.current)) return;
     if (!title.trim() && !saved) {
       close();
       return;
@@ -124,7 +141,11 @@ export default function CasePage({
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => void onClose()}
       />
-      <section className={`case-page ${expanded ? 'expanded' : ''}`} aria-label="案件详情">
+      <section
+        ref={section}
+        className={`case-page ${expanded ? 'expanded' : ''}`}
+        aria-label="案件详情"
+      >
         <div className="case-toolbar">
           <button className="icon-button" title="返回看板" onClick={onClose}>
             <ChevronsRight />

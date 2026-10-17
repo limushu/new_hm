@@ -21,11 +21,17 @@ test.beforeEach(async ({ page }) => {
 test('点击侧页外返回，命名草稿保存、空白草稿取消，点击侧页内不误关闭', async ({ page }) => {
   await openInfo(page);
   await page.getByLabel('案号', { exact: true }).click();
+  await page.getByLabel('案号', { exact: true }).fill('侧页外保存案号');
   await expect(page.locator('.case-page')).toBeVisible();
   await page
     .getByRole('button', { name: '返回主页面', exact: true })
     .click({ position: { x: 30, y: 300 } });
   await expect(page.locator('.case-page')).toHaveCount(0);
+  await openInfo(page);
+  await expect(page.getByLabel('案号', { exact: true })).toHaveValue('侧页外保存案号');
+  await page
+    .getByRole('button', { name: '返回主页面', exact: true })
+    .click({ position: { x: 30, y: 300 } });
   await page.getByRole('button', { name: '新建案件', exact: true }).click();
   await page.getByLabel('案件名称', { exact: true }).fill('侧页外保存（虚构）');
   await page
