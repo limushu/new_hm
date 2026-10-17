@@ -6,6 +6,7 @@ import {
   type RefObject,
 } from 'react';
 import type { CaseStatus } from '../../domain/types';
+export const trashTarget = '__case_trash__';
 
 export interface BoardDrag {
   id: string;
@@ -47,6 +48,7 @@ export function useBoardDrag(
     let animation = 0;
     let pointer = { x: 0, y: 0 };
     function target(x: number, y: number) {
+      if (document.elementFromPoint(x, y)?.closest('[data-case-trash-target]')) return trashTarget;
       const root = board.current;
       if (!root) return null;
       const bounds = root.getBoundingClientRect();
@@ -124,10 +126,13 @@ export function useBoardDrag(
       }
       if (!value.keyboard) return;
       if (event.key === 'Tab') event.preventDefault();
-      if (['ArrowLeft', 'ArrowRight', 'Enter', ' '].includes(event.key)) event.preventDefault();
+      if (['ArrowLeft', 'ArrowRight', 'ArrowDown', 'Enter', ' '].includes(event.key))
+        event.preventDefault();
       if (event.key === 'Enter' || event.key === ' ') {
         reset();
         if (value.over) options.current.onDrop(value.id, value.over);
+      } else if (event.key === 'ArrowDown') {
+        update({ ...value, over: trashTarget });
       } else if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
         const values = options.current.statuses;
         const index = values.findIndex((status) => status.id === value.over);

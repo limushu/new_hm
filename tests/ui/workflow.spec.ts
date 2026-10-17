@@ -1,3 +1,4 @@
+import { selectOption } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 
 async function createCase(page: Page, title: string) {
@@ -25,7 +26,7 @@ test('侧页建案、待办、工作记录与可恢复删除', async ({ page }) 
   await page.getByRole('textbox', { name: '工作记录内容' }).fill('已与当事人核对现有证据。');
   await page.getByRole('button', { name: '保存记录', exact: true }).click();
   await expect(page.locator('.work-record')).toContainText('已与当事人核对现有证据。');
-  await page.getByRole('button', { name: '案件操作', exact: true }).click();
+  await page.getByRole('button', { name: '删除案件', exact: true }).click();
   await page.getByRole('button', { name: '移入回收站', exact: true }).click();
   await expect(page.getByRole('region', { name: '案件详情' })).toHaveCount(0);
   await page.getByRole('button', { name: '回收站', exact: true }).click();
@@ -45,20 +46,16 @@ test('不同程序独立保存案号，新增程序不改变案件状态', async
   await page.getByRole('textbox', { name: '案号', exact: true }).press('Tab');
   await expect(page.locator('.save-state')).toHaveText('已保存');
   await page.getByRole('button', { name: '新增程序', exact: true }).click();
-  await page.getByRole('combobox', { name: '新增程序类型' }).selectOption('appeal');
+  await selectOption(page, page.getByRole('combobox', { name: '新增程序类型' }), 'appeal');
   await page.getByRole('button', { name: '新增', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '当前程序' })).toContainText('二审');
   await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue('');
-  const firstOption = await page
-    .getByRole('combobox', { name: '当前程序' })
-    .locator('option')
-    .filter({ hasText: '一审' })
-    .getAttribute('value');
-  await page.getByRole('combobox', { name: '当前程序' }).selectOption(firstOption!);
+  await selectOption(page, page.getByRole('combobox', { name: '当前程序' }), { label: '一审' });
   await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue(
     '一审独立案号',
   );
-  await expect(page.getByRole('combobox', { name: '案件状态', exact: true })).toHaveValue(
+  await expect(page.getByRole('combobox', { name: '案件状态', exact: true })).toHaveAttribute(
+    'data-value',
     'not_started',
   );
 });

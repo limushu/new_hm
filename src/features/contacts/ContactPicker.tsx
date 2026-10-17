@@ -1,4 +1,5 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
+import { usePopover } from '../../components/usePopover';
 import { Search, ChevronDown, X, Plus, Check } from 'lucide-react';
 import type { Contact } from '../../domain/types';
 export const contactLabels: Record<Contact['kind'], string> = {
@@ -29,7 +30,8 @@ export default function ContactPicker({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [active, setActive] = useState(0);
-  const root = useRef<HTMLDivElement>(null);
+  const close = useCallback(() => setOpen(false), []);
+  const { anchor: root, popup } = usePopover(open && !disabled, close, 250);
   const input = useRef<HTMLInputElement>(null);
   const id = useId();
   const selected = contacts.find((c) => c.id === value);
@@ -40,13 +42,6 @@ export default function ContactPicker({
   );
   const canCreate =
     !!onCreate && !!query.trim() && !rows.some((c) => c.name.trim() === query.trim());
-  useEffect(() => {
-    const close = (e: PointerEvent) => {
-      if (!root.current?.contains(e.target as Node)) setOpen(false);
-    };
-    document.addEventListener('pointerdown', close);
-    return () => document.removeEventListener('pointerdown', close);
-  }, []);
   function choose(index: number) {
     if (index < rows.length) {
       onSelect(rows[index]);
@@ -134,7 +129,7 @@ export default function ContactPicker({
         )}
       </div>
       {open && !disabled && (
-        <div className="picker-popover">
+        <div ref={popup} popover="manual" className="picker-popover field-popover">
           <div className="picker-caption">{query ? '匹配的已有对象' : '选择已有对象'}</div>
           <div role="listbox" id={id} aria-label={`${label}候选`}>
             {rows.map((c, index) => (

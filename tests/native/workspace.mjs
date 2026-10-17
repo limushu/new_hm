@@ -13,7 +13,7 @@ import { createServer } from 'node:net';
 if (process.platform !== 'win32') throw new Error('Native smoke test requires Windows');
 mkdirSync(resolve('.local'), { recursive: true });
 const root = mkdtempSync(join(resolve('.local'), 'native-v1-'));
-const executable = join(root, '律师工作台.exe');
+const executable = join(root, '案笺.exe');
 copyFileSync(resolve(process.argv[2] ?? 'target/release/hm-app.exe'), executable);
 writeFileSync(join(root, '.portable'), '');
 let pid, browser;
@@ -128,6 +128,22 @@ try {
   let workspace = await invoke(page, 'load_workspace');
   const item = workspace.cases[0];
   if (workspace.stages.length !== 5) throw new Error('Default stages missing');
+  await page.getByRole('combobox', { name: '案件状态', exact: true }).click();
+  await expect(page.getByRole('listbox', { name: '案件状态选项', exact: true })).toBeVisible();
+  await page.screenshot({ path: join(root, 'case-menu.png') });
+  await page.keyboard.press('Escape');
+  await expect(page.locator('.case-page')).toBeVisible();
+  await page.getByRole('button', { name: '添加待办', exact: true }).click();
+  await page.getByLabel('待办内容', { exact: true }).fill('原生日期组件验收');
+  await page.getByLabel('截止日期', { exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '截止日期选择器', exact: true })).toBeVisible();
+  await page.screenshot({ path: join(root, 'task-date.png') });
+  await page
+    .getByRole('dialog', { name: '截止日期选择器', exact: true })
+    .getByRole('button', { name: '今天', exact: true })
+    .click();
+  await page.getByRole('button', { name: '添加', exact: true }).click();
+  await expect(page.locator('.todo-row')).toContainText('原生日期组件验收');
   const source = join(root, '原始证据.txt');
   writeFileSync(source, 'original evidence');
   const pdfPath = join(root, '阅读示例.pdf');
@@ -285,6 +301,68 @@ try {
   )
     throw new Error('Native relation or field flush did not survive restore');
   if (!existsSync(join(root, 'data', 'recovery'))) throw new Error('Recovery snapshot missing');
+  // Exercise deletion against real SQLite in this owned, fictional workspace only.
+  const deletionCase = await invoke(page, 'create_case', {
+    input: {
+      id: crypto.randomUUID(),
+      title: '可删除关系验收（虚构）',
+      caseType: 'civil',
+      statusId: 'not_started',
+    },
+  });
+  const deletedCourt = {
+    id: crypto.randomUUID(),
+    name: '可删除法院（虚构）',
+    kind: 'court',
+    phone: '',
+    address: '',
+    notes: '',
+  };
+  const retainedJudge = {
+    ...deletedCourt,
+    id: crypto.randomUUID(),
+    name: '保留法官（虚构）',
+    kind: 'judge',
+  };
+  await invoke(page, 'save_contact', { input: deletedCourt });
+  await invoke(page, 'save_contact', { input: retainedJudge, courtIds: [deletedCourt.id] });
+  await invoke(page, 'set_proceeding_contacts', {
+    input: {
+      proceedingId: deletionCase.currentProceedingId,
+      courtId: deletedCourt.id,
+      judgeId: retainedJudge.id,
+    },
+  });
+  await page.reload();
+  await page.getByRole('button', { name: '联系对象', exact: true }).click();
+  const directoryRow = page
+    .locator('.contact-directory-row')
+    .filter({ has: page.locator('.row-main > span').filter({ hasText: deletedCourt.name }) });
+  await directoryRow.locator('.row-main').click();
+  const objectDetail = page.getByRole('dialog', { name: deletedCourt.name, exact: true });
+  await expect(objectDetail.getByRole('region', { name: '对象资料' })).toContainText(
+    deletedCourt.name,
+  );
+  await page.screenshot({ path: join(root, 'object-details.png') });
+  await objectDetail.getByRole('button', { name: '删除对象', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '删除联系对象', exact: true })
+    .getByRole('button', { name: '删除', exact: true })
+    .click();
+  await expect(objectDetail).toHaveCount(0);
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    workspace.contacts.some((c) => c.id === deletedCourt.id) ||
+    !workspace.contacts.some((c) => c.id === retainedJudge.id) ||
+    workspace.contactLinks.some((l) => l.contactId === deletedCourt.id) ||
+    workspace.contactRelations.some((r) => r.courtId === deletedCourt.id) ||
+    workspace.proceedings.find((p) => p.id === deletionCase.currentProceedingId)?.court !==
+      deletedCourt.name
+  )
+    throw new Error('Deleting a linked object did not preserve independent data and history');
+  await invoke(page, 'delete_contact', { id: retainedJudge.id });
+  await invoke(page, 'trash_case', { id: deletionCase.id });
+  await invoke(page, 'purge_item', { kind: 'case', id: deletionCase.id, confirmed: true });
   await stop(page);
   page = await start();
   workspace = await invoke(page, 'load_workspace');

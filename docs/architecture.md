@@ -1,6 +1,6 @@
 # 应用架构
 
-更新于 2026-10-18，版本 1.0.1。Windows x64 首发，其他平台需单独构建验收。
+更新于 2026-10-18，版本 1.0.2。Windows x64 首发，其他平台需单独构建验收。
 
 ## 层次
 
@@ -44,4 +44,4 @@ NSIS 当前用户安装；Tauri updater 从 GitHub Release 的 latest.json 检�
 
 移动端、macOS、云同步、协作、AI、全文检索、转写、重复日程、法定期限自动计算不作为此版本已验收能力。保留 DESIGN-NOTION-COLOR 与 DESIGN-NOTION-DETAIL 后续打磨。
 
-1.0.1：contact_relations 保存法官/法院关系，程序参与对象通过 contact_links 关联，显示名称随引用更新；搜索选择器替代法院和法官自由文本录入。关系图从真实案件/程序/对象边生成，不把案件的每个法院都直接混成一层。恢复版本 3 的完整备份时自动执行迁移 4，详见[对象关系优化](relationship-design.md)。
+1.0.2：contact_relations 保存法官/法院关系，程序参与对象通过 contact_links 关联，显示名称随引用更新；搜索选择器替代法院和法官自由文本录入。关系图从真实案件/程序/对象边生成，不把案件的每个法院都直接混成一层。恢复版本 3 的完整备份时自动执行迁移 4，详见[对象关系优化](relationship-design.md)。

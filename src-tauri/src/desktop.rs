@@ -115,11 +115,11 @@ pub async fn install_update(
 }
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(DesktopState::default());
-    let show = tauri::menu::MenuItem::with_id(app, "show", "打开律师工作台", true, None::<&str>)?;
+    let show = tauri::menu::MenuItem::with_id(app, "show", "打开案笺", true, None::<&str>)?;
     let quit = tauri::menu::MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
     let menu = tauri::menu::Menu::with_items(app, &[&show, &quit])?;
     let mut tray = tauri::tray::TrayIconBuilder::with_id("main")
-        .tooltip("律师工作台 · 后台提醒运行中")
+        .tooltip("案笺 · 后台提醒运行中")
         .menu(&menu)
         .show_menu_on_left_click(false)
         .on_menu_event(|app, event| match event.id.as_ref() {

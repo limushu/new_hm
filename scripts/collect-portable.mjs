@@ -20,10 +20,10 @@ const output = resolve('artifacts/windows');
 mkdirSync(local, { recursive: true });
 mkdirSync(output, { recursive: true });
 const staging = mkdtempSync(join(local, 'portable-package-'));
-const name = `律师工作台-${version}-portable`;
+const name = `案笺-${version}-portable`;
 const folder = join(staging, name);
 mkdirSync(folder);
-copyFileSync(binary, join(folder, '律师工作台.exe'));
+copyFileSync(binary, join(folder, '案笺.exe'));
 writeFileSync(
   join(folder, '.portable'),
   'Keep this marker beside the executable to store data in ./data.\n',

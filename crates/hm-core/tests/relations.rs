@@ -86,7 +86,6 @@ fn program_selection_reuses_objects_and_keeps_proceedings_and_history_separate()
             .judge,
         judge.name
     ); // editing affiliation does not rewrite an old program
-    assert!(s.delete_contact(&court.id).is_err());
     s.trash_case(&a.id).unwrap();
     assert!(s.set_proceeding_contacts(input).is_err());
 }
@@ -125,9 +124,81 @@ fn invalid_affiliation_rolls_back_contact_and_relation_changes() {
             ..court.clone()
         })
         .is_err());
-    assert!(s.delete_contact(&court.id).is_err());
     s.save_contact_with_courts(judge, Some(vec![])).unwrap();
     s.delete_contact(&court.id).unwrap();
+}
+#[test]
+fn deleting_linked_objects_detaches_every_relation_but_preserves_case_history() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("workspace.sqlite3");
+    let mut s = Store::open(&path).unwrap();
+    let a = case(&mut s);
+    let b = case(&mut s);
+    let court = person("保留在案件中的法院名称", "court");
+    let judge = person("保留在案件中的法官名称", "judge");
+    let client = person("可删除的关联联系人", "person");
+    for c in [&court, &judge, &client] {
+        s.save_contact(c.clone()).unwrap();
+    }
+    for c in [&a, &b] {
+        s.set_proceeding_contacts(ProceedingContacts {
+            proceeding_id: c.current_proceeding_id.clone().unwrap(),
+            court_id: Some(court.id.clone()),
+            judge_id: Some(judge.id.clone()),
+        })
+        .unwrap();
+        s.save_contact_link(ContactLink {
+            id: Uuid::new_v4().to_string(),
+            contact_id: client.id.clone(),
+            case_id: c.id.clone(),
+            proceeding_id: None,
+            role: "当事人".into(),
+        })
+        .unwrap();
+    }
+    s.trash_case(&b.id).unwrap();
+    s.delete_contact(&court.id).unwrap();
+    assert!(s.contact_relations().unwrap().is_empty());
+    assert_eq!(s.contact_links().unwrap().len(), 4);
+    assert_eq!(s.contacts().unwrap().len(), 2);
+    s.delete_contact(&judge.id).unwrap();
+    s.delete_contact(&client.id).unwrap();
+    assert!(s.contact_links().unwrap().is_empty());
+    assert!(s.contacts().unwrap().is_empty());
+    assert!(matches!(s.delete_contact(&court.id), Err(Error::NotFound)));
+    let p = s
+        .workspace()
+        .unwrap()
+        .proceedings
+        .into_iter()
+        .find(|p| p.case_id == a.id)
+        .unwrap();
+    s.update_proceeding(UpdateProceeding {
+        id: p.id,
+        stage: p.stage,
+        case_number: "编辑案号不会重新生成已删除对象".into(),
+        court: p.court,
+        judge: p.judge,
+    })
+    .unwrap();
+    drop(s);
+    let s = Store::open(&path).unwrap();
+    let w = s.workspace().unwrap();
+    assert!(w.contacts.is_empty());
+    assert!(w.contact_links.is_empty());
+    assert!(w.contact_relations.is_empty());
+    assert_eq!(w.cases.len(), 2);
+    assert!(w
+        .cases
+        .iter()
+        .find(|c| c.id == b.id)
+        .unwrap()
+        .deleted_at
+        .is_some());
+    for p in w.proceedings {
+        assert_eq!(p.court, court.name);
+        assert_eq!(p.judge, judge.name);
+    }
 }
 fn old_database(path: &std::path::Path) -> rusqlite::Connection {
     let db = rusqlite::Connection::open(path).unwrap();

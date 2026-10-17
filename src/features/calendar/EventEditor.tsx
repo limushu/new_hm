@@ -1,3 +1,5 @@
+import DateField from '../../components/DateField';
+import Select from '../../components/Select';
 import { useEffect, useRef, useState } from 'react';
 import { CalendarDays, Clock3, MapPin, Trash2, X } from 'lucide-react';
 import type { CalendarEvent, CaseFile, SaveAction } from '../../domain/types';
@@ -126,15 +128,14 @@ export default function EventEditor({ event, existing, cases, save, onClose, onS
             <div>
               <label>
                 <span>开始</span>
-                <input
-                  type="date"
+                <DateField
                   aria-label="开始日期"
                   value={value.startDate}
                   required
-                  onChange={(e) =>
+                  onValueChange={(date) =>
                     update({
-                      startDate: e.target.value,
-                      endDate: value.endDate < e.target.value ? e.target.value : value.endDate,
+                      startDate: date,
+                      endDate: value.endDate < date ? date : value.endDate,
                     })
                   }
                 />
@@ -150,13 +151,12 @@ export default function EventEditor({ event, existing, cases, save, onClose, onS
               </label>
               <label>
                 <span>结束</span>
-                <input
-                  type="date"
+                <DateField
                   aria-label="结束日期"
                   value={value.endDate}
                   required
                   min={value.startDate}
-                  onChange={(e) => update({ endDate: e.target.value })}
+                  onValueChange={(value) => update({ endDate: value })}
                 />
                 {value.endTime !== null && (
                   <input
@@ -172,12 +172,12 @@ export default function EventEditor({ event, existing, cases, save, onClose, onS
           </div>
           <label className="event-reminder-field">
             提醒
-            <select
+            <Select
               aria-label="日程提醒时间"
               value={value.reminderMinutes ?? 'none'}
-              onChange={(e) =>
+              onValueChange={(value) =>
                 update({
-                  reminderMinutes: e.target.value === 'none' ? null : Number(e.target.value),
+                  reminderMinutes: value === 'none' ? null : Number(value),
                 })
               }
             >
@@ -189,7 +189,7 @@ export default function EventEditor({ event, existing, cases, save, onClose, onS
               <option value="60">提前1小时</option>
               <option value="1440">提前1天</option>
               <option value="10080">提前1周</option>
-            </select>
+            </Select>
             {value.startTime === null &&
               value.reminderMinutes !== undefined &&
               value.reminderMinutes !== null && <small>全天安排以当天09:00为提醒基准</small>}

@@ -1,3 +1,4 @@
+import Select from '../../components/Select';
 import { useMemo, useState } from 'react';
 import { Minus, Plus, RotateCcw, ArrowUpRight } from 'lucide-react';
 import type { Workspace } from '../../domain/types';
@@ -124,15 +125,15 @@ export default function RelationGraph({
         <div>
           <label>
             层级
-            <select
+            <Select
               aria-label="关系图层级"
               value={depth}
-              onChange={(e) => setDepth(Number(e.target.value))}
+              onValueChange={(value) => setDepth(Number(value))}
             >
               <option value={1}>1 层</option>
               <option value={2}>2 层</option>
               <option value={3}>3 层</option>
-            </select>
+            </Select>
           </label>
           <button
             type="button"

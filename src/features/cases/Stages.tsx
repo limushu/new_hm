@@ -1,3 +1,5 @@
+import DateField from '../../components/DateField';
+import Select from '../../components/Select';
 import { useState } from 'react';
 import { Plus, ArrowUp, ArrowDown, CheckCircle2, SkipForward } from 'lucide-react';
 import Dialog from '../../components/Dialog';
@@ -280,12 +282,11 @@ function EventForm({
       </label>
       <label>
         日期
-        <input
+        <DateField
           aria-label="事件日期"
-          type="date"
           value={input.eventDate}
           required
-          onChange={(e) => update({ eventDate: e.target.value })}
+          onValueChange={(value) => update({ eventDate: value })}
         />
       </label>
       <label>
@@ -306,16 +307,16 @@ function EventForm({
         <>
           <label>
             提醒
-            <select
+            <Select
               aria-label="事件提醒"
               value={reminder}
-              onChange={(e) => setReminder(e.target.value)}
+              onValueChange={(value) => setReminder(value)}
             >
               <option value="none">不提醒</option>
               <option value="0">当天 09:00</option>
               <option value="1440">提前一天 09:00</option>
               <option value="10080">提前一周 09:00</option>
-            </select>
+            </Select>
           </label>
           <p className="field-hint">将创建与此案件关联的全天日程；可在日历中再调整时间。</p>
         </>

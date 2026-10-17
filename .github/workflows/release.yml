@@ -46,7 +46,7 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             Write-Host 'Release already exists; preserve its verified published assets.'
           } else {
-            gh release create $env:GITHUB_REF_NAME artifacts/windows/$version/* --title "律师工作台 $version" --notes-file docs/release-notes.md --verify-tag
+            gh release create $env:GITHUB_REF_NAME artifacts/windows/$version/* --title "案笺 $version" --notes-file docs/release-notes.md --verify-tag
             if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
           }
           exit 0

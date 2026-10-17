@@ -1,3 +1,5 @@
+import DateField from '../../components/DateField';
+import Select from '../../components/Select';
 import { cents, money } from '../../domain/money';
 import { useState } from 'react';
 import { Plus } from 'lucide-react';
@@ -84,12 +86,12 @@ export default function Finance({
         待收仅按“律师费”类别的收入统计。垫付款报销单独跟踪，不重复计入律师费收入。
       </p>
       <div className="feature-toolbar">
-        <select aria-label="筛选收支" value={filter} onChange={(e) => setFilter(e.target.value)}>
+        <Select aria-label="筛选收支" value={filter} onValueChange={(value) => setFilter(value)}>
           <option value="all">全部收支</option>
           <option value="income">收入</option>
           <option value="expense">支出</option>
           <option value="pending">待报销</option>
-        </select>
+        </Select>
       </div>
       {error && (
         <p role="alert" className="error-message">
@@ -216,20 +218,20 @@ function EntryForm({
       <div className="form-columns">
         <label>
           类型
-          <select
+          <Select
             aria-label="收支类型"
             value={input.kind}
-            onChange={(e) =>
+            onValueChange={(value) =>
               update({
-                kind: e.target.value as LedgerEntry['kind'],
+                kind: value as LedgerEntry['kind'],
                 reimbursement: 'none',
-                category: e.target.value === 'income' ? '律师费' : '交通费',
+                category: value === 'income' ? '律师费' : '交通费',
               })
             }
           >
             <option value="income">收入</option>
             <option value="expense">支出</option>
-          </select>
+          </Select>
         </label>
         <label>
           金额（元）
@@ -246,11 +248,10 @@ function EntryForm({
       <div className="form-columns">
         <label>
           日期
-          <input
-            type="date"
+          <DateField
             aria-label="收支日期"
             value={input.entryDate}
-            onChange={(e) => update({ entryDate: e.target.value })}
+            onValueChange={(value) => update({ entryDate: value })}
             required
           />
         </label>
@@ -266,10 +267,10 @@ function EntryForm({
       </div>
       <label>
         所属程序
-        <select
+        <Select
           aria-label="收支所属程序"
           value={input.proceedingId ?? ''}
-          onChange={(e) => update({ proceedingId: e.target.value || null })}
+          onValueChange={(value) => update({ proceedingId: value || null })}
         >
           <option value="">案件共用</option>
           {data.proceedings
@@ -279,30 +280,30 @@ function EntryForm({
                 {programLabels[p.kind]}
               </option>
             ))}
-        </select>
+        </Select>
       </label>
       {input.kind === 'expense' && (
         <label>
           当事人报销
-          <select
+          <Select
             aria-label="报销状态"
             value={input.reimbursement}
-            onChange={(e) =>
-              update({ reimbursement: e.target.value as LedgerEntry['reimbursement'] })
+            onValueChange={(value) =>
+              update({ reimbursement: value as LedgerEntry['reimbursement'] })
             }
           >
             <option value="none">无需报销</option>
             <option value="pending">待报销</option>
             <option value="received">已报销</option>
-          </select>
+          </Select>
         </label>
       )}
       <label>
         凭证（可选）
-        <select
+        <Select
           aria-label="收支凭证"
           value={input.materialId ?? ''}
-          onChange={(e) => update({ materialId: e.target.value || null })}
+          onValueChange={(value) => update({ materialId: value || null })}
         >
           <option value="">不关联凭证</option>
           {data.materials
@@ -312,7 +313,7 @@ function EntryForm({
                 {m.name}
               </option>
             ))}
-        </select>
+        </Select>
       </label>
       <label>
         备注

@@ -166,7 +166,6 @@ fn contacts_case_roles_finance_and_archive_are_isolated() {
             role: "被告".into(),
         })
         .unwrap();
-    assert!(store.delete_contact(&person.id).is_err());
     let original_link = store
         .contact_links()
         .unwrap()

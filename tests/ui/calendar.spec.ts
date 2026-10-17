@@ -1,3 +1,4 @@
+import { selectOption } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 
 async function openDay(page: Page, date: string) {
@@ -12,7 +13,7 @@ async function saveEvent(page: Page, title: string) {
 test.beforeEach(async ({ page }) => {
   await page.goto('/?preview=1');
   await expect(page.getByRole('button', { name: '新建日程', exact: true })).toBeEnabled();
-  await page.getByRole('combobox', { name: '日历视图', exact: true }).selectOption('month');
+  await selectOption(page, page.getByRole('combobox', { name: '日历视图', exact: true }), 'month');
 });
 
 test('日期格直接新建个人日程，修改时间和备注，再删除', async ({ page }) => {
@@ -90,7 +91,7 @@ test('日程与待办分别筛选，关联案件跳转并随案件回收和恢�
   await expect(page.getByRole('textbox', { name: '案件名称', exact: true })).toHaveValue(
     '张某与李某借款纠纷（示例）',
   );
-  await page.getByRole('button', { name: '案件操作', exact: true }).click();
+  await page.getByRole('button', { name: '删除案件', exact: true }).click();
   await page.getByRole('button', { name: '移入回收站', exact: true }).click();
   await expect(page.locator('.event-entry')).toHaveCount(0);
   await page.getByRole('button', { name: '回收站', exact: true }).click();

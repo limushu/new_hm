@@ -1,3 +1,4 @@
+import { selectOption } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 const caseTitle = '张某与李某借款纠纷（示例）';
 async function openCase(page: Page) {
@@ -57,7 +58,7 @@ test('材料导入、同名保留、改名、文件夹移动与回收恢复', as
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('button', { name: '借条原件.txt的操作', exact: true }).click();
   await page.getByRole('menuitem', { name: '移动到…', exact: true }).click();
-  await page.getByLabel('目标文件夹').selectOption({ label: '证据' });
+  await selectOption(page, page.getByLabel('目标文件夹'), { label: '证据' });
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await page.getByRole('button', { name: '证据', exact: true }).click();
   await expect(page.locator('.material-row')).toHaveCount(1);
@@ -110,6 +111,10 @@ test('联系对象原位关联、关系图和双向案件跳转', async ({ page 
   await page.getByRole('button', { name: '关系图', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '案件关系图', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '查看虚构王甲', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '虚构王甲', exact: true })
+    .getByRole('button', { name: '反向关联', exact: true })
+    .click();
   await expect(page.getByRole('dialog', { name: '虚构王甲', exact: true })).toContainText('委托人');
   await page.getByRole('button', { name: /张某与李某借款纠纷（示例）.*委托人/ }).click();
   await expect(page.getByRole('textbox', { name: '案件名称', exact: true })).toHaveValue(caseTitle);
@@ -125,14 +130,14 @@ test('律师费与垫付支出使用精确金额并独立跟踪报销', async ({
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.locator('.fee-summary')).toContainText('7,000.00');
   await page.getByRole('button', { name: '记一笔', exact: true }).click();
-  await page.getByLabel('收支类型').selectOption('expense');
+  await selectOption(page, page.getByLabel('收支类型'), 'expense');
   await page.getByLabel('收支金额').fill('750.50');
-  await page.getByLabel('报销状态').selectOption('pending');
+  await selectOption(page, page.getByLabel('报销状态'), 'pending');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.locator('.ledger-row')).toHaveCount(2);
   await expect(page.locator('.finance-summary')).toContainText('750.50');
   await page.getByRole('button', { name: /交通费.*待报销/ }).click();
-  await page.getByLabel('报销状态').selectOption('received');
+  await selectOption(page, page.getByLabel('报销状态'), 'received');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.locator('.ledger-row').filter({ hasText: '已报销' })).toHaveCount(1);
   await expect(page.locator('.ledger-row').filter({ hasText: '律师费' })).toHaveCount(1);
@@ -142,7 +147,10 @@ test('阶段管理和记录关键事件，不自动将程序结束等同结案',
   await page.getByRole('button', { name: '案件信息', exact: true }).click();
   await page.getByRole('button', { name: '举证', exact: true }).click();
   await expect(page.getByLabel('当前程序', { exact: true })).toContainText('举证');
-  await expect(page.getByLabel('案件状态', { exact: true })).toHaveValue('in_progress');
+  await expect(page.getByLabel('案件状态', { exact: true })).toHaveAttribute(
+    'data-value',
+    'in_progress',
+  );
   await page.getByRole('button', { name: '管理阶段', exact: true }).click();
   await page.getByRole('button', { name: '新增阶段', exact: true }).click();
   await page.getByLabel('阶段名称').fill('鉴定');
@@ -156,9 +164,9 @@ test('阶段管理和记录关键事件，不自动将程序结束等同结案',
   await expect(page.getByRole('button', { name: '鉴定', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '记录事件', exact: true }).click();
   await page.getByLabel('事件名称').fill('示例开庭');
-  await page.getByLabel('事件日期').fill('2026-11-05');
+  await page.getByLabel('事件日期', { exact: true }).fill('2026-11-05');
   await page.getByRole('checkbox', { name: '同时加入此案件的日历' }).check();
-  await page.getByLabel('事件提醒').selectOption('1440');
+  await selectOption(page, page.getByLabel('事件提醒'), '1440');
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.locator('.case-event')).toContainText('示例开庭');
 });
@@ -210,9 +218,9 @@ test('可新增自定义状态列并通过键盘移动案件', async ({ page }) 
 test('日程提醒可选择，默认仍不关联案件', async ({ page }) => {
   await page.getByRole('button', { name: '新建日程', exact: true }).click();
   await page.getByLabel('日程名称', { exact: true }).fill('带提醒日程');
-  await page.getByLabel('日程提醒时间').selectOption('15');
+  await selectOption(page, page.getByLabel('日程提醒时间'), '15');
   await expect(page.getByRole('button', { name: '关联案件', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '保存日程', exact: true }).click();
   await page.locator('.time-event').filter({ hasText: '带提醒日程' }).click();
-  await expect(page.getByLabel('日程提醒时间')).toHaveValue('15');
+  await expect(page.getByLabel('日程提醒时间')).toHaveAttribute('data-value', '15');
 });

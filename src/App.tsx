@@ -1,3 +1,4 @@
+import BrandMark from './components/BrandMark';
 import Contacts, { ContactDetail } from './features/contacts/Contacts';
 import SettingsPage from './features/settings/Settings';
 import GlobalSearch from './components/GlobalSearch';
@@ -109,8 +110,8 @@ export default function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <Folder />
-          律师工作台
+          <BrandMark />
+          案笺
         </div>
         <div className="sidebar-search-row">
           <button onClick={() => setSearchOpen(true)}>

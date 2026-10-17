@@ -195,6 +195,10 @@ export async function previewCommand<K extends keyof Commands>(
     }
     case 'delete_contact':
       data.contacts = data.contacts.filter((row) => row.id !== a.id);
+      data.contactLinks = data.contactLinks.filter((row) => row.contactId !== a.id);
+      data.contactRelations = data.contactRelations.filter(
+        (row) => row.courtId !== a.id && row.judgeId !== a.id,
+      );
       break;
     case 'delete_contact_link':
       data.contactLinks = data.contactLinks.filter((row) => row.id !== a.id);

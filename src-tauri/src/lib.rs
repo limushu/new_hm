@@ -123,7 +123,12 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_notification::init())
-        .plugin(tauri_plugin_autostart::Builder::new().build())
+        // Keep the v1 installation's startup identity through display-name changes.
+        .plugin(
+            tauri_plugin_autostart::Builder::new()
+                .app_name("律师工作台")
+                .build(),
+        )
         .plugin(tauri_plugin_updater::Builder::new().build())
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -158,7 +163,7 @@ pub fn run() {
                 let config = app.config().app.windows.first().ok_or("缺少主窗口配置")?;
                 tauri::WebviewWindowBuilder::from_config(app, config)?
                     .data_directory(location.data_directory.join("webview"))
-                    .title("律师工作台 · 绿色版")
+                    .title("案笺 · 绿色版")
                     .build()?;
             }
             desktop::setup(app)?;

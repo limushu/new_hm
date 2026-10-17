@@ -1,12 +1,14 @@
-# 律师工作台
+# 案笺
+
+原“律师工作台”，现更名为“案笺”。[名称与图标设计](docs/design/brand.md)。
 
 面向独立执业律师的本地工作应用：案件、办理程序、材料归档、日程、联系人和简单收支。无需登录，离线使用。技术栈为 Tauri 2、React/TypeScript、Rust、SQLite。
 
-当前交付版本 **1.0.1，Windows x64 安装版**。macOS、Android、iOS 是后续目标，尚未做发布验收。视觉延续已确认的 Notion 式深灰、圆角和舒展留白。
+当前交付版本 **1.0.2，Windows x64 安装版**。macOS、Android、iOS 是后续目标，尚未做发布验收。视觉延续已确认的 Notion 式深灰、圆角和舒展留白。
 
 ## 使用与验收
 
-安装包、签名与更新清单位于本地 artifacts/windows/1.0.1/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
+安装包、签名与更新清单位于本地 artifacts/windows/1.0.2/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
 
 详见[1.0 使用与验收](docs/v1.0-acceptance.md)：功能检查、数据位置、备份、提醒与升级边界。软件尚无 Windows 发布者代码签名证书，在线升级使用独立签名验证。
 
@@ -60,6 +62,8 @@ npm run artifacts:release
 
 当前[案件看板预览](docs/design/current/case-board-preview-1.0.0.png)与[原生材料页](docs/design/current/materials-app-1.0.0.png)均使用虚构数据；原生截图在隔离目录运行，不读取个人工作区。
 
-1.0.1 已统一办理法院/法官的可复用关系，加入搜索选择、反向关联及局部关系图，支持点击案件侧页外返回。设计与数据规则见[对象关系优化](docs/relationship-design.md)；文档位于 docs 目录。
+1.0.2 改名为案笺，统一菜单、日期和字体；对象默认看资料，有关联也可删除；案件删除入口常驻并支持拖拽回收与撤销。设计与数据规则见[对象关系优化](docs/relationship-design.md)；文档位于 docs 目录。
 
 [1.0.1 案件信息](docs/design/current/case-info-app-1.0.1.png) · [对象局部关系图](docs/design/current/object-relations-app-1.0.1.png)：Windows 正式构建的隔离验收截图。
+
+[1.0.2 对象资料](docs/design/current/contact-details-1.0.2.png) · [统一菜单](docs/design/current/contacts-menu-1.0.2.png) · [待办日期](docs/design/current/task-date-1.0.2.png)：开发预览的虚构数据截图。

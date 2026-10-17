@@ -293,7 +293,8 @@ impl Store {
         if changed == 0 {
             return Err(Error::NotFound);
         }
-        crate::relations::backfill_program(&tx, Some(&input.id))?;
+        // Legacy names are migrated once on opening schema v3. Routine edits must
+        // not recreate a directory object that the user deliberately deleted.
         tx.commit()?;
         Ok(())
     }

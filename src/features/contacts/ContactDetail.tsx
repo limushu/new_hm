@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ArrowLeft, ArrowUpRight, Network, Link2, Phone, MapPin, Pencil } from 'lucide-react';
+import { ArrowLeft, ArrowUpRight, Network, Link2, FileText, Pencil, Trash2 } from 'lucide-react';
+import DeleteContact from './DeleteContact';
 import Dialog from '../../components/Dialog';
 import type { Contact, SaveAction, Workspace } from '../../domain/types';
 import { programLabels } from '../../domain/types';
@@ -13,17 +14,20 @@ export default function ContactDetail({
   save,
   onClose,
   onCase,
+  initialView = 'details',
 }: {
   contact: Contact;
   data: Workspace;
   save: SaveAction;
   onClose: () => void;
   onCase: (id: string) => void;
+  initialView?: 'details' | 'links' | 'graph';
 }) {
   const [selected, setSelected] = useState(contact.id);
   const [history, setHistory] = useState<string[]>([]);
-  const [view, setView] = useState<'links' | 'graph'>('links');
+  const [view, setView] = useState<'details' | 'links' | 'graph'>(initialView);
   const [edit, setEdit] = useState(false);
+  const [remove, setRemove] = useState(false);
   const current = data.contacts.find((c) => c.id === selected) ?? contact;
   const cases = linkedCases(data, current.id);
   const related = relatedContacts(data, current);
@@ -31,15 +35,24 @@ export default function ContactDetail({
     if (id === selected) return;
     setHistory((h) => [...h, selected]);
     setSelected(id);
+    setView('details');
   }
   return (
-    <Dialog title={current.name} onClose={onClose} className="contact-detail-dialog">
+    <Dialog
+      title={current.name}
+      onClose={onClose}
+      className={`contact-detail-dialog ${view === 'details' ? 'is-details' : ''}`}
+    >
       <div className="entity-context">
         <span>{contactLabels[current.kind]}</span>
         <span>{cases.length} 个关联案件</span>
         <button type="button" onClick={() => setEdit(true)}>
           <Pencil />
           编辑对象
+        </button>
+        <button type="button" className="entity-delete" onClick={() => setRemove(true)}>
+          <Trash2 />
+          删除对象
         </button>
         {history.length > 0 && (
           <button
@@ -54,24 +67,15 @@ export default function ContactDetail({
           </button>
         )}
       </div>
-      {(current.phone || current.address) && (
-        <div className="entity-properties">
-          {current.phone && (
-            <span>
-              <Phone />
-              {current.phone}
-            </span>
-          )}
-          {current.address && (
-            <span>
-              <MapPin />
-              {current.address}
-            </span>
-          )}
-        </div>
-      )}
-      {current.notes && <p className="contact-notes">{current.notes}</p>}
       <nav className="entity-view-tabs">
+        <button
+          type="button"
+          className={view === 'details' ? 'active' : ''}
+          onClick={() => setView('details')}
+        >
+          <FileText />
+          详情
+        </button>
         <button
           type="button"
           className={view === 'links' ? 'active' : ''}
@@ -89,7 +93,48 @@ export default function ContactDetail({
           局部关系图
         </button>
       </nav>
-      {view === 'graph' ? (
+      {view === 'details' ? (
+        <section className="entity-details" aria-label="对象资料">
+          <dl>
+            <div>
+              <dt>对象名称</dt>
+              <dd>{current.name}</dd>
+            </div>
+            <div>
+              <dt>类型</dt>
+              <dd>{contactLabels[current.kind]}</dd>
+            </div>
+            <div>
+              <dt>电话</dt>
+              <dd className={!current.phone ? 'is-empty' : ''}>{current.phone || '未填写'}</dd>
+            </div>
+            <div>
+              <dt>地址</dt>
+              <dd className={!current.address ? 'is-empty' : ''}>{current.address || '未填写'}</dd>
+            </div>
+          </dl>
+          <h3>备注</h3>
+          <p className={`contact-notes ${!current.notes ? 'is-empty' : ''}`}>
+            {current.notes || '暂无备注'}
+          </p>
+          {related.length > 0 && (
+            <div className="entity-detail-affiliations">
+              <span>{current.kind === 'judge' ? '所属法院' : '法官'}</span>
+              {related.map((c) => (
+                <button type="button" key={c.id} onClick={() => go(c.id)}>
+                  {c.name}
+                  <ArrowUpRight />
+                </button>
+              ))}
+            </div>
+          )}
+          <button type="button" className="entity-related-entry" onClick={() => setView('links')}>
+            <Link2 />
+            查看关联案件 <span>{cases.length}</span>
+            <ArrowUpRight />
+          </button>
+        </section>
+      ) : view === 'graph' ? (
         <RelationGraph
           key={selected}
           data={data}
@@ -172,6 +217,15 @@ export default function ContactDetail({
           data={data}
           save={save}
           onClose={() => setEdit(false)}
+        />
+      )}
+      {remove && (
+        <DeleteContact
+          contact={current}
+          data={data}
+          save={save}
+          onClose={() => setRemove(false)}
+          onDeleted={onClose}
         />
       )}
     </Dialog>

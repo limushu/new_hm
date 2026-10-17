@@ -1,0 +1,205 @@
+.select-field {
+  display: inline-flex;
+  min-width: 0;
+  vertical-align: middle;
+}
+.select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid #393939;
+  border-radius: 7px;
+  background: #242424;
+  font-size: 13px;
+  font-weight: 400;
+  text-align: left;
+}
+.select-trigger > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.select-trigger > svg {
+  width: 13px;
+  height: 13px;
+  color: #959595;
+}
+.select-trigger:hover {
+  background: #2b2b2b;
+}
+.select-trigger[aria-expanded='true'] {
+  background: #303030;
+}
+.field-popover {
+  position: fixed;
+  inset: auto;
+  margin: 0;
+  padding: 5px;
+  border: 1px solid #414141;
+  border-radius: 9px;
+  color: var(--text);
+  background: #272727;
+  box-shadow:
+    0 8px 28px #0005,
+    0 2px 6px #0003;
+  font: inherit;
+  overflow: auto;
+}
+.field-popover::backdrop {
+  background: transparent;
+}
+.select-menu [role='option'] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  padding: 7px 9px;
+  border-radius: 5px;
+  text-align: left;
+  font-size: 13px;
+  font-weight: 400;
+  color: #d9d9d9;
+}
+.select-menu [role='option'].is-active {
+  background: #383838;
+}
+.select-menu [role='option'] svg {
+  width: 13px;
+  height: 13px;
+  color: #a5b6c3;
+}
+.contacts-tools .select-trigger,
+.materials-scope .select-trigger,
+.graph-controls .select-trigger,
+.calendar-toolbar .select-trigger {
+  border-color: transparent;
+  background: transparent;
+  padding: 6px 9px;
+}
+.contacts-tools .select-trigger:hover,
+.materials-scope .select-trigger:hover,
+.graph-controls .select-trigger:hover {
+  background: #2b2b2b;
+}
+.workspace-dialog label > .select-field,
+.case-properties label > .select-field,
+.program-fields label > .select-field {
+  width: 100%;
+}
+.date-field {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+}
+.date-field > input {
+  width: 100%;
+  min-width: 0;
+  padding-right: 33px;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.date-field .date-open {
+  position: absolute;
+  right: 5px;
+  display: grid;
+  place-items: center;
+  padding: 5px;
+  border-radius: 5px;
+  color: #929292;
+}
+.date-field .date-open:hover {
+  background: #363636;
+  color: #ccc;
+}
+.date-menu {
+  padding: 12px;
+}
+.date-menu header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 12px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.date-menu header button {
+  display: grid;
+  place-items: center;
+  padding: 4px;
+  border-radius: 5px;
+}
+.date-weekdays,
+.date-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 3px;
+  text-align: center;
+}
+.date-weekdays {
+  color: #8e8e8e;
+  font-size: 11px;
+  margin-bottom: 7px;
+}
+.date-days > button {
+  height: 30px;
+  padding: 0;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.date-days > button:hover,
+.date-menu header button:hover {
+  background: #3a3a3a;
+}
+.date-days > button.outside-month {
+  color: #777;
+}
+.date-days > button[aria-current='date'] {
+  color: #91b9d5;
+}
+.date-days > button.selected {
+  background: #3b6c90;
+  color: #fff;
+}
+.date-menu footer {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 11px;
+  border-top: 1px solid #3a3a3a;
+  padding-top: 10px;
+}
+.date-menu footer button {
+  font-size: 12px;
+  color: #b4b4b4;
+  padding: 3px;
+}
+.workspace-dialog label > .date-field {
+  width: 100%;
+}
+.task-editor .task-title {
+  width: 100%;
+  border: 0;
+  background: transparent;
+  font-size: 19px;
+  padding: 10px 0 20px;
+}
+.task-editor .task-date {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.task-editor .task-date > span {
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: 12px;
+}
+.task-editor .task-date > .date-field {
+  width: 190px;
+}

@@ -154,31 +154,18 @@ impl Store {
         Ok(())
     }
     pub fn delete_contact(&self, id: &str) -> Result<()> {
-        let links: i64 = self.connection.query_row(
-            "SELECT count(*) FROM contact_links WHERE contact_id=?1",
+        let tx = self.connection.unchecked_transaction()?;
+        tx.execute("DELETE FROM contact_links WHERE contact_id=?1", [id])?;
+        tx.execute(
+            "DELETE FROM contact_relations WHERE judge_id=?1 OR court_id=?1",
             [id],
-            |r| r.get(0),
         )?;
-        if links > 0 {
-            return Err(Error::Validation("此对象仍关联案件，请先解除关联".into()));
-        }
-        let related: bool = self.connection.query_row(
-            "SELECT EXISTS(SELECT 1 FROM contact_relations WHERE judge_id=?1 OR court_id=?1)",
-            [id],
-            |r| r.get(0),
-        )?;
-        if related {
-            return Err(Error::Validation(
-                "此对象仍有法院/法官关系，请先在对象详情中解除".into(),
-            ));
-        }
-        if self
-            .connection
-            .execute("DELETE FROM contacts WHERE id=?1", [id])?
-            == 0
-        {
+        // Proceeding names are historical snapshots; deleting an optional directory
+        // entry must not erase case information or delete any other object.
+        if tx.execute("DELETE FROM contacts WHERE id=?1", [id])? == 0 {
             return Err(Error::NotFound);
         }
+        tx.commit()?;
         Ok(())
     }
     pub fn case_details(&self) -> Result<Vec<CaseDetail>> {

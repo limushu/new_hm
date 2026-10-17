@@ -1,6 +1,7 @@
+import Select from '../../components/Select';
 import { useState } from 'react';
 import { Plus, Users, ArrowUpRight, Search } from 'lucide-react';
-import Dialog from '../../components/Dialog';
+import DeleteContact from './DeleteContact';
 import type { Contact, SaveAction, Workspace } from '../../domain/types';
 import { linkedCases, relatedContacts } from '../../domain/relations';
 import ContactForm from './ContactForm';
@@ -23,6 +24,7 @@ export default function Contacts({
   const [kind, setKind] = useState('all');
   const [edit, setEdit] = useState<Contact | null>(null);
   const [detail, setDetail] = useState<Contact | null>(null);
+  const [detailView, setDetailView] = useState<'details' | 'links'>('details');
   const [remove, setRemove] = useState<Contact | null>(null);
   const rows = data.contacts.filter(
     (c) =>
@@ -58,14 +60,14 @@ export default function Contacts({
             onChange={(e) => setQuery(e.target.value)}
           />
         </div>
-        <select aria-label="筛选对象类型" value={kind} onChange={(e) => setKind(e.target.value)}>
+        <Select aria-label="筛选对象类型" value={kind} onValueChange={(value) => setKind(value)}>
           <option value="all">全部类型</option>
           {Object.entries(contactLabels).map(([id, label]) => (
             <option key={id} value={id}>
               {label}
             </option>
           ))}
-        </select>
+        </Select>
         <span>{rows.length} 个对象</span>
       </div>
       <div className="feature-list contacts-list">
@@ -82,21 +84,30 @@ export default function Contacts({
               <span className={`entity-mark kind-${c.kind}`}>
                 <Users />
               </span>
-              <button className="row-main" onClick={() => setDetail(c)}>
+              <button
+                className="row-main"
+                onClick={() => {
+                  setDetailView('details');
+                  setDetail(c);
+                }}
+              >
                 <span>
                   {c.name}
                   <small className="inline-kind">{contactLabels[c.kind]}</small>
                 </span>
                 <small>
-                  {related.length
-                    ? related.map((x) => x.name).join(' · ')
-                    : c.phone || c.address || '未填写联系方式'}
+                  {c.phone ||
+                    c.address ||
+                    (related.length ? related.map((x) => x.name).join(' · ') : '未填写联系方式')}
                 </small>
               </button>
               <button
                 className="backlink-count"
                 aria-label={`查看${c.name}的${cases.length}个关联案件`}
-                onClick={() => setDetail(c)}
+                onClick={() => {
+                  setDetailView('links');
+                  setDetail(c);
+                }}
               >
                 {cases.length} 个案件
                 <ArrowUpRight />
@@ -123,6 +134,7 @@ export default function Contacts({
       {detail && (
         <ContactDetail
           contact={detail}
+          initialView={detailView}
           data={data}
           save={save}
           onClose={() => setDetail(null)}
@@ -130,19 +142,7 @@ export default function Contacts({
         />
       )}
       {remove && (
-        <Dialog
-          title="删除联系对象"
-          onClose={() => setRemove(null)}
-          danger
-          submitLabel="删除"
-          onSubmit={async () => {
-            await save('delete_contact', { id: remove.id });
-          }}
-        >
-          <p className="feature-description">
-            删除“{remove.name}”？已有案件或法院关系的对象，需要先解除关联。
-          </p>
-        </Dialog>
+        <DeleteContact contact={remove} data={data} save={save} onClose={() => setRemove(null)} />
       )}
     </div>
   );

@@ -1,3 +1,4 @@
+import Select from '../../components/Select';
 import { useEffect, useRef, useState } from 'react';
 import {
   ChevronLeft,
@@ -166,16 +167,16 @@ export default function Calendar({
             </button>
           ))}
         </div>
-        <select
+        <Select
           className="calendar-view-select"
           aria-label="日历视图"
           value={view}
-          onChange={(event) => onViewChange(event.target.value as typeof view)}
+          onValueChange={(value) => onViewChange(value as typeof view)}
         >
           <option value="day">日视图</option>
           <option value="week">周视图</option>
           <option value="month">月视图</option>
-        </select>
+        </Select>
       </div>
       {view === 'month' && (
         <>

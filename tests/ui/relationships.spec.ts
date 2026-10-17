@@ -1,8 +1,9 @@
+import { selectOption } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 async function addContact(page: Page, name: string, kind: string, court?: string) {
   await page.getByRole('button', { name: '新建对象', exact: true }).click();
   await page.getByLabel('对象名称', { exact: true }).fill(name);
-  await page.getByLabel('对象类型', { exact: true }).selectOption(kind);
+  await selectOption(page, page.getByLabel('对象类型', { exact: true }), kind);
   if (court) {
     await page.getByRole('combobox', { name: '法官关联法院', exact: true }).fill(court);
     await page.getByRole('option', { name: new RegExp(court) }).click();
@@ -78,12 +79,9 @@ test('法院法官搜索复用、筛选与反向关联，无需重复建档或�
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue('');
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('乙法院');
   await page.getByRole('option', { name: /示例乙法院/ }).click();
-  const first = await page
-    .getByRole('combobox', { name: '当前程序', exact: true })
-    .locator('option')
-    .filter({ hasText: '一审' })
-    .getAttribute('value');
-  await page.getByRole('combobox', { name: '当前程序', exact: true }).selectOption(first!);
+  await selectOption(page, page.getByRole('combobox', { name: '当前程序', exact: true }), {
+    label: '一审',
+  });
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(
     '示例甲法院',
   );

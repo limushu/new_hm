@@ -23,7 +23,7 @@
 }
 .workspace-dialog h2 {
   font-size: 17px;
-  font-weight: 550;
+  font-weight: 500;
 }
 .workspace-dialog fieldset {
   border: 0;
@@ -123,7 +123,7 @@
 }
 .feature-section h3 {
   font-size: 14px;
-  font-weight: 550;
+  font-weight: 500;
 }
 .feature-section > header button {
   display: inline-flex;
@@ -427,7 +427,7 @@
 }
 .settings-section h2 {
   font-size: 15px;
-  font-weight: 550;
+  font-weight: 500;
   margin-bottom: 13px;
 }
 .settings-path {

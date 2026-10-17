@@ -1,3 +1,6 @@
+import DateField from '../../components/DateField';
+import Dialog from '../../components/Dialog';
+import Select from '../../components/Select';
 import CaseLinks from './CaseLinks';
 import ProgramContacts from '../contacts/ProgramContacts';
 import Finance from '../finance/Finance';
@@ -6,7 +9,7 @@ import Stages from './Stages';
 import Records from './Records';
 import Materials from '../materials/Materials';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, ChevronsRight, Expand, Folder, Plus, X } from 'lucide-react';
+import { ChevronRight, ChevronsRight, Expand, Folder, Plus, Trash2, X } from 'lucide-react';
 import type { CaseFile, CaseInput, ProgramKind, SaveAction, Workspace } from '../../domain/types';
 import { programLabels } from '../../domain/types';
 
@@ -45,7 +48,7 @@ export default function CasePage({
   const [taskDate, setTaskDate] = useState('');
   const [taskForm, setTaskForm] = useState(false);
   const [saved, setSaved] = useState(!draft);
-  const [caseMenu, setCaseMenu] = useState(false);
+  const [remove, setRemove] = useState(false);
   const [taskOverrides, setTaskOverrides] = useState<Record<string, boolean>>({});
   const inFlight = useRef<Promise<boolean> | null>(null);
   const pendingAction = useRef<Promise<boolean> | null>(null);
@@ -155,6 +158,16 @@ export default function CasePage({
             <Expand />
             {expanded ? '收起为侧页' : '展开案件'}
           </button>
+          {saved && (
+            <button
+              className="case-delete-action"
+              disabled={saving}
+              onClick={() => setRemove(true)}
+            >
+              <Trash2 />
+              删除案件
+            </button>
+          )}
         </div>
         <div className="case-body">
           <Folder className="page-symbol" />
@@ -176,13 +189,13 @@ export default function CasePage({
           <div className="case-properties">
             <label>
               案件状态
-              <select
+              <Select
                 aria-label="案件状态"
                 value={statusId}
                 disabled={saving}
-                onChange={(e) => {
-                  setStatusId(e.target.value);
-                  if (title.trim()) void commit({ statusId: e.target.value });
+                onValueChange={(value) => {
+                  setStatusId(value);
+                  if (title.trim()) void commit({ statusId: value });
                 }}
               >
                 {data.statuses.map((s) => (
@@ -190,34 +203,34 @@ export default function CasePage({
                     {s.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <label>
               案件类型
-              <select
+              <Select
                 aria-label="案件类型"
                 value={caseType}
                 disabled={saving}
-                onChange={(e) => {
-                  const value = e.target.value as CaseFile['caseType'];
-                  setCaseType(value);
-                  if (title.trim()) void commit({ caseType: value });
+                onValueChange={(value) => {
+                  const type = value as CaseFile['caseType'];
+                  setCaseType(type);
+                  if (title.trim()) void commit({ caseType: type });
                 }}
               >
                 <option value="civil">民商事诉讼</option>
                 <option value="other">其他案件</option>
-              </select>
+              </Select>
             </label>
             {program && (
               <label>
                 当前程序
-                <select
+                <Select
                   aria-label="当前程序"
                   disabled={saving}
                   value={program.id}
-                  onChange={(e) =>
+                  onValueChange={(value) =>
                     void act(() =>
-                      save('select_proceeding', { caseId: item.id, proceedingId: e.target.value }),
+                      save('select_proceeding', { caseId: item.id, proceedingId: value }),
                     )
                   }
                 >
@@ -227,7 +240,7 @@ export default function CasePage({
                       {p.stage ? ` · ${p.stage}` : ''}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
             )}
           </div>
@@ -268,49 +281,6 @@ export default function CasePage({
                         添加待办
                       </button>
                     </div>
-                    {taskForm && (
-                      <form
-                        className="inline-form"
-                        onSubmit={(e) => {
-                          e.preventDefault();
-                          void act(async () => {
-                            await save('add_task', {
-                              input: {
-                                caseId: item.id,
-                                title: taskTitle,
-                                dueDate: taskDate || null,
-                              },
-                            });
-                            setTaskTitle('');
-                            setTaskDate('');
-                            setTaskForm(false);
-                          });
-                        }}
-                      >
-                        <input
-                          aria-label="待办内容"
-                          placeholder="要做什么？"
-                          value={taskTitle}
-                          onChange={(e) => setTaskTitle(e.target.value)}
-                          required
-                          maxLength={500}
-                        />
-                        <div className="form-actions">
-                          <label>
-                            截止日期（可选）
-                            <input
-                              type="date"
-                              aria-label="截止日期"
-                              value={taskDate}
-                              onChange={(e) => setTaskDate(e.target.value)}
-                            />
-                          </label>
-                          <button disabled={saving || !taskTitle.trim()} type="submit">
-                            添加
-                          </button>
-                        </div>
-                      </form>
-                    )}
                     {!tasks.length && !taskForm && <p className="empty-text">暂无待办</p>}
                     {tasks.map((t) => {
                       const completed = taskOverrides[t.id] ?? t.completed;
@@ -375,17 +345,17 @@ export default function CasePage({
                         });
                       }}
                     >
-                      <select
+                      <Select
                         aria-label="新增程序类型"
                         value={newProgram}
-                        onChange={(e) => setNewProgram(e.target.value as ProgramKind)}
+                        onValueChange={(value) => setNewProgram(value as ProgramKind)}
                       >
                         {Object.entries(programLabels).map(([id, label]) => (
                           <option key={id} value={id}>
                             {label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                       <button type="submit" disabled={saving}>
                         新增
                       </button>
@@ -446,23 +416,6 @@ export default function CasePage({
                 <Materials caseId={item.id} data={data} save={save} focusId={focusMaterialId} />
               )}
               {tab === 'finance' && <Finance caseId={item.id} data={data} save={save} />}
-              <div className="case-footer">
-                <button onClick={() => setCaseMenu(!caseMenu)}>案件操作</button>
-                {caseMenu && (
-                  <button
-                    className="danger"
-                    disabled={saving}
-                    onClick={() =>
-                      void act(async () => {
-                        await save('trash_case', { id: item.id });
-                        close();
-                      })
-                    }
-                  >
-                    移入回收站
-                  </button>
-                )}
-              </div>
             </>
           )}
         </div>
@@ -470,6 +423,54 @@ export default function CasePage({
           <X />
         </button>
       </section>
+      {taskForm && (
+        <Dialog
+          title="新建待办"
+          className="task-editor"
+          onClose={() => {
+            setTaskForm(false);
+            setTaskTitle('');
+            setTaskDate('');
+          }}
+          submitLabel="添加"
+          onSubmit={async () => {
+            await save('add_task', {
+              input: { caseId: item.id, title: taskTitle.trim(), dueDate: taskDate || null },
+            });
+          }}
+        >
+          <input
+            className="task-title"
+            aria-label="待办内容"
+            placeholder="要做什么？"
+            autoFocus
+            required
+            maxLength={500}
+            value={taskTitle}
+            onChange={(e) => setTaskTitle(e.target.value)}
+          />
+          <label className="task-date">
+            <span>截止日期（可选）</span>
+            <DateField aria-label="截止日期" value={taskDate} onValueChange={setTaskDate} />
+          </label>
+        </Dialog>
+      )}
+      {remove && (
+        <Dialog
+          title="删除案件"
+          danger
+          submitLabel="移入回收站"
+          onClose={() => setRemove(false)}
+          onSubmit={async () => {
+            await save('trash_case', { id: item.id });
+            close();
+          }}
+        >
+          <p className="feature-description">
+            将“{item.title}”移入回收站？案件及其材料、工作记录会保留，可在回收站恢复。
+          </p>
+        </Dialog>
+      )}
     </>
   );
 }

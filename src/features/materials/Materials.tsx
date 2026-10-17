@@ -1,3 +1,4 @@
+import Select from '../../components/Select';
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import {
   Folder,
@@ -228,11 +229,11 @@ export default function Materials({
       }}
     >
       <div className="materials-scope">
-        <select
+        <Select
           aria-label="材料归属范围"
           value={scope}
-          onChange={(event) => {
-            setScope(event.target.value);
+          onValueChange={(value) => {
+            setScope(value);
             setFolder(null);
             setQuery('');
           }}
@@ -244,7 +245,7 @@ export default function Materials({
               {p.caseNumber ? ` · ${p.caseNumber}` : ''}
             </option>
           ))}
-        </select>
+        </Select>
         <span>{rows.length} 项</span>
       </div>
       <div className="feature-toolbar material-toolbar">
@@ -496,11 +497,11 @@ export default function Materials({
             <>
               <label>
                 归属范围
-                <select
+                <Select
                   aria-label="目标材料范围"
                   value={moveScope}
-                  onChange={(event) => {
-                    setMoveScope(event.target.value);
+                  onValueChange={(value) => {
+                    setMoveScope(value);
                     setMoveFolder('');
                   }}
                 >
@@ -510,14 +511,14 @@ export default function Materials({
                       {programLabels[p.kind]}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
               <label>
                 目标文件夹
-                <select
+                <Select
                   aria-label="目标文件夹"
                   value={moveFolder}
-                  onChange={(event) => setMoveFolder(event.target.value)}
+                  onValueChange={(value) => setMoveFolder(value)}
                 >
                   <option value="">根目录</option>
                   {materials
@@ -532,7 +533,7 @@ export default function Materials({
                         {pathOf(m)}
                       </option>
                     ))}
-                </select>
+                </Select>
               </label>
             </>
           ) : (

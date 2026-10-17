@@ -1,3 +1,4 @@
+import Select from '../../components/Select';
 import { useState } from 'react';
 import { Plus, Network, ArrowUpRight } from 'lucide-react';
 import Dialog from '../../components/Dialog';
@@ -140,10 +141,10 @@ export default function CaseContacts({
           </label>
           <label>
             所属程序
-            <select
+            <Select
               aria-label="对象所属程序"
               value={program}
-              onChange={(e) => setProgram(e.target.value)}
+              onValueChange={(value) => setProgram(value)}
             >
               <option value="">案件共用</option>
               {programs.map((p) => (
@@ -151,7 +152,7 @@ export default function CaseContacts({
                   {programLabels[p.kind]}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </Dialog>
       )}

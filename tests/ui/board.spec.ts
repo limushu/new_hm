@@ -31,7 +31,10 @@ test('跨列拖动保存状态并更新数量，松手不会误打开案件', as
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await expect(column(page, 'closed').locator('[data-case-id="demo"]')).toBeVisible();
   await card(page).click();
-  await expect(page.getByRole('combobox', { name: '案件状态', exact: true })).toHaveValue('closed');
+  await expect(page.getByRole('combobox', { name: '案件状态', exact: true })).toHaveAttribute(
+    'data-value',
+    'closed',
+  );
   await expect(page.getByRole('combobox', { name: '当前程序' })).toContainText('庭前准备');
 });
 

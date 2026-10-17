@@ -215,7 +215,7 @@ export default function Settings({
       </section>
       <section className="settings-section">
         <h2>版本与更新</h2>
-        <p className="feature-description">律师工作台 {metadata.version} · Windows 安装版</p>
+        <p className="feature-description">案笺 {metadata.version} · Windows 安装版</p>
         <p className="field-hint">
           检查新版本后，由你确认下载和安装。升级包会验证签名，安装前会备份当前工作区。
         </p>

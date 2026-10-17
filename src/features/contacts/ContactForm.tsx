@@ -1,3 +1,4 @@
+import Select from '../../components/Select';
 import { useState } from 'react';
 import { X } from 'lucide-react';
 import Dialog from '../../components/Dialog';
@@ -95,10 +96,10 @@ export default function ContactForm({
       <div className="form-columns">
         <label>
           类型
-          <select
+          <Select
             aria-label="对象类型"
             value={input.kind}
-            onChange={(e) => update({ kind: e.target.value as Contact['kind'] })}
+            onValueChange={(value) => update({ kind: value as Contact['kind'] })}
           >
             {Object.entries(contactLabels)
               .filter(([id]) => !allowedKinds || allowedKinds.includes(id as Contact['kind']))
@@ -107,7 +108,7 @@ export default function ContactForm({
                   {label}
                 </option>
               ))}
-          </select>
+          </Select>
         </label>
         <label>
           电话

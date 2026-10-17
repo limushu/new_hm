@@ -1,8 +1,12 @@
+import { selectOption } from './fields';
 import { expect, test } from '@playwright/test';
 
 test.beforeEach(async ({ page }) => {
   await page.goto('/?preview=1');
-  await expect(page.getByRole('combobox', { name: '日历视图' })).toHaveValue('week');
+  await expect(page.getByRole('combobox', { name: '日历视图' })).toHaveAttribute(
+    'data-value',
+    'week',
+  );
 });
 
 test('默认周时间表，小月历跳转，空闲时间可创建且不自动关联案件', async ({ page }) => {
@@ -46,7 +50,7 @@ test('默认周时间表，小月历跳转，空闲时间可创建且不自动�
   await expect(page.locator('.time-event')).toHaveCount(0);
   await page.getByRole('button', { name: `跳转到 ${key}`, exact: true }).click();
   await expect(page.locator('.time-event')).toHaveCount(2);
-  await page.getByRole('combobox', { name: '日历视图' }).selectOption('day');
+  await selectOption(page, page.getByRole('combobox', { name: '日历视图' }), 'day');
   await expect(page.locator('.time-column')).toHaveCount(1);
 });
 
@@ -84,9 +88,12 @@ test('重叠时间块并排展示，全天与待办不放入小时网格', async
 test('手机默认日视图，切周视图仅在时间表内部横向滚动', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
-  await expect(page.getByRole('combobox', { name: '日历视图' })).toHaveValue('day');
+  await expect(page.getByRole('combobox', { name: '日历视图' })).toHaveAttribute(
+    'data-value',
+    'day',
+  );
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
-  await page.getByRole('combobox', { name: '日历视图' }).selectOption('week');
+  await selectOption(page, page.getByRole('combobox', { name: '日历视图' }), 'week');
   await expect(page.locator('.time-column')).toHaveCount(7);
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
 });

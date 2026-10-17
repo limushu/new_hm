@@ -1,9 +1,9 @@
 import Dialog from '../../components/Dialog';
 import { useId, useRef, useState, type CSSProperties } from 'react';
-import { ArrowRightCircle, Folder, Plus, Search, MoreHorizontal } from 'lucide-react';
+import { ArrowRightCircle, Folder, Plus, Search, MoreHorizontal, Trash2 } from 'lucide-react';
 import { programLabels } from '../../domain/types';
 import type { CaseFile, CaseStatus, SaveAction, Workspace } from '../../domain/types';
-import { useBoardDrag } from './useBoardDrag';
+import { useBoardDrag, trashTarget } from './useBoardDrag';
 import './case-board.css';
 
 interface Props {
@@ -88,6 +88,8 @@ export default function CaseBoard({
   const saving = useRef(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [removed, setRemoved] = useState<CaseFile | null>(null);
+  const [trashBusy, setTrashBusy] = useState(false);
   const activeCases = data.cases.filter((item) => !item.deletedAt);
   const queryText = query.trim().toLocaleLowerCase();
   const matches = (item: CaseFile) =>
@@ -97,6 +99,23 @@ export default function CaseBoard({
         program.caseId === item.id && program.caseNumber.toLocaleLowerCase().includes(queryText),
     );
   const statusOf = (item: CaseFile) => (pending?.id === item.id ? pending.statusId : item.statusId);
+  async function trash(id: string) {
+    const item = activeCases.find((c) => c.id === id);
+    if (!item || saving.current) return;
+    saving.current = true;
+    setTrashBusy(true);
+    setError('');
+    try {
+      await save('trash_case', { id });
+      setRemoved(item);
+      setNotice(`“${item.title}”已移入回收站`);
+    } catch (error) {
+      setError(`删除未完成，案件已保留。${String(error)}`);
+    } finally {
+      saving.current = false;
+      setTrashBusy(false);
+    }
+  }
 
   async function move(id: string, statusId: string) {
     const item = activeCases.find((item) => item.id === id);
@@ -125,13 +144,17 @@ export default function CaseBoard({
   const { drag, pointerDown, lift, canOpen } = useBoardDrag(
     board,
     data.statuses,
-    !!pending,
+    !!pending || trashBusy,
     (id, statusId) => {
-      void move(id, statusId);
+      if (statusId === trashTarget) void trash(id);
+      else void move(id, statusId);
     },
   );
   const dragItem = drag ? activeCases.find((item) => item.id === drag.id) : null;
-  const overName = data.statuses.find((status) => status.id === drag?.over)?.name;
+  const overName =
+    drag?.over === trashTarget
+      ? '回收站'
+      : data.statuses.find((status) => status.id === drag?.over)?.name;
 
   function content(item: CaseFile) {
     const program = data.proceedings.find((program) => program.id === item.currentProceedingId);
@@ -206,7 +229,8 @@ export default function CaseBoard({
         <span className="case-count">{activeCases.length} 个案件</span>
       </div>
       <p className="board-sr-only" id={instructionId}>
-        拖动到其他状态列更改状态。键盘可按空格拿起，左右方向键选列，回车放下，Escape 取消。
+        拖动到其他状态列更改状态，或拖到回收站删除。键盘可按空格拿起，左右方向键选列，向下选回收站，回车放下，Escape
+        取消。
       </p>
       <p className="board-sr-only" role="status" aria-live="polite">
         {drag
@@ -287,11 +311,6 @@ export default function CaseBoard({
                   </button>
                 )}
                 {!cases.length && queryText && <p className="column-empty">没有匹配的案件</p>}
-                {drag && (
-                  <span className="column-drop-hint" aria-hidden="true">
-                    {drag.over === status.id ? '放到这里' : ''}
-                  </span>
-                )}
               </section>
             );
           })}
@@ -309,13 +328,51 @@ export default function CaseBoard({
           className="case-card case-drag-preview"
           aria-hidden="true"
           style={{
-            ...tone(drag.over ?? statusOf(dragItem)),
+            ...tone(drag.over && drag.over !== trashTarget ? drag.over : statusOf(dragItem)),
             left: drag.x,
             top: drag.y,
             width: drag.width,
           }}
         >
           {content(dragItem)}
+        </div>
+      )}
+      {!loading && (
+        <div className="board-bottom">
+          <div
+            className={`case-trash-target ${drag ? 'drag-ready' : ''} ${drag?.over === trashTarget ? 'is-over' : ''}`}
+            data-case-trash-target="true"
+            role="region"
+            aria-label="拖拽删除案件"
+          >
+            <Trash2 />
+            <span>{drag?.over === trashTarget ? '松开移入回收站' : '拖到这里删除案件'}</span>
+          </div>
+          {removed && (
+            <div className="case-trash-notice" role="status">
+              <span>“{removed.title}”已移入回收站</span>
+              <button
+                disabled={trashBusy}
+                onClick={async () => {
+                  if (saving.current) return;
+                  saving.current = true;
+                  setTrashBusy(true);
+                  setError('');
+                  try {
+                    await save('restore_item', { kind: 'case', id: removed.id });
+                    setRemoved(null);
+                  } catch (error) {
+                    setError(String(error));
+                  } finally {
+                    saving.current = false;
+                    setTrashBusy(false);
+                  }
+                }}
+              >
+                撤销
+              </button>
+            </div>
+          )}
         </div>
       )}
       {statusEdit && (

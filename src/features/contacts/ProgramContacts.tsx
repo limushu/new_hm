@@ -123,6 +123,7 @@ export default function ProgramContacts({
       {detail && (
         <ContactDetail
           contact={detail}
+          initialView="links"
           data={data}
           save={save}
           onClose={() => setDetail(null)}

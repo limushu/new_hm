@@ -1,3 +1,4 @@
+import Select from '../../components/Select';
 import { useState } from 'react';
 import Dialog from '../../components/Dialog';
 import type { SaveAction, Workspace } from '../../domain/types';
@@ -68,10 +69,10 @@ export default function CaseLinks({
         >
           <label>
             关联原案（可选）
-            <select
+            <Select
               aria-label="关联原案"
               value={related}
-              onChange={(e) => setRelated(e.target.value)}
+              onValueChange={(value) => setRelated(value)}
             >
               <option value="">不关联</option>
               {data.cases
@@ -81,7 +82,7 @@ export default function CaseLinks({
                     {c.title}
                   </option>
                 ))}
-            </select>
+            </Select>
           </label>
           <label>
             备注
