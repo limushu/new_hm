@@ -2,6 +2,8 @@
 
 1.2.0 的[案件概览与我方身份](current/representation-overview-1.2.0.png)、[身份联想编辑](current/representation-editor-1.2.0.png)、[非诉模板编辑](current/workflow-template-1.2.0.png)使用虚构数据。概览按当前关注流程显示身份，法院和法官不替代委托关系；编辑使用共用深色选择器与联想浮层。各功能保持整行，卡片右上角明确删除，拖拽仅移动状态。
 
+1.2.0 的[Windows 原生概览](current/representation-app-1.2.0.png)与[800×600 原生流程页](current/workflow-app-small-1.2.0.png)来自隔离虚构工作区，未读取个人数据；截图像素随系统 DPI 缩放。
+
 1.1.4 的 [HM 手写花体标志](current/brand-1.1.4.png)采用黑色底层、不规则内层与青蓝紫渐变花体，H、M 共用中间笔画。几何 HM 为旧版，不再作为当前方向。阶段删除从当前阶段状态面板或管理阶段进入，确认后清空被删的当前阶段并保留历史与程序材料。
 
 [案件概览](current/case-text-1.1.4.png)与[程序详情](current/program-text-1.1.4.png)使用虚构数据，展示正文、属性值与标题同色，灰色区分空值和辅助标签；不再堆叠操作说明。
