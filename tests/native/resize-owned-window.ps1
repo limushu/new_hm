@@ -16,11 +16,14 @@ public static class OwnedLayoutWindow {
   [DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr window, out uint process);
   [DllImport("user32.dll")] public static extern IntPtr SendMessage(IntPtr window, uint message, IntPtr wParam, IntPtr lParam);
   [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr window);
+  [DllImport("user32.dll")] public static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
   [DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr window, out Rect rect);
   [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out Rect rect);
   [DllImport("user32.dll", SetLastError = true)] public static extern bool SetWindowPos(IntPtr window, IntPtr after, int x, int y, int width, int height, uint flags);
 }
 '@
+# Match the app's per-monitor awareness; otherwise Windows virtualizes the helper's coordinates.
+[void][OwnedLayoutWindow]::SetThreadDpiAwarenessContext([IntPtr](-4))
 $script:ownedWindow = [IntPtr]::Zero
 [OwnedLayoutWindow]::EnumWindows({
   param($window, $extra)

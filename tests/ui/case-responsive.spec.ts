@@ -109,6 +109,16 @@ test('窄屏长阶段名、法院搜索和管理弹窗不挤出窗口', async ({
   const box = await picker.boundingBox();
   expect(box!.x + box!.width).toBeLessThanOrEqual(390);
   expect(box!.y + box!.height).toBeLessThanOrEqual(700);
+  // Scrolling the anchor away must not move the shared menu beyond the window.
+  await page.locator('.case-page').evaluate((pane) => {
+    pane.scrollTop = 0;
+  });
+  await expect
+    .poll(async () => {
+      const box = await picker.boundingBox();
+      return !!box && box.y >= 0 && box.y + box.height <= 700;
+    })
+    .toBe(true);
   await page.getByRole('combobox', { name: '办理法院', exact: true }).press('Escape');
   await expect(page.getByRole('region', { name: '案件详情' })).toBeVisible();
 });
