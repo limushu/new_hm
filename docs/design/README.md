@@ -4,6 +4,8 @@
 
 [浅色办理](current/workspace-light-1.4.0.png)、[深色办理](current/workspace-dark-1.4.0.png)、[手机宽度](current/workspace-mobile-1.4.0.png)使用实际浏览器渲染和虚构工作记录。下方为历史版本，冲突处以 1.4 工作空间及当前字体映射为准。
 
+[Windows 原生阶段工作](current/workspace-light-app-1.4.0.png)来自 1.4.0 正式构建、隔离虚构工作区。任务/等待、材料多处引用、直接凭据、收费核销、阶段删除、恢复与重启均完成实际 SQLite 与文件回归；未读取个人案件。
+
 1.3.2 重新平衡阅读与操作的视觉比例：[深色材料](current/materials-dark-1.3.2.png)、[浅色材料](current/materials-light-1.3.2.png)、[800×600 小窗口](current/materials-desktop-small-1.3.2.png)为实际渲染、虚构材料。标题与图标同行、属性行内排列，删除材料页重复标题及根目录路径；正文/文件名 15px、操作 14px、元信息 13px，常规文件行 44px，优先让内容进入首屏。此规则替代 1.3.1 的全局 16px 下限；仍保持真实内容清晰，不依赖小字说明解释布局。完整映射见[字体规范](typography.md)。
 
 
