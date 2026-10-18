@@ -62,6 +62,11 @@ export interface WorkRecord {
   createdAt: string;
 }
 export interface Workspace {
+  workLinks: WorkLink[];
+  taskWork: TaskWork[];
+  feePlans: FeePlan[];
+  feeAllocations: FeeAllocation[];
+  confirmedFeeCases: string[];
   workflowTemplates: WorkflowTemplate[];
   caseParties: CaseParty[];
   proceedingPartyRoles: ProceedingPartyRole[];
@@ -157,6 +162,11 @@ export const programLabels: Record<ProgramKind, string> = {
   enforcement: '执行',
 };
 export const emptyWorkspace: Workspace = {
+  workLinks: [],
+  taskWork: [],
+  feePlans: [],
+  feeAllocations: [],
+  confirmedFeeCases: [],
   workflowTemplates: [],
   caseParties: [],
   proceedingPartyRoles: [],
@@ -179,6 +189,55 @@ export const emptyWorkspace: Workspace = {
   deletedRecords: [],
 };
 
+export type WorkScope = { proceedingId: string | null; stageId: string | null };
+export interface WorkLink {
+  id: string;
+  caseId: string;
+  proceedingId: string;
+  stageId: string | null;
+  kind: 'task' | 'event' | 'material' | 'record' | 'ledger';
+  resourceId: string;
+  label: string;
+}
+export interface TaskWork {
+  taskId: string;
+  waitingFor: string;
+  outcome: string;
+}
+export interface FeePlan extends WorkScope {
+  id: string;
+  caseId: string;
+  title: string;
+  amountCents: number;
+  dueDate: string | null;
+  condition: string;
+  ready: boolean;
+}
+export interface FeeAllocation {
+  planId: string;
+  ledgerId: string;
+  amountCents: number;
+}
+export interface Commands {
+  save_work_link: { args: { input: WorkLink }; result: null };
+  save_work_event: { args: WorkScope & { input: CalendarEvent }; result: null };
+  save_work_record: { args: WorkScope & { input: RecordInput }; result: null };
+  save_work_ledger: {
+    args: { input: LedgerEntry; stageId: string | null; sourcePath?: string; receiptId?: string };
+    result: null;
+  };
+  delete_work_link: { args: { id: string }; result: null };
+  save_work_task: {
+    args: { input: WorkScope & { task: Task; waitingFor: string; outcome: string } };
+    result: null;
+  };
+  apply_stage_tasks: { args: { stageId: string; titles: string[] }; result: null };
+  save_fee_plan: { args: { input: FeePlan }; result: null };
+  delete_fee_plan: { args: { id: string }; result: null };
+  save_fee_allocation: { args: { input: FeeAllocation }; result: null };
+  save_fee_agreement: { args: { caseId: string; amountCents: number }; result: null };
+}
+
 export interface Material {
   id: string;
   caseId: string;
@@ -194,6 +253,7 @@ export interface Material {
   trashGroup: string | null;
 }
 export interface MaterialTarget {
+  stageId?: string | null;
   caseId: string;
   proceedingId: string | null;
   parentId: string | null;

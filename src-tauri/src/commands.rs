@@ -2,6 +2,97 @@ use crate::{access, AppState};
 use hm_core::*;
 use tauri::State;
 #[tauri::command(async)]
+pub fn save_work_event(
+    state: State<'_, AppState>,
+    input: CalendarEvent,
+    proceeding_id: Option<String>,
+    stage_id: Option<String>,
+) -> std::result::Result<(), String> {
+    access(&state, |s| {
+        s.save_work_event(input, proceeding_id, stage_id)
+    })
+}
+#[tauri::command(async)]
+pub fn save_work_record(
+    state: State<'_, AppState>,
+    input: RecordInput,
+    proceeding_id: Option<String>,
+    stage_id: Option<String>,
+) -> std::result::Result<(), String> {
+    access(&state, |s| {
+        s.save_work_record(input, proceeding_id, stage_id)
+    })
+}
+#[tauri::command(async)]
+pub fn save_work_ledger(
+    state: State<'_, AppState>,
+    input: LedgerEntry,
+    stage_id: Option<String>,
+    source_path: Option<std::path::PathBuf>,
+    receipt_id: Option<String>,
+) -> std::result::Result<(), String> {
+    access(&state, |s| {
+        s.save_work_ledger(
+            input,
+            stage_id,
+            source_path.as_deref(),
+            receipt_id.as_deref(),
+        )
+    })
+}
+#[tauri::command(async)]
+pub fn save_work_link(
+    state: State<'_, AppState>,
+    input: WorkLink,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.save_work_link(input))
+}
+#[tauri::command(async)]
+pub fn delete_work_link(state: State<'_, AppState>, id: String) -> std::result::Result<(), String> {
+    access(&state, |s| s.delete_work_link(&id))
+}
+#[tauri::command(async)]
+pub fn save_work_task(
+    state: State<'_, AppState>,
+    input: SaveWorkTask,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.save_work_task(input))
+}
+#[tauri::command(async)]
+pub fn apply_stage_tasks(
+    state: State<'_, AppState>,
+    stage_id: String,
+    titles: Vec<String>,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.apply_stage_tasks(&stage_id, titles))
+}
+#[tauri::command(async)]
+pub fn save_fee_plan(
+    state: State<'_, AppState>,
+    input: FeePlan,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.save_fee_plan(input))
+}
+#[tauri::command(async)]
+pub fn delete_fee_plan(state: State<'_, AppState>, id: String) -> std::result::Result<(), String> {
+    access(&state, |s| s.delete_fee_plan(&id))
+}
+#[tauri::command(async)]
+pub fn save_fee_allocation(
+    state: State<'_, AppState>,
+    input: FeeAllocation,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.save_fee_allocation(input))
+}
+#[tauri::command(async)]
+pub fn save_fee_agreement(
+    state: State<'_, AppState>,
+    case_id: String,
+    amount_cents: i64,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.save_fee_agreement(&case_id, amount_cents))
+}
+#[tauri::command(async)]
 pub fn save_workflow_template(
     state: State<'_, AppState>,
     input: WorkflowTemplate,

@@ -1,0 +1,381 @@
+.work-navigation {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 0 14px;
+  border-bottom: 1px solid var(--line);
+}
+.work-programs {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-width: 0;
+}
+.work-programs > button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 10px 14px;
+  min-width: 120px;
+  max-width: 100%;
+  text-align: left;
+}
+.work-programs > button[aria-pressed='true'] {
+  background: var(--blue-soft);
+  border-color: var(--blue-line);
+}
+.work-programs strong {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+.work-programs small {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.work-add-program {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  padding: 10px 0;
+  color: var(--blue-text);
+}
+.work-relations {
+  margin-top: 12px;
+}
+.work-relations > summary,
+.work-details > summary,
+.work-history-panel > summary {
+  color: var(--text);
+  font-size: var(--text-base);
+  cursor: pointer;
+  padding: 12px 0;
+}
+.work-details,
+.work-history-panel {
+  border-top: 1px solid var(--line);
+  margin-top: 28px;
+}
+.work-details .program-details-section {
+  margin-top: 8px;
+}
+.work-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px 14px;
+}
+.work-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-base);
+}
+.work-actions svg {
+  width: 15px;
+  height: 15px;
+}
+.work-task-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.work-task-row > input {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  accent-color: var(--blue);
+}
+.work-task-main {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  line-height: 1.6;
+  padding: 0;
+}
+.work-task-main > span {
+  font-size: var(--text-body);
+  overflow-wrap: anywhere;
+}
+.work-task-main small {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--muted);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.work-task-main .work-waiting {
+  color: var(--amber-text);
+}
+.work-task-row.completed .work-task-main > span {
+  text-decoration: line-through;
+}
+.work-task-row time {
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.work-task-row .work-origin {
+  font-size: var(--text-sm);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue-text);
+  max-width: 35%;
+  text-align: left;
+}
+.work-origin svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+.work-scope-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.work-scope-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin: 18px 0 4px;
+  font-size: var(--text-base);
+}
+.work-scope-banner > span {
+  margin-right: auto;
+}
+.work-scope-banner strong {
+  font-weight: var(--weight-medium);
+}
+.work-scope-banner button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--blue-text);
+  font-size: var(--text-sm);
+}
+.work-scope-banner svg {
+  width: 14px;
+  height: 14px;
+}
+.stage-strip .stage-chip.is-viewed {
+  box-shadow: 0 0 0 1px var(--blue-line);
+  background: var(--blue-soft);
+  color: var(--blue-text);
+}
+.program-detail .program-current-stage h3 {
+  color: var(--text);
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+}
+.program-detail .stage-chip::after {
+  display: none;
+}
+.stage-strip {
+  gap: 8px;
+}
+.stage-strip .stage-chip.stage-current:not(.is-viewed) {
+  background: transparent;
+  border-color: var(--line);
+  color: var(--text);
+}
+.stage-current-label {
+  font-size: var(--text-xs);
+  color: var(--blue-text);
+  margin-left: 4px;
+}
+.work-programs small,
+.work-task-main small,
+.fee-plan-row small,
+.work-overview-row small {
+  color: var(--text);
+}
+.work-stage-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 20px 0 0;
+}
+.work-stage-heading h3 {
+  margin: 0;
+  font-size: var(--text-heading);
+}
+.work-stage-heading > button {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--blue-text);
+}
+.work-state {
+  display: inline-block;
+  font-size: var(--text-sm);
+  padding: 2px 7px;
+  border-radius: 5px;
+  background: var(--hover);
+  white-space: nowrap;
+}
+.work-state.is-due {
+  background: var(--amber-soft);
+  color: var(--amber-text);
+}
+.stage-work .materials-panel {
+  padding: 0;
+  margin-top: 8px;
+}
+.stage-work .material-toolbar {
+  margin-top: 0;
+}
+.stage-work .case-section {
+  padding-bottom: 4px;
+}
+.material-stage-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+.material-stage-filter button {
+  font-size: var(--text-sm);
+}
+.material-uses {
+  color: var(--blue-text) !important;
+}
+.work-cost-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+  width: 100%;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.work-cost-row > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.work-cost-row time {
+  font-size: var(--text-sm);
+}
+.work-cost-row strong {
+  white-space: nowrap;
+  font-weight: var(--weight-medium);
+}
+.fee-plan-totals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 24px;
+  margin: 12px 0;
+  font-size: var(--text-base);
+}
+.fee-plan-totals strong {
+  font-weight: var(--weight-medium);
+  margin-left: 6px;
+}
+.fee-plan-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-base);
+}
+.fee-plan-row .row-main {
+  flex: 1;
+  text-align: left;
+  min-width: 0;
+}
+.fee-plan-row .row-main strong {
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body);
+  overflow-wrap: anywhere;
+}
+.fee-plan-row small {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.fee-plan-row > button:not(.row-main) {
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+.work-overview-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  width: 100%;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.work-overview-row > span:first-child {
+  flex: 1;
+  min-width: 0;
+}
+.work-overview-row strong {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+.work-overview-row small {
+  display: block;
+  margin-top: 3px;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.work-overview-row > span:nth-child(2) {
+  font-size: var(--text-sm);
+}
+.work-overview-row > svg {
+  width: 16px;
+  height: 16px;
+  color: var(--blue-text);
+  flex-shrink: 0;
+}
+@container case-panel (max-width:600px) {
+  .work-navigation {
+    flex-wrap: wrap;
+  }
+  .work-add-program {
+    margin-left: auto;
+  }
+  .work-task-row {
+    flex-wrap: wrap;
+  }
+  .work-task-row .work-origin {
+    max-width: 100%;
+    margin-left: 26px;
+  }
+  .work-stage-heading {
+    flex-wrap: wrap;
+  }
+  .stage-work .section-title {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .stage-work .section-title h3 {
+    flex: 1 0 100%;
+  }
+  .work-actions {
+    justify-content: flex-start;
+  }
+  .fee-plan-row {
+    flex-wrap: wrap;
+    gap: 8px 12px;
+  }
+  .fee-plan-row .row-main {
+    flex-basis: 65%;
+  }
+  .fee-plan-row > button:not(.row-main) {
+    margin-left: auto;
+  }
+}

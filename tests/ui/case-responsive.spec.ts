@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { selectOption } from './fields';
+import { selectOption, openFlowDetails } from './fields';
 
 async function expectPaneFits(page: Page) {
   const geometry = await page.locator('.case-page').evaluate((pane) => ({
@@ -42,6 +42,7 @@ test('流程详情按侧页实际宽度适配，小桌面、展开和手机均�
   await page.getByRole('button', { name: '新增流程', exact: true }).click();
   await selectOption(page, page.getByLabel('流程模板', { exact: true }), 'appeal');
   await page.getByRole('button', { name: '新增', exact: true }).click();
+  await openFlowDetails(page);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.program-detail-heading h2')).toHaveText('二审');
   await page
@@ -62,7 +63,7 @@ test('流程详情按侧页实际宽度适配，小桌面、展开和手机均�
     await page.setViewportSize(viewport);
     await expectPaneFits(page);
     await page.getByRole('button', { name: '举证', exact: true }).click();
-    await expect(page.locator('.program-current-stage')).toContainText('举证');
+    await expect(page.locator('.work-stage-heading')).toContainText('举证');
     // A selected stage opens the adjustment dialog; return to another stage for the next size.
     await page.getByRole('button', { name: '立案', exact: true }).click();
     await page.getByLabel('前序流程', { exact: true }).click();
@@ -75,15 +76,17 @@ test('流程详情按侧页实际宽度适配，小桌面、展开和手机均�
     expect(box!.y + box!.height).toBeLessThanOrEqual(viewport.height);
     await page.getByLabel('前序流程', { exact: true }).press('Escape');
     await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
+    await openFlowDetails(page);
     await expect(page.locator('.program-detail-heading h2')).toHaveText('一审');
     await page.getByRole('button', { name: '查看二审流程', exact: true }).click();
+    await openFlowDetails(page);
     await expect(page.getByLabel('案号', { exact: true })).toHaveValue(/较长案号/);
   }
 
   await page.setViewportSize({ width: 1024, height: 768 });
   await page.getByRole('button', { name: '展开案件', exact: true }).click();
   await expectPaneFits(page);
-  await page.getByRole('button', { name: '展开办理路径', exact: true }).click();
+  await page.getByText('流程关系', { exact: true }).click();
   await expect(page.locator('.program-edges')).toBeVisible();
   await expectPaneFits(page);
 });
@@ -93,7 +96,8 @@ test('窄屏长阶段名、法院搜索和管理弹窗不挤出窗口', async ({
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openFlowDetails(page);
   await page.getByRole('button', { name: '管理阶段', exact: true }).click();
   await page.getByRole('button', { name: '新增阶段', exact: true }).click();
   const name = '核对全部证据材料并联系委托人确认补充说明'.repeat(3);
@@ -103,7 +107,7 @@ test('窄屏长阶段名、法院搜索和管理弹窗不挤出窗口', async ({
   expect(await manager.evaluate((e) => e.scrollWidth - e.clientWidth)).toBeLessThanOrEqual(1);
   await manager.getByRole('button', { name: '关闭', exact: true }).last().click();
   await page.getByRole('button', { name, exact: true }).click();
-  await expect(page.locator('.program-current-stage')).toContainText(name);
+  await expect(page.locator('.work-stage-heading')).toContainText(name);
   await expectPaneFits(page);
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('未录入的法院');
   const picker = page.locator('.picker-popover');

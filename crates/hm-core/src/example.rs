@@ -74,6 +74,7 @@ impl Store {
         std::fs::write(&file,"示例材料说明\n\n这里可以归档借条、转账凭证与沟通记录。软件将文件复制到案件目录，原始文件保持不变。\n所有示例内容均为虚构。")?;
         let imported = self.import_materials(
             MaterialTarget {
+                stage_id: None,
                 case_id: item.id.clone(),
                 proceeding_id: None,
                 parent_id: None,

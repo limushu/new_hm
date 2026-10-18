@@ -11,7 +11,8 @@ import {
   Square,
 } from 'lucide-react';
 import { dateKey, monthDays, parseDate, shiftDate, weekDates } from '../../domain/calendar';
-import type { CalendarEvent, SaveAction, Workspace } from '../../domain/types';
+import type { CalendarEvent, SaveAction, Workspace, Task } from '../../domain/types';
+import { WorkTaskEditor } from '../cases/WorkTasks';
 import {
   displayDate,
   emptyEvent,
@@ -57,6 +58,7 @@ export default function Calendar({
   }, [selected]);
   const [editing, setEditing] = useState<CalendarEvent | null>(null);
   const [filter, setFilter] = useState<'all' | 'events' | 'tasks'>('all');
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [focusToday, setFocusToday] = useState(0);
   const agenda = useRef<HTMLElement>(null);
   const activeCases = data.cases.filter((item) => !item.deletedAt);
@@ -253,7 +255,7 @@ export default function Calendar({
                         onClick={(e) => {
                           e.stopPropagation();
                           setSelected(key);
-                          openCase(task.caseId);
+                          setEditingTask(task);
                         }}
                       >
                         <Square />
@@ -290,6 +292,7 @@ export default function Calendar({
           onCreate={(date, minute) => create(date, minute, minute === undefined)}
           onEdit={setEditing}
           openCase={openCase}
+          onTask={setEditingTask}
         />
       )}
       <section hidden={view !== 'month'} ref={agenda} className="day-agenda" aria-label="当天安排">
@@ -359,7 +362,7 @@ export default function Calendar({
         {dayTasks.map((task) => (
           <div className="agenda-task" key={task.id}>
             <span className="agenda-time">待办</span>
-            <button className="agenda-task-main" onClick={() => openCase(task.caseId)}>
+            <button className="agenda-task-main" onClick={() => setEditingTask(task)}>
               <Square />
               <span>{task.title}</span>
             </button>
@@ -388,7 +391,7 @@ export default function Calendar({
             无日期待办 <span>{undated.length}</span>
           </summary>
           {undated.map((task) => (
-            <button key={task.id} className="undated-task" onClick={() => openCase(task.caseId)}>
+            <button key={task.id} className="undated-task" onClick={() => setEditingTask(task)}>
               <Square />
               <span>{task.title}</span>
               <small>{caseTitle(task.caseId)}</small>
@@ -396,8 +399,17 @@ export default function Calendar({
           ))}
         </details>
       )}
+      {editingTask && (
+        <WorkTaskEditor
+          task={editingTask}
+          data={data}
+          save={save}
+          onClose={() => setEditingTask(null)}
+        />
+      )}
       {editing && (
         <EventEditor
+          data={data}
           key={editing.id}
           event={editing}
           existing={data.calendarEvents.some((event) => event.id === editing.id)}

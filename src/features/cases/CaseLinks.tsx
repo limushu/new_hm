@@ -33,7 +33,7 @@ export default function CaseLinks({
       <header>
         <h3>
           <AlignLeft aria-hidden="true" />
-          案情摘要与相关案件
+          委托目标与案情
         </h3>
         <button
           onClick={() => {
@@ -59,7 +59,7 @@ export default function CaseLinks({
         </button>
       ))}
       {!detail.notes && !original && !relatedCases.length && (
-        <p className="quiet-empty">暂无案情摘要</p>
+        <p className="quiet-empty">尚未填写</p>
       )}
       {editing && (
         <Dialog
@@ -94,6 +94,7 @@ export default function CaseLinks({
               aria-label="案件备注"
               value={notes}
               rows={4}
+              placeholder="记录委托目标、服务范围与关键事实"
               maxLength={20000}
               onChange={(e) => setNotes(e.target.value)}
             />

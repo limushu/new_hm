@@ -71,6 +71,11 @@ pub struct WorkRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Workspace {
+    pub work_links: Vec<WorkLink>,
+    pub task_work: Vec<TaskWork>,
+    pub fee_plans: Vec<FeePlan>,
+    pub fee_allocations: Vec<FeeAllocation>,
+    pub confirmed_fee_cases: Vec<String>,
     pub workflow_templates: Vec<WorkflowTemplate>,
     pub case_parties: Vec<CaseParty>,
     pub proceeding_party_roles: Vec<ProceedingPartyRole>,
@@ -91,6 +96,55 @@ pub struct Workspace {
     pub stages: Vec<Stage>,
     pub case_events: Vec<CaseEvent>,
     pub deleted_records: Vec<WorkRecord>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkLink {
+    pub id: String,
+    pub case_id: String,
+    pub proceeding_id: String,
+    pub stage_id: Option<String>,
+    pub kind: String,
+    pub resource_id: String,
+    #[serde(default)]
+    pub label: String,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TaskWork {
+    pub task_id: String,
+    pub waiting_for: String,
+    pub outcome: String,
+}
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveWorkTask {
+    pub task: Task,
+    pub waiting_for: String,
+    pub outcome: String,
+    pub proceeding_id: Option<String>,
+    pub stage_id: Option<String>,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FeePlan {
+    pub id: String,
+    pub case_id: String,
+    pub proceeding_id: Option<String>,
+    pub stage_id: Option<String>,
+    pub title: String,
+    pub amount_cents: i64,
+    pub due_date: Option<String>,
+    pub condition: String,
+    pub ready: bool,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct FeeAllocation {
+    pub plan_id: String,
+    pub ledger_id: String,
+    pub amount_cents: i64,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -202,6 +256,8 @@ pub struct Material {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct MaterialTarget {
+    #[serde(default)]
+    pub stage_id: Option<String>,
     pub case_id: String,
     pub proceeding_id: Option<String>,
     pub parent_id: Option<String>,

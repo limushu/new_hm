@@ -1,5 +1,5 @@
-import { Plus, CircleCheck, Crosshair } from 'lucide-react';
-import { useId, useState } from 'react';
+import { CircleCheck, Crosshair } from 'lucide-react';
+import { useId } from 'react';
 import type { CaseFile, Proceeding, Workspace } from '../../domain/types';
 import { currentStage, proceedingName } from '../../domain/proceedings';
 import { workflowLayout } from '../../domain/workflow-layout';
@@ -9,18 +9,13 @@ export default function ProceedingPath({
   selected,
   data,
   onSelect,
-  onAdd,
-  compact = false,
 }: {
   item: CaseFile;
   programs: Proceeding[];
   selected: string | null;
   data: Workspace;
   onSelect: (id: string) => void;
-  onAdd: () => void;
-  compact?: boolean;
 }) {
-  const [expanded, setExpanded] = useState(false);
   const focus = programs.find((p) => p.id === item.currentProceedingId);
   const layout = workflowLayout(programs);
   const marker = useId().replace(/:/g, '');
@@ -29,30 +24,16 @@ export default function ProceedingPath({
     return p ? proceedingName(p, programs) : '前序流程';
   };
   return (
-    <section
-      className={`proceeding-path ${compact && !expanded ? 'is-compact' : ''}`}
-      aria-label="案件办理路径"
-    >
+    <section className="proceeding-path" aria-label="流程关系图">
       <header>
         <div>
           <h3>
-            办理路径 <span>{programs.length} 个流程</span>
+            流程关系图 <span>{programs.length} 个流程</span>
           </h3>
           <p>
             {programs.filter((p) => p.state === 'active').length} 个办理中
             {focus ? ` · 当前关注：${proceedingName(focus, programs)}` : ' · 尚未指定当前关注'}
           </p>
-        </div>
-        <div className="program-path-actions">
-          {compact && programs.length > 0 && (
-            <button aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
-              {expanded ? '收起办理路径' : '展开办理路径'}
-            </button>
-          )}
-          <button onClick={onAdd}>
-            <Plus />
-            新增流程
-          </button>
         </div>
       </header>
       {programs.length ? (
@@ -98,7 +79,7 @@ export default function ProceedingPath({
               <button
                 key={p.id}
                 className={`program-node ${selected === p.id ? 'is-selected' : ''} ${item.currentProceedingId === p.id ? 'is-focus' : ''}`}
-                aria-label={`查看${proceedingName(p, programs)}流程`}
+                aria-label={`关系图：${proceedingName(p, programs)}`}
                 aria-pressed={selected === p.id}
                 title={proceedingName(p, programs)}
                 style={{ left: x, top: y }}
@@ -120,7 +101,6 @@ export default function ProceedingPath({
                       当前关注
                     </span>
                   )}
-                  {selected === p.id && <span className="viewing-badge">查看中</span>}
                 </span>
                 <span className="program-parent">
                   {p.parentId ? `承接：${parentName(p.parentId)}` : '独立流程'}

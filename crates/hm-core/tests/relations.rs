@@ -286,6 +286,7 @@ fn version_three_complete_backup_restores_and_migrates_with_materials() {
     std::fs::write(&src, "虚构材料").unwrap();
     s.import_materials(
         MaterialTarget {
+            stage_id: None,
             case_id: c.id.clone(),
             proceeding_id: None,
             parent_id: None,

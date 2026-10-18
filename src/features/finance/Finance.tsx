@@ -4,7 +4,10 @@ import { cents, money } from '../../domain/money';
 import { useState } from 'react';
 import { Plus, Paperclip } from 'lucide-react';
 import Dialog from '../../components/Dialog';
-import type { CaseDetail, LedgerEntry, SaveAction, Workspace } from '../../domain/types';
+import type { LedgerEntry, SaveAction, Workspace, WorkScope } from '../../domain/types';
+import { caseScope, resourceLinks, resourceInScope } from '../../domain/workspace';
+import WorkScopeField from '../cases/WorkScopeField';
+import FeePlans from './FeePlans';
 import { proceedingName } from '../../domain/proceedings';
 import { dateKey } from '../../domain/calendar';
 import { command } from '../../services/repository';
@@ -17,10 +20,12 @@ export default function Finance({
   caseId,
   data,
   save,
+  scope = caseScope,
 }: {
   caseId: string;
   data: Workspace;
   save: SaveAction;
+  scope?: WorkScope;
 }) {
   const detail = data.caseDetails.find((d) => d.caseId === caseId) ?? {
     caseId,
@@ -34,24 +39,56 @@ export default function Finance({
   const [filter, setFilter] = useState('all');
   const [category, setCategory] = useState<string | null>(null);
   const { error, run } = useAction();
-  const rows = data.ledgerEntries.filter((row) => row.caseId === caseId);
+  const scopedRows = data.ledgerEntries.filter(
+    (row) =>
+      row.caseId === caseId &&
+      (!scope.proceedingId ||
+        (scope.stageId
+          ? resourceInScope(data, 'ledger', row.id, scope)
+          : row.proceedingId === scope.proceedingId)),
+  );
+  const rows = scopedRows.filter(
+    (r) =>
+      (filter === 'all' ||
+        (filter === 'pending' ? r.reimbursement === 'pending' : r.kind === filter)) &&
+      (!category || (r.category || '未分类') === category),
+  );
+  const agreementKnown = data.confirmedFeeCases.includes(caseId) || detail.agreedFeeCents > 0;
+  const allFees = data.ledgerEntries
+    .filter((r) => r.caseId === caseId && r.kind === 'income' && r.category === '律师费')
+    .reduce((n, r) => n + r.amountCents, 0);
   const total = (predicate: (row: LedgerEntry) => boolean) =>
     rows.filter(predicate).reduce((sum, row) => sum + row.amountCents, 0);
   const income = total((r) => r.kind === 'income');
   const expense = total((r) => r.kind === 'expense');
-  const fees = total((r) => r.kind === 'income' && r.category === '律师费');
   const pending = total((r) => r.kind === 'expense' && r.reimbursement === 'pending');
   const received = total((r) => r.kind === 'expense' && r.reimbursement === 'received');
   return (
     <section className="feature-section">
+      <div className="fee-summary">
+        <span>
+          整案约定律师费{' '}
+          <strong>{agreementKnown ? `¥ ${money(detail.agreedFeeCents)}` : '未填写'}</strong>
+        </span>
+        <span>整案已收律师费 ¥ {money(allFees)}</span>
+        {agreementKnown && (
+          <span>整案未收 ¥ {money(Math.max(0, detail.agreedFeeCents - allFees))}</span>
+        )}
+        <button
+          onClick={() => setFee(agreementKnown ? (detail.agreedFeeCents / 100).toFixed(2) : '')}
+        >
+          修改约定
+        </button>
+      </div>
+      <FeePlans caseId={caseId} data={data} save={save} scope={scope} />
       <header>
-        <h3>案件收支</h3>
+        <h3>实际收支</h3>
         <button
           onClick={() =>
             setEdit({
               id: crypto.randomUUID(),
               caseId,
-              proceedingId: null,
+              proceedingId: scope.proceedingId,
               kind: 'income',
               amountCents: 0,
               entryDate: dateKey(new Date()),
@@ -79,17 +116,6 @@ export default function Finance({
           </div>
         ))}
       </div>
-      <div className="fee-summary">
-        <span>
-          约定律师费 <strong>¥ {money(detail.agreedFeeCents)}</strong>
-        </span>
-        <span>已收律师费 ¥ {money(fees)}</span>
-        <span>待收 ¥ {money(Math.max(0, detail.agreedFeeCents - fees))}</span>
-        <button onClick={() => setFee((detail.agreedFeeCents / 100).toFixed(2))}>修改约定</button>
-      </div>
-      <p className="field-hint">
-        待收仅按“律师费”类别的收入统计。垫付款报销单独跟踪，不重复计入律师费收入。
-      </p>
       <div className="feature-toolbar">
         <Select
           aria-label="筛选收支"
@@ -106,8 +132,11 @@ export default function Finance({
         </Select>
       </div>
       <FinanceChart
+        paidTotal={allFees}
+        agreementKnown={agreementKnown}
+        showAgreement={!scope.proceedingId}
         rows={rows}
-        agreed={detail.agreedFeeCents}
+        agreed={scope.proceedingId ? 0 : agreementKnown ? detail.agreedFeeCents : 0}
         onCategory={(kind, name) => {
           setFilter(kind);
           setCategory(name);
@@ -123,52 +152,46 @@ export default function Finance({
           {error}
         </p>
       )}
-      {rows
-        .filter(
-          (r) =>
-            (filter === 'all' ||
-              (filter === 'pending' ? r.reimbursement === 'pending' : r.kind === filter)) &&
-            (!category || (r.category || '未分类') === category),
-        )
-        .map((row) => (
-          <div className="feature-row ledger-row" key={row.id}>
-            <time>{row.entryDate}</time>
-            <button className="row-main" onClick={() => setEdit(row)}>
-              <span>{row.category || (row.kind === 'income' ? '收入' : '支出')}</span>
-              <small>
-                {row.notes}
-                {row.reimbursement !== 'none'
-                  ? ` · ${row.reimbursement === 'pending' ? '待报销' : '已报销'}`
-                  : ''}
-                {row.proceedingId
-                  ? ` · ${proceedingName(data.proceedings.find((p) => p.id === row.proceedingId)!, data.proceedings)}`
-                  : ''}
-              </small>
+      {rows.map((row) => (
+        <div className="feature-row ledger-row" key={row.id}>
+          <time>{row.entryDate}</time>
+          <button className="row-main" onClick={() => setEdit(row)}>
+            <span>{row.category || (row.kind === 'income' ? '收入' : '支出')}</span>
+            <small>
+              {row.notes}
+              {row.reimbursement !== 'none'
+                ? ` · ${row.reimbursement === 'pending' ? '待报销' : '已报销'}`
+                : ''}
+              {row.proceedingId
+                ? ` · ${proceedingName(data.proceedings.find((p) => p.id === row.proceedingId)!, data.proceedings)}`
+                : ''}
+            </small>
+          </button>
+          <span className={row.kind === 'income' ? 'money-income' : 'money-expense'}>
+            {row.kind === 'income' ? '+' : '−'} {money(row.amountCents)}
+          </span>
+          {row.materialId && (
+            <button
+              className="receipt-link"
+              title="使用系统应用打开凭证"
+              onClick={() => void run(() => command('open_material', { id: row.materialId! }))}
+            >
+              凭证
             </button>
-            <span className={row.kind === 'income' ? 'money-income' : 'money-expense'}>
-              {row.kind === 'income' ? '+' : '−'} {money(row.amountCents)}
-            </span>
-            {row.materialId && (
-              <button
-                className="receipt-link"
-                title="使用系统应用打开凭证"
-                onClick={() => void run(() => command('open_material', { id: row.materialId! }))}
-              >
-                凭证
-              </button>
-            )}
-            {!row.materialId && (
-              <button className="receipt-link" onClick={() => setEdit(row)}>
-                <Paperclip />
-                添加凭据
-              </button>
-            )}
-          </div>
-        ))}
+          )}
+          {!row.materialId && (
+            <button className="receipt-link" onClick={() => setEdit(row)}>
+              <Paperclip />
+              添加凭据
+            </button>
+          )}
+        </div>
+      ))}
       {!rows.length && <p className="quiet-empty">暂无收支，先记录一笔收入或支出。</p>}
       {edit && (
         <EntryForm
           value={edit}
+          initialScope={resourceLinks(data, 'ledger', edit.id)[0] ?? scope}
           data={data}
           save={save}
           onClose={() => setEdit(null)}
@@ -182,9 +205,7 @@ export default function Finance({
           title="约定律师费"
           onClose={() => setFee(null)}
           onSubmit={async () => {
-            await save('save_case_detail', {
-              input: { ...detail, agreedFeeCents: cents(fee) } satisfies CaseDetail,
-            });
+            await save('save_fee_agreement', { caseId, amountCents: cents(fee) });
           }}
         >
           <label>
@@ -219,20 +240,26 @@ export default function Finance({
     </section>
   );
 }
-function EntryForm({
+export function EntryForm({
   value,
   data,
   save,
   onClose,
   onDelete,
+  initialScope = caseScope,
 }: {
   value: LedgerEntry;
   data: Workspace;
   save: SaveAction;
   onClose: () => void;
   onDelete?: () => void;
+  initialScope?: WorkScope;
 }) {
   const [input, setInput] = useState(value);
+  const [scope, setScope] = useState<WorkScope>({
+    proceedingId: value.proceedingId,
+    stageId: initialScope.stageId,
+  });
   const [receipt, setReceipt] = useState<PendingReceipt | null>(null);
   const [amount, setAmount] = useState(
     value.amountCents ? (value.amountCents / 100).toFixed(2) : '',
@@ -245,13 +272,11 @@ function EntryForm({
       onSubmit={async () => {
         const amountCents = cents(amount);
         if (!amountCents) throw new Error('金额必须大于0');
-        if (receipt)
-          await save('save_ledger_with_receipt', {
-            input: { ...input, amountCents },
-            sourcePath: receipt.path,
-            receiptId: receipt.id,
-          });
-        else await save('save_ledger', { input: { ...input, amountCents } });
+        await save('save_work_ledger', {
+          input: { ...input, amountCents, proceedingId: scope.proceedingId },
+          stageId: scope.stageId,
+          ...(receipt ? { sourcePath: receipt.path, receiptId: receipt.id } : {}),
+        });
       }}
     >
       <div className="form-columns">
@@ -312,23 +337,7 @@ function EntryForm({
           />
         </label>
       </div>
-      <label>
-        所属流程
-        <Select
-          aria-label="收支所属程序"
-          value={input.proceedingId ?? ''}
-          onValueChange={(value) => update({ proceedingId: value || null })}
-        >
-          <option value="">案件共用</option>
-          {data.proceedings
-            .filter((p) => p.caseId === input.caseId)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {proceedingName(p, data.proceedings)}
-              </option>
-            ))}
-        </Select>
-      </label>
+      <WorkScopeField caseId={input.caseId} data={data} value={scope} onChange={setScope} />
       {input.kind === 'expense' && (
         <label>
           当事人报销

@@ -4,11 +4,58 @@ use rusqlite::{params, OptionalExtension};
 impl Store {
     pub fn save_ledger_with_receipt(
         &self,
-        mut input: LedgerEntry,
+        input: LedgerEntry,
         source: &std::path::Path,
         receipt_id: &str,
     ) -> Result<()> {
+        self.save_receipt_context(input, source, receipt_id, None, false)
+    }
+    pub fn save_work_ledger(
+        &self,
+        input: LedgerEntry,
+        stage_id: Option<String>,
+        source: Option<&std::path::Path>,
+        receipt_id: Option<&str>,
+    ) -> Result<()> {
+        self.validate_work_scope(
+            &input.case_id,
+            input.proceeding_id.as_deref(),
+            stage_id.as_deref(),
+        )?;
+        if let Some(path) = source {
+            return self.save_receipt_context(
+                input,
+                path,
+                receipt_id.ok_or_else(|| Error::Validation("缺少凭据编号".into()))?,
+                stage_id,
+                true,
+            );
+        }
+        let tx = self.connection.unchecked_transaction()?;
+        let id = input.id.clone();
+        let owner = input.case_id.clone();
+        let proceeding = input.proceeding_id.clone();
+        self.save_ledger(input)?;
+        self.set_resource_scope(
+            &owner,
+            "ledger",
+            &id,
+            proceeding.as_deref(),
+            stage_id.as_deref(),
+        )?;
+        tx.commit()?;
+        Ok(())
+    }
+    fn save_receipt_context(
+        &self,
+        mut input: LedgerEntry,
+        source: &std::path::Path,
+        receipt_id: &str,
+        stage_id: Option<String>,
+        scoped: bool,
+    ) -> Result<()> {
         let target = MaterialTarget {
+            stage_id: stage_id.clone(),
             case_id: input.case_id.clone(),
             proceeding_id: input.proceeding_id.clone(),
             parent_id: None,
@@ -24,7 +71,19 @@ impl Store {
         let path = self.material_path(&id)?;
         input.material_id = Some(id);
         let result = (|| -> Result<()> {
+            let id = input.id.clone();
+            let owner = input.case_id.clone();
+            let proceeding = input.proceeding_id.clone();
             self.save_ledger(input)?;
+            if scoped {
+                self.set_resource_scope(
+                    &owner,
+                    "ledger",
+                    &id,
+                    proceeding.as_deref(),
+                    stage_id.as_deref(),
+                )?;
+            }
             tx.commit()?;
             Ok(())
         })();
@@ -73,6 +132,18 @@ impl Store {
             .optional()?;
         if owner.is_some_and(|id| id != input.case_id) {
             return Err(Error::Validation("不能修改其他案件的收支".into()));
+        }
+        let allocated: i64 = self.connection.query_row(
+            "SELECT coalesce(sum(amount_cents),0) FROM fee_allocations WHERE ledger_id=?1",
+            [&input.id],
+            |r| r.get(0),
+        )?;
+        if allocated > 0
+            && (input.kind != "income" || category != "律师费" || input.amount_cents < allocated)
+        {
+            return Err(Error::Validation(
+                "此收款已用于核销，请先调整核销关联".into(),
+            ));
         }
         self.connection.execute("INSERT INTO ledger_entries(id,case_id,proceeding_id,kind,amount_cents,entry_date,category,notes,reimbursement,material_id) VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10) ON CONFLICT(id) DO UPDATE SET proceeding_id=excluded.proceeding_id,kind=excluded.kind,amount_cents=excluded.amount_cents,entry_date=excluded.entry_date,category=excluded.category,notes=excluded.notes,reimbursement=excluded.reimbursement,material_id=excluded.material_id",params![input.id,input.case_id,input.proceeding_id,input.kind,input.amount_cents,input.entry_date,category,notes,input.reimbursement,input.material_id])?;
         Ok(())

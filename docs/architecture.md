@@ -1,6 +1,6 @@
 # 应用架构
 
-更新于 2026-10-18，版本 1.3.0。Windows x64 首发，其他平台需单独构建验收。
+更新于 2026-10-18，版本 1.4.0。Windows x64 首发，其他平台需单独构建验收。
 
 ## 层次
 
@@ -14,7 +14,7 @@ src/features 按 cases、calendar、materials、contacts、finance、settings �
 
 阶段排序不是强制线性流程：完成、跳过和重开由用户指定，切换当前阶段不自动完成原阶段。任意中间阶段可重开而保留其他阶段状态；状态变更与历史在同一事务写入，重复保存不刷历史。案件概览所有功能分区单列纵排，窗口宽度不改变功能阅读顺序。
 
-SQLite 外键、WAL、FULL 同步、5 秒 busy timeout，user_version 当前为 6。迁移在事务内执行；旧版本 1–5 在迁移前用 SQLite 在线备份 API 保存数据库副本。更高版本拒绝打开。005_case_overview.sql 增加程序前序与生命周期、人工事项/阶段历史分类、持久标签候选和案件标签关系。
+SQLite 外键、WAL、FULL 同步、5 秒 busy timeout，user_version 当前为 7。迁移在事务内执行；旧版本 1–6 在迁移前用 SQLite 在线备份 API 保存数据库副本。更高版本拒绝打开。005_case_overview.sql 增加程序前序与生命周期、人工事项/阶段历史分类、持久标签候选和案件标签关系。
 
 006_workflows_and_representation.sql 增加流程模板、实例名称和类别快照、案件级委托关系与按流程保存的身份；重建旧枚举约束后执行外键全量检查。可选联系人删除保留姓名和身份。更新图标的 Windows 专用 Shell 缓存同步在 windows_icon.rs 的独立 COM 线程中执行，只处理本安装资源，不改快捷方式或全局缓存。
 
@@ -55,3 +55,9 @@ NSIS 当前用户安装；Rust 在启动 15 秒后及每 6 小时通过 Tauri up
 ThemeProvider 读取 SQLite 设置 theme（dark/light/system），将解析后的主题应用至根元素，跟随系统时监听系统变化；只把该外观选择缓存于 WebView 用于启动，业务数据仍只走 Rust/SQLite。窗口仅新增 set-theme 权限。所有界面共用语义色变量，材料内容不做颜色变换。
 
 记账窗口直接选取本地凭据，选择阶段只保留路径、名称与稳定上传 ID，取消不复制、不写材料。保存时通过 save_ledger_with_receipt 在同一 SQLite 事务导入材料并保存金额与关联，失败回滚并清理本次新复制的 UUID 对象，原件和历史材料保留。稳定上传 ID 使相同提交重试不重复导入。凭据自动进入本案或所选流程的材料范围，复用现有材料和备份机制，无需修改数据库版本 6。当前一笔记录关联一份凭据，可上传多页 PDF；未实现票据 OCR、多凭据明细或自动报销判断。
+
+## 1.4 工作归属与收费
+
+007_case_workspace.sql 引入 work_links、task_work、fee_plans、fee_allocations 及约定确认。任务/事件/记录/账目单归属，材料多处引用；资源记录仍只有一份。归档目标新增可选 stageId，Rust 校验案件、流程、阶段与资源一致，归档和工作引用通过可嵌套 savepoint 一起提交。阶段删除使用 SET NULL 保留工作记录，资源彻底删除用触发器清理关联。
+
+save_work_task / save_work_event / save_work_record / save_work_ledger 原子保存资源和工作关联；支出凭据沿用稳定 ID 及失败清理。核销校验同案实际律师费收入、节点上限、单笔实收上限，收款改为支出或减额时保护已核销部分。整案备注不隐式确认 0 元约定。备份恢复接受 schema 3–7。页面与规则详见[案件工作空间](design/case-workspace.md)。

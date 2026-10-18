@@ -77,6 +77,11 @@ async function start() {
     throw new Error(`Native icon setup failed: ${JSON.stringify(iconStatus)}`);
   return page;
 }
+async function openFlowDetails(page) {
+  const e = page.locator('.work-details');
+  if ((await e.count()) && !(await e.evaluate((n) => n.open)))
+    await e.locator(':scope > summary').click();
+}
 const invoke = (page, name, args = {}) =>
   page.evaluate(([name, args]) => window.__TAURI_INTERNALS__.invoke(name, args), [name, args]);
 async function stop(page) {
@@ -237,8 +242,8 @@ try {
     .getByRole('dialog', { name: '截止日期选择器', exact: true })
     .getByRole('button', { name: '今天', exact: true })
     .click();
-  await page.getByRole('button', { name: '添加', exact: true }).click();
-  await expect(page.locator('.todo-row')).toContainText('原生日期组件验收');
+  await page.getByRole('button', { name: '保存待办', exact: true }).click();
+  await expect(page.locator('.work-task-row')).toContainText('原生日期组件验收');
   const source = join(root, '原始证据.txt');
   writeFileSync(source, 'original evidence');
   const pdfPath = join(root, '阅读示例.pdf');
@@ -414,18 +419,23 @@ try {
   await page.reload();
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
+  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await page.getByText('流程关系', { exact: true }).click();
   await expect(page.locator('.program-node')).toHaveCount(3);
   await expect(page.locator('.program-edges path')).toHaveCount(2);
   await page.getByRole('button', { name: '查看二审流程', exact: true }).click();
+  await openFlowDetails(page);
   workspace = await invoke(page, 'load_workspace');
   if (workspace.cases[0].currentProceedingId !== first)
     throw new Error('Browsing changed persistent focus');
   await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
+  await openFlowDetails(page);
   const tags = page.getByRole('combobox', { name: '案件标签', exact: true });
   await tags.fill('#合同纠纷');
   await tags.press('Enter');
   await expect(page.getByRole('button', { name: '移除标签合同纠纷' })).toBeVisible();
-  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openFlowDetails(page);
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(
     '虚构甲法院新名称',
   );
@@ -471,15 +481,18 @@ try {
     (s) => s.proceedingId === second && s.state === 'current',
   );
   await page.getByRole('button', { name: '查看二审流程', exact: true }).click();
+  await openFlowDetails(page);
   await page.getByRole('button', { name: deletedCurrent.name, exact: true }).click();
+  await page.getByRole('button', { name: '调整阶段状态', exact: true }).click();
   await page.getByRole('button', { name: '删除此阶段', exact: true }).click();
   const deleteStageDialog = page.getByRole('dialog', { name: '删除阶段', exact: true });
   await deleteStageDialog.getByRole('button', { name: '取消', exact: true }).click();
-  await expect(page.locator('.stage-current')).toHaveText(deletedCurrent.name);
+  await expect(page.locator('.stage-current')).toContainText(deletedCurrent.name);
   await page.getByRole('button', { name: deletedCurrent.name, exact: true }).click();
+  await page.getByRole('button', { name: '调整阶段状态', exact: true }).click();
   await page.getByRole('button', { name: '删除此阶段', exact: true }).click();
   await deleteStageDialog.getByRole('button', { name: '删除', exact: true }).click();
-  await expect(page.locator('.program-current-stage')).toContainText('尚未指定阶段');
+  await expect(page.locator('.program-current-stage')).toContainText('尚未指定当前阶段');
   workspace = await invoke(page, 'load_workspace');
   if (
     workspace.stages.some((s) => s.id === deletedCurrent.id) ||
@@ -491,6 +504,7 @@ try {
     throw new Error('Native stage deletion changed unrelated work or lost history');
   await page.screenshot({ path: join(root, 'stage-deletion.png') });
   await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
+  await openFlowDetails(page);
   await page.getByRole('button', { name: '查看法院关联', exact: true }).click();
   const detail = page.getByRole('dialog', { name: '虚构甲法院新名称', exact: true });
   await expect(detail).toContainText('虚构法官');
@@ -719,7 +733,7 @@ try {
     throw new Error('Direct receipt/theme persistence failed');
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('tab', { name: '收支', exact: true }).click();
+  await page.getByRole('tab', { name: '费用', exact: true }).click();
   await expect(page.locator('.ledger-row').filter({ hasText: '凭据直接上传验收' })).toContainText(
     '128.50',
   );
@@ -733,6 +747,186 @@ try {
     console.log('Native update service check:', JSON.stringify(update));
     if (update !== null) throw new Error('Unexpected version in published update service');
   }
+  // 1.4: exercise the complete work model against real SQLite, managed files,
+  // IPC, WebView, backup/restore and a fresh owned process.
+  const workCase = await invoke(page, 'create_case', {
+    input: {
+      id: crypto.randomUUID(),
+      title: '阶段工作空间验收（虚构）',
+      caseType: 'civil',
+      statusId: 'in_progress',
+    },
+  });
+  const workFlow = await invoke(page, 'add_proceeding', {
+    caseId: workCase.id,
+    kind: 'first_instance',
+    parentId: null,
+  });
+  const parallelFlow = await invoke(page, 'add_proceeding', {
+    caseId: workCase.id,
+    kind: 'contract_review',
+    parentId: null,
+  });
+  workspace = await invoke(page, 'load_workspace');
+  const workStage = workspace.stages.find((s) => s.proceedingId === workFlow && s.name === '举证');
+  const parallelStage = workspace.stages.find((s) => s.proceedingId === parallelFlow);
+  const workTask = {
+    id: crypto.randomUUID(),
+    caseId: workCase.id,
+    title: '核对并提交补充证据',
+    dueDate: today,
+    completed: false,
+  };
+  await invoke(page, 'save_work_task', {
+    input: {
+      task: workTask,
+      waitingFor: '委托人补充流水',
+      outcome: '',
+      proceedingId: workFlow,
+      stageId: workStage.id,
+    },
+  });
+  await invoke(page, 'apply_stage_tasks', {
+    stageId: workStage.id,
+    titles: ['核对提交稿', '保存回执'],
+  });
+  await invoke(page, 'apply_stage_tasks', {
+    stageId: workStage.id,
+    titles: ['核对提交稿', '保存回执'],
+  });
+  const workEvent = {
+    id: crypto.randomUUID(),
+    caseId: workCase.id,
+    title: '证据核对会议',
+    startDate: today,
+    endDate: today,
+    startTime: '10:00',
+    endTime: '10:30',
+    location: '视频',
+    notes: '',
+  };
+  await invoke(page, 'save_work_event', {
+    input: workEvent,
+    proceedingId: workFlow,
+    stageId: workStage.id,
+  });
+  await invoke(page, 'save_work_record', {
+    input: { id: crypto.randomUUID(), caseId: workCase.id, body: '已核对证据原件' },
+    proceedingId: workFlow,
+    stageId: workStage.id,
+  });
+  const workTarget = {
+    caseId: workCase.id,
+    proceedingId: workFlow,
+    stageId: workStage.id,
+    parentId: null,
+    recordId: null,
+  };
+  const imported = await invoke(page, 'import_material_paths', {
+    target: workTarget,
+    paths: [source],
+  });
+  if (imported.imported !== 1 || imported.errors.length)
+    throw new Error('Scoped native file import failed');
+  workspace = await invoke(page, 'load_workspace');
+  const sharedFile = workspace.materials.find((m) => m.caseId === workCase.id);
+  await invoke(page, 'save_work_link', {
+    input: {
+      id: crypto.randomUUID(),
+      caseId: workCase.id,
+      proceedingId: parallelFlow,
+      stageId: parallelStage.id,
+      kind: 'material',
+      resourceId: sharedFile.id,
+      label: '复用依据',
+    },
+  });
+  const feePlan = {
+    id: crypto.randomUUID(),
+    caseId: workCase.id,
+    proceedingId: workFlow,
+    stageId: workStage.id,
+    title: '首期服务费',
+    amountCents: 1000000,
+    dueDate: today,
+    condition: '',
+    ready: true,
+  };
+  await invoke(page, 'save_fee_plan', { input: feePlan });
+  const workIncome = {
+    ...directReceipt,
+    id: crypto.randomUUID(),
+    caseId: workCase.id,
+    proceedingId: workFlow,
+    kind: 'income',
+    amountCents: 600000,
+    category: '律师费',
+    notes: '首期实收',
+    reimbursement: 'none',
+    materialId: null,
+  };
+  await invoke(page, 'save_work_ledger', { input: workIncome, stageId: workStage.id });
+  await invoke(page, 'save_fee_allocation', {
+    input: { planId: feePlan.id, ledgerId: workIncome.id, amountCents: 600000 },
+  });
+  const workExpense = {
+    ...directReceipt,
+    id: crypto.randomUUID(),
+    caseId: workCase.id,
+    proceedingId: workFlow,
+  };
+  const workReceipt = crypto.randomUUID();
+  for (let n = 0; n < 2; n++)
+    await invoke(page, 'save_work_ledger', {
+      input: workExpense,
+      stageId: workStage.id,
+      sourcePath: source,
+      receiptId: workReceipt,
+    });
+  await invoke(page, 'select_proceeding', { caseId: workCase.id, proceedingId: workFlow });
+  await page.reload();
+  await page.getByRole('button', { name: '案件', exact: true }).click();
+  await page.locator('.case-card').filter({ hasText: workCase.title }).click();
+  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await page.getByRole('button', { name: '举证', exact: true }).click();
+  await expect(page.locator('.work-task-row')).toHaveCount(3);
+  await expect(page.locator('.work-task-row').filter({ hasText: workTask.title })).toContainText(
+    '委托人补充流水',
+  );
+  await expect(page.locator('.material-row')).toHaveCount(2);
+  await expect(page.getByRole('region', { name: '阶段费用', exact: true })).toContainText(
+    '6,000.00',
+  );
+  await expect(page.locator('.fee-plan-totals')).toContainText('4,000.00');
+  await expect(page.locator('.work-relations')).not.toHaveAttribute('open', '');
+  await page.screenshot({ path: join(root, 'workspace-1.4-light.png') });
+  const workBackup = await invoke(page, 'run_backup');
+  await invoke(page, 'delete_stage', { id: workStage.id });
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    workspace.tasks.filter((t) => t.caseId === workCase.id).length !== 3 ||
+    workspace.materials.filter((m) => m.caseId === workCase.id).length !== 2 ||
+    workspace.ledgerEntries.filter((e) => e.caseId === workCase.id).length !== 2 ||
+    workspace.feePlans.find((p) => p.id === feePlan.id)?.stageId !== null ||
+    !workspace.feeAllocations.some((a) => a.planId === feePlan.id && a.amountCents === 600000) ||
+    workspace.workLinks.some((l) => l.stageId === workStage.id)
+  )
+    throw new Error('Deleting a native work stage lost business records');
+  await invoke(page, 'apply_restore_backup', { path: workBackup.directory, confirmed: true });
+  await stop(page);
+  page = await start();
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    !workspace.stages.some((s) => s.id === workStage.id) ||
+    workspace.workLinks.filter((l) => l.kind === 'material' && l.resourceId === sharedFile.id)
+      .length !== 2 ||
+    workspace.feeAllocations.find((a) => a.planId === feePlan.id)?.amountCents !== 600000 ||
+    workspace.ledgerEntries.filter((e) => e.id === workExpense.id).length !== 1 ||
+    readFileSync(source, 'utf8') !== 'original evidence'
+  )
+    throw new Error(
+      'Native workspace links/allocations or original file did not survive restart and restore',
+    );
   await stop(page);
   const identities = workspace.proceedingPartyRoles.filter((r) => r.partyId === party.id);
   if (

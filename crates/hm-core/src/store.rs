@@ -51,13 +51,13 @@ impl Store {
         let mut connection = Connection::open(path)?;
         crate::backup::recover_on_open(&mut connection, directory)?;
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 0 && version < 6 {
+        if version > 0 && version < 7 {
             let safety = directory.join("migration-backups");
             std::fs::create_dir_all(&safety)?;
             connection.backup(
                 "main",
                 safety.join(format!(
-                    "before-v6-from-v{version}-{}.sqlite3",
+                    "before-v7-from-v{version}-{}.sqlite3",
                     Uuid::new_v4()
                 )),
                 None,
@@ -83,12 +83,12 @@ impl Store {
     }
     pub(crate) fn migrate(connection: &mut Connection) -> Result<()> {
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 6 {
+        if version > 7 {
             return Err(Error::Validation(
                 "数据库来自较新版本，请使用新版软件打开".into(),
             ));
         }
-        if version < 6 {
+        if version < 7 {
             // SQLite cannot remove the legacy kind CHECK in place. Disable FK
             // enforcement before the atomic rebuild, validate before committing,
             // and restore enforcement on success and failure alike.
@@ -111,9 +111,12 @@ impl Store {
                 if version < 5 {
                     tx.execute_batch(include_str!("../migrations/005_case_overview.sql"))?;
                 }
-                tx.execute_batch(include_str!(
-                    "../migrations/006_workflows_and_representation.sql"
-                ))?;
+                if version < 6 {
+                    tx.execute_batch(include_str!(
+                        "../migrations/006_workflows_and_representation.sql"
+                    ))?;
+                }
+                tx.execute_batch(include_str!("../migrations/007_case_workspace.sql"))?;
                 if tx.prepare("PRAGMA foreign_key_check")?.exists([])? {
                     return Err(Error::Validation(
                         "升级关系校验未通过，已保留原数据库".into(),
@@ -193,6 +196,11 @@ impl Store {
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
         Ok(Workspace {
+            work_links: self.work_links()?,
+            task_work: self.task_work()?,
+            fee_plans: self.fee_plans()?,
+            fee_allocations: self.fee_allocations()?,
+            confirmed_fee_cases: self.confirmed_fee_cases()?,
             workflow_templates: self.workflow_templates()?,
             case_parties: self.case_parties()?,
             proceeding_party_roles: self.proceeding_party_roles()?,

@@ -119,6 +119,7 @@ fn case(store: &mut Store, title: &str) -> Case {
 }
 fn target(c: &Case) -> MaterialTarget {
     MaterialTarget {
+        stage_id: None,
         case_id: c.id.clone(),
         proceeding_id: None,
         parent_id: None,

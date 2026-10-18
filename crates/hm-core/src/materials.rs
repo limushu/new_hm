@@ -80,7 +80,11 @@ impl Store {
         Ok(())
     }
     fn target(&self, target: &MaterialTarget) -> Result<()> {
-        self.validate_proceeding(&target.case_id, target.proceeding_id.as_deref())?;
+        self.validate_work_scope(
+            &target.case_id,
+            target.proceeding_id.as_deref(),
+            target.stage_id.as_deref(),
+        )?;
         if let Some(id) = &target.parent_id {
             let parent = self.material(id)?;
             if parent.kind != "folder"
@@ -277,7 +281,28 @@ impl Store {
             temporary
                 .persist_noclobber(dir.join(&stored))
                 .map_err(|e| Error::Io(e.error))?;
-            self.connection.execute("INSERT INTO materials(id,case_id,proceeding_id,parent_id,name,kind,storage_name,size,record_id) VALUES(?1,?2,?3,?4,?5,'file',?6,?7,?8)",params![id,target.case_id,target.proceeding_id,target.parent_id,name,stored,size as i64,target.record_id])?;
+            self.connection.execute_batch("SAVEPOINT material_import")?;
+            let inserted = (|| -> Result<()> {
+                self.connection.execute("INSERT INTO materials(id,case_id,proceeding_id,parent_id,name,kind,storage_name,size,record_id) VALUES(?1,?2,?3,?4,?5,'file',?6,?7,?8)",params![id,target.case_id,target.proceeding_id,target.parent_id,name,stored,size as i64,target.record_id])?;
+                if let (Some(stage), Some(proceeding)) = (&target.stage_id, &target.proceeding_id) {
+                    self.write_work_link(&crate::WorkLink {
+                        id: Uuid::new_v4().to_string(),
+                        case_id: target.case_id.clone(),
+                        proceeding_id: proceeding.clone(),
+                        stage_id: Some(stage.clone()),
+                        kind: "material".into(),
+                        resource_id: id.into(),
+                        label: String::new(),
+                    })?;
+                }
+                Ok(())
+            })();
+            if inserted.is_err() {
+                self.connection
+                    .execute_batch("ROLLBACK TO material_import")?;
+            }
+            self.connection.execute_batch("RELEASE material_import")?;
+            inserted?;
             Ok(id.to_string())
         })();
         if result.is_err() {
@@ -311,6 +336,7 @@ impl Store {
     pub fn rename_material(&self, id: &str, name: &str) -> Result<()> {
         let item = self.material(id)?;
         let target = MaterialTarget {
+            stage_id: None,
             case_id: item.case_id.clone(),
             proceeding_id: item.proceeding_id.clone(),
             parent_id: item.parent_id.clone(),

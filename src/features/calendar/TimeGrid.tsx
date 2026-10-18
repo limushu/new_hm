@@ -15,6 +15,7 @@ interface Props {
   onCreate: (date: string, minute?: number) => void;
   onEdit: (event: CalendarEvent) => void;
   openCase: (id: string) => void;
+  onTask?: (task: Task) => void;
   focusToday: number;
 }
 
@@ -28,6 +29,7 @@ export default function TimeGrid({
   onCreate,
   onEdit,
   openCase,
+  onTask,
   focusToday,
 }: Props) {
   const scroll = useRef<HTMLDivElement>(null);
@@ -118,7 +120,7 @@ export default function TimeGrid({
                         <button
                           className="time-task"
                           key={task.id}
-                          onClick={() => openCase(task.caseId)}
+                          onClick={() => (onTask ? onTask(task) : openCase(task.caseId))}
                         >
                           <Square />
                           <span>{task.title}</span>

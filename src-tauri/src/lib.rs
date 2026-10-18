@@ -177,6 +177,17 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             load_workspace,
+            commands::save_work_link,
+            commands::save_work_event,
+            commands::save_work_record,
+            commands::save_work_ledger,
+            commands::delete_work_link,
+            commands::save_work_task,
+            commands::apply_stage_tasks,
+            commands::save_fee_plan,
+            commands::delete_fee_plan,
+            commands::save_fee_allocation,
+            commands::save_fee_agreement,
             files::pick_receipt_file,
             files::save_ledger_with_receipt,
             storage_info,

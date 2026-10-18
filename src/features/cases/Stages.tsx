@@ -18,12 +18,16 @@ export default function Stages({
   data,
   save,
   children,
+  selected,
+  onSelect,
 }: {
   caseId: string;
   proceedingId: string;
   data: Workspace;
   save: SaveAction;
   children?: ReactNode;
+  selected?: string | null;
+  onSelect?: (id: string | null) => void;
 }) {
   const closed = data.proceedings.find((p) => p.id === proceedingId)?.state === 'completed';
   const history = data.caseEvents.filter(
@@ -54,28 +58,40 @@ export default function Stages({
       <section className="feature-section program-stage-section" aria-label="办理阶段">
         <header>
           <div className="program-current-stage">
-            <h3>{closed ? '最后办理阶段' : '当前办理'}</h3>
-            <strong className={!rows.some((s) => s.state === 'current') ? 'is-empty' : undefined}>
-              {rows.find((s) => s.state === 'current')?.name || '尚未指定阶段'}
-            </strong>
+            <h3>工作阶段</h3>
+            {!rows.some((s) => s.state === 'current') && (
+              <span className="quiet-empty">尚未指定当前阶段</span>
+            )}
           </div>
           <button disabled={closed} onClick={() => setManage(true)}>
             管理阶段
           </button>
         </header>
         <div className="stage-strip">
+          {onSelect && (
+            <button
+              className={`stage-chip ${!selected ? 'is-viewed' : ''}`}
+              aria-pressed={!selected}
+              onClick={() => onSelect(null)}
+            >
+              全部阶段
+            </button>
+          )}
           {rows.map((stage) => (
             <button
               key={stage.id}
-              className={`stage-chip stage-${stage.state}`}
-              disabled={busy || closed}
-              title={`${stageLabels[stage.state]} · ${stage.state === 'pending' ? '点击设为当前阶段' : '点击调整状态'}`}
+              aria-label={stage.name}
+              className={`stage-chip stage-${stage.state} ${selected === stage.id ? 'is-viewed' : ''}`}
+              aria-pressed={selected === stage.id}
+              disabled={busy}
+              title={stageLabels[stage.state]}
               onContextMenu={(e) => {
                 e.preventDefault();
                 if (!busy && !closed) adjust(stage);
               }}
               onClick={() => {
-                if (stage.state === 'pending')
+                if (onSelect) onSelect(stage.id);
+                else if (stage.state === 'pending')
                   void run(() => save('save_stage', { input: { ...stage, state: 'current' } }));
                 else adjust(stage);
               }}
@@ -88,16 +104,22 @@ export default function Stages({
                 <i />
               )}
               {stage.name}
+              {stage.state === 'current' && <small className="stage-current-label">正在办理</small>}
             </button>
           ))}
         </div>
         {rows.length === 0 && <p className="quiet-empty">暂无阶段</p>}
-        <details className="stage-help">
-          <summary>阶段如何调整</summary>
-          <p className="stage-guidance">
-            顺序仅作办理参考，切换当前阶段不会自动完成其他阶段。点击已完成阶段可重新打开，也可在“管理阶段”中调整状态。
-          </p>
-        </details>
+        {selected && rows.find((s) => s.id === selected) && (
+          <div className="work-stage-heading">
+            <h3>{rows.find((s) => s.id === selected)!.name}</h3>
+            <span className="work-state">
+              {stageLabels[rows.find((s) => s.id === selected)!.state]}
+            </span>
+            <button disabled={closed} onClick={() => adjust(rows.find((s) => s.id === selected)!)}>
+              调整阶段状态
+            </button>
+          </div>
+        )}
         {error && (
           <p role="alert" className="error-message">
             {error}
@@ -105,45 +127,30 @@ export default function Stages({
         )}
       </section>
       {children}
-      <section className="feature-section" aria-label="流程事项">
-        <header>
-          <h3>流程事项</h3>
-          <button
-            onClick={() =>
-              setEvent({
-                id: crypto.randomUUID(),
-                caseId,
-                proceedingId,
-                title: '',
-                eventDate: dateKey(new Date()),
-                notes: '',
-              })
-            }
-          >
-            <Plus />
-            记录事件
-          </button>
-        </header>
-        {data.caseEvents
-          .filter((e) => e.proceedingId === proceedingId && e.kind !== 'stage_change')
-          .map((e) => (
-            <article className="case-event" key={e.id}>
-              <time>{e.eventDate}</time>
-              <div>
-                <strong>{e.title}</strong>
-                {e.notes && <p>{e.notes}</p>}
-              </div>
-            </article>
-          ))}
-        {!data.caseEvents.some(
-          (e) => e.proceedingId === proceedingId && e.kind !== 'stage_change',
-        ) && <p className="quiet-empty">暂无流程事项</p>}
-      </section>
-      {history.length > 0 && (
-        <details className="case-history">
-          <summary>阶段变更记录 · {history.length}</summary>
-          <div className="stage-history-list">
-            {history.map((e) => (
+      <details className="work-history-panel">
+        <summary>事项与变更记录</summary>
+        <section className="feature-section" aria-label="流程事项">
+          <header>
+            <h3>流程事项</h3>
+            <button
+              onClick={() =>
+                setEvent({
+                  id: crypto.randomUUID(),
+                  caseId,
+                  proceedingId,
+                  title: '',
+                  eventDate: dateKey(new Date()),
+                  notes: '',
+                })
+              }
+            >
+              <Plus />
+              记录事件
+            </button>
+          </header>
+          {data.caseEvents
+            .filter((e) => e.proceedingId === proceedingId && e.kind !== 'stage_change')
+            .map((e) => (
               <article className="case-event" key={e.id}>
                 <time>{e.eventDate}</time>
                 <div>
@@ -152,9 +159,27 @@ export default function Stages({
                 </div>
               </article>
             ))}
-          </div>
-        </details>
-      )}
+          {!data.caseEvents.some(
+            (e) => e.proceedingId === proceedingId && e.kind !== 'stage_change',
+          ) && <p className="quiet-empty">暂无流程事项</p>}
+        </section>
+        {history.length > 0 && (
+          <details className="case-history">
+            <summary>阶段变更记录 · {history.length}</summary>
+            <div className="stage-history-list">
+              {history.map((e) => (
+                <article className="case-event" key={e.id}>
+                  <time>{e.eventDate}</time>
+                  <div>
+                    <strong>{e.title}</strong>
+                    {e.notes && <p>{e.notes}</p>}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </details>
+        )}
+      </details>
       {manage && (
         <Dialog title="管理办理阶段" onClose={() => setManage(false)}>
           <div className="feature-list">
@@ -301,7 +326,9 @@ export default function Stages({
             await save('delete_stage', { id: remove.id });
           }}
         >
-          <p className="feature-description">删除“{remove.name}”？已发生的事件记录会保留。</p>
+          <p className="feature-description">
+            删除“{remove.name}”？任务、材料、日程和费用保留在所属流程，已发生的记录也会保留。
+          </p>
           <p className="field-hint">
             程序材料和其他阶段不受影响。
             {remove.state === 'current' &&

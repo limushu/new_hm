@@ -2,20 +2,26 @@ import { useState } from 'react';
 import { Plus, Paperclip, NotebookPen } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import Materials from '../materials/Materials';
-import type { RecordInput, SaveAction, Workspace, WorkRecord } from '../../domain/types';
+import type { RecordInput, SaveAction, Workspace, WorkRecord, WorkScope } from '../../domain/types';
+import { caseScope, resourceInScope, resourceLinks } from '../../domain/workspace';
+import WorkScopeField from './WorkScopeField';
 export default function Records({
   caseId,
   data,
   save,
+  scope = caseScope,
 }: {
   caseId: string;
   data: Workspace;
   save: SaveAction;
+  scope?: WorkScope;
 }) {
   const [edit, setEdit] = useState<RecordInput | null>(null);
   const [remove, setRemove] = useState<WorkRecord | null>(null);
   const [attachments, setAttachments] = useState<WorkRecord | null>(null);
-  const rows = data.workRecords.filter((r) => r.caseId === caseId);
+  const rows = data.workRecords.filter(
+    (r) => r.caseId === caseId && resourceInScope(data, 'record', r.id, scope),
+  );
   return (
     <section className="case-section" data-tone="violet">
       <div className="section-title">
@@ -50,7 +56,15 @@ export default function Records({
           </footer>
         </article>
       ))}
-      {edit && <RecordForm value={edit} save={save} onClose={() => setEdit(null)} />}
+      {edit && (
+        <RecordForm
+          value={edit}
+          data={data}
+          scope={resourceLinks(data, 'record', edit.id)[0] ?? scope}
+          save={save}
+          onClose={() => setEdit(null)}
+        />
+      )}
       {remove && (
         <Dialog
           title="移入回收站"
@@ -78,19 +92,24 @@ function RecordForm({
   value,
   save,
   onClose,
+  data,
+  scope,
 }: {
   value: RecordInput;
   save: SaveAction;
   onClose: () => void;
+  data: Workspace;
+  scope: WorkScope;
 }) {
   const [body, setBody] = useState(value.body);
+  const [context, setContext] = useState(scope);
   return (
     <Dialog
       title={value.body ? '编辑工作记录' : '添加工作记录'}
       onClose={onClose}
       submitLabel="保存记录"
       onSubmit={async () => {
-        await save('save_record', { input: { ...value, body } });
+        await save('save_work_record', { input: { ...value, body }, ...context });
       }}
     >
       <label>
@@ -106,7 +125,7 @@ function RecordForm({
           onChange={(e) => setBody(e.target.value)}
         />
       </label>
-      <p className="field-hint">保存后可通过“附件”添加文件或录音。</p>
+      <WorkScopeField caseId={value.caseId} data={data} value={context} onChange={setContext} />
     </Dialog>
   );
 }

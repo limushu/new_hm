@@ -2,7 +2,9 @@ import DateField from '../../components/DateField';
 import Select from '../../components/Select';
 import { useEffect, useRef, useState } from 'react';
 import { CalendarDays, Clock3, MapPin, Trash2, X } from 'lucide-react';
-import type { CalendarEvent, CaseFile, SaveAction } from '../../domain/types';
+import type { CalendarEvent, CaseFile, SaveAction, Workspace, WorkScope } from '../../domain/types';
+import WorkScopeField from '../cases/WorkScopeField';
+import { caseScope, resourceLinks } from '../../domain/workspace';
 import { validateEvent } from './schedule';
 import CaseAssociation from './CaseAssociation';
 
@@ -13,9 +15,23 @@ interface Props {
   save: SaveAction;
   onClose: () => void;
   onSaved: (date: string) => void;
+  data?: Workspace;
+  initialScope?: WorkScope;
 }
 
-export default function EventEditor({ event, existing, cases, save, onClose, onSaved }: Props) {
+export default function EventEditor({
+  event,
+  existing,
+  cases,
+  save,
+  onClose,
+  onSaved,
+  data,
+  initialScope = caseScope,
+}: Props) {
+  const [scope, setScope] = useState<WorkScope>(
+    data ? (resourceLinks(data, 'event', event.id)[0] ?? initialScope) : initialScope,
+  );
   const [value, setValue] = useState(event);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -27,8 +43,10 @@ export default function EventEditor({ event, existing, cases, save, onClose, onS
     dialog.current?.showModal();
     title.current?.focus();
   }, []);
-  const update = (patch: Partial<CalendarEvent>) =>
+  const update = (patch: Partial<CalendarEvent>) => {
+    if ('caseId' in patch && patch.caseId !== value.caseId) setScope(caseScope);
     setValue((current) => ({ ...current, ...patch }));
+  };
   async function submit() {
     if (inFlight.current) return;
     const invalid = validateEvent(value);
@@ -40,7 +58,9 @@ export default function EventEditor({ event, existing, cases, save, onClose, onS
     setBusy(true);
     setError('');
     try {
-      await save('save_calendar_event', { input: { ...value, title: value.title.trim() } });
+      if (data)
+        await save('save_work_event', { input: { ...value, title: value.title.trim() }, ...scope });
+      else await save('save_calendar_event', { input: { ...value, title: value.title.trim() } });
       onSaved(value.startDate);
     } catch (reason) {
       setError(String(reason));
@@ -199,6 +219,9 @@ export default function EventEditor({ event, existing, cases, save, onClose, onS
             cases={cases}
             onChange={(caseId) => update({ caseId })}
           />
+          {data && value.caseId && (
+            <WorkScopeField caseId={value.caseId} data={data} value={scope} onChange={setScope} />
+          )}
           <label className="event-property">
             <MapPin />
             <input

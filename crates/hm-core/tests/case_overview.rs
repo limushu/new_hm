@@ -286,6 +286,7 @@ fn deleting_any_stage_keeps_history_and_program_scope_and_can_leave_no_current_s
     let folder = store
         .create_material_folder(
             MaterialTarget {
+                stage_id: None,
                 case_id: case.id.clone(),
                 proceeding_id: Some(program.clone()),
                 parent_id: None,

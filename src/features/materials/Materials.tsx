@@ -11,11 +11,20 @@ import {
   ChevronRight,
   Mic,
   Upload,
+  Link2,
 } from 'lucide-react';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
-import type { Material, MaterialTarget, SaveAction, Workspace } from '../../domain/types';
+import type {
+  Material,
+  MaterialTarget,
+  SaveAction,
+  Workspace,
+  WorkScope,
+} from '../../domain/types';
+import { matchesScope, resourceLinks, scopeName as workScopeName } from '../../domain/workspace';
+import ResourceAssociation from '../cases/ResourceAssociation';
 import { proceedingName } from '../../domain/proceedings';
 import { command, desktopRuntime } from '../../services/repository';
 import Recorder from './Recorder';
@@ -44,7 +53,10 @@ export default function Materials({
   save,
   recordId = null,
   focusId,
-  initialScope = 'shared',
+  initialScope = 'all',
+  initialStageId = null,
+  workScope,
+  onScopeChange,
 }: {
   caseId: string;
   data: Workspace;
@@ -52,11 +64,30 @@ export default function Materials({
   recordId?: string | null;
   focusId?: string;
   initialScope?: string;
+  initialStageId?: string | null;
+  workScope?: WorkScope;
+  onScopeChange?: (scope: WorkScope) => void;
 }) {
   const focused = data.materials.find(
     (m) => m.id === focusId && m.caseId === caseId && !m.deletedAt,
   );
-  const [scope, setScope] = useState(focused?.proceedingId ?? initialScope);
+  const [scope, setScope] = useState(
+    workScope?.proceedingId ?? (focused ? (focused.proceedingId ?? 'shared') : initialScope),
+  );
+  const [stageId, setStageId] = useState(workScope?.stageId ?? initialStageId);
+  const filterProp = useRef({ scope: initialScope, stage: initialStageId });
+  useEffect(() => {
+    if (filterProp.current.scope === initialScope && filterProp.current.stage === initialStageId)
+      return;
+    filterProp.current = { scope: initialScope, stage: initialStageId };
+    if (!workScope) {
+      setScope(initialScope);
+      setStageId(initialStageId);
+      setFolder(null);
+      setQuery('');
+    }
+  }, [initialScope, initialStageId, workScope]);
+  const [association, setAssociation] = useState<Material | null>(null);
   const [folder, setFolder] = useState<string | null>(focused?.parentId ?? null);
   const [query, setQuery] = useState('');
   const [preview, setPreview] = useState<Material | null>(null);
@@ -76,7 +107,12 @@ export default function Materials({
   const target = useRef<MaterialTarget>({ caseId, proceedingId: null, parentId: null, recordId });
   target.current = {
     caseId,
-    proceedingId: scope === 'shared' ? null : scope,
+    proceedingId: folder
+      ? (data.materials.find((m) => m.id === folder)?.proceedingId ?? null)
+      : scope === 'shared' || scope === 'all'
+        ? null
+        : scope,
+    stageId,
     parentId: folder,
     recordId,
   };
@@ -84,16 +120,31 @@ export default function Materials({
   const materials = data.materials.filter((m) => m.caseId === caseId && !m.deletedAt);
   const rows = materials.filter(
     (m) =>
-      (recordId ? m.recordId === recordId : m.proceedingId === target.current.proceedingId) &&
-      (query
+      (recordId
+        ? m.recordId === recordId
+        : stageId
+          ? resourceLinks(data, 'material', m.id).some((l) =>
+              matchesScope(l, { proceedingId: scope, stageId }),
+            )
+          : scope === 'all' ||
+            m.proceedingId === target.current.proceedingId ||
+            resourceLinks(data, 'material', m.id).some((l) => l.proceedingId === scope)) &&
+      (query || stageId
         ? m.name.toLocaleLowerCase().includes(query.toLocaleLowerCase())
-        : m.parentId === folder),
+        : m.parentId === folder ||
+          (!folder &&
+            scope !== 'all' &&
+            scope !== 'shared' &&
+            m.proceedingId !== scope &&
+            resourceLinks(data, 'material', m.id).some((l) => l.proceedingId === scope))),
   );
   const current = materials.find((m) => m.id === folder);
   const scopeName =
-    scope === 'shared'
-      ? '案件共用'
-      : proceedingName(programs.find((p) => p.id === scope)!, programs);
+    scope === 'all'
+      ? '全案材料'
+      : scope === 'shared'
+        ? '案件共用'
+        : proceedingName(programs.find((p) => p.id === scope)!, programs);
   const ancestors: Material[] = [];
   let at = current;
   const visited = new Set<string>();
@@ -242,9 +293,10 @@ export default function Materials({
         });
       }}
     >
-      {!recordId && (
+      {!recordId && !workScope && (
         <nav className="material-scopes" aria-label="按流程查看材料">
           {[
+            { id: 'all', name: '全案材料' },
             { id: 'shared', name: '案件共用' },
             ...programs.map((p) => ({ id: p.id, name: proceedingName(p, programs) })),
           ].map((group) => (
@@ -254,6 +306,11 @@ export default function Materials({
               className={scope === group.id ? 'active' : ''}
               onClick={() => {
                 setScope(group.id);
+                onScopeChange?.({
+                  proceedingId: group.id === 'all' ? null : group.id,
+                  stageId: null,
+                });
+                setStageId(null);
                 setFolder(null);
                 setQuery('');
               }}
@@ -262,13 +319,51 @@ export default function Materials({
               <small>
                 {
                   materials.filter(
-                    (m) => (m.proceedingId ?? 'shared') === group.id && m.kind === 'file',
+                    (m) =>
+                      (group.id === 'all' ||
+                        (m.proceedingId ?? 'shared') === group.id ||
+                        resourceLinks(data, 'material', m.id).some(
+                          (l) => l.proceedingId === group.id,
+                        )) &&
+                      m.kind === 'file',
                   ).length
                 }
               </small>
             </button>
           ))}
         </nav>
+      )}
+      {!recordId && !workScope && scope !== 'all' && scope !== 'shared' && (
+        <div className="material-stage-filter">
+          <Select
+            aria-label="材料阶段筛选"
+            value={stageId ?? ''}
+            onValueChange={(v) => {
+              setStageId(v || null);
+              onScopeChange?.({ proceedingId: scope, stageId: v || null });
+              setFolder(null);
+            }}
+          >
+            <option value="">全部阶段</option>
+            {data.stages
+              .filter((s) => s.proceedingId === scope)
+              .map((s) => (
+                <option value={s.id} key={s.id}>
+                  {s.name}
+                </option>
+              ))}
+          </Select>
+          {stageId && (
+            <button
+              onClick={() => {
+                setStageId(null);
+                onScopeChange?.({ proceedingId: scope, stageId: null });
+              }}
+            >
+              清除阶段筛选
+            </button>
+          )}
+        </div>
       )}
       <div className="feature-toolbar material-toolbar">
         <label className="material-search">
@@ -280,10 +375,12 @@ export default function Materials({
             onChange={(event) => setQuery(event.target.value)}
           />
         </label>
-        <button type="button" disabled={busy} onClick={() => showEdit('folder')}>
-          <Plus />
-          文件夹
-        </button>
+        {!stageId && (
+          <button type="button" disabled={busy} onClick={() => showEdit('folder')}>
+            <Plus />
+            文件夹
+          </button>
+        )}
         <button type="button" disabled={busy} onClick={() => setRecording(true)}>
           <Mic />
           录音
@@ -386,6 +483,7 @@ export default function Materials({
             <button
               type="button"
               className="material-name"
+              aria-label={item.name}
               title={query ? pathOf(item) : item.name}
               onClick={() => {
                 if (item.kind === 'folder') void open(item);
@@ -404,6 +502,13 @@ export default function Materials({
               <span>
                 {item.name}
                 {item.notes && <small>{item.notes}</small>}
+                {resourceLinks(data, 'material', item.id).length > 0 && (
+                  <small className="material-uses">
+                    {resourceLinks(data, 'material', item.id)
+                      .map((l) => `${workScopeName(data, l)}${l.label ? ' · ' + l.label : ''}`)
+                      .join(' / ')}
+                  </small>
+                )}
               </span>
             </button>
             <small>{item.kind === 'folder' ? '—' : fileSize(item.size)}</small>
@@ -437,6 +542,16 @@ export default function Materials({
           </div>
         )}
       </div>
+      {association && (
+        <ResourceAssociation
+          caseId={caseId}
+          kind="material"
+          resourceId={association.id}
+          data={data}
+          save={save}
+          onClose={() => setAssociation(null)}
+        />
+      )}
       {menu && (
         <div
           className="material-menu"
@@ -462,6 +577,19 @@ export default function Materials({
           <button type="button" role="menuitem" onClick={() => showEdit('notes', menu.item)}>
             备注
           </button>
+          {menu.item.kind === 'file' && (
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => {
+                setAssociation(menu.item);
+                setMenu(null);
+              }}
+            >
+              <Link2 />
+              工作关联
+            </button>
+          )}
           {menu.item.kind === 'file' && (
             <button
               type="button"

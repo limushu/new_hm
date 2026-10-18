@@ -85,6 +85,7 @@ impl Store {
                         .map_err(|_| Error::Validation("请先恢复上级文件夹".into()))?;
                 }
                 let target = MaterialTarget {
+                    stage_id: None,
                     case_id: item.case_id,
                     proceeding_id: item.proceeding_id,
                     parent_id: item.parent_id,

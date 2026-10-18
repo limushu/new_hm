@@ -7,10 +7,16 @@ export default function FinanceChart({
   rows,
   agreed,
   onCategory,
+  agreementKnown = agreed > 0,
+  paidTotal,
+  showAgreement = true,
 }: {
   rows: LedgerEntry[];
   agreed: number;
   onCategory: (kind: 'income' | 'expense', category: string | null) => void;
+  agreementKnown?: boolean;
+  paidTotal?: number;
+  showAgreement?: boolean;
 }) {
   const [kind, setKind] = useState<'income' | 'expense'>('income');
   const [chosen, setChosen] = useState<string | null>(null);
@@ -26,9 +32,11 @@ export default function FinanceChart({
     );
   const parts = [...amounts].sort((a, b) => b[1] - a[1]);
   const total = parts.reduce((sum, [, amount]) => sum + amount, 0);
-  const paid = rows
-    .filter((r) => r.kind === 'income' && r.category === '律师费')
-    .reduce((sum, r) => sum + r.amountCents, 0);
+  const paid =
+    paidTotal ??
+    rows
+      .filter((r) => r.kind === 'income' && r.category === '律师费')
+      .reduce((sum, r) => sum + r.amountCents, 0);
   const active = parts.find(([name]) => name === (hover || chosen));
   let offset = 0;
   return (
@@ -129,27 +137,29 @@ export default function FinanceChart({
             )}
           </div>
         </div>
-        <p className="field-hint">点击分类查看对应明细；图表按本案全部记录统计。</p>
       </section>
-      <section className="fee-progress">
-        <h4>律师费收款</h4>
-        <strong>
-          ¥ {money(paid)} <small>/ {money(agreed)}</small>
-        </strong>
-        <progress
-          max={Math.max(agreed, 1)}
-          value={Math.min(paid, agreed)}
-          aria-label="已收律师费占约定金额"
-        />
-        <p>
-          {!agreed
-            ? '尚未设置约定律师费'
-            : paid > agreed
-              ? `已收超出约定 ¥ ${money(paid - agreed)}`
-              : `待收 ¥ ${money(Math.max(0, agreed - paid))}`}
-        </p>
-        <small>只统计“律师费”收入，垫付款报销单独核算。</small>
-      </section>
+      {showAgreement && (
+        <section className="fee-progress">
+          <h4>整案律师费收款</h4>
+          <strong>
+            ¥ {money(paid)} <small>/ {money(agreed)}</small>
+          </strong>
+          <progress
+            max={Math.max(agreed, 1)}
+            value={Math.min(paid, agreed)}
+            aria-label="已收律师费占约定金额"
+          />
+          <p>
+            {!agreementKnown
+              ? '尚未设置约定律师费'
+              : agreed === 0 && paid === 0
+                ? '已明确约定免费'
+                : paid > agreed
+                  ? `已收超出约定 ¥ ${money(paid - agreed)}`
+                  : `待收 ¥ ${money(Math.max(0, agreed - paid))}`}
+          </p>
+        </section>
+      )}
     </div>
   );
 }

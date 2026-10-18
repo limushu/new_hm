@@ -14,6 +14,7 @@ mod stages;
 mod storage_location;
 pub mod store;
 mod workflows;
+mod workspace;
 pub use models::*;
 pub use storage_location::StorageLocation;
 pub use store::Store;

@@ -6,6 +6,8 @@ import type {
   CaseInput,
   ProceedingInput,
   CalendarEvent,
+  WorkLink,
+  WorkScope,
 } from '../domain/types';
 import type { MaterialTarget, RecordInput } from '../domain/types';
 import { dateKey } from '../domain/calendar';
@@ -21,6 +23,11 @@ export function registerPreviewFiles(files: File[]) {
 const settings: Record<string, string> = { close_to_tray: 'true', notifications: 'true' };
 const now = new Date().toISOString();
 const data: Workspace = {
+  workLinks: [],
+  taskWork: [],
+  feePlans: [],
+  feeAllocations: [],
+  confirmedFeeCases: [],
   workflowTemplates: [
     ...[
       ['first_instance', '一审'],
@@ -127,6 +134,65 @@ function writeTags(caseId: string, tags: string[]) {
     .concat(names.map((tag) => ({ caseId, tag })));
   data.tagCatalog = [...new Set([...data.tagCatalog, ...names])].sort();
 }
+function validateScope(caseId: string, scope: WorkScope) {
+  if (findCase(caseId).deletedAt) throw new Error('案件已删除');
+  if (
+    scope.proceedingId &&
+    !data.proceedings.some((p) => p.id === scope.proceedingId && p.caseId === caseId)
+  )
+    throw new Error('流程不属于此案件');
+  if (
+    scope.stageId &&
+    !data.stages.some((s) => s.id === scope.stageId && s.proceedingId === scope.proceedingId)
+  )
+    throw new Error('阶段不属于所选流程');
+}
+function writeLink(link: WorkLink) {
+  validateScope(link.caseId, link);
+  const resources = {
+    task: data.tasks,
+    event: data.calendarEvents,
+    material: data.materials,
+    record: data.workRecords,
+    ledger: data.ledgerEntries,
+  }[link.kind];
+  if (!resources.some((r) => r.id === link.resourceId && r.caseId === link.caseId))
+    throw new Error('只能关联本案件的记录');
+  const existing = data.workLinks.find((l) => l.id === link.id);
+  if (
+    existing &&
+    (existing.caseId !== link.caseId ||
+      existing.kind !== link.kind ||
+      existing.resourceId !== link.resourceId)
+  )
+    throw new Error('关联归属不一致');
+  if (link.kind !== 'material')
+    data.workLinks = data.workLinks.filter(
+      (l) => l.kind !== link.kind || l.resourceId !== link.resourceId,
+    );
+  const duplicate = data.workLinks.find(
+    (l) =>
+      l.kind === link.kind &&
+      l.resourceId === link.resourceId &&
+      l.proceedingId === link.proceedingId &&
+      l.stageId === link.stageId,
+  );
+  if (duplicate) duplicate.label = link.label;
+  else data.workLinks.push({ ...link });
+}
+function writeScope(caseId: string, kind: WorkLink['kind'], id: string, scope: WorkScope) {
+  data.workLinks = data.workLinks.filter((l) => l.kind !== kind || l.resourceId !== id);
+  if (scope.proceedingId)
+    writeLink({
+      id: crypto.randomUUID(),
+      caseId,
+      kind,
+      resourceId: id,
+      proceedingId: scope.proceedingId,
+      stageId: scope.stageId,
+      label: '',
+    });
+}
 export async function previewCommand<K extends keyof Commands>(
   name: K,
   args: Commands[K]['args'],
@@ -134,6 +200,167 @@ export async function previewCommand<K extends keyof Commands>(
   const a = args as Record<string, unknown>;
   let result: unknown = null;
   switch (name) {
+    case 'save_work_link':
+      writeLink(a.input as WorkLink);
+      break;
+    case 'delete_work_link':
+      data.workLinks = data.workLinks.filter((l) => l.id !== a.id);
+      break;
+    case 'save_work_task': {
+      const v = a.input as Commands['save_work_task']['args']['input'];
+      validateScope(v.task.caseId, v);
+      if (!v.task.title.trim()) throw new Error('请填写待办内容');
+      const old = data.tasks.find((t) => t.id === v.task.id);
+      if (old && old.caseId !== v.task.caseId) throw new Error('不能修改其他案件的任务');
+      if (old) Object.assign(old, v.task, { title: v.task.title.trim() });
+      else data.tasks.push({ ...v.task, title: v.task.title.trim() });
+      const work = { taskId: v.task.id, waitingFor: v.waitingFor, outcome: v.outcome };
+      const meta = data.taskWork.find((w) => w.taskId === v.task.id);
+      if (meta) Object.assign(meta, work);
+      else data.taskWork.push(work);
+      writeScope(v.task.caseId, 'task', v.task.id, v);
+      break;
+    }
+    case 'apply_stage_tasks': {
+      const stage = data.stages.find((s) => s.id === a.stageId)!;
+      const p = data.proceedings.find((p) => p.id === stage.proceedingId)!;
+      for (const title of a.titles as string[]) {
+        if (
+          !data.tasks.some(
+            (t) =>
+              t.title === title.trim() &&
+              data.workLinks.some(
+                (l) => l.kind === 'task' && l.resourceId === t.id && l.stageId === stage.id,
+              ),
+          )
+        )
+          await previewCommand('save_work_task', {
+            input: {
+              task: {
+                id: crypto.randomUUID(),
+                caseId: p.caseId,
+                title: title.trim(),
+                dueDate: null,
+                completed: false,
+              },
+              waitingFor: '',
+              outcome: '',
+              proceedingId: p.id,
+              stageId: stage.id,
+            },
+          });
+      }
+      break;
+    }
+    case 'save_work_event': {
+      const v = a as unknown as Commands['save_work_event']['args'];
+      if (v.input.caseId) validateScope(v.input.caseId, v);
+      await previewCommand('save_calendar_event', { input: v.input });
+      if (v.input.caseId) writeScope(v.input.caseId, 'event', v.input.id, v);
+      break;
+    }
+    case 'save_work_record': {
+      const v = a as unknown as Commands['save_work_record']['args'];
+      validateScope(v.input.caseId, v);
+      await previewCommand('save_record', { input: v.input });
+      writeScope(v.input.caseId, 'record', v.input.id, v);
+      break;
+    }
+    case 'save_work_ledger': {
+      const v = a as unknown as Commands['save_work_ledger']['args'];
+      const scope = { proceedingId: v.input.proceedingId, stageId: v.stageId };
+      validateScope(v.input.caseId, scope);
+      const allocated = data.feeAllocations
+        .filter((x) => x.ledgerId === v.input.id)
+        .reduce((n, x) => n + x.amountCents, 0);
+      if (
+        allocated &&
+        (v.input.amountCents < allocated ||
+          v.input.kind !== 'income' ||
+          v.input.category !== '律师费')
+      )
+        throw new Error('此收款已用于核销，请先调整核销关联');
+      if (v.sourcePath)
+        await previewCommand('save_ledger_with_receipt', {
+          input: v.input,
+          sourcePath: v.sourcePath,
+          receiptId: v.receiptId!,
+        });
+      else await previewCommand('save_ledger', { input: v.input });
+      writeScope(v.input.caseId, 'ledger', v.input.id, scope);
+      const receipt = data.ledgerEntries.find((e) => e.id === v.input.id)?.materialId;
+      if (receipt && v.sourcePath && scope.stageId && scope.proceedingId)
+        writeLink({
+          id: crypto.randomUUID(),
+          caseId: v.input.caseId,
+          kind: 'material',
+          resourceId: receipt,
+          proceedingId: scope.proceedingId,
+          stageId: scope.stageId,
+          label: '费用凭据',
+        });
+      break;
+    }
+    case 'save_fee_agreement': {
+      const caseId = a.caseId as string;
+      const amount = a.amountCents as number;
+      findCase(caseId);
+      if (!Number.isSafeInteger(amount) || amount < 0) throw new Error('约定金额无效');
+      const old = data.caseDetails.find((d) => d.caseId === caseId);
+      if (old) old.agreedFeeCents = amount;
+      else
+        data.caseDetails.push({ caseId, agreedFeeCents: amount, notes: '', relatedCaseId: null });
+      if (!data.confirmedFeeCases.includes(caseId)) data.confirmedFeeCases.push(caseId);
+      break;
+    }
+    case 'save_fee_plan': {
+      const v = a.input as Workspace['feePlans'][number];
+      validateScope(v.caseId, v);
+      if (!v.title.trim() || !Number.isSafeInteger(v.amountCents) || v.amountCents <= 0)
+        throw new Error('收费名称或金额无效');
+      if (
+        data.feeAllocations
+          .filter((x) => x.planId === v.id)
+          .reduce((n, x) => n + x.amountCents, 0) > v.amountCents
+      )
+        throw new Error('约定金额不能少于已核销金额');
+      const old = data.feePlans.find((p) => p.id === v.id);
+      if (old && old.caseId !== v.caseId) throw new Error('不能修改其他案件的收费计划');
+      if (old) Object.assign(old, v);
+      else data.feePlans.push({ ...v });
+      break;
+    }
+    case 'delete_fee_plan':
+      data.feePlans = data.feePlans.filter((p) => p.id !== a.id);
+      data.feeAllocations = data.feeAllocations.filter((x) => x.planId !== a.id);
+      break;
+    case 'save_fee_allocation': {
+      const v = a.input as Workspace['feeAllocations'][number];
+      const p = data.feePlans.find((p) => p.id === v.planId),
+        e = data.ledgerEntries.find((e) => e.id === v.ledgerId);
+      if (
+        !p ||
+        !e ||
+        p.caseId !== e.caseId ||
+        e.kind !== 'income' ||
+        e.category !== '律师费' ||
+        v.amountCents < 0
+      )
+        throw new Error('只能使用本案实际收到的律师费核销');
+      const planUsed = data.feeAllocations
+          .filter((x) => x.planId === v.planId && x.ledgerId !== v.ledgerId)
+          .reduce((n, x) => n + x.amountCents, 0),
+        entryUsed = data.feeAllocations
+          .filter((x) => x.ledgerId === v.ledgerId && x.planId !== v.planId)
+          .reduce((n, x) => n + x.amountCents, 0);
+      if (planUsed + v.amountCents > p.amountCents || entryUsed + v.amountCents > e.amountCents)
+        throw new Error('核销不能超过收费节点或实际收款金额');
+      data.feeAllocations = data.feeAllocations.filter(
+        (x) => x.planId !== v.planId || x.ledgerId !== v.ledgerId,
+      );
+      if (v.amountCents) data.feeAllocations.push({ ...v });
+      break;
+    }
     case 'pick_receipt_file':
       throw new Error('浏览器预览请使用文件选择框');
     case 'save_ledger_with_receipt': {
@@ -341,6 +568,8 @@ export async function previewCommand<K extends keyof Commands>(
       break;
     case 'delete_ledger':
       data.ledgerEntries = data.ledgerEntries.filter((row) => row.id !== a.id);
+      data.feeAllocations = data.feeAllocations.filter((x) => x.ledgerId !== a.id);
+      data.workLinks = data.workLinks.filter((l) => l.kind !== 'ledger' || l.resourceId !== a.id);
       break;
     case 'delete_stage': {
       const stage = data.stages.find((row) => row.id === a.id);
@@ -348,6 +577,12 @@ export async function previewCommand<K extends keyof Commands>(
       const program = data.proceedings.find((p) => p.id === stage.proceedingId)!;
       if (program.state === 'completed') throw new Error('程序已办结，请先恢复办理再调整阶段');
       data.stages = data.stages.filter((row) => row.id !== a.id);
+      data.workLinks.forEach((l) => {
+        if (l.stageId === a.id) l.stageId = null;
+      });
+      data.feePlans.forEach((p) => {
+        if (p.stageId === a.id) p.stageId = null;
+      });
       if (stage.state === 'current') program.stage = '';
       data.stages
         .filter((row) => row.proceedingId === program.id)
@@ -450,6 +685,16 @@ export async function previewCommand<K extends keyof Commands>(
           deletedAt: null,
           trashGroup: null,
         });
+        if (target.stageId && target.proceedingId)
+          writeLink({
+            id: crypto.randomUUID(),
+            caseId: target.caseId,
+            kind: 'material',
+            resourceId: id,
+            proceedingId: target.proceedingId,
+            stageId: target.stageId,
+            label: '',
+          });
       }
       result = { imported: (a.paths as string[]).length, errors: [] };
       break;

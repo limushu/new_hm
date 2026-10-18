@@ -285,7 +285,7 @@ fn v5_rebuild_preserves_dependent_records_and_keeps_foreign_keys_enabled() {
         check
             .query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
             .unwrap(),
-        6
+        7
     );
     assert!(s
         .save_contact_link(ContactLink {

@@ -1,14 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
-import { selectOption } from './fields';
+import { selectOption, openFlowDetails, changeStageState, showWorkHistory } from './fields';
 
 const node = (page: Page, title: string) =>
   page.getByRole('button', { name: `查看${title}流程`, exact: true });
-const path = (page: Page) => page.getByRole('region', { name: '案件办理路径' });
+const path = (page: Page) => page.getByRole('region', { name: '流程关系图' });
 async function add(page: Page, kind: string, parent: string) {
   await page.getByRole('button', { name: '新增流程', exact: true }).click();
   await selectOption(page, page.getByLabel('流程模板'), kind);
   await selectOption(page, page.getByLabel('新流程的前序流程'), { label: parent });
   await page.getByRole('button', { name: '新增', exact: true }).click();
+  await openFlowDetails(page);
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
 test.beforeEach(async ({ page }) => {
@@ -20,19 +21,23 @@ test.beforeEach(async ({ page }) => {
 test('并行流程、明确前序与关注独立于浏览，办结不关闭整个案件', async ({ page }) => {
   await add(page, 'appeal', '一审');
   await add(page, 'enforcement', '一审');
+  await page.getByText('流程关系', { exact: true }).click();
   await expect(page.locator('.program-node')).toHaveCount(3);
   await expect(page.locator('.program-edges path')).toHaveCount(2);
   await expect(path(page)).toContainText('3 个办理中 · 当前关注：执行');
   await node(page, '一审').click();
+  await openFlowDetails(page);
   await expect(path(page)).toContainText('当前关注：执行');
   await page.getByRole('button', { name: '设为当前关注', exact: true }).click();
   await expect(path(page)).toContainText('当前关注：一审');
-  await page.getByRole('button', { name: '举证', exact: true }).click();
+  await changeStageState(page, '举证', 'current');
   await expect(node(page, '一审')).toContainText('举证');
   await expect(page.locator('.stage-history-list')).toBeHidden();
   await node(page, '执行').click();
+  await openFlowDetails(page);
   await expect(page.locator('.stage-current')).toContainText('申请执行');
   await node(page, '一审').click();
+  await openFlowDetails(page);
   await selectOption(page, page.getByLabel('前序流程', { exact: true }), { label: '二审' });
   await expect(page.getByRole('alert')).toContainText('循环');
   await expect(page.getByLabel('前序流程', { exact: true })).toHaveAttribute('data-value', '');
@@ -99,7 +104,7 @@ test('日历关联事件在案件出现，案件修改同一日程并同步回�
 
 test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async ({ page }) => {
   await add(page, 'enforcement', '一审');
-  await page.getByRole('tab', { name: '概览', exact: true }).click();
+  await page.getByRole('tab', { name: '概况', exact: true }).click();
   await page.locator('.overview-materials button').filter({ hasText: '执行' }).click();
   await expect(page.locator('.material-scopes button[aria-pressed="true"]')).toContainText('执行');
   await page.setViewportSize({ width: 390, height: 844 });
@@ -110,8 +115,8 @@ test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async
   ).toBeVisible();
 });
 
-test('收支图按整数分统计、分类筛选不改变总额，超收明确显示', async ({ page }) => {
-  await page.getByRole('tab', { name: '收支', exact: true }).click();
+test('收支图按整数分统计、分类筛选同步合计，超收明确显示', async ({ page }) => {
+  await page.getByRole('tab', { name: '费用', exact: true }).click();
   await expect(page.getByRole('img', { name: '收入分类，总额 0.00 元' })).toBeVisible();
   await page.getByRole('button', { name: '修改约定', exact: true }).click();
   await page.getByRole('textbox', { name: '约定律师费', exact: true }).fill('1000');
@@ -130,14 +135,15 @@ test('收支图按整数分统计、分类筛选不改变总额，超收明确�
   await page.locator('.chart-legend button').filter({ hasText: '咨询费' }).click();
   await expect(page.locator('.ledger-row')).toHaveCount(1);
   await expect(page.locator('.ledger-row')).toContainText('399.99');
-  await expect(page.getByRole('img', { name: '收入分类，总额 1,600.00 元' })).toBeVisible();
+  await expect(page.getByRole('img', { name: '收入分类，总额 399.99 元' })).toBeVisible();
   await page.getByRole('button', { name: /清除分类筛选/ }).click();
   await expect(page.locator('.ledger-row')).toHaveCount(2);
 });
 
 test('中间阶段完成后可重开，保留后续完成状态、当前阶段与历史', async ({ page }) => {
-  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
-  await page.getByRole('button', { name: '举证', exact: true }).click();
+  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openFlowDetails(page);
+  await changeStageState(page, '举证', 'current');
   await expect(page.locator('.stage-done')).toHaveCount(0);
   await page.getByRole('button', { name: '管理阶段', exact: true }).click();
   for (const name of ['立案', '裁判']) {
@@ -148,6 +154,7 @@ test('中间阶段完成后可重开，保留后续完成状态、当前阶段�
   const manager = page.getByRole('dialog', { name: '管理办理阶段', exact: true });
   await manager.getByRole('button', { name: '关闭', exact: true }).last().click();
   await page.getByRole('button', { name: '立案', exact: true }).click();
+  await page.getByRole('button', { name: '调整阶段状态', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '阶段状态', exact: true })).toHaveAttribute(
     'data-value',
     'pending',
@@ -160,6 +167,7 @@ test('中间阶段完成后可重开，保留后续完成状态、当前阶段�
   await expect(page.getByRole('button', { name: '举证', exact: true })).toHaveClass(
     /stage-current/,
   );
+  await showWorkHistory(page);
   await page.getByText(/阶段变更记录 ·/).click();
   await expect(page.locator('.stage-history-list')).toContainText('完成阶段：立案');
   await expect(page.locator('.stage-history-list')).toContainText('重新打开阶段：立案');
@@ -167,30 +175,33 @@ test('中间阶段完成后可重开，保留后续完成状态、当前阶段�
 });
 
 test('当前阶段可直接删除，取消不变更；删除保留历史且不替用户选择下一步', async ({ page }) => {
-  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openFlowDetails(page);
   const initialCount = await page.locator('.stage-chip').count();
-  await page.getByRole('button', { name: '举证', exact: true }).click();
-  await page.getByRole('button', { name: '举证', exact: true }).click();
+  await changeStageState(page, '举证', 'current');
+  await page.getByRole('button', { name: '调整阶段状态', exact: true }).click();
   await page.getByRole('button', { name: '删除此阶段', exact: true }).click();
   const confirmation = page.getByRole('dialog', { name: '删除阶段', exact: true });
   await expect(confirmation).toContainText('删除后将暂不指定当前阶段');
   await confirmation.getByRole('button', { name: '取消', exact: true }).click();
-  await expect(page.locator('.stage-current')).toHaveText('举证');
+  await expect(page.locator('.stage-current')).toContainText('举证');
   await page.getByRole('button', { name: '管理阶段', exact: true }).click();
   const manager = page.getByRole('dialog', { name: '管理办理阶段', exact: true });
   await manager.getByRole('button', { name: '删除阶段举证', exact: true }).click();
   await confirmation.getByRole('button', { name: '删除', exact: true }).click();
-  await expect(manager.locator('.feature-row')).toHaveCount(initialCount - 1);
+  await expect(manager.locator('.feature-row')).toHaveCount(initialCount - 2);
   await manager.getByRole('button', { name: '关闭', exact: true }).last().click();
   await expect(page.locator('.stage-current')).toHaveCount(0);
-  await expect(page.locator('.program-current-stage')).toContainText('尚未指定阶段');
-  await expect(node(page, '一审')).not.toContainText('举证');
+  await expect(page.locator('.program-current-stage')).toContainText('尚未指定当前阶段');
+  await expect(page.locator('.program-detail-heading h2')).not.toContainText('举证');
+  await showWorkHistory(page);
   await page.getByText(/阶段变更记录 ·/).click();
   await expect(page.locator('.stage-history-list')).toContainText('设为当前阶段：举证');
   await expect(page.locator('.stage-history-list')).toContainText('删除阶段：举证');
-  await page.getByRole('tab', { name: '概览', exact: true }).click();
-  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '概况', exact: true }).click();
+  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openFlowDetails(page);
   await expect(page.getByRole('button', { name: '举证', exact: true })).toHaveCount(0);
-  await page.getByRole('button', { name: '开庭', exact: true }).click();
-  await expect(page.locator('.stage-current')).toHaveText('开庭');
+  await changeStageState(page, '开庭', 'current');
+  await expect(page.locator('.stage-current')).toContainText('开庭');
 });

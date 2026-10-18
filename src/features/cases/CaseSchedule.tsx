@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { CalendarDays, Plus } from 'lucide-react';
-import type { CalendarEvent, SaveAction, Workspace } from '../../domain/types';
+import type { CalendarEvent, SaveAction, Workspace, WorkScope } from '../../domain/types';
+import { caseScope, resourceInScope } from '../../domain/workspace';
 import { dateKey } from '../../domain/calendar';
 import { emptyEvent, eventRange } from '../calendar/schedule';
 import EventEditor from '../calendar/EventEditor';
@@ -8,15 +9,19 @@ export default function CaseSchedule({
   caseId,
   data,
   save,
+  scope = caseScope,
+  onAssociate,
 }: {
   caseId: string;
   data: Workspace;
   save: SaveAction;
+  scope?: WorkScope;
+  onAssociate?: () => void;
 }) {
   const [edit, setEdit] = useState<CalendarEvent | null>(null);
   const today = dateKey(new Date());
   const rows = data.calendarEvents
-    .filter((e) => e.caseId === caseId)
+    .filter((e) => e.caseId === caseId && resourceInScope(data, 'event', e.id, scope))
     .sort((a, b) =>
       (a.startDate + (a.startTime || '')).localeCompare(b.startDate + (b.startTime || '')),
     );
@@ -43,10 +48,13 @@ export default function CaseSchedule({
           <CalendarDays aria-hidden="true" />
           案件日程 <span>{upcoming.length}</span>
         </h3>
-        <button onClick={() => setEdit({ ...emptyEvent(today), caseId })}>
-          <Plus />
-          添加案件日程
-        </button>
+        <div className="work-actions">
+          {onAssociate && <button onClick={onAssociate}>关联已有日程</button>}
+          <button onClick={() => setEdit({ ...emptyEvent(today), caseId })}>
+            <Plus />
+            添加案件日程
+          </button>
+        </div>
       </div>
       {upcoming.length ? upcoming.map(entry) : <p className="empty-text">暂无待进行的日程</p>}
       {past.length > 0 && (
@@ -57,6 +65,8 @@ export default function CaseSchedule({
       )}
       {edit && (
         <EventEditor
+          data={data}
+          initialScope={scope}
           event={edit}
           existing={rows.some((e) => e.id === edit.id)}
           cases={data.cases}
