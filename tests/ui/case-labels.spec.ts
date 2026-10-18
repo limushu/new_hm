@@ -41,6 +41,7 @@ test('案件状态原位创建并同步看板，另一案件搜索复用同一�
   await expect(page.getByRole('option', { name: '创建 #等待反馈', exact: true })).toBeVisible();
   await state.press('Enter');
   await expect(state).toHaveValue('#等待反馈');
+  await expect(state).toBeEnabled();
   const id = await state.getAttribute('data-value');
   await page.getByRole('button', { name: '返回看板', exact: true }).click();
   await expect(page.locator('.case-column')).toHaveCount(4);
