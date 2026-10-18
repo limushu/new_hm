@@ -127,6 +127,33 @@ try {
   await expect(page.locator('.save-state')).toHaveText('已保存');
   let workspace = await invoke(page, 'load_workspace');
   const item = workspace.cases[0];
+  const stateField = page.getByRole('combobox', { name: '案件状态', exact: true });
+  await stateField.fill('#原生候选验收');
+  await stateField.press('Enter');
+  await expect(stateField).toHaveValue('#原生候选验收');
+  await expect(stateField).toBeEnabled();
+  const customStatusId = await stateField.getAttribute('data-value');
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    workspace.cases[0].statusId !== customStatusId ||
+    !workspace.statuses.some((s) => s.id === customStatusId && s.name === '原生候选验收')
+  )
+    throw new Error('Native inline status creation was not persisted');
+  await stateField.fill('未开始');
+  await page.getByRole('option', { name: '#未开始', exact: true }).click();
+  await expect(stateField).toHaveAttribute('data-value', 'not_started');
+  // Private UI event only: never publish a fake version or start its installation.
+  await invoke(page, 'plugin:event|emit', {
+    event: 'update-available',
+    payload: { version: '99.0.0', notes: '隔离事件测试，不会下载或安装' },
+  });
+  await page.getByRole('button', { name: '更新案笺到 99.0.0', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '安装 99.0.0', exact: true })).toBeVisible();
+  await expect(page.getByLabel('优先更新源')).toHaveCount(0);
+  await page.screenshot({ path: join(root, 'update-dialog.png') });
+  await page.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.getByLabel('案件名称', { exact: true })).toHaveValue('原生验收案件（虚构）');
+  await invoke(page, 'plugin:event|emit', { event: 'update-available', payload: null });
   if (workspace.stages.length !== 5) throw new Error('Default stages missing');
   const middleStage = workspace.stages[1];
   const followingStage = workspace.stages[2];

@@ -2,6 +2,69 @@ use hm_core::*;
 use std::path::Path;
 use uuid::Uuid;
 #[test]
+fn status_catalog_persists_and_rejects_duplicate_names_without_changing_cases() {
+    let dir = tempfile::tempdir().unwrap();
+    let path = dir.path().join("workspace.sqlite3");
+    let mut store = Store::open(&path).unwrap();
+    let item = case(&mut store, "状态候选验收");
+    let status = CaseStatus {
+        id: Uuid::new_v4().to_string(),
+        name: "Review".into(),
+        color: "#768b9a".into(),
+    };
+    store.save_case_status(status.clone()).unwrap();
+    store.set_case_status(&item.id, &status.id).unwrap();
+    assert!(store
+        .save_case_status(CaseStatus {
+            id: Uuid::new_v4().to_string(),
+            name: " review ".into(),
+            ..status.clone()
+        })
+        .is_err());
+    assert!(store
+        .save_case_status(CaseStatus {
+            id: "not_started".into(),
+            ..status.clone()
+        })
+        .is_err());
+    assert_eq!(store.workspace().unwrap().statuses.len(), 4);
+    assert_eq!(store.workspace().unwrap().cases[0].status_id, status.id);
+    // Old duplicate names are left intact; changing only their color remains possible.
+    let db = rusqlite::Connection::open(&path).unwrap();
+    db.execute(
+        "INSERT INTO case_statuses(id,name,color,position) VALUES(?1,'Review','#768b9a',99)",
+        [Uuid::new_v4().to_string()],
+    )
+    .unwrap();
+    store
+        .save_case_status(CaseStatus {
+            color: "#335577".into(),
+            ..status.clone()
+        })
+        .unwrap();
+    drop(store);
+    let reopened = Store::open(&path).unwrap().workspace().unwrap();
+    assert_eq!(reopened.cases[0].status_id, status.id);
+    assert_eq!(
+        reopened
+            .statuses
+            .iter()
+            .find(|s| s.id == status.id)
+            .unwrap()
+            .color,
+        "#335577"
+    );
+    assert_eq!(
+        reopened
+            .statuses
+            .iter()
+            .find(|s| s.id == "not_started")
+            .unwrap()
+            .name,
+        "未开始"
+    );
+}
+#[test]
 fn version_two_stage_migration_keeps_one_current_stage_and_original_database() {
     let dir = tempfile::tempdir().unwrap();
     let path = dir.path().join("workspace.sqlite3");

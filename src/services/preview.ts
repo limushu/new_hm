@@ -273,8 +273,15 @@ export async function previewCommand<K extends keyof Commands>(
     case 'save_case_status': {
       const input = a.input as Workspace['statuses'][number];
       const old = data.statuses.find((s) => s.id === input.id);
-      if (old) Object.assign(old, input);
-      else data.statuses.push({ ...input });
+      if (
+        old?.name.toLowerCase() !== input.name.trim().toLowerCase() &&
+        data.statuses.some(
+          (s) => s.id !== input.id && s.name.toLowerCase() === input.name.trim().toLowerCase(),
+        )
+      )
+        throw new Error('已有同名案件状态，请选择已有状态');
+      if (old) Object.assign(old, { ...input, name: input.name.trim() });
+      else data.statuses.push({ ...input, name: input.name.trim() });
       break;
     }
     case 'delete_case_status':

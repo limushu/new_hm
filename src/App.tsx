@@ -160,17 +160,8 @@ export default function App() {
             </button>
           ))}
         </div>
+        <UpdateNotice />
         <div className="sidebar-bottom">
-          <UpdateNotice
-            onOpen={() => {
-              setPage('settings');
-              requestAnimationFrame(() =>
-                document
-                  .getElementById('version-update-section')
-                  ?.scrollIntoView({ block: 'start', behavior: 'smooth' }),
-              );
-            }}
-          />
           <span className="storage-indicator">
             <i />
             {previewMode

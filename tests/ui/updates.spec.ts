@@ -1,6 +1,6 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-test('设置页已打开时收到后台更新事件，侧栏和安装入口即时同步', async ({ page }) => {
+async function backgroundEvents(page: Page) {
   await page.addInitScript(() => {
     const callbacks = new Map<number, (event: unknown) => void>();
     const listeners = new Map<number, { event: string; handler: number }>();
@@ -14,6 +14,15 @@ test('设置页已打开时收到后台更新事件，侧栏和安装入口即�
               event: 'update-available',
               id: eventId,
               payload: { version: '1.2.0', notes: '隔离后台测试' },
+            });
+      },
+      emitTestProgress: () => {
+        for (const [eventId, value] of listeners)
+          if (value.event === 'update-progress')
+            callbacks.get(value.handler)?.({
+              event: 'update-progress',
+              id: eventId,
+              payload: { downloaded: 35, total: 100 },
             });
       },
       __TAURI_EVENT_PLUGIN_INTERNALS__: {
@@ -30,12 +39,22 @@ test('设置页已打开时收到后台更新事件，侧栏和安装入口即�
             return id;
           }
           if (name === 'plugin:event|unlisten') return;
+          if (name === 'install_update')
+            return new Promise((_, reject) => {
+              Object.assign(window, {
+                failTestInstall: () => reject(new Error('隔离测试：下载失败，未实际安装')),
+              });
+            });
           const { previewCommand } = await import('/src/services/preview.ts');
           return previewCommand(name, args);
         },
       },
     });
   });
+}
+
+test('设置页已打开时收到后台更新事件，侧栏和安装入口即时同步', async ({ page }) => {
+  await backgroundEvents(page);
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await expect(page.getByLabel('优先更新源')).toBeVisible();
@@ -43,6 +62,8 @@ test('设置页已打开时收到后台更新事件，侧栏和安装入口即�
   await expect(page.getByRole('button', { name: '更新案笺到 1.2.0', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: '更新到 1.2.0', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '更新案笺到 1.2.0', exact: true }).click();
+  await expect(page.getByRole('dialog', { name: '安装 1.2.0', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '取消', exact: true }).click();
   await expect(page.getByRole('button', { name: '更新到 1.2.0', exact: true })).toBeVisible();
 });
 
@@ -66,22 +87,67 @@ test('发现新版后侧栏提示，点击只查看更新，确认后才调用�
   });
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '更新案笺到 1.2.0', exact: true }).click();
-  await expect(page.getByRole('button', { name: '更新到 1.2.0', exact: true })).toBeVisible();
-  await expect(page.getByLabel('优先更新源', { exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog', { name: '安装 1.2.0', exact: true })).toContainText(
+    '虚构更新测试',
+  );
+  await expect(page.getByLabel('优先更新源', { exact: true })).toHaveCount(0);
   expect(
     await page.evaluate(() => (window as unknown as { updateInstalls: unknown[] }).updateInstalls),
   ).toEqual([]);
-  await page.getByRole('button', { name: '更新到 1.2.0', exact: true }).click();
   await page.getByRole('button', { name: '取消', exact: true }).click();
   expect(
     await page.evaluate(() => (window as unknown as { updateInstalls: unknown[] }).updateInstalls),
   ).toEqual([]);
-  await page.getByRole('button', { name: '更新到 1.2.0', exact: true }).click();
+  await page.getByRole('button', { name: '更新案笺到 1.2.0', exact: true }).click();
   await page.getByRole('button', { name: '下载并安装', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('不实际安装');
   expect(
     await page.evaluate(() => (window as unknown as { updateInstalls: unknown[] }).updateInstalls),
   ).toEqual([{ confirmed: true }]);
+});
+
+test('日历工作期间后台发现新版，原位查看、显示下载进度并保留失败信息', async ({ page }) => {
+  await backgroundEvents(page);
+  await page.goto('/?preview=1');
+  await expect(page.locator('.sidebar-update')).toHaveCount(0);
+  await page.evaluate(() => (window as unknown as { emitTestUpdate: () => void }).emitTestUpdate());
+  await expect(page.getByRole('button', { name: '更新案笺到 1.2.0', exact: true })).toBeVisible();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await page.getByRole('button', { name: '更新案笺到 1.2.0', exact: true }).click();
+  await expect(page.getByLabel('优先更新源')).toHaveCount(0);
+  await page.getByRole('button', { name: '下载并安装', exact: true }).click();
+  await expect(page.getByRole('button', { name: '处理中…', exact: true })).toBeDisabled();
+  await page.evaluate(() =>
+    (window as unknown as { emitTestProgress: () => void }).emitTestProgress(),
+  );
+  await expect(page.getByRole('status')).toContainText('下载进度 35%');
+  await page.evaluate(() =>
+    (window as unknown as { failTestInstall: () => void }).failTestInstall(),
+  );
+  await expect(page.getByRole('alert')).toContainText('下载失败');
+  await page.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.locator('.calendar-page')).toBeVisible();
+});
+
+test('窄窗口仍显示新版提示，关闭更新面板后保留正在编辑的案件', async ({ page }) => {
+  await backgroundEvents(page);
+  await page.setViewportSize({ width: 760, height: 600 });
+  await page.goto('/?preview=1');
+  await page.getByRole('button', { name: '案件', exact: true }).click();
+  await page.locator('.case-card').first().click();
+  await page.getByLabel('案件名称', { exact: true }).fill('更新期间保留的案件编辑');
+  await page.evaluate(() => (window as unknown as { emitTestUpdate: () => void }).emitTestUpdate());
+  const notice = page.getByRole('button', { name: '更新案笺到 1.2.0', exact: true });
+  await expect(notice).toBeVisible();
+  await notice.click();
+  await page.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.getByLabel('案件名称', { exact: true })).toHaveValue('更新期间保留的案件编辑');
+  await expect(page.locator('.save-state')).toHaveText('已保存');
+  await page.setViewportSize({ width: 390, height: 700 });
+  await notice.click();
+  const box = await page.getByRole('dialog', { name: '安装 1.2.0', exact: true }).boundingBox();
+  expect(box!.x).toBeGreaterThanOrEqual(0);
+  expect(box!.x + box!.width).toBeLessThanOrEqual(390);
 });
 
 test('没有新版时不占据侧栏，不把检查失败描述为最新', async ({ page }) => {

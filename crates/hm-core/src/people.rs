@@ -199,18 +199,35 @@ impl Store {
     }
     pub fn save_case_status(&self, input: CaseStatus) -> Result<()> {
         let name = checked_text(&input.name, "状态名称", 30, true)?;
+        let current: Option<String> = self
+            .connection
+            .query_row(
+                "SELECT name FROM case_statuses WHERE id=?1",
+                [&input.id],
+                |r| r.get(0),
+            )
+            .optional()?;
+        let normalized = name.to_lowercase();
+        if current
+            .as_ref()
+            .is_none_or(|old| old.to_lowercase() != normalized)
+        {
+            let names = self
+                .connection
+                .prepare("SELECT name FROM case_statuses WHERE id<>?1")?
+                .query_map([&input.id], |r| r.get::<_, String>(0))?
+                .collect::<rusqlite::Result<Vec<_>>>()?;
+            if names.iter().any(|old| old.to_lowercase() == normalized) {
+                return Err(Error::Validation("已有同名案件状态，请选择已有状态".into()));
+            }
+        }
         if input.color.len() != 7
             || !input.color.starts_with('#')
             || !input.color[1..].chars().all(|c| c.is_ascii_hexdigit())
         {
             return Err(Error::Validation("状态颜色无效".into()));
         }
-        let exists: bool = self.connection.query_row(
-            "SELECT EXISTS(SELECT 1 FROM case_statuses WHERE id=?1)",
-            [&input.id],
-            |r| r.get(0),
-        )?;
-        if !exists {
+        if current.is_none() {
             valid_id(&input.id)?;
         }
         self.connection.execute("INSERT INTO case_statuses(id,name,color,position) VALUES(?1,?2,?3,(SELECT COALESCE(max(position),-1)+1 FROM case_statuses)) ON CONFLICT(id) DO UPDATE SET name=excluded.name,color=excluded.color",params![input.id,name,input.color])?;

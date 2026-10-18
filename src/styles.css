@@ -712,7 +712,18 @@ h3 {
     min-height: 42px;
   }
 }
-.sidebar-bottom > .sidebar-update {
+.update-notice-slot {
+  margin-top: auto;
+  min-height: 70px;
+}
+.update-notice-slot + .sidebar-bottom {
+  margin-top: 0;
+}
+.sidebar-update {
+  position: fixed;
+  left: 10px;
+  bottom: 64px;
+  z-index: 7;
   display: flex;
   gap: 10px;
   align-items: center;
@@ -721,7 +732,8 @@ h3 {
   border: 1px solid #3a4d5b;
   padding: 9px 10px;
   border-radius: 8px;
-  margin-bottom: 12px;
+  width: 196px;
+  text-align: left;
 }
 .sidebar-update > svg {
   width: 17px;
@@ -735,6 +747,21 @@ h3 {
   color: #8eabbf;
   font-size: var(--text-xs);
   margin-top: 3px;
+}
+@media (max-width: 760px) {
+  .update-notice-slot {
+    margin: 0;
+    min-height: 0;
+  }
+  .sidebar-update {
+    position: fixed;
+    left: 12px;
+    bottom: 72px;
+    width: auto;
+    margin: 0;
+    z-index: 7;
+    box-shadow: 0 3px 14px #0003;
+  }
 }
 .update-source-form {
   display: flex;

@@ -5,13 +5,13 @@
 3. 本机构建从用户目录 .hm-release/updater.key 取签名私钥，或使用 TAURI_SIGNING_PRIVATE_KEY 与 TAURI_SIGNING_PRIVATE_KEY_PASSWORD 环境变量。绝不提交私钥，不在日志回显。安全离线备份私钥，丢失后无法用当前公钥发布有效升级。
 4. artifacts/windows/<version>/ 包含 x64 NSIS 安装包、.sig、latest.json、SHA256SUMS.txt 和使用说明。签名清单的 URL 指向同版本 GitHub Release；不能只上传 latest.json 而缺失对应包。
 5. .github/workflows/release.yml 支持手动构建和版本标签。标签发布会构建、上传并发布对应版本；Actions 中需配置同一私钥的 TAURI_SIGNING_PRIVATE_KEY secret，密码若为空则无需配置。普通 CI 不需要私钥。
-6. 安装版通过 releases/latest/download/latest.json 获取稳定版。发布后检查清单、下载哈希与签名；后续版本在旧版“设置 → 检查更新”由用户确认安装。不要为测试虚构高版本公开清单。
+6. 安装版通过 releases/latest/download/latest.json 获取稳定版。发布后检查清单、下载哈希与签名；客户端后台定期检查，有新版时点击提示确认安装，设置中仍保留手动检查。不要为测试虚构高版本公开清单。
 
 当前仅发布 Windows x64；macOS updater 签名与 Apple 公证、其他平台发布另行接入。Tauri 升级签名不是 Windows Authenticode，当前安装包可能出现未知发布者提示。GitHub 访问失败时应用报告网络错误，不宣称已是最新。
 
 ## 后台提示与替代更新源
 
-1.1 起启动 15 秒后及每 6 小时由 Rust 检查更新；成功发现更高版本才在侧栏显示提示。后台失败不弹窗，用户手动检查可看到错误。点击侧栏进入设置查看版本说明，下载和安装仍需明确确认。Rust 负责清单请求、内置公钥验签、升级前备份和安装；TypeScript 负责展示状态、进度和确认交互。
+启动 15 秒后及每 6 小时由 Rust 检查更新，应用驻留托盘时也继续检查；成功发现更高版本才显示提示。后台失败不弹窗，用户手动检查可看到错误。1.1.3 起点击提示在当前页面直接打开更新面板，无需跳转设置；窄窗口也显示可点击的更新提示。面板展示版本说明与下载进度，下载和安装仍需明确确认，取消后保留原页面和案件。设置的手动更新复用同一面板。Rust 负责清单请求、内置公钥验签、升级前备份和安装；TypeScript 负责展示状态、进度和确认交互。
 
 “设置 → 版本与更新 → 更新源”可填写自有 HTTPS latest.json 地址。自定义源优先、请求失败回退 GitHub。留空使用默认源。无需把访问令牌存进软件；只接受无用户名密码的 HTTPS 地址。
 

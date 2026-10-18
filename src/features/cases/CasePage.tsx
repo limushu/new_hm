@@ -3,6 +3,7 @@ import Dialog from '../../components/Dialog';
 import Select from '../../components/Select';
 import CaseOverview from './CaseOverview';
 import CaseTags from './CaseTags';
+import CaseStatusPicker from './CaseStatusPicker';
 import ProceedingPath from './ProceedingPath';
 import CaseSchedule from './CaseSchedule';
 import { proceedingName } from '../../domain/proceedings';
@@ -219,24 +220,22 @@ export default function CasePage({
             }}
           />
           <div className="case-properties">
-            <label>
-              案件状态
-              <Select
-                aria-label="案件状态"
+            <div className="case-status-property">
+              <span>案件状态</span>
+              <CaseStatusPicker
                 value={statusId}
+                statuses={data.statuses}
                 disabled={saving}
-                onValueChange={(value) => {
-                  setStatusId(value);
-                  if (title.trim()) void commit({ statusId: value });
-                }}
-              >
-                {data.statuses.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
-                  </option>
-                ))}
-              </Select>
-            </label>
+                onChoose={async (status, create) =>
+                  act(async () => {
+                    if (create) await save('save_case_status', { input: status });
+                    setStatusId(status.id);
+                    if (title.trim() && !(await commit({ statusId: status.id })))
+                      throw new Error('案件状态尚未保存，请重试');
+                  })
+                }
+              />
+            </div>
             <div className="case-category">
               <span>案件类型 / 标签</span>
               <CaseTags

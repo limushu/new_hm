@@ -4,6 +4,7 @@ import { listen } from '@tauri-apps/api/event';
 import type { BackupInfo, Commands, SaveAction } from '../../domain/types';
 import { command, desktopRuntime } from '../../services/repository';
 import Dialog from '../../components/Dialog';
+import UpdateDialog from '../../components/UpdateDialog';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
 export default function Settings({
@@ -22,7 +23,6 @@ export default function Settings({
   const [updateDialog, setUpdateDialog] = useState(false);
   const [checked, setChecked] = useState(false);
   const [endpoint, setEndpoint] = useState('');
-  const [progress, setProgress] = useState('');
   const { busy, error, run } = useAction();
   useEffect(() => {
     let canceled = false;
@@ -56,13 +56,6 @@ export default function Settings({
         setUpdate(e.payload);
         setChecked(false);
       }),
-      listen<{ downloaded: number; total: number | null }>('update-progress', (e) =>
-        setProgress(
-          e.payload.total
-            ? `${Math.round((e.payload.downloaded / e.payload.total) * 100)}%`
-            : `${Math.round(e.payload.downloaded / 1024)} KB`,
-        ),
-      ),
     ])
       .then((values) => {
         if (canceled) values.forEach((stop) => stop());
@@ -227,7 +220,8 @@ export default function Settings({
         <h2>版本与更新</h2>
         <p className="feature-description">案笺 {metadata.version} · Windows 安装版</p>
         <p className="field-hint">
-          启动后及运行期间会在后台检查，有新版时在侧栏提示。由你确认下载和安装；升级包会验证签名，安装前会备份当前工作区。
+          启动 15 秒后及每 6
+          小时在后台检查，有新版时提示。点击提示可直接查看并确认安装，无需进入设置；安装前会备份工作区并验证升级包签名。
         </p>
         <form
           className="update-source-form"
@@ -278,11 +272,6 @@ export default function Settings({
             checked && <span className="field-hint">当前已是最新版本。</span>
           )}
         </div>
-        {progress && (
-          <p role="status" className="field-hint">
-            下载进度 {progress}
-          </p>
-        )}
       </section>
       {restore && (
         <Dialog
@@ -306,22 +295,7 @@ export default function Settings({
         </Dialog>
       )}
       {updateDialog && update && (
-        <Dialog
-          title={`安装 ${update.version}`}
-          onClose={() => setUpdateDialog(false)}
-          submitLabel="下载并安装"
-          onSubmit={async () => {
-            await command('install_update', { confirmed: true });
-          }}
-        >
-          <p className="feature-description">安装时应用将退出并重启，案件数据保留。</p>
-          {update.notes && <p className="update-notes">{update.notes}</p>}
-          {progress && (
-            <p role="status" className="field-hint">
-              下载进度 {progress}
-            </p>
-          )}
-        </Dialog>
+        <UpdateDialog update={update} onClose={() => setUpdateDialog(false)} />
       )}
     </div>
   );
