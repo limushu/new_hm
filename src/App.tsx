@@ -1,4 +1,5 @@
 import BrandMark from './components/BrandMark';
+import Welcome from './components/Welcome';
 import UpdateNotice from './components/UpdateNotice';
 import Contacts, { ContactDetail } from './features/contacts/Contacts';
 import SettingsPage from './features/settings/Settings';
@@ -27,6 +28,7 @@ export default function App() {
   const [opened, setOpened] = useState<string | null>(null);
   const [draft, setDraft] = useState<CaseFile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [welcome, setWelcome] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState<Contact | null>(null);
@@ -46,9 +48,23 @@ export default function App() {
         if (!canceled) setStorage(value);
       })
       .catch(() => {});
-    command('load_workspace', {})
-      .then((value) => {
-        if (!canceled) setData(value);
+    Promise.all([command('load_workspace', {}), command('get_settings', {}).catch(() => null)])
+      .then(([value, settings]) => {
+        if (canceled) return;
+        setData(value);
+        if (settings && settings.onboarding_done !== 'true') {
+          const occupied =
+            value.cases.length +
+              value.contacts.length +
+              value.materials.length +
+              value.tasks.length +
+              value.calendarEvents.length >
+            0;
+          const previewWelcome = previewMode && new URLSearchParams(location.search).has('welcome');
+          if (previewWelcome || (!previewMode && !occupied)) setWelcome(true);
+          else if (!previewMode)
+            void command('set_setting', { key: 'onboarding_done', value: 'true' }).catch(() => {});
+        }
       })
       .catch((e) => {
         if (!canceled) setError(String(e));
@@ -244,6 +260,7 @@ export default function App() {
         {page === 'trash' && <Trash data={data} save={save} />}
         {page === 'settings' && <SettingsPage save={save} storage={storage} />}
       </main>
+      {welcome && <Welcome onDone={() => setWelcome(false)} />}
       {openItem && (
         <CasePage
           key={openItem.id + initialTab + (focusMaterialId ?? '')}

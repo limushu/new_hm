@@ -113,6 +113,10 @@ test('联系对象原位关联、关系图和双向案件跳转', async ({ page 
   await expect(page.getByRole('dialog', { name: '案件关系图', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '查看虚构王甲', exact: true }).click();
   await page
+    .getByRole('region', { name: '选中节点的关系', exact: true })
+    .getByRole('button', { name: '打开对象详情', exact: true })
+    .click();
+  await page
     .getByRole('dialog', { name: '虚构王甲', exact: true })
     .getByRole('button', { name: '反向关联', exact: true })
     .click();

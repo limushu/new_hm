@@ -1,6 +1,8 @@
 import Select from '../../components/Select';
 import { useState } from 'react';
-import { Plus, Users, ArrowUpRight, Search } from 'lucide-react';
+import { Plus, Users, ArrowUpRight, Search, Network } from 'lucide-react';
+import Dialog from '../../components/Dialog';
+import RelationGraph from './RelationGraph';
 import DeleteContact from './DeleteContact';
 import type { Contact, SaveAction, Workspace } from '../../domain/types';
 import { linkedCases, relatedContacts } from '../../domain/relations';
@@ -26,6 +28,7 @@ export default function Contacts({
   const [detail, setDetail] = useState<Contact | null>(null);
   const [detailView, setDetailView] = useState<'details' | 'links'>('details');
   const [remove, setRemove] = useState<Contact | null>(null);
+  const [graph, setGraph] = useState(false);
   const rows = data.contacts.filter(
     (c) =>
       (kind === 'all' || c.kind === kind) &&
@@ -45,10 +48,16 @@ export default function Contacts({
           </h1>
           <p>从一个对象，找到与它有关的案件和联系。</p>
         </div>
-        <button className="primary-action" onClick={() => setEdit(emptyContact())}>
-          <Plus />
-          新建对象
-        </button>
+        <div className="contacts-actions">
+          <button onClick={() => setGraph(true)}>
+            <Network />
+            关系图
+          </button>
+          <button className="primary-action" onClick={() => setEdit(emptyContact())}>
+            <Plus />
+            新建对象
+          </button>
+        </div>
       </div>
       <div className="contacts-tools">
         <div className="contact-search">
@@ -70,6 +79,35 @@ export default function Contacts({
         </Select>
         <span>{rows.length} 个对象</span>
       </div>
+      {graph && (
+        <Dialog
+          title="全局关系图"
+          className="contact-detail-dialog"
+          onClose={() => setGraph(false)}
+        >
+          <RelationGraph
+            data={data}
+            focusId={
+              data.contacts[0]
+                ? `contact:${data.contacts[0].id}`
+                : `case:${data.cases.find((c) => !c.deletedAt)?.id ?? ''}`
+            }
+            initialGlobal
+            onCase={(id) => {
+              setGraph(false);
+              onCase(id);
+            }}
+            onContact={(id) => {
+              const contact = data.contacts.find((c) => c.id === id);
+              if (contact) {
+                setGraph(false);
+                setDetail(contact);
+                setDetailView('details');
+              }
+            }}
+          />
+        </Dialog>
+      )}
       <div className="feature-list contacts-list">
         {!rows.length && (
           <p className="quiet-empty">

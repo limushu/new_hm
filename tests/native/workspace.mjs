@@ -19,6 +19,7 @@ mkdirSync(join(root, 'branding'));
 copyFileSync(resolve('src-tauri/icons/icon.ico'), join(root, 'branding', 'hm-mark.ico'));
 writeFileSync(join(root, '.portable'), '');
 let pid, browser;
+let launches = 0;
 const logs = [];
 async function start() {
   const server = createServer();
@@ -61,6 +62,17 @@ async function start() {
   const page = browser.contexts()[0].pages()[0];
   page.on('pageerror', (error) => logs.push(error.message));
   await page.getByRole('button', { name: '案件', exact: true }).waitFor();
+  const welcome = page.getByRole('dialog', { name: '欢迎使用案笺', exact: true });
+  if (launches++ === 0) {
+    await expect(welcome).toBeVisible();
+    await welcome.getByRole('button', { name: '开始使用', exact: true }).click();
+    await expect(welcome).toHaveCount(0);
+  } else {
+    await expect
+      .poll(async () => (await invoke(page, 'get_settings')).onboarding_done)
+      .toBe('true');
+    await expect(welcome).toHaveCount(0);
+  }
   console.log('Owned native page:', page.url());
   await expect
     .poll(
@@ -509,6 +521,12 @@ try {
   const detail = page.getByRole('dialog', { name: '虚构甲法院新名称', exact: true });
   await expect(detail).toContainText('虚构法官');
   await detail.getByRole('button', { name: '局部关系图', exact: true }).click();
+  await detail.getByRole('button', { name: '查看虚构法官', exact: true }).click();
+  await expect(detail).toBeVisible();
+  await expect(detail.getByRole('region', { name: '选中节点的关系' })).toContainText('虚构法官');
+  await detail.getByRole('button', { name: '放大关系图', exact: true }).click();
+  await expect(detail.getByLabel('关系图缩放比例', { exact: true })).toHaveText('120%');
+  await detail.getByRole('button', { name: '重置关系图', exact: true }).click();
   await page.screenshot({ path: join(root, 'relations.png') });
   await detail.getByRole('button', { name: '关闭', exact: true }).last().click();
   await page.getByRole('textbox', { name: '案号', exact: true }).fill('原生案号-2026');
@@ -663,6 +681,8 @@ try {
   await invoke(page, 'delete_contact', { id: retainedJudge.id });
   await invoke(page, 'trash_case', { id: deletionCase.id });
   await invoke(page, 'purge_item', { kind: 'case', id: deletionCase.id, confirmed: true });
+  // Simulate an existing workspace upgrading from a build without the welcome marker.
+  await invoke(page, 'set_setting', { key: 'onboarding_done', value: 'false' });
   await stop(page);
   page = await start();
   workspace = await invoke(page, 'load_workspace');

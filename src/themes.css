@@ -37,6 +37,24 @@
   --red-strong: #a3484c;
   --accent: #90b3db;
   --icon-muted: #9b9b97;
+  --board-neutral-column: #202020;
+  --board-neutral-card: #202020;
+  --board-neutral-line: #333332;
+  --status-neutral-bg: #4a4a48;
+  --status-neutral-dot: #a5a5a0;
+  --status-neutral-text: #ededeb;
+  --board-blue-column: #1b2228;
+  --board-blue-card: #213243;
+  --board-blue-line: #2c4359;
+  --status-blue-bg: #2b4e70;
+  --status-blue-dot: #52a4e8;
+  --status-blue-text: #dfedfa;
+  --board-green-column: #1c241f;
+  --board-green-card: #22372c;
+  --board-green-line: #2d4939;
+  --status-green-bg: #2d5841;
+  --status-green-dot: #62bb8b;
+  --status-green-text: #e0f1e6;
 }
 :root[data-theme='light'] {
   color-scheme: light;
@@ -92,6 +110,24 @@
   --calendar-card-border: #d4e1ef;
   --calendar-card-text: #285780;
   --calendar-card-meta: #4a7193;
+  --board-neutral-column: #f1f1ef;
+  --board-neutral-card: #ffffff;
+  --board-neutral-line: #e0e0dd;
+  --status-neutral-bg: #e3e3df;
+  --status-neutral-dot: #8c8c85;
+  --status-neutral-text: #43443f;
+  --board-blue-column: #edf3f8;
+  --board-blue-card: #ffffff;
+  --board-blue-line: #d4e2ee;
+  --status-blue-bg: #d9e9f7;
+  --status-blue-dot: #3489ce;
+  --status-blue-text: #28577e;
+  --board-green-column: #eff5f0;
+  --board-green-card: #ffffff;
+  --board-green-line: #d5e5d9;
+  --status-green-bg: #dcece1;
+  --status-green-dot: #49946b;
+  --status-green-text: #325e42;
 }
 .theme-options {
   display: flex;
@@ -135,7 +171,7 @@
   background: var(--primary-hover);
 }
 .board-status-pill {
-  color: var(--on-primary);
+  color: var(--status-foreground, var(--text));
 }
 :root[data-theme='light'] .brand-mark {
   filter: none;

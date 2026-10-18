@@ -169,6 +169,16 @@ export default function ContactDetail({
                   <small>
                     {[
                       ...new Set([
+                        ...data.caseParties
+                          .filter((p) => p.caseId === c.id && p.contactId === current.id)
+                          .map(
+                            (p) =>
+                              ({
+                                client: '我方委托人',
+                                opponent: '对方当事人',
+                                other: '其他当事人',
+                              })[p.side],
+                          ),
                         ...data.contactLinks
                           .filter((l) => l.caseId === c.id && l.contactId === current.id)
                           .map(

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, CheckSquare, ArrowUpRight } from 'lucide-react';
+import { Plus, CheckSquare, ArrowUpRight, ListChecks } from 'lucide-react';
 import DateField from '../../components/DateField';
 import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
@@ -70,8 +70,14 @@ export default function WorkTasks({
           待办 <span>{pending.length}</span>
         </h3>
         <div className="work-actions">
-          {onTemplate && <button onClick={onTemplate}>使用工作清单</button>}
+          {onTemplate && (
+            <button onClick={onTemplate}>
+              <ListChecks />
+              使用工作清单
+            </button>
+          )}
           <button
+            className="work-add-action"
             onClick={() =>
               setEdit({
                 id: crypto.randomUUID(),

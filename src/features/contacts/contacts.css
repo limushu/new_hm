@@ -15,6 +15,28 @@
   align-items: center;
   gap: 6px;
 }
+.contacts-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.contacts-actions > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-base);
+  padding: 8px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+.contacts-actions > button:not(.primary-action) {
+  border: 1px solid var(--line);
+}
+.contacts-actions svg {
+  width: 16px;
+  height: 16px;
+}
 .contacts-tools {
   display: flex;
   align-items: center;
@@ -556,153 +578,6 @@
   font-size: var(--text-sm);
   padding-top: 10px;
 }
-.local-graph {
-  border: 1px solid var(--line);
-  border-radius: 9px;
-  overflow: hidden;
-  background: var(--bg);
-}
-.graph-controls {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 14px;
-  border-bottom: 1px solid var(--line);
-  font-size: var(--text-sm);
-  color: var(--text);
-}
-.graph-controls > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex: 1;
-}
-.graph-controls small {
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-.graph-controls > div {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex: none;
-}
-.graph-controls label {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: var(--text-xs);
-}
-.graph-controls select {
-  width: auto;
-  border: 0;
-  background: var(--hover);
-  padding: 3px 5px;
-  font-size: var(--text-xs);
-}
-.graph-controls button {
-  display: flex;
-  padding: 4px;
-  color: var(--muted);
-  border-radius: 4px;
-}
-.graph-controls button:hover {
-  background: var(--surface-strong);
-}
-.graph-controls svg {
-  width: 13px;
-  height: 13px;
-}
-.local-graph > svg {
-  width: 100%;
-  height: auto;
-  min-height: 280px;
-  max-height: 440px;
-  display: block;
-  touch-action: none;
-  cursor: grab;
-}
-.graph-edge path {
-  stroke: var(--quiet);
-  stroke-width: 1;
-  fill: none;
-}
-.graph-edge text {
-  fill: var(--muted);
-  font-size: var(--text-xs);
-  paint-order: stroke;
-  stroke: var(--quiet);
-  stroke-width: 5px;
-  stroke-linejoin: round;
-}
-.graph-edge.is-lit path {
-  stroke: var(--blue-text);
-  stroke-width: 1.4;
-}
-.graph-edge.is-lit text {
-  fill: var(--blue-text);
-}
-.graph-node {
-  cursor: pointer;
-  outline: none;
-}
-.graph-node circle {
-  fill: var(--muted);
-  stroke: var(--quiet);
-  stroke-width: 5px;
-}
-.graph-node.kind-court circle {
-  fill: var(--red-text);
-}
-.graph-node.kind-judge circle {
-  fill: var(--blue-text);
-}
-.graph-node.kind-program circle {
-  fill: var(--muted);
-  stroke-width: 3px;
-}
-.graph-node.is-focused circle {
-  fill: var(--blue-text);
-  stroke: var(--blue-text);
-  stroke-width: 7px;
-}
-.graph-node text {
-  fill: var(--text);
-  font-size: var(--text-body);
-  paint-order: stroke;
-  stroke: var(--quiet);
-  stroke-width: 5px;
-  stroke-linejoin: round;
-}
-.graph-node:focus-visible circle,
-.graph-node:hover circle {
-  stroke: var(--blue-text);
-}
-.graph-node.is-focused text {
-  font-weight: 600;
-  fill: var(--text);
-}
-.graph-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  border-top: 1px solid var(--line);
-  padding: 10px 14px;
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-.graph-footer button {
-  display: flex;
-  gap: 5px;
-  align-items: center;
-  color: var(--blue-text);
-  font-size: var(--text-xs);
-}
-.graph-footer button svg {
-  width: 12px;
-  height: 12px;
-}
 @media (max-width: 760px) {
   .contacts-heading {
     align-items: flex-start;
@@ -762,18 +637,6 @@
   }
   .entity-context {
     gap: 9px;
-  }
-  .graph-controls {
-    flex-wrap: wrap;
-  }
-  .graph-controls > span {
-    flex-basis: 100%;
-  }
-  .local-graph > svg {
-    min-height: 245px;
-  }
-  .graph-footer > span {
-    max-width: 170px;
   }
   .picker-popover {
     min-width: 0;

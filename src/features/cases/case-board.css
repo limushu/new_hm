@@ -103,7 +103,7 @@
   align-items: center;
   gap: 6px;
   background: var(--status-bg);
-  color: var(--text);
+  color: var(--status-foreground, var(--text));
   border-radius: 15px;
   padding: 3px 9px 3px 7px;
   font-size: var(--text-base);

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Files, Plus, ArrowUpRight, Wallet } from 'lucide-react';
+import { Files, Plus, ArrowUpRight, Wallet, Link2 } from 'lucide-react';
 import type { SaveAction, Workspace, WorkScope, WorkLink, LedgerEntry } from '../../domain/types';
 import {
   resourceInScope,
@@ -70,7 +70,10 @@ export default function StageWork({
             材料与成果
           </h3>
           <div className="work-actions">
-            <button onClick={() => setLink('material')}>关联已有材料</button>
+            <button onClick={() => setLink('material')}>
+              <Link2 />
+              关联已有材料
+            </button>
             <button onClick={() => onMaterials(scope)}>
               在材料库查看
               <ArrowUpRight />
@@ -88,6 +91,7 @@ export default function StageWork({
           </h3>
           <div className="work-actions">
             <button
+              className="work-add-action"
               onClick={() =>
                 setEntry({
                   id: crypto.randomUUID(),

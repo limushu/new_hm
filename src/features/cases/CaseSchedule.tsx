@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { CalendarDays, Plus } from 'lucide-react';
+import { CalendarDays, Plus, Link2 } from 'lucide-react';
 import type { CalendarEvent, SaveAction, Workspace, WorkScope } from '../../domain/types';
 import { caseScope, resourceInScope } from '../../domain/workspace';
 import { dateKey } from '../../domain/calendar';
@@ -49,8 +49,16 @@ export default function CaseSchedule({
           案件日程 <span>{upcoming.length}</span>
         </h3>
         <div className="work-actions">
-          {onAssociate && <button onClick={onAssociate}>关联已有日程</button>}
-          <button onClick={() => setEdit({ ...emptyEvent(today), caseId })}>
+          {onAssociate && (
+            <button onClick={onAssociate}>
+              <Link2 />
+              关联已有日程
+            </button>
+          )}
+          <button
+            className="work-add-action"
+            onClick={() => setEdit({ ...emptyEvent(today), caseId })}
+          >
             <Plus />
             添加案件日程
           </button>

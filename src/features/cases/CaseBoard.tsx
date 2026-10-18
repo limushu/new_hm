@@ -1,6 +1,7 @@
 import { currentStage, proceedingName } from '../../domain/proceedings';
 import Dialog from '../../components/Dialog';
-import { useId, useRef, useState, type CSSProperties } from 'react';
+import { statusPalette } from '../../domain/statusPalette';
+import { useId, useRef, useState } from 'react';
 import { ArrowRightCircle, Folder, Plus, Search, MoreHorizontal, Trash2 } from 'lucide-react';
 import type { CaseFile, CaseStatus, SaveAction, Workspace } from '../../domain/types';
 import { useBoardDrag } from './useBoardDrag';
@@ -16,33 +17,6 @@ interface Props {
   onOpen: (id: string) => void;
   onMove: (id: string, statusId: string) => Promise<void>;
 }
-
-const palettes: Record<string, CSSProperties> = {
-  not_started: {
-    '--column-bg': 'var(--surface)',
-    '--card-bg': 'var(--surface)',
-    '--card-border': 'var(--line)',
-    '--status-bg': 'var(--muted)',
-    '--status-dot': 'var(--text)',
-    '--status-accent': 'var(--muted)',
-  } as CSSProperties,
-  in_progress: {
-    '--column-bg': 'var(--blue-faint)',
-    '--card-bg': 'var(--blue-soft)',
-    '--card-border': 'var(--blue-line)',
-    '--status-bg': 'var(--blue-strong)',
-    '--status-dot': 'var(--blue-text)',
-    '--status-accent': 'var(--blue-text)',
-  } as CSSProperties,
-  closed: {
-    '--column-bg': 'var(--green-faint)',
-    '--card-bg': 'var(--green-soft)',
-    '--card-border': 'var(--green-line)',
-    '--status-bg': 'var(--green-strong)',
-    '--status-dot': 'var(--green-text)',
-    '--status-accent': 'var(--green-text)',
-  } as CSSProperties,
-};
 
 export default function CaseBoard({
   data,
@@ -64,24 +38,7 @@ export default function CaseBoard({
     setStatusName(status.name);
     setStatusColor(status.color);
   }
-  const tone = (id: string) =>
-    ((data.statuses.find((s) => s.id === id)?.color ?? '').toLowerCase() ===
-    (
-      { not_started: '#96938b', in_progress: '#7098b9', closed: '#7e9b85' } as Record<
-        string,
-        string
-      >
-    )[id]
-      ? palettes[id]
-      : undefined) ??
-    ({
-      '--column-bg': (data.statuses.find((s) => s.id === id)?.color ?? '#768b9a') + '12',
-      '--card-bg': (data.statuses.find((s) => s.id === id)?.color ?? '#768b9a') + '20',
-      '--card-border': (data.statuses.find((s) => s.id === id)?.color ?? '#768b9a') + '40',
-      '--status-bg': (data.statuses.find((s) => s.id === id)?.color ?? '#768b9a') + '60',
-      '--status-dot': data.statuses.find((s) => s.id === id)?.color ?? '#768b9a',
-      '--status-accent': data.statuses.find((s) => s.id === id)?.color ?? '#768b9a',
-    } as CSSProperties);
+  const tone = (id: string) => statusPalette(data.statuses.find((s) => s.id === id));
   const board = useRef<HTMLDivElement>(null);
   const instructionId = useId();
   const [pending, setPending] = useState<{ id: string; statusId: string } | null>(null);

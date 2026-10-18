@@ -15,7 +15,9 @@ export function programContacts(data: Workspace, id: string) {
 export function linkedCases(data: Workspace, contactId: string) {
   return data.cases.filter(
     (c) =>
-      !c.deletedAt && data.contactLinks.some((l) => l.caseId === c.id && l.contactId === contactId),
+      !c.deletedAt &&
+      (data.contactLinks.some((l) => l.caseId === c.id && l.contactId === contactId) ||
+        data.caseParties.some((p) => p.caseId === c.id && p.contactId === contactId)),
   );
 }
 export function relatedContacts(data: Workspace, contact: Contact) {
@@ -74,6 +76,14 @@ export function workspaceGraph(data: Workspace) {
       target: `contact:${r.judgeId}`,
       label: '法院 · 法官',
     });
+  for (const p of data.caseParties) {
+    if (p.contactId && active.some((c) => c.id === p.caseId))
+      edges.push({
+        source: `case:${p.caseId}`,
+        target: `contact:${p.contactId}`,
+        label: { client: '我方委托人', opponent: '对方当事人', other: '其他当事人' }[p.side],
+      });
+  }
   for (const r of data.proceedingPartyRoles) {
     const party = data.caseParties.find((p) => p.id === r.partyId);
     if (party?.contactId && programs.some((p) => p.id === r.proceedingId))

@@ -1,5 +1,6 @@
 import { useCallback, useId, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
+import { statusPalette } from '../../domain/statusPalette';
 import type { CaseStatus } from '../../domain/types';
 import { usePopover } from '../../components/usePopover';
 import { useAction } from '../../components/useAction';
@@ -44,10 +45,8 @@ export default function CaseStatusPicker({
   }
   return (
     <div className="case-status-picker" ref={anchor}>
-      <div
-        className="case-status-input"
-        style={{ background: `${selected?.color ?? '#768b9a'}25` }}
-      >
+      <div className="case-status-input" style={statusPalette(selected)}>
+        <i className="status-dot" aria-hidden="true" />
         <input
           role="combobox"
           aria-label="案件状态"
@@ -117,7 +116,9 @@ export default function CaseStatusPicker({
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => choose(index)}
             >
-              <span>#{s.name}</span>
+              <span className="status-option-pill" style={statusPalette(s)}>
+                <i className="status-dot" aria-hidden="true" />#{s.name}
+              </span>
               {s.id === value && <Check />}
             </button>
           ))}

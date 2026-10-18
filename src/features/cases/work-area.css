@@ -69,13 +69,29 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px 14px;
+  gap: 6px;
 }
-.work-actions button {
+.case-body .section-title .work-actions button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
   font-size: var(--text-base);
+  padding: 6px 9px;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--text);
+  background: var(--surface);
+  line-height: 1.35;
+}
+.case-body .section-title .work-actions button:hover {
+  background: var(--hover);
+  border-color: var(--line-strong);
+}
+.case-body .section-title .work-actions button.work-add-action {
+  color: var(--blue-text);
+  background: var(--blue-soft);
+  border-color: transparent;
 }
 .work-actions svg {
   width: 15px;

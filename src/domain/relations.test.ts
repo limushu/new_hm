@@ -77,4 +77,36 @@ describe('程序与对象关系', () => {
     data.contactLinks.push({ ...data.contactLinks[0], id: 'c', contactId: 'court2' });
     expect(programContacts(data, 'program').court).toBeNull();
   });
+  it('未开始办理的委托人也有案件反向关联，回收站案件不进入图', () => {
+    const data = fixture();
+    data.contacts.push({
+      id: 'client',
+      name: '虚构委托人',
+      kind: 'person',
+      phone: '',
+      address: '',
+      notes: '',
+    });
+    data.caseParties.push({
+      id: 'party',
+      caseId: 'case',
+      contactId: 'client',
+      name: '虚构委托人',
+      side: 'client',
+      serviceType: '',
+    });
+    expect(linkedCases(data, 'client')).toHaveLength(1);
+    expect(workspaceGraph(data).edges).toContainEqual({
+      source: 'case:case',
+      target: 'contact:client',
+      label: '我方委托人',
+    });
+    data.cases[0].deletedAt = 'now';
+    expect(linkedCases(data, 'client')).toHaveLength(0);
+    expect(workspaceGraph(data).edges).not.toContainEqual({
+      source: 'case:case',
+      target: 'contact:client',
+      label: '我方委托人',
+    });
+  });
 });

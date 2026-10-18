@@ -1,0 +1,345 @@
+.local-graph {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--bg);
+  margin-top: 16px;
+}
+.graph-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px 8px;
+  font-size: var(--text-base);
+}
+.graph-mode {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 7px;
+  background: var(--hover);
+  flex: none;
+}
+.graph-mode button {
+  padding: 4px 10px;
+  border-radius: 5px;
+  font-size: var(--text-base);
+  color: var(--text);
+}
+.graph-mode button[aria-pressed='true'] {
+  background: var(--surface-strong);
+  box-shadow: 0 1px 3px var(--shadow-color);
+}
+.local-graph .graph-toolbar .graph-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex: 1;
+  min-width: 90px;
+  flex-direction: row;
+  margin: 0;
+}
+.graph-search svg {
+  width: 15px;
+  height: 15px;
+  color: var(--muted);
+  flex: none;
+}
+.graph-search input {
+  width: 100%;
+  min-width: 0;
+  padding: 6px 0;
+  border: 0;
+  background: none;
+  font-size: var(--text-base);
+}
+.local-graph .graph-toolbar .graph-depth {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  flex: none;
+  flex-direction: row;
+  margin: 0;
+}
+.graph-depth .select-trigger {
+  padding: 5px 8px;
+}
+.graph-toolbar > button svg {
+  width: 16px;
+  height: 16px;
+}
+.graph-filters {
+  display: flex;
+  gap: 6px 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 0 14px 12px;
+  border-bottom: 1px solid var(--line);
+}
+.graph-filters button,
+.graph-kind {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+.graph-filters button {
+  border-radius: 4px;
+  padding: 3px 0;
+}
+.graph-filters button[aria-pressed='false'] {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+.graph-filters i,
+.graph-kind i {
+  display: block;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--node-color);
+  flex: none;
+}
+.graph-filters > span {
+  margin-left: auto;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.kind-case {
+  --node-color: var(--blue-text);
+}
+.kind-program {
+  --node-color: var(--violet-text);
+}
+.kind-court {
+  --node-color: var(--amber-text);
+}
+.kind-judge {
+  --node-color: var(--green-text);
+}
+.kind-person {
+  --node-color: var(--text);
+}
+.kind-organization {
+  --node-color: var(--teal-text);
+}
+.graph-canvas {
+  position: relative;
+}
+.graph-canvas > svg {
+  display: block;
+  width: 100%;
+  height: 390px;
+  touch-action: none;
+  cursor: grab;
+}
+.graph-canvas > svg:active {
+  cursor: grabbing;
+}
+.graph-canvas > svg:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+.graph-edge line {
+  stroke: var(--line-strong);
+  stroke-width: 1px;
+}
+.graph-edge.is-lit line {
+  stroke: var(--accent);
+  stroke-width: 1.3px;
+}
+.graph-node {
+  cursor: grab;
+  outline: none;
+  transition: opacity 0.15s;
+}
+.graph-hit {
+  fill: transparent;
+  stroke: none;
+}
+.graph-dot {
+  fill: var(--node-color);
+  stroke: var(--bg);
+  stroke-width: 3px;
+}
+.graph-node.is-focused .graph-dot,
+.graph-node:focus-visible .graph-dot {
+  stroke: var(--accent);
+  stroke-width: 2px;
+  filter: drop-shadow(0 0 5px var(--blue-line));
+}
+.graph-node text {
+  fill: var(--text);
+  font-size: var(--text-base);
+  paint-order: stroke;
+  stroke: var(--bg);
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.graph-node .is-zoomed-out {
+  display: none;
+}
+.graph-zoom {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  border: 1px solid var(--line);
+  background: var(--popup);
+  border-radius: 7px;
+}
+.graph-zoom button {
+  display: grid;
+  place-items: center;
+  width: 29px;
+  height: 28px;
+  padding: 5px;
+  border-radius: 4px;
+}
+.graph-zoom button:hover {
+  background: var(--hover);
+}
+.graph-zoom svg {
+  width: 15px;
+  height: 15px;
+}
+.graph-zoom output {
+  font-size: var(--text-sm);
+  min-width: 40px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.graph-inspector {
+  border-top: 1px solid var(--line);
+  padding: 13px 14px;
+  background: var(--surface);
+}
+.graph-inspector header,
+.graph-inspector header > div {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.graph-inspector header {
+  justify-content: space-between;
+}
+.graph-inspector strong {
+  font-size: var(--text-body);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.graph-inspector header button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 0;
+  font-size: var(--text-sm);
+}
+.graph-inspector header button:last-child {
+  color: var(--blue-text);
+}
+.graph-inspector header svg {
+  width: 14px;
+  height: 14px;
+}
+.graph-connections {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+  max-height: 120px;
+  overflow: auto;
+}
+.graph-connections button {
+  display: inline-flex;
+  gap: 7px;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  padding: 5px 8px;
+  font-size: var(--text-base);
+  text-align: left;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.graph-connections button:hover {
+  background: var(--hover);
+}
+.graph-connections button span {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.graph-no-links,
+.graph-idle {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.graph-idle {
+  padding: 14px;
+  border-top: 1px solid var(--line);
+}
+.graph-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  pointer-events: none;
+  color: var(--muted);
+  font-size: var(--text-body);
+}
+.graph-empty button {
+  pointer-events: auto;
+  color: var(--blue-text);
+  font-size: var(--text-base);
+}
+.contact-detail-dialog:has(.local-graph.is-expanded) {
+  width: calc(100vw - 32px);
+}
+.local-graph.is-expanded .graph-canvas > svg {
+  height: min(60dvh, 680px);
+}
+@media (max-width: 600px) {
+  .graph-toolbar {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px;
+  }
+  .graph-search {
+    flex-basis: calc(100% - 120px);
+  }
+  .graph-depth {
+    margin-left: auto;
+  }
+  .graph-filters {
+    padding: 0 10px 10px;
+    gap: 6px 10px;
+  }
+  .graph-filters > span {
+    flex-basis: 100%;
+    margin-left: 0;
+  }
+  .graph-canvas > svg {
+    height: 340px;
+  }
+  .graph-inspector {
+    padding: 12px 10px;
+  }
+  .graph-inspector header {
+    gap: 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .graph-node {
+    transition: none;
+  }
+}
