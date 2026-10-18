@@ -58,7 +58,7 @@ export default function CaseTags({
             aria-autocomplete="list"
             aria-activedescendant={open && active >= 0 ? `${id}-${active}` : undefined}
             disabled={disabled}
-            placeholder={value.length ? '+ 标签' : '# 添加案件类型或标签'}
+            placeholder={value.length ? '+ 标签' : '# 添加标签'}
             value={query}
             maxLength={31}
             onFocus={() => setOpen(true)}

@@ -242,9 +242,6 @@ export default function Materials({
         });
       }}
     >
-      <header className="materials-heading">
-        <h2>材料</h2>
-      </header>
       {!recordId && (
         <nav className="material-scopes" aria-label="按流程查看材料">
           {[
@@ -322,38 +319,40 @@ export default function Materials({
           });
         }}
       />
-      <div className="materials-scope">
-        <nav className="material-breadcrumb" aria-label="材料路径">
-          <button
-            type="button"
-            aria-label="全部材料"
-            aria-current={!current && !query ? 'location' : undefined}
-            onClick={() => {
-              setFolder(null);
-              setQuery('');
-            }}
-          >
-            {scopeName}
-          </button>
-          {ancestors.map((ancestor) => (
-            <span className="material-path-part" key={ancestor.id}>
-              <ChevronRight aria-hidden="true" />
-              <button
-                type="button"
-                aria-current={ancestor.id === folder && !query ? 'location' : undefined}
-                onClick={() => {
-                  setFolder(ancestor.id);
-                  setQuery('');
-                }}
-              >
-                {ancestor.name}
-              </button>
-            </span>
-          ))}
-          {query && <span className="material-search-context">搜索结果</span>}
-        </nav>
-        <span className="material-count">{rows.length} 项</span>
-      </div>
+      {(current || query) && (
+        <div className="materials-scope">
+          <nav className="material-breadcrumb" aria-label="材料路径">
+            <button
+              type="button"
+              aria-label="全部材料"
+              aria-current={!current && !query ? 'location' : undefined}
+              onClick={() => {
+                setFolder(null);
+                setQuery('');
+              }}
+            >
+              {scopeName}
+            </button>
+            {ancestors.map((ancestor) => (
+              <span className="material-path-part" key={ancestor.id}>
+                <ChevronRight aria-hidden="true" />
+                <button
+                  type="button"
+                  aria-current={ancestor.id === folder && !query ? 'location' : undefined}
+                  onClick={() => {
+                    setFolder(ancestor.id);
+                    setQuery('');
+                  }}
+                >
+                  {ancestor.name}
+                </button>
+              </span>
+            ))}
+            {query && <span className="material-search-context">搜索结果</span>}
+          </nav>
+          <span className="material-count">{rows.length} 项</span>
+        </div>
+      )}
       {error && (
         <p role="alert" className="error-message">
           {error}

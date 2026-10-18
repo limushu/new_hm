@@ -269,7 +269,8 @@ try {
     const sizes = await page
       .locator(selector)
       .evaluateAll((nodes) => nodes.map((n) => parseFloat(getComputedStyle(n).fontSize)));
-    if (!sizes.length || sizes.some((size) => size < 16))
+    const minimum = selector === '.material-name' ? 15 : 14;
+    if (!sizes.length || sizes.some((size) => size < minimum))
       throw new Error('Native material text is too small: ' + selector);
   }
   const materialTypography = await page.context().newCDPSession(page);

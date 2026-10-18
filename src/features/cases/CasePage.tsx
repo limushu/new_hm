@@ -243,7 +243,7 @@ export default function CasePage({
             <div className="case-status-property">
               <span>
                 <CircleDot aria-hidden="true" />
-                案件状态
+                状态
               </span>
               <CaseStatusPicker
                 value={statusId}
@@ -262,7 +262,7 @@ export default function CasePage({
             <div className="case-category">
               <span>
                 <Tag aria-hidden="true" />
-                案件类型 / 标签
+                标签
               </span>
               <CaseTags
                 value={tags}

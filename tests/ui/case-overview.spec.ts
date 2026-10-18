@@ -101,7 +101,7 @@ test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async
   await add(page, 'enforcement', '一审');
   await page.getByRole('tab', { name: '概览', exact: true }).click();
   await page.locator('.overview-materials button').filter({ hasText: '执行' }).click();
-  await expect(page.locator('.materials-scope')).toContainText('执行');
+  await expect(page.locator('.material-scopes button[aria-pressed="true"]')).toContainText('执行');
   await page.setViewportSize({ width: 390, height: 844 });
   await expect(page.getByRole('navigation', { name: '按流程查看材料' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

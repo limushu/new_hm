@@ -37,10 +37,18 @@ test('材料使用单一归档导航，多级路径可返回，新增始终落�
   await expect(page.locator('.material-row')).toHaveCount(1);
   await expect(page.locator('.material-row')).toContainText('书证');
   await breadcrumb.getByRole('button', { name: '全部材料', exact: true }).click();
-  await expect(breadcrumb).toHaveText('一审');
+  await expect(breadcrumb).toHaveCount(0);
+  await expect(scopes.getByRole('button', { name: /^一审/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await scopes.getByRole('button', { name: /^案件共用/ }).click();
   await expect(page.locator('.material-row')).toHaveCount(0);
-  await expect(breadcrumb).toHaveText('案件共用');
+  await expect(breadcrumb).toHaveCount(0);
+  await expect(scopes.getByRole('button', { name: /^案件共用/ })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   await scopes.getByRole('button', { name: /^一审/ }).click();
   await page.locator('.material-list').getByRole('button', { name: '证据', exact: true }).click();
   await page.locator('.material-list').getByRole('button', { name: '书证', exact: true }).click();
@@ -70,14 +78,16 @@ test('材料正文与操作保持可读字号，深浅主题及窄侧页不靠�
         '.material-search input',
         '.material-scopes button',
         '.material-toolbar button',
-        '.material-breadcrumb button',
       ]) {
         const sizes = await panel
           .locator(selector)
           .evaluateAll((nodes) => nodes.map((n) => parseFloat(getComputedStyle(n).fontSize)));
-        expect(sizes.every((size) => size >= 16)).toBe(true);
+        const minimum = selector === '.material-name' ? 15 : 14;
+        expect(sizes.every((size) => size >= minimum && size <= 15)).toBe(true);
       }
-      const titleColor = await panel.locator('h2').evaluate((n) => getComputedStyle(n).color);
+      const titleColor = await page
+        .locator('.page-title-input')
+        .evaluate((n) => getComputedStyle(n).color);
       await expect(panel.locator('.material-name')).toHaveCSS('color', titleColor);
       await expect(panel.locator('.material-row > time')).toHaveCSS('color', titleColor);
       await expect(panel.getByRole('button', { name: '添加材料', exact: true })).toBeVisible();
@@ -89,4 +99,20 @@ test('材料正文与操作保持可读字号，深浅主题及窄侧页不靠�
     }
     await page.setViewportSize({ width: 1600, height: 1000 });
   }
+});
+
+test('小桌面首屏可见材料行，标题和工具栏不挤占内容区', async ({ page }) => {
+  await page.setViewportSize({ width: 800, height: 600 });
+  await openMaterials(page);
+  await page.getByLabel('选择材料文件').setInputFiles(
+    Array.from({ length: 6 }, (_, i) => ({
+      name: `证据 ${i + 1}.txt`,
+      mimeType: 'text/plain',
+      buffer: Buffer.from('虚构材料'),
+    })),
+  );
+  await page.locator('.case-page').evaluate((pane) => (pane.scrollTop = 0));
+  const rows = page.locator('.material-row');
+  await expect(rows).toHaveCount(6);
+  await expect(rows.nth(3)).toBeInViewport({ ratio: 1 });
 });

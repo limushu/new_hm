@@ -4,11 +4,11 @@
 
 面向独立执业律师的本地工作应用：案件、办理流程、材料归档、日程、联系人和简单收支。无需登录，离线使用。技术栈为 Tauri 2、React/TypeScript、Rust、SQLite。
 
-当前交付版本 **1.3.1，Windows x64 安装版**。macOS、Android、iOS 是后续目标，尚未做发布验收。视觉延续已确认的 Notion 式深灰、圆角和舒展留白。
+当前交付版本 **1.3.2，Windows x64 安装版**。macOS、Android、iOS 是后续目标，尚未做发布验收。视觉延续已确认的 Notion 式深灰、圆角和舒展留白。
 
 ## 使用与验收
 
-安装包、签名与更新清单位于本地 artifacts/windows/1.3.1/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
+安装包、签名与更新清单位于本地 artifacts/windows/1.3.2/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
 
 详见[1.0 使用与验收](docs/v1.0-acceptance.md)：功能检查、数据位置、备份、提醒与升级边界。软件尚无 Windows 发布者代码签名证书，在线升级使用独立签名验证。
 
