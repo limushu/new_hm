@@ -6,6 +6,8 @@
 
 这些规范优先于下方历史原型说明；正式应用已实现材料管理、自定义状态和程序节点。
 
+1.1 正式 Windows 程序的[案件概览](current/case-overview-app-1.1.0.png)、[程序详情](current/case-programs-app-1.1.0.png)为隔离虚构数据的实机截图。字号按[统一映射](typography.md)渲染，未读取用户已有案件。
+
 ## 如何使用这些资料
 
 | 位置 | 用途 |
