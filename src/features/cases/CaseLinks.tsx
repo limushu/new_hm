@@ -55,9 +55,7 @@ export default function CaseLinks({
         </button>
       ))}
       {!detail.notes && !original && !relatedCases.length && (
-        <p className="quiet-empty">
-          记下案情、争议焦点和办理目标，让再次打开案件时知道要解决什么。
-        </p>
+        <p className="quiet-empty">暂无案情摘要</p>
       )}
       {editing && (
         <Dialog

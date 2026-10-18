@@ -398,7 +398,7 @@
   border-top: 1px solid var(--line);
   width: 100%;
   font-size: var(--text-sm);
-  color: #b0b8be;
+  color: var(--text);
 }
 .entity-related-entry > span {
   color: var(--muted);
@@ -471,7 +471,7 @@
   font-size: var(--text-base);
   white-space: pre-wrap;
   line-height: 1.8;
-  color: #aaa;
+  color: var(--text);
 }
 .entity-view-tabs {
   display: flex;
@@ -537,12 +537,12 @@
 }
 .backlink-row > span {
   font-size: var(--text-base);
-  color: #d4d4d4;
+  color: var(--text);
 }
 .backlink-row small {
   display: block;
   font-size: var(--text-xs);
-  color: #8e8e8e;
+  color: var(--text);
   line-height: 1.6;
   margin-top: 5px;
 }

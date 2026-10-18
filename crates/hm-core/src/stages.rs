@@ -175,7 +175,7 @@ impl Store {
         tx.commit()?;
         Ok(())
     }
-    pub fn delete_stage(&self, id: &str) -> Result<()> {
+    pub fn delete_stage(&mut self, id: &str) -> Result<()> {
         let stage = self
             .stages()?
             .into_iter()
@@ -188,11 +188,36 @@ impl Store {
             |r| r.get(0),
         )?;
         self.active_case(&owner)?;
+        let tx = self.connection.transaction()?;
+        tx.execute("DELETE FROM stages WHERE id=?1", [id])?;
         if stage.state == "current" {
-            return Err(Error::Validation("请先切换到其他阶段".into()));
+            tx.execute(
+                "UPDATE proceedings SET stage='' WHERE id=?1",
+                [&stage.proceeding_id],
+            )?;
         }
-        self.connection
-            .execute("DELETE FROM stages WHERE id=?1", [id])?;
+        // Keep positions contiguous so a new stage can safely append at rows.len().
+        let remaining = tx
+            .prepare("SELECT id FROM stages WHERE proceeding_id=?1 ORDER BY position,id")?
+            .query_map([&stage.proceeding_id], |r| r.get::<_, String>(0))?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        for (position, remaining_id) in remaining.iter().enumerate() {
+            tx.execute(
+                "UPDATE stages SET position=?1 WHERE id=?2",
+                params![position as i64, remaining_id],
+            )?;
+        }
+        tx.execute(
+            "INSERT INTO case_events(id,case_id,proceeding_id,title,event_date,notes,kind) VALUES(?1,?2,?3,?4,date('now','localtime'),?5,'stage_change')",
+            params![
+                Uuid::new_v4().to_string(),
+                owner,
+                stage.proceeding_id,
+                format!("删除阶段：{}", stage.name),
+                format!("删除前：{}。既有事件与程序材料保留。{}", stage_state_label(&stage.state), if stage.state == "current" { "当前办理已清空，未自动切换其他阶段。" } else { "" })
+            ],
+        )?;
+        tx.commit()?;
         Ok(())
     }
     pub fn save_case_event(&self, input: CaseEvent) -> Result<()> {

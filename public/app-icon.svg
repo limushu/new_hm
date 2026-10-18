@@ -1,5 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
-  <rect x="32" y="32" width="960" height="960" rx="232" fill="#243d50"/>
-  <path d="M222 306V718M416 306V718M222 512H416" fill="none" stroke="#edf1f1" stroke-width="68" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M552 718V306L681 520L810 306V718" fill="none" stroke="#9bc3d6" stroke-width="68" stroke-linecap="round" stroke-linejoin="round"/>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024"><defs>
+  <linearGradient id="ink" x1="220" y1="290" x2="800" y2="730" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#a4eee5"/><stop offset="0.48" stop-color="#92bdf7"/><stop offset="1" stop-color="#c6a0ef"/>
+  </linearGradient>
+  <linearGradient id="surface" x1="260" y1="150" x2="740" y2="870" gradientUnits="userSpaceOnUse">
+    <stop stop-color="#292c35"/><stop offset="1" stop-color="#171920"/>
+  </linearGradient>
+</defs>
+<rect x="32" y="32" width="960" height="960" rx="236" fill="#08090b"/>
+<path d="M245 163C372 129 499 179 640 143C777 108 900 198 875 334C852 456 913 571 861 703C817 815 716 865 594 850C457 833 337 903 224 824C118 750 163 633 142 510C121 384 118 197 245 163Z" fill="url(#surface)"/>
+<g fill="url(#ink)">
+<path d="M356 300C330 330 315 395 300 444L230 675C222 700 233 722 255 708C280 688 287 650 299 610L369 367C380 332 379 308 356 300Z"/>
+<path d="M539 289C516 299 503 335 493 373L399 695C395 709 414 723 432 710C449 694 461 663 468 635L558 326C566 298 554 284 539 289Z"/>
+<path d="M785 299C772 307 759 333 748 373L665 676C658 702 661 725 687 725C723 725 767 683 791 648L780 640C753 673 732 691 716 691C705 691 712 668 717 652L808 329C817 299 801 289 785 299Z"/>
+</g>
+<g fill="none" stroke="url(#ink)" stroke-width="26" stroke-linecap="round" stroke-linejoin="round">
+<path d="M192 450C150 416 181 343 243 303C296 268 337 268 356 300"/>
+<path d="M219 541C272 517 359 490 435 491C470 491 486 497 498 506"/>
+<path d="M552 319C557 389 574 478 589 548C593 567 603 570 617 552L785 313"/>
+</g></svg>

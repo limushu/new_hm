@@ -16,6 +16,7 @@
   font-size: var(--text-base);
   font-weight: 400;
   text-align: left;
+  color: var(--text);
 }
 .select-trigger > span {
   overflow: hidden;
@@ -62,7 +63,7 @@
   text-align: left;
   font-size: var(--text-base);
   font-weight: 400;
-  color: #d9d9d9;
+  color: var(--text);
 }
 .select-menu [role='option'].is-active {
   background: #383838;

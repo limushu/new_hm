@@ -47,11 +47,7 @@ export default function CaseSchedule({
           添加案件日程
         </button>
       </div>
-      {upcoming.length ? (
-        upcoming.map(entry)
-      ) : (
-        <p className="empty-text">暂无待进行的日程。在日历里关联此案件的安排会自动显示。</p>
-      )}
+      {upcoming.length ? upcoming.map(entry) : <p className="empty-text">暂无待进行的日程</p>}
       {past.length > 0 && (
         <details className="case-history">
           <summary>已过日程 · {past.length}</summary>

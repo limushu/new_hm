@@ -118,10 +118,14 @@
   color: var(--muted);
 }
 .program-current-stage strong {
-  color: #d2e1ec;
+  color: var(--text);
   font-size: var(--text-heading);
   font-weight: 500;
   overflow-wrap: anywhere;
+}
+.program-current-stage .is-empty,
+.program-detail .select-trigger[data-value=''] {
+  color: var(--quiet);
 }
 .program-detail .stage-chip {
   max-width: 100%;

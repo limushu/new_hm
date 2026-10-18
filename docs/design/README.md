@@ -1,5 +1,9 @@
 # 设计入口
 
+1.1.4 的 [HM 手写花体标志](current/brand-1.1.4.png)采用黑色底层、不规则内层与青蓝紫渐变花体，H、M 共用中间笔画。几何 HM 为旧版，不再作为当前方向。阶段删除从当前阶段状态面板或管理阶段进入，确认后清空被删的当前阶段并保留历史与程序材料。
+
+[案件概览](current/case-text-1.1.4.png)与[程序详情](current/program-text-1.1.4.png)使用虚构数据，展示正文、属性值与标题同色，灰色区分空值和辅助标签；不再堆叠操作说明。
+
 当前以 Notion 为主要视觉参考：中性深灰、适度标题、可读正文、内容自适应分组和组间留白。当前配色与细节是暂定基线。
 
 1.1.3 的[状态联想](current/status-suggestions-1.1.3.png)与[标签联想](current/tag-suggestions-1.1.3.png)使用虚构数据。参考新的 Notion 详情截图，正文改为中性灰、功能分区标题统一字号与字重、属性使用一致的小型图标，案件页增加柔和书页标识。概览减少重复分隔线，以标题和组间距建立层次，继续保持每行一个功能。实际字体族保持离线系统映射，不声称使用了 Notion 的专有字体。
@@ -16,7 +20,7 @@
 
 响应式以案件侧页容器宽度为准，而不是只看整个窗口。600px 以内的侧页阶段自动换行，资料始终逐行排列，工具栏允许换行，边距随可用宽度缩减；程序关系图的横向滚动仅发生在图内。选择菜单使用窗口边界定位，不能被侧页裁掉。字号仍遵循[字体规范](typography.md)，不靠整体缩小解决拥挤。
 
-[HM 标志](current/brand-1.1.1.png)、[单列概览](current/case-overview-1.1.1.png)、[阶段重开](current/case-stage-reopen-1.1.1.png)为 1.1.1 当前方向。
+[HM 标志](current/brand-1.1.1.png)、[单列概览](current/case-overview-1.1.1.png)、[阶段重开](current/case-stage-reopen-1.1.1.png)为 1.1.1 历史预览。
 
 1.1.1 正式 Windows 程序的[单列概览](current/case-overview-app-1.1.1.png)及[程序详情](current/case-programs-app-1.1.1.png)使用隔离虚构数据，窗口及任务栏实际图标均验证为 HM。
 

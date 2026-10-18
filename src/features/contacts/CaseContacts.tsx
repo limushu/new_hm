@@ -50,7 +50,6 @@ export default function CaseContacts({
       <header>
         <div>
           <h3>当事人与其他联系人</h3>
-          <p className="section-description">复用已有对象，身份只属于当前案件。</p>
         </div>
         <div className="feature-toolbar">
           <button onClick={() => setGraph(true)}>
@@ -73,7 +72,7 @@ export default function CaseContacts({
           {error}
         </p>
       )}
-      {!links.length && <p className="quiet-empty">按需关联委托人、对方当事人或其他联系人。</p>}
+      {!links.length && <p className="quiet-empty">暂无关联对象</p>}
       {links.map((l) => {
         const c = contacts.find((c) => c.id === l.contactId)!;
         return (

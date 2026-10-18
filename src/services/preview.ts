@@ -261,9 +261,29 @@ export async function previewCommand<K extends keyof Commands>(
     case 'delete_ledger':
       data.ledgerEntries = data.ledgerEntries.filter((row) => row.id !== a.id);
       break;
-    case 'delete_stage':
+    case 'delete_stage': {
+      const stage = data.stages.find((row) => row.id === a.id);
+      if (!stage) throw new Error('未找到对应案件或记录');
+      const program = data.proceedings.find((p) => p.id === stage.proceedingId)!;
+      if (program.state === 'completed') throw new Error('程序已办结，请先恢复办理再调整阶段');
       data.stages = data.stages.filter((row) => row.id !== a.id);
+      if (stage.state === 'current') program.stage = '';
+      data.stages
+        .filter((row) => row.proceedingId === program.id)
+        .sort((a, b) => a.position - b.position || a.id.localeCompare(b.id))
+        .forEach((row, index) => (row.position = index));
+      const labels = { pending: '待办理', current: '当前办理', done: '已完成', skipped: '已跳过' };
+      data.caseEvents.unshift({
+        id: crypto.randomUUID(),
+        caseId: program.caseId,
+        proceedingId: program.id,
+        title: `删除阶段：${stage.name}`,
+        eventDate: dateKey(new Date()),
+        notes: `删除前：${labels[stage.state]}。既有事件与程序材料保留。${stage.state === 'current' ? '当前办理已清空，未自动切换其他阶段。' : ''}`,
+        kind: 'stage_change',
+      });
       break;
+    }
     case 'reorder_stages':
       (a.ids as string[]).forEach((id, index) => {
         const row = data.stages.find((s) => s.id === id);

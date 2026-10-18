@@ -88,21 +88,18 @@ export default function ProceedingPath({
                     <i />
                   )}
                 </span>
-                <span className="program-node-stage">
+                <span
+                  className={`program-node-stage ${p.state !== 'completed' && !p.stage ? 'is-empty' : ''}`}
+                >
                   {p.state === 'completed' ? '已办结' : currentStage(data, p)}
                 </span>
-                <small>{p.caseNumber || '案号未填写'}</small>
+                {p.caseNumber && <small>{p.caseNumber}</small>}
               </button>
             ))}
           </div>
         </nav>
       ) : (
-        <p className="quiet-empty">还没有办理程序，可从一审、二审、再审或执行开始建立。</p>
-      )}
-      {programs.length > 0 && (
-        <p className="program-map-caption">
-          点击节点查看资料；连线表示已确认的承接关系。各程序可并行办理。
-        </p>
+        <p className="quiet-empty">暂无办理程序</p>
       )}
     </section>
   );

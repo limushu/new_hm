@@ -30,8 +30,8 @@
   --surface: #202020;
   --hover: #2b2b2b;
   --line: #303030;
-  --text: #d4d4d1;
-  --text-strong: #ececea;
+  --text: #ececea;
+  --text-strong: var(--text);
   --muted: #9c9c97;
   --quiet: #747474;
   --accent: #7d98ac;
@@ -77,6 +77,11 @@ select {
   border-radius: 5px;
   padding: 8px 10px;
   font-size: var(--text-base);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--quiet);
+  opacity: 1;
 }
 button:focus-visible,
 input:focus-visible,
@@ -160,7 +165,7 @@ h3 {
   gap: 10px;
   text-align: left;
   border-radius: 5px;
-  color: #a2a2a2;
+  color: var(--text);
   font-size: var(--text-base);
   padding: 8px 12px;
   min-height: 35px;
@@ -421,7 +426,7 @@ h3 {
   border: 0;
   background: none;
   max-width: 200px;
-  color: #bdbdbd;
+  color: var(--text);
 }
 .case-properties option {
   background: #252525;
@@ -439,7 +444,7 @@ h3 {
   border-bottom: 2px solid transparent;
 }
 .case-tabs > button.active {
-  color: #d8d8d8;
+  color: var(--text);
   border-bottom-color: #a8a8a8;
 }
 .save-state {
@@ -533,7 +538,7 @@ h3 {
   font-size: var(--text-base);
   line-height: 1.7;
   padding: 8px 0;
-  color: #bebebe;
+  color: var(--text);
 }
 .todo-row > input {
   accent-color: #8b9b87;
@@ -551,7 +556,7 @@ h3 {
 }
 .todo-row time {
   font-size: var(--text-xs);
-  color: #878787;
+  color: var(--text);
   margin-left: auto;
   white-space: nowrap;
 }
@@ -568,7 +573,7 @@ h3 {
 .work-record > time {
   display: block;
   font-size: var(--text-xs);
-  color: #797979;
+  color: var(--text);
   margin-top: 8px;
 }
 .program-form select {

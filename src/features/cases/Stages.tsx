@@ -55,7 +55,9 @@ export default function Stages({
         <header>
           <div className="program-current-stage">
             <h3>{closed ? '最后办理阶段' : '当前办理'}</h3>
-            <strong>{rows.find((s) => s.state === 'current')?.name || '尚未指定阶段'}</strong>
+            <strong className={!rows.some((s) => s.state === 'current') ? 'is-empty' : undefined}>
+              {rows.find((s) => s.state === 'current')?.name || '尚未指定阶段'}
+            </strong>
           </div>
           <button disabled={closed} onClick={() => setManage(true)}>
             管理阶段
@@ -89,6 +91,7 @@ export default function Stages({
             </button>
           ))}
         </div>
+        {rows.length === 0 && <p className="quiet-empty">暂无阶段，可在“管理阶段”中添加。</p>}
         <details className="stage-help">
           <summary>阶段如何调整</summary>
           <p className="stage-guidance">
@@ -134,7 +137,7 @@ export default function Stages({
           ))}
         {!data.caseEvents.some(
           (e) => e.proceedingId === proceedingId && e.kind !== 'stage_change',
-        ) && <p className="quiet-empty">暂无事项，可记录沟通、递交或办理进展。</p>}
+        ) && <p className="quiet-empty">暂无程序事项</p>}
       </section>
       {history.length > 0 && (
         <details className="case-history">
@@ -200,7 +203,8 @@ export default function Stages({
                   </button>
                   <button
                     type="button"
-                    disabled={stage.state === 'current'}
+                    disabled={busy}
+                    aria-label={`删除阶段${stage.name}`}
                     onClick={() => setRemove(stage)}
                   >
                     删除
@@ -257,6 +261,16 @@ export default function Stages({
           <p className="field-hint">
             重新打开只调整此阶段，其他阶段的完成状态保持不变。设为当前时，原当前阶段回到待办理；不会自动标记完成。历史记录保留。
           </p>
+          <button
+            type="button"
+            className="case-delete-action"
+            onClick={() => {
+              setRemove(statusStage);
+              setStatusStage(null);
+            }}
+          >
+            删除此阶段
+          </button>
         </Dialog>
       )}
       {edit && (
@@ -291,6 +305,11 @@ export default function Stages({
           }}
         >
           <p className="feature-description">删除“{remove.name}”？已发生的事件记录会保留。</p>
+          <p className="field-hint">
+            程序材料和其他阶段不受影响。
+            {remove.state === 'current' &&
+              '此阶段正在办理，删除后将暂不指定当前阶段，由你重新选择。'}
+          </p>
         </Dialog>
       )}
       {event && <EventForm value={event} save={save} onClose={() => setEvent(null)} />}

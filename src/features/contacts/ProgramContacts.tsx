@@ -97,9 +97,6 @@ export default function ProgramContacts({
           <p className="field-hint">原记录：{program.judge} · 请选择对应对象</p>
         )}
       </div>
-      {court && !judge && (
-        <p className="program-relation-hint">可选择该法院的法官；更换法院后请重新确认。</p>
-      )}
       {error && (
         <p role="alert" className="error-message">
           {error}

@@ -79,7 +79,7 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #bdc5c9;
+  color: var(--text);
   background: #2c3032;
   border-radius: 5px;
   padding: 3px 7px;
@@ -242,7 +242,7 @@
 .program-node-stage {
   display: block;
   font-size: var(--text-sm);
-  color: #b2b9be;
+  color: var(--text);
   margin-top: 4px;
 }
 .program-node > small {
@@ -250,7 +250,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: #8a9298;
+  color: var(--text);
   font-size: var(--text-xs);
   margin-top: 3px;
 }
@@ -281,8 +281,12 @@
   font-size: var(--text-title-sm);
   font-weight: 600;
 }
+.case-focus-summary .is-empty,
+.program-node-stage.is-empty {
+  color: var(--quiet);
+}
 .case-focus-summary p {
-  color: #999;
+  color: var(--text);
   font-size: var(--text-sm);
   margin-top: 7px;
 }
@@ -313,7 +317,7 @@
 }
 .overview-people button small {
   font-size: var(--text-xs);
-  color: #939fa7;
+  color: var(--text);
   grid-row: 2;
 }
 .overview-people button svg {
@@ -349,7 +353,7 @@
 .case-schedule-row small {
   display: block;
   font-size: var(--text-sm);
-  color: #92999e;
+  color: var(--text);
   margin-top: 4px;
 }
 .case-history {
@@ -382,7 +386,7 @@
 }
 .overview-materials strong {
   font-weight: 400;
-  color: #a8b6c0;
+  color: var(--text);
 }
 .case-section h3 > span {
   color: #858585;
@@ -449,7 +453,7 @@
   display: flex;
   gap: 7px;
   flex-wrap: wrap;
-  color: #9ba8b0;
+  color: var(--text);
   font-size: var(--text-xs);
 }
 .stage-strip {

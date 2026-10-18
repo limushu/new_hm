@@ -313,7 +313,7 @@ button.calendar-primary:hover {
 .agenda-event-main strong {
   display: block;
   font-size: var(--text-base);
-  font-weight: 450;
+  font-weight: var(--weight-medium);
   overflow-wrap: anywhere;
 }
 .agenda-event-main > span {

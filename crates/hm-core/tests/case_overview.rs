@@ -271,3 +271,129 @@ fn stages_can_reopen_in_the_middle_without_resetting_other_work_or_erasing_histo
     );
     assert_eq!(reopened.cases[0].status_id, "in_progress");
 }
+
+#[test]
+fn deleting_any_stage_keeps_history_and_program_scope_and_can_leave_no_current_stage() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("workspace.sqlite3");
+    let mut store = Store::open(&path).unwrap();
+    let case = create(&mut store, None);
+    let program = case.current_proceeding_id.as_ref().unwrap();
+    let other = store.add_proceeding(&case.id, "appeal").unwrap();
+    let folder = store
+        .create_material_folder(
+            MaterialTarget {
+                case_id: case.id.clone(),
+                proceeding_id: Some(program.clone()),
+                parent_id: None,
+                record_id: None,
+            },
+            "阶段整理材料",
+        )
+        .unwrap();
+    let rows: Vec<_> = store
+        .stages()
+        .unwrap()
+        .into_iter()
+        .filter(|s| &s.proceeding_id == program)
+        .collect();
+    let mut middle = rows[1].clone();
+    middle.state = "done".into();
+    store.save_stage(middle.clone()).unwrap();
+    let history = store.case_events().unwrap();
+    let event = CaseEvent {
+        id: Uuid::new_v4().to_string(),
+        case_id: case.id.clone(),
+        proceeding_id: Some(program.clone()),
+        title: "既有沟通事项".into(),
+        event_date: "2026-10-18".into(),
+        notes: "保留".into(),
+        kind: "milestone".into(),
+    };
+    store.save_case_event(event.clone()).unwrap();
+    store.delete_stage(&middle.id).unwrap();
+    let workspace = store.workspace().unwrap();
+    assert_eq!(
+        workspace
+            .proceedings
+            .iter()
+            .find(|p| &p.id == program)
+            .unwrap()
+            .stage,
+        rows[0].name
+    );
+    assert!(workspace
+        .stages
+        .iter()
+        .any(|s| s.id == rows[0].id && s.state == "current"));
+    assert_eq!(workspace.case_events[0].title, "删除阶段：立案");
+    assert!(workspace.case_events.iter().any(|e| e.id == history[0].id));
+    assert!(workspace.case_events.iter().any(|e| e.id == event.id));
+    store.delete_stage(&rows[0].id).unwrap();
+    let workspace = store.workspace().unwrap();
+    assert!(workspace
+        .proceedings
+        .iter()
+        .find(|p| &p.id == program)
+        .unwrap()
+        .stage
+        .is_empty());
+    assert!(workspace
+        .stages
+        .iter()
+        .filter(|s| &s.proceeding_id == program)
+        .all(|s| s.state != "current"));
+    assert_eq!(
+        workspace
+            .stages
+            .iter()
+            .filter(|s| s.proceeding_id == other)
+            .count(),
+        5
+    );
+    assert_eq!(workspace.case_events[0].title, "删除阶段：材料准备");
+    assert!(workspace.case_events[0].notes.contains("当前办理已清空"));
+    for (index, row) in workspace
+        .stages
+        .iter()
+        .filter(|s| &s.proceeding_id == program)
+        .enumerate()
+    {
+        assert_eq!(row.position, index as i64);
+    }
+    let count = workspace.case_events.len();
+    assert!(store.delete_stage(&rows[0].id).is_err());
+    assert_eq!(store.case_events().unwrap().len(), count);
+    for row in rows.iter().skip(2) {
+        store.delete_stage(&row.id).unwrap();
+    }
+    let replacement = Stage {
+        id: Uuid::new_v4().to_string(),
+        proceeding_id: program.clone(),
+        name: "自定办理".into(),
+        position: 0,
+        state: "pending".into(),
+    };
+    store.save_stage(replacement.clone()).unwrap();
+    drop(store);
+    let workspace = Store::open(&path).unwrap().workspace().unwrap();
+    let remaining: Vec<_> = workspace
+        .stages
+        .iter()
+        .filter(|s| &s.proceeding_id == program)
+        .collect();
+    assert_eq!(remaining.len(), 1);
+    assert_eq!(remaining[0].id, replacement.id);
+    assert!(workspace
+        .proceedings
+        .iter()
+        .find(|p| &p.id == program)
+        .unwrap()
+        .stage
+        .is_empty());
+    assert!(workspace.case_events.iter().any(|e| e.id == event.id));
+    assert!(workspace
+        .materials
+        .iter()
+        .any(|m| m.id == folder && m.proceeding_id.as_ref() == Some(program)));
+}

@@ -172,7 +172,7 @@
 }
 .time-date strong {
   font-size: var(--text-title-sm);
-  font-weight: 450;
+  font-weight: var(--weight-medium);
   width: 32px;
   height: 32px;
   line-height: 32px;

@@ -165,3 +165,32 @@ test('中间阶段完成后可重开，保留后续完成状态、当前阶段�
   await expect(page.locator('.stage-history-list')).toContainText('重新打开阶段：立案');
   await expect(page.locator('.stage-history-list')).toContainText('已完成 → 待办理');
 });
+
+test('当前阶段可直接删除，取消不变更；删除保留历史且不替用户选择下一步', async ({ page }) => {
+  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  const initialCount = await page.locator('.stage-chip').count();
+  await page.getByRole('button', { name: '举证', exact: true }).click();
+  await page.getByRole('button', { name: '举证', exact: true }).click();
+  await page.getByRole('button', { name: '删除此阶段', exact: true }).click();
+  const confirmation = page.getByRole('dialog', { name: '删除阶段', exact: true });
+  await expect(confirmation).toContainText('删除后将暂不指定当前阶段');
+  await confirmation.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.locator('.stage-current')).toHaveText('举证');
+  await page.getByRole('button', { name: '管理阶段', exact: true }).click();
+  const manager = page.getByRole('dialog', { name: '管理办理阶段', exact: true });
+  await manager.getByRole('button', { name: '删除阶段举证', exact: true }).click();
+  await confirmation.getByRole('button', { name: '删除', exact: true }).click();
+  await expect(manager.locator('.feature-row')).toHaveCount(initialCount - 1);
+  await manager.getByRole('button', { name: '关闭', exact: true }).last().click();
+  await expect(page.locator('.stage-current')).toHaveCount(0);
+  await expect(page.locator('.program-current-stage')).toContainText('尚未指定阶段');
+  await expect(node(page, '一审')).not.toContainText('举证');
+  await page.getByText(/阶段变更记录 ·/).click();
+  await expect(page.locator('.stage-history-list')).toContainText('设为当前阶段：举证');
+  await expect(page.locator('.stage-history-list')).toContainText('删除阶段：举证');
+  await page.getByRole('button', { name: '概览', exact: true }).click();
+  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await expect(page.getByRole('button', { name: '举证', exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: '开庭', exact: true }).click();
+  await expect(page.locator('.stage-current')).toHaveText('开庭');
+});

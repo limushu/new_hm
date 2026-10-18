@@ -156,7 +156,7 @@
 }
 .feature-row small {
   font-size: var(--text-xs);
-  color: #939393;
+  color: var(--text);
   line-height: 1.7;
 }
 .feature-row .row-main {
@@ -192,7 +192,7 @@
 }
 .feature-description {
   font-size: var(--text-sm);
-  color: #999;
+  color: var(--text);
   line-height: 1.8;
 }
 @media (max-width: 760px) {
@@ -225,7 +225,7 @@
 .contact-notes {
   white-space: pre-wrap;
   font-size: var(--text-base);
-  color: #bbb;
+  color: var(--text);
   line-height: 1.8;
 }
 .contact-case-link {
@@ -238,7 +238,7 @@
 }
 .contact-case-link small {
   font-size: var(--text-xs);
-  color: #999;
+  color: var(--text);
 }
 .minor-heading {
   font-size: var(--text-base);
@@ -273,7 +273,7 @@
 }
 .finance-summary strong {
   font-size: var(--text-title-sm);
-  font-weight: 450;
+  font-weight: var(--weight-medium);
   font-variant-numeric: tabular-nums;
 }
 .fee-summary {
@@ -286,8 +286,8 @@
   padding: 18px 0 8px;
 }
 .fee-summary strong {
-  font-weight: 450;
-  color: #ccc;
+  font-weight: var(--weight-medium);
+  color: var(--text);
 }
 .fee-summary button {
   color: #99b5c8;
@@ -296,7 +296,7 @@
 }
 .ledger-row > time {
   font-size: var(--text-xs);
-  color: #888;
+  color: var(--text);
   flex-shrink: 0;
 }
 .money-income {
@@ -340,7 +340,7 @@
   background: #242424;
   border: 1px solid #353535;
   border-radius: 6px;
-  color: #929292;
+  color: var(--text);
   font-size: var(--text-xs);
 }
 .stage-chip i {
@@ -374,17 +374,17 @@
 }
 .case-event > time {
   font-size: var(--text-xs);
-  color: #888;
+  color: var(--text);
   flex-shrink: 0;
   line-height: 1.8;
 }
 .case-event strong {
   font-weight: 500;
-  color: #c9c9c9;
+  color: var(--text);
 }
 .case-event p {
   white-space: pre-wrap;
-  color: #999;
+  color: var(--text);
   line-height: 1.8;
   margin-top: 6px;
 }
@@ -440,7 +440,7 @@
 }
 .settings-path code {
   overflow-wrap: anywhere;
-  color: #bbb;
+  color: var(--text);
   flex: 1;
   min-width: 120px;
 }

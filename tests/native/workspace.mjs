@@ -404,6 +404,30 @@ try {
     await expect(page.getByRole('listbox', { name: '前序程序选项', exact: true })).toBeVisible();
     await page.getByLabel('前序程序', { exact: true }).press('Escape');
   }
+  const deletedCurrent = workspace.stages.find(
+    (s) => s.proceedingId === second && s.state === 'current',
+  );
+  await page.getByRole('button', { name: '查看二审程序', exact: true }).click();
+  await page.getByRole('button', { name: deletedCurrent.name, exact: true }).click();
+  await page.getByRole('button', { name: '删除此阶段', exact: true }).click();
+  const deleteStageDialog = page.getByRole('dialog', { name: '删除阶段', exact: true });
+  await deleteStageDialog.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(page.locator('.stage-current')).toHaveText(deletedCurrent.name);
+  await page.getByRole('button', { name: deletedCurrent.name, exact: true }).click();
+  await page.getByRole('button', { name: '删除此阶段', exact: true }).click();
+  await deleteStageDialog.getByRole('button', { name: '删除', exact: true }).click();
+  await expect(page.locator('.program-current-stage')).toContainText('尚未指定阶段');
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    workspace.stages.some((s) => s.id === deletedCurrent.id) ||
+    workspace.proceedings.find((p) => p.id === second).stage !== '' ||
+    workspace.stages.find((s) => s.id === followingStage.id).state !== 'current' ||
+    workspace.materials.length !== 4 ||
+    !workspace.caseEvents.some((e) => e.proceedingId === second && e.title === '删除阶段：材料准备')
+  )
+    throw new Error('Native stage deletion changed unrelated work or lost history');
+  await page.screenshot({ path: join(root, 'stage-deletion.png') });
+  await page.getByRole('button', { name: '查看一审程序', exact: true }).click();
   await page.getByRole('button', { name: '查看法院关联', exact: true }).click();
   const detail = page.getByRole('dialog', { name: '虚构甲法院新名称', exact: true });
   await expect(detail).toContainText('虚构法官');
@@ -576,6 +600,11 @@ try {
   if (
     workspace.stages.find((s) => s.id === middleStage.id)?.state !== 'pending' ||
     workspace.stages.find((s) => s.id === followingStage.id)?.state !== 'current' ||
+    workspace.stages.some((s) => s.id === deletedCurrent.id) ||
+    workspace.proceedings.find((p) => p.id === second)?.stage !== '' ||
+    !workspace.caseEvents.some(
+      (e) => e.proceedingId === second && e.title === '删除阶段：材料准备',
+    ) ||
     !workspace.caseEvents.some((e) => e.title.includes('重新打开阶段'))
   )
     throw new Error('Stage reopen and history did not survive restore/restart');
