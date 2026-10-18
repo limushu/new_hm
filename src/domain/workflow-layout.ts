@@ -2,9 +2,9 @@ import type { Proceeding } from './types';
 /** A forest: branches share their real predecessor; independent flows stay separate. */
 export function workflowLayout(programs: Proceeding[]) {
   const width = 210,
-    height = 148,
+    height = 176,
     stepX = 278,
-    stepY = 176;
+    stepY = 204;
   const nodes: Array<{ program: Proceeding; x: number; y: number }> = [];
   const known = new Set(programs.map((p) => p.id));
   const visited = new Set<string>();

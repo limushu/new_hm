@@ -1,6 +1,6 @@
 .materials-panel {
   position: relative;
-  margin-top: 20px;
+  margin-top: 32px;
   min-height: 260px;
 }
 .materials-panel.is-file-drop {
@@ -8,20 +8,22 @@
   outline-offset: 10px;
   border-radius: 6px;
 }
+.materials-heading h2 {
+  font-size: var(--text-heading);
+  font-weight: var(--weight-strong);
+  line-height: 1.5;
+}
 .materials-scope {
   display: flex;
   align-items: center;
   gap: 12px;
+  justify-content: space-between;
+  margin: 24px 0 8px;
 }
-.materials-scope select {
-  background: none;
-  border: 0;
-  padding-left: 0;
-  font-size: var(--text-base);
-}
-.materials-scope > span {
-  font-size: var(--text-xs);
+.material-count {
+  font-size: var(--text-sm);
   color: var(--muted);
+  white-space: nowrap;
 }
 .material-search {
   display: flex;
@@ -32,30 +34,39 @@
   color: var(--muted);
 }
 .material-search svg {
-  width: 13px;
-  height: 13px;
+  width: 17px;
+  height: 17px;
 }
 .material-search input {
   background: none;
   border: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   min-width: 0;
   padding: 6px 0;
   width: 100%;
 }
 .material-toolbar {
-  gap: 7px;
+  gap: 10px;
+  margin: 22px 0 0;
 }
 .material-toolbar button {
   white-space: nowrap;
+  font-size: var(--text-base);
+  min-height: 40px;
+  padding: 8px 10px;
+}
+.material-toolbar button > svg {
+  width: 17px;
+  height: 17px;
 }
 .material-breadcrumb {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: var(--text-xs);
-  color: var(--muted);
-  margin: 18px 0 12px;
+  font-size: var(--text-base);
+  color: var(--text);
+  margin: 0;
+  flex-wrap: wrap;
   min-width: 0;
 }
 .material-breadcrumb button {
@@ -63,27 +74,41 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: var(--text-xs);
-  white-space: nowrap;
+  font-size: inherit;
+  overflow-wrap: anywhere;
+  text-align: left;
+  border-radius: 4px;
 }
-.material-breadcrumb > span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.material-breadcrumb button:hover {
+  background: var(--hover);
+}
+.material-breadcrumb button[aria-current] {
+  font-weight: var(--weight-medium);
+}
+.material-path-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.material-search-context {
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
 .material-breadcrumb svg {
-  width: 12px;
-  height: 12px;
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
 }
 .material-list-heading,
 .material-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 60px 90px 28px;
+  grid-template-columns: minmax(0, 1fr) 80px 110px 32px;
   align-items: center;
   gap: 12px;
 }
 .material-list-heading {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
   color: var(--muted);
   padding: 10px 2px;
   border-bottom: 1px solid var(--line);
@@ -92,15 +117,15 @@
   padding: 12px 2px;
   min-height: 52px;
   border-bottom: 1px solid var(--line);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 .material-row:hover {
   background: var(--wash);
 }
 .material-row > small,
 .material-row > time {
-  font-size: var(--text-xs);
-  color: var(--muted);
+  font-size: var(--text-sm);
+  color: var(--text);
 }
 .material-name {
   display: flex;
@@ -117,26 +142,28 @@
   overflow-wrap: anywhere;
 }
 .material-name > svg {
-  width: 17px;
-  height: 17px;
+  width: 20px;
+  height: 20px;
   color: var(--blue-text);
 }
 .material-name small {
   display: block;
-  color: var(--muted);
-  font-size: var(--text-xs);
+  color: var(--text);
+  font-size: var(--text-sm);
   margin-top: 4px;
-  max-height: 32px;
+  max-height: 44px;
   overflow: hidden;
   white-space: pre-wrap;
 }
 .material-notice {
-  font-size: var(--text-xs);
-  color: var(--muted);
-  margin: 8px 0;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
 }
 .materials-empty {
-  padding: 50px 8px;
+  padding: 44px 8px;
   text-align: center;
 }
 .materials-empty > svg {
@@ -148,10 +175,6 @@
   font-size: var(--text-base);
   color: var(--muted);
   margin: 14px 0 6px;
-}
-.materials-empty span {
-  font-size: var(--text-xs);
-  color: var(--muted);
 }
 .material-menu {
   position: fixed;
@@ -169,7 +192,7 @@
   width: 100%;
   padding: 8px 10px;
   border-radius: 5px;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 .material-menu button:hover {
   background: var(--wash);
@@ -282,17 +305,23 @@
   display: flex;
   flex-wrap: wrap;
   gap: 7px;
-  margin: 18px 0 14px;
+  margin: 16px 0 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
 }
 .material-scopes button {
   display: flex;
   align-items: center;
   gap: 12px;
-  border-radius: 7px;
-  border: 1px solid var(--line);
-  color: var(--muted);
-  padding: 7px 10px;
-  font-size: var(--text-sm);
+  border-radius: 6px;
+  border: 1px solid transparent;
+  color: var(--text);
+  padding: 8px 12px;
+  font-size: var(--text-base);
+  line-height: 1.5;
+}
+.material-scopes button:hover {
+  background: var(--hover);
 }
 .material-scopes button.active {
   color: var(--text);
@@ -300,10 +329,26 @@
   border-color: var(--blue-line);
 }
 .material-scopes small {
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.material-scopes button.active small {
   color: var(--blue-text);
 }
-.materials-scope strong {
-  font-weight: 500;
-  color: var(--text);
+@container case-panel (max-width:600px) {
+  .material-toolbar .material-search {
+    flex-basis: 100%;
+  }
+  .material-toolbar {
+    justify-content: flex-end;
+  }
+  .material-list-heading,
+  .material-row {
+    grid-template-columns: minmax(0, 1fr) 68px 32px;
+    gap: 8px;
+  }
+  .material-list-heading > span:nth-child(3),
+  .material-row > time {
+    display: none;
+  }
 }

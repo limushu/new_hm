@@ -11,7 +11,6 @@ import {
   ChevronRight,
   Mic,
   Upload,
-  ArrowLeft,
 } from 'lucide-react';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import Dialog from '../../components/Dialog';
@@ -91,6 +90,19 @@ export default function Materials({
         : m.parentId === folder),
   );
   const current = materials.find((m) => m.id === folder);
+  const scopeName =
+    scope === 'shared'
+      ? '案件共用'
+      : proceedingName(programs.find((p) => p.id === scope)!, programs);
+  const ancestors: Material[] = [];
+  let at = current;
+  const visited = new Set<string>();
+  while (at && !visited.has(at.id)) {
+    visited.add(at.id);
+    ancestors.unshift(at);
+    const parentId = at.parentId;
+    at = materials.find((m) => m.id === parentId);
+  }
   function report(result: { imported: number; errors: string[] }) {
     if (result.imported) setNotice(`已添加 ${result.imported} 份材料`);
     if (result.errors.length) setError(result.errors.join('\n'));
@@ -230,6 +242,9 @@ export default function Materials({
         });
       }}
     >
+      <header className="materials-heading">
+        <h2>材料</h2>
+      </header>
       {!recordId && (
         <nav className="material-scopes" aria-label="按流程查看材料">
           {[
@@ -258,23 +273,6 @@ export default function Materials({
           ))}
         </nav>
       )}
-      <div className="materials-scope">
-        <span>
-          归档到：
-          <strong>
-            {scope === 'shared'
-              ? '案件共用'
-              : proceedingName(programs.find((p) => p.id === scope)!, programs)}
-          </strong>
-          {folder ? ' / ' + current?.name : ''}
-        </span>
-        <span>{rows.length} 项</span>
-      </div>
-      {!recordId && (
-        <p className="field-hint">
-          材料按流程归档；举证、开庭等具体阶段可建立文件夹细分。添加文件会进入当前选中的归档位置。
-        </p>
-      )}
       <div className="feature-toolbar material-toolbar">
         <label className="material-search">
           <Search />
@@ -293,7 +291,13 @@ export default function Materials({
           <Mic />
           录音
         </button>
-        <button type="button" className="primary-action" disabled={busy} onClick={() => void add()}>
+        <button
+          type="button"
+          className="primary-action"
+          title={`添加到 ${scopeName}${current ? ' / ' + pathOf(current) : ''}`}
+          disabled={busy}
+          onClick={() => void add()}
+        >
           <Upload />
           添加材料
         </button>
@@ -318,34 +322,38 @@ export default function Materials({
           });
         }}
       />
-      <nav className="material-breadcrumb" aria-label="材料路径">
-        <button
-          type="button"
-          onClick={() => {
-            setFolder(null);
-            setQuery('');
-          }}
-        >
-          全部材料
-        </button>
-        {current && (
-          <>
-            <ChevronRight />
-            <button
-              type="button"
-              onClick={() => {
-                setFolder(current.parentId);
-                setQuery('');
-              }}
-            >
-              <ArrowLeft />
-              上一级
-            </button>
-            <ChevronRight />
-            <span>{current.name}</span>
-          </>
-        )}
-      </nav>
+      <div className="materials-scope">
+        <nav className="material-breadcrumb" aria-label="材料路径">
+          <button
+            type="button"
+            aria-label="全部材料"
+            aria-current={!current && !query ? 'location' : undefined}
+            onClick={() => {
+              setFolder(null);
+              setQuery('');
+            }}
+          >
+            {scopeName}
+          </button>
+          {ancestors.map((ancestor) => (
+            <span className="material-path-part" key={ancestor.id}>
+              <ChevronRight aria-hidden="true" />
+              <button
+                type="button"
+                aria-current={ancestor.id === folder && !query ? 'location' : undefined}
+                onClick={() => {
+                  setFolder(ancestor.id);
+                  setQuery('');
+                }}
+              >
+                {ancestor.name}
+              </button>
+            </span>
+          ))}
+          {query && <span className="material-search-context">搜索结果</span>}
+        </nav>
+        <span className="material-count">{rows.length} 项</span>
+      </div>
       {error && (
         <p role="alert" className="error-message">
           {error}
@@ -426,8 +434,7 @@ export default function Materials({
         {!rows.length && (
           <div className="materials-empty">
             <Folder />
-            <p>{query ? '没有匹配的材料' : '把文件拖到这里，或点击添加材料'}</p>
-            <span>{query ? '试试其他文件名' : '归档时保留原文件，材料可按需放入文件夹。'}</span>
+            <p>{query ? '没有匹配的材料' : '拖入文件，或添加材料'}</p>
           </div>
         )}
       </div>

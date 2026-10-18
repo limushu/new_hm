@@ -91,7 +91,7 @@ export default function Stages({
             </button>
           ))}
         </div>
-        {rows.length === 0 && <p className="quiet-empty">暂无阶段，可在“管理阶段”中添加。</p>}
+        {rows.length === 0 && <p className="quiet-empty">暂无阶段</p>}
         <details className="stage-help">
           <summary>阶段如何调整</summary>
           <p className="stage-guidance">
@@ -142,9 +142,6 @@ export default function Stages({
       {history.length > 0 && (
         <details className="case-history">
           <summary>阶段变更记录 · {history.length}</summary>
-          <p className="field-hint">
-            最新变更在前。这里保留完成、重开和当前阶段调整的历史，不限制实际办理顺序。
-          </p>
           <div className="stage-history-list">
             {history.map((e) => (
               <article className="case-event" key={e.id}>

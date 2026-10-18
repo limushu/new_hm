@@ -41,7 +41,7 @@
   gap: 3px 0;
 }
 .mini-weekdays {
-  font-size: 9px;
+  font-size: var(--text-xs);
   color: var(--muted);
   margin-bottom: 5px;
 }
@@ -152,7 +152,7 @@
   padding-bottom: 20px;
 }
 .time-zone {
-  font-size: 9px;
+  font-size: var(--text-xs);
   color: var(--muted);
   align-self: end;
   padding: 0 0 11px 7px;
@@ -192,7 +192,7 @@
   border-top: 1px solid var(--line);
 }
 .time-axis-caption {
-  font-size: 9px;
+  font-size: var(--text-xs);
   line-height: 1.6;
   color: var(--muted);
   padding: 6px 0 3px 8px;
@@ -438,7 +438,7 @@
   }
   .time-zone {
     padding-left: 3px;
-    font-size: 8px;
+    font-size: var(--text-xs);
   }
   .time-date-header .time-date {
     padding-top: 8px;

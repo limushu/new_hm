@@ -323,7 +323,7 @@ export default function CasePage({
               {saving ? '保存中…' : saved ? '已保存' : '填写名称开始'}
             </span>
           </nav>
-          {saved && (
+          {saved && tab !== 'materials' && (
             <ProceedingPath
               compact={tab !== 'overview'}
               item={item}

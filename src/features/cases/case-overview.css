@@ -61,7 +61,7 @@
   background: transparent;
   border-color: transparent;
   padding: 7px;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 .case-status-input svg {
   width: 12px;
@@ -83,7 +83,7 @@
   background: var(--hover);
   border-radius: 5px;
   padding: 3px 7px;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 .case-tag-chips button {
   padding: 0;
@@ -100,7 +100,7 @@
   padding: 5px 0;
   background: none;
   border: 0;
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 .tag-suggestions {
   position: fixed;
@@ -156,7 +156,7 @@
   margin-bottom: 14px;
 }
 .proceeding-path h3 {
-  font-size: var(--text-body);
+  font-size: var(--text-heading);
   font-weight: 600;
 }
 .proceeding-path h3 > span {
@@ -175,7 +175,7 @@
   align-items: center;
   gap: 5px;
   color: var(--blue-text);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
   white-space: nowrap;
   padding: 4px 0;
 }

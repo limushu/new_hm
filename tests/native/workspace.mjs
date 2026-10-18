@@ -264,6 +264,29 @@ try {
   await page.locator('.case-card').first().click();
   await page.getByRole('tab', { name: '材料', exact: true }).click();
   await expect(page.locator('.material-row')).toHaveCount(3);
+  await expect(page.locator('.proceeding-path')).toHaveCount(0);
+  for (const selector of ['.material-name', '.material-toolbar button', '.material-search input']) {
+    const sizes = await page
+      .locator(selector)
+      .evaluateAll((nodes) => nodes.map((n) => parseFloat(getComputedStyle(n).fontSize)));
+    if (!sizes.length || sizes.some((size) => size < 16))
+      throw new Error('Native material text is too small: ' + selector);
+  }
+  const materialTypography = await page.context().newCDPSession(page);
+  await materialTypography.send('DOM.enable');
+  await materialTypography.send('CSS.enable');
+  const materialDocument = await materialTypography.send('DOM.getDocument');
+  const materialNode = await materialTypography.send('DOM.querySelector', {
+    nodeId: materialDocument.root.nodeId,
+    selector: '.material-name > span',
+  });
+  const materialFonts = await materialTypography.send('CSS.getPlatformFontsForNode', {
+    nodeId: materialNode.nodeId,
+  });
+  console.log('Native material fonts:', materialFonts.fonts.map((f) => f.familyName).join(', '));
+  if (materialFonts.fonts.some((font) => /SimSun|Times New Roman/i.test(font.familyName)))
+    throw new Error('Native materials unexpectedly use serif fallback');
+  await materialTypography.detach();
   await page.getByRole('button', { name: '阅读示例.pdf', exact: true }).dblclick();
   await expect(
     page
@@ -700,6 +723,9 @@ try {
     '128.50',
   );
   await page.screenshot({ path: join(root, 'finance-light.png') });
+  await page.getByRole('tab', { name: '材料', exact: true }).click();
+  await expect(page.locator('.material-row')).toHaveCount(5);
+  await page.screenshot({ path: join(root, 'materials-light.png') });
   await page.getByRole('button', { name: '返回看板', exact: true }).click();
   if (process.env.HM_CHECK_UPDATE === '1') {
     const update = await invoke(page, 'check_update');
