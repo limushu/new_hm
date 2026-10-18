@@ -29,7 +29,7 @@ export default function CaseStatusPicker({
   const count = options.length + (create ? 1 : 0);
   function show() {
     setQuery('');
-    setActive(-1);
+    setActive(statuses.findIndex((s) => s.id === value));
     setOpen(true);
   }
   function choose(index: number) {

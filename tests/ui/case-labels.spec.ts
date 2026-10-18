@@ -72,6 +72,9 @@ test('中文输入法回车不提交，Escape 不改变状态；窄屏联想菜�
   await expect(page.getByRole('listbox', { name: '已有案件标签' })).toHaveCount(0);
   const state = page.getByRole('combobox', { name: '案件状态', exact: true });
   const id = await state.getAttribute('data-value');
+  await state.click();
+  await state.press('Enter');
+  await expect(state).toHaveAttribute('data-value', id!);
   await state.fill('#待确认');
   const menu = page.getByRole('listbox', { name: '案件状态选项', exact: true });
   const box = await menu.boundingBox();
