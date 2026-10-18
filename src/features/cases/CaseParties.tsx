@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Pencil, Trash2, Link2, ArrowUpRight } from 'lucide-react';
+import { Plus, Pencil, Trash2, Link2, ArrowUpRight, Users } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import Select from '../../components/Select';
 import SuggestInput from '../../components/SuggestInput';
@@ -50,9 +50,12 @@ export default function CaseParties({
     '委托方',
   ];
   return (
-    <section className="case-section case-parties" aria-label="委托与当事人">
+    <section className="case-section case-parties" data-tone="teal" aria-label="委托与当事人">
       <div className="section-title">
-        <h3>委托与当事人</h3>
+        <h3>
+          <Users aria-hidden="true" />
+          委托与当事人
+        </h3>
         <button
           onClick={() =>
             edit({

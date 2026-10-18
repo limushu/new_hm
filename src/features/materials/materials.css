@@ -4,7 +4,7 @@
   min-height: 260px;
 }
 .materials-panel.is-file-drop {
-  outline: 1px dashed #7aa8c9;
+  outline: 1px dashed var(--blue-line);
   outline-offset: 10px;
   border-radius: 6px;
 }
@@ -21,7 +21,7 @@
 }
 .materials-scope > span {
   font-size: var(--text-xs);
-  color: #808080;
+  color: var(--muted);
 }
 .material-search {
   display: flex;
@@ -29,7 +29,7 @@
   gap: 6px;
   flex: 1;
   min-width: 110px;
-  color: #858585;
+  color: var(--muted);
 }
 .material-search svg {
   width: 13px;
@@ -54,7 +54,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--text-xs);
-  color: #999;
+  color: var(--muted);
   margin: 18px 0 12px;
   min-width: 0;
 }
@@ -84,23 +84,23 @@
 }
 .material-list-heading {
   font-size: var(--text-xs);
-  color: #777;
+  color: var(--muted);
   padding: 10px 2px;
-  border-bottom: 1px solid #343434;
+  border-bottom: 1px solid var(--line);
 }
 .material-row {
   padding: 12px 2px;
   min-height: 52px;
-  border-bottom: 1px solid #2a2a2a;
+  border-bottom: 1px solid var(--line);
   font-size: var(--text-sm);
 }
 .material-row:hover {
-  background: #ffffff03;
+  background: var(--wash);
 }
 .material-row > small,
 .material-row > time {
   font-size: var(--text-xs);
-  color: #858585;
+  color: var(--muted);
 }
 .material-name {
   display: flex;
@@ -110,7 +110,7 @@
   text-align: left;
   padding: 0;
   font-size: var(--text-base);
-  color: #d5d5d5;
+  color: var(--text);
 }
 .material-name > span {
   min-width: 0;
@@ -119,11 +119,11 @@
 .material-name > svg {
   width: 17px;
   height: 17px;
-  color: #7d98ac;
+  color: var(--blue-text);
 }
 .material-name small {
   display: block;
-  color: #888;
+  color: var(--muted);
   font-size: var(--text-xs);
   margin-top: 4px;
   max-height: 32px;
@@ -132,7 +132,7 @@
 }
 .material-notice {
   font-size: var(--text-xs);
-  color: #99ad9e;
+  color: var(--muted);
   margin: 8px 0;
 }
 .materials-empty {
@@ -142,26 +142,26 @@
 .materials-empty > svg {
   width: 25px;
   height: 25px;
-  color: #747b80;
+  color: var(--muted);
 }
 .materials-empty p {
   font-size: var(--text-base);
-  color: #aaa;
+  color: var(--muted);
   margin: 14px 0 6px;
 }
 .materials-empty span {
   font-size: var(--text-xs);
-  color: #747474;
+  color: var(--muted);
 }
 .material-menu {
   position: fixed;
   z-index: 15;
-  background: #252525;
-  border: 1px solid #3c3c3c;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 5px;
   width: 195px;
-  box-shadow: 0 8px 30px #0005;
+  box-shadow: 0 8px 30px var(--shadow-color);
 }
 .material-menu button {
   display: block;
@@ -172,20 +172,20 @@
   font-size: var(--text-sm);
 }
 .material-menu button:hover {
-  background: #ffffff0a;
+  background: var(--wash);
 }
 .material-preview {
   width: min(1180px, calc(100vw - 40px));
   height: 90dvh;
   padding: 0;
-  color: #ddd;
-  background: #202020;
-  border: 1px solid #3c3c3c;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
   border-radius: 10px;
-  box-shadow: 0 20px 80px #0008;
+  box-shadow: 0 20px 80px var(--shadow-color);
 }
 .material-preview::backdrop {
-  background: #0008;
+  background: var(--backdrop);
 }
 .material-preview > header {
   height: 54px;
@@ -193,7 +193,7 @@
   align-items: center;
   gap: 12px;
   padding: 0 16px;
-  border-bottom: 1px solid #343434;
+  border-bottom: 1px solid var(--line);
 }
 .material-preview > header strong {
   font-size: var(--text-base);
@@ -237,7 +237,7 @@
 .recording-clock {
   font-size: var(--text-display);
   font-weight: 400;
-  color: #b4c5d3;
+  color: var(--blue-text);
   font-variant-numeric: tabular-nums;
   text-align: center;
   padding: 18px 0;
@@ -273,9 +273,9 @@
   }
 }
 .material-row.is-focused {
-  background: #7e9fb512;
+  background: var(--backdrop);
   border-radius: 5px;
-  outline: 1px solid #63819866;
+  outline: 1px solid var(--line);
   outline-offset: -1px;
 }
 .material-scopes {
@@ -289,21 +289,21 @@
   align-items: center;
   gap: 12px;
   border-radius: 7px;
-  border: 1px solid #353535;
-  color: #aaa;
+  border: 1px solid var(--line);
+  color: var(--muted);
   padding: 7px 10px;
   font-size: var(--text-sm);
 }
 .material-scopes button.active {
-  color: #d1dce4;
-  background: #26343f;
-  border-color: #546d7e;
+  color: var(--text);
+  background: var(--blue-soft);
+  border-color: var(--blue-line);
 }
 .material-scopes small {
   font-size: var(--text-xs);
-  color: #8c9aa3;
+  color: var(--blue-text);
 }
 .materials-scope strong {
   font-weight: 500;
-  color: #d0d0d0;
+  color: var(--text);
 }

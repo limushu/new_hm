@@ -1,0 +1,149 @@
+/* Colors describe UI roles. Both themes use the same typography and spacing. */
+:root {
+  --surface-raised: #252525;
+  --popup: #272727;
+  --control: #292929;
+  --surface-strong: #383838;
+  --surface-soft: #222222;
+  --line-strong: #4b4b49;
+  --wash: #ffffff08;
+  --shadow-color: #0005;
+  --backdrop: #0007;
+  --primary: #3977b7;
+  --primary-hover: #4787c7;
+  --on-primary: #fff;
+  --blue-text: #9ebfe4;
+  --blue-soft: #243449;
+  --blue-faint: #1d2631;
+  --blue-line: #3a5572;
+  --blue-strong: #35669b;
+  --green-text: #9ac4ad;
+  --green-soft: #253a31;
+  --green-faint: #1e2923;
+  --green-line: #3d5a4c;
+  --green-strong: #376d53;
+  --teal-text: #8fc6c1;
+  --teal-soft: #233a39;
+  --teal-line: #3a605e;
+  --amber-text: #d0b488;
+  --amber-soft: #3b3225;
+  --amber-line: #6b5536;
+  --violet-text: #bba8d7;
+  --violet-soft: #332b40;
+  --violet-line: #564466;
+  --red-text: #dfa5a4;
+  --red-soft: #402c2d;
+  --red-line: #744a4d;
+  --red-strong: #a3484c;
+  --accent: #90b3db;
+  --icon-muted: #9b9b97;
+}
+:root[data-theme='light'] {
+  color-scheme: light;
+  --bg: #f7f7f5;
+  --surface: #ffffff;
+  --surface-soft: #f2f2ef;
+  --surface-raised: #fafaf8;
+  --popup: #ffffff;
+  --control: #f4f4f1;
+  --hover: #ececea;
+  --surface-strong: #e5e5e1;
+  --line: #e3e3de;
+  --line-strong: #ccccc5;
+  --text: #2e302e;
+  --text-strong: var(--text);
+  --muted: #686c69;
+  --quiet: #848882;
+  --icon-muted: #777e78;
+  --wash: #00000005;
+  --shadow-color: #20251b1a;
+  --backdrop: #15203040;
+  --accent: #3676b8;
+  --primary: #3478ba;
+  --primary-hover: #2869a8;
+  --blue-text: #2d679d;
+  --blue-soft: #eaf2fb;
+  --blue-faint: #f1f6fb;
+  --blue-line: #c8dcef;
+  --blue-strong: #397bb5;
+  --green-text: #367459;
+  --green-soft: #eaf4ee;
+  --green-faint: #f0f6f1;
+  --green-line: #c7dfcf;
+  --green-strong: #39785a;
+  --teal-text: #307b79;
+  --teal-soft: #e8f4f2;
+  --teal-line: #c1dfdb;
+  --amber-text: #906620;
+  --amber-soft: #faf2df;
+  --amber-line: #e8d8af;
+  --violet-text: #775495;
+  --violet-soft: #f2ecf8;
+  --violet-line: #ded0ec;
+  --red-text: #ad494b;
+  --red-soft: #faeded;
+  --red-line: #ebcbcd;
+  --red-strong: #b74c4f;
+  --calendar-blue: var(--primary);
+  --calendar-blue-hover: var(--primary-hover);
+  --calendar-card: #e6eff9;
+  --calendar-card-hover: #dce9f6;
+  --calendar-card-edge: #79a4cf;
+  --calendar-card-border: #d4e1ef;
+  --calendar-card-text: #285780;
+  --calendar-card-meta: #4a7193;
+}
+.theme-options {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+.theme-options > button {
+  display: grid;
+  gap: 8px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  min-width: 110px;
+  text-align: left;
+  font-size: var(--text-sm);
+}
+.theme-options > button[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--blue-soft);
+  color: var(--blue-text);
+}
+.theme-swatch {
+  display: block;
+  height: 46px;
+  border-radius: 5px;
+  border: 1px solid var(--line);
+  background: linear-gradient(90deg, #ededeb 24%, #fff 24%);
+}
+.theme-swatch.dark {
+  background: linear-gradient(90deg, #242424 24%, #191919 24%);
+}
+.theme-swatch.system {
+  background: linear-gradient(90deg, #ededeb 24%, #fff 24%, #fff 50%, #191919 50%);
+}
+.primary-action {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.primary-action:hover {
+  background: var(--primary-hover);
+}
+.board-status-pill {
+  color: var(--on-primary);
+}
+:root[data-theme='light'] .brand-mark {
+  filter: none;
+}
+:root[data-theme='light'] .sidebar {
+  background: var(--surface-soft);
+}
+.picker-popover.field-popover,
+.tag-suggestions {
+  background: var(--popup);
+}

@@ -177,6 +177,8 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             load_workspace,
+            files::pick_receipt_file,
+            files::save_ledger_with_receipt,
             storage_info,
             save_calendar_event,
             delete_calendar_event,

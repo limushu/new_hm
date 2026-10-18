@@ -134,6 +134,44 @@ export async function previewCommand<K extends keyof Commands>(
   const a = args as Record<string, unknown>;
   let result: unknown = null;
   switch (name) {
+    case 'pick_receipt_file':
+      throw new Error('浏览器预览请使用文件选择框');
+    case 'save_ledger_with_receipt': {
+      const input = a.input as Commands['save_ledger_with_receipt']['args']['input'];
+      const file = previewFiles.get(a.sourcePath as string);
+      if (!file) throw new Error('凭据文件不可用，请重新选择');
+      if (!Number.isSafeInteger(input.amountCents) || input.amountCents <= 0)
+        throw new Error('金额必须大于0');
+      const c = findCase(input.caseId);
+      if (c.deletedAt) throw new Error('案件已删除');
+      const existing = data.ledgerEntries.find((r) => r.id === input.id);
+      if (existing && existing.caseId !== input.caseId) throw new Error('不能修改其他案件的收支');
+      const id = a.receiptId as string;
+      const old = data.materials.find((m) => m.id === id);
+      if (old && (old.caseId !== input.caseId || old.proceedingId !== input.proceedingId))
+        throw new Error('凭据归属不一致');
+      if (!old) {
+        data.materials.push({
+          id,
+          caseId: input.caseId,
+          proceedingId: input.proceedingId,
+          parentId: null,
+          name: file.name,
+          kind: 'file',
+          size: file.size,
+          notes: '',
+          recordId: null,
+          createdAt: new Date().toISOString(),
+          deletedAt: null,
+          trashGroup: null,
+        });
+        previewFiles.set(id, file);
+      }
+      const row = { ...input, materialId: id };
+      if (existing) Object.assign(existing, row);
+      else data.ledgerEntries.push(row);
+      break;
+    }
     case 'set_proceeding_contacts': {
       const input = a.input as Commands['set_proceeding_contacts']['args']['input'];
       const p = data.proceedings.find((p) => p.id === input.proceedingId)!;

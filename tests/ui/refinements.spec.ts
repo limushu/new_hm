@@ -52,7 +52,7 @@ test('从详情编辑、取消和删除时不嵌套表单、不刷新页面，�
 test('有案件和法官关系的法院可直接删除，案件原记录保留', async ({ page }) => {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('可删除法院');
   await page.getByRole('button', { name: '新建「可删除法院」', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
@@ -76,7 +76,7 @@ test('有案件和法官关系的法院可直接删除，案件原记录保留',
   await expect(page.locator('.contact-directory-row')).toHaveCount(1);
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await expect(page.locator('.program-contacts')).toContainText('原记录：可删除法院');
 });
 test('卡片删除先确认，可取消和撤销，键盘可操作且回收站可恢复', async ({ page }) => {

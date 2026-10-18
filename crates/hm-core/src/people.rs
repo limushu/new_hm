@@ -288,6 +288,7 @@ impl Store {
             "notifications",
             "onboarding_done",
             "update_endpoint",
+            "theme",
         ]
         .contains(&key)
             || value.len() > 4096
@@ -307,6 +308,9 @@ impl Store {
                     "更新源必须是无账号信息的 HTTPS 更新清单地址".into(),
                 ));
             }
+        }
+        if key == "theme" && !["dark", "light", "system"].contains(&value) {
+            return Err(Error::Validation("外观主题无效".into()));
         }
         self.connection.execute("INSERT INTO settings(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",params![key,value])?;
         Ok(())

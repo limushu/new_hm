@@ -37,9 +37,10 @@ export default function CaseSchedule({
     );
   }
   return (
-    <section className="case-section case-schedule">
+    <section className="case-section case-schedule" data-tone="blue">
       <div className="section-title">
         <h3>
+          <CalendarDays aria-hidden="true" />
           案件日程 <span>{upcoming.length}</span>
         </h3>
         <button onClick={() => setEdit({ ...emptyEvent(today), caseId })}>

@@ -7,6 +7,7 @@ import Dialog from '../../components/Dialog';
 import UpdateDialog from '../../components/UpdateDialog';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
+import { useTheme } from '../../components/ThemeProvider';
 export default function Settings({
   save,
   storage,
@@ -24,6 +25,7 @@ export default function Settings({
   const [checked, setChecked] = useState(false);
   const [endpoint, setEndpoint] = useState('');
   const { busy, error, run } = useAction();
+  const { theme, setTheme } = useTheme();
   useEffect(() => {
     let canceled = false;
     void Promise.all([
@@ -84,6 +86,28 @@ export default function Settings({
           {error}
         </p>
       )}
+      <section className="settings-section">
+        <h2>外观</h2>
+        <div className="theme-options" aria-label="外观主题">
+          {(
+            [
+              ['light', '浅色'],
+              ['dark', '深色'],
+              ['system', '跟随系统'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              aria-pressed={theme === value}
+              disabled={busy}
+              onClick={() => void run(() => setTheme(value))}
+            >
+              <span className={`theme-swatch ${value}`} aria-hidden="true" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </div>
+      </section>
       <section className="settings-section">
         <h2>本地数据</h2>
         {settings.recovery_notice && (

@@ -14,7 +14,7 @@ async function addContact(page: Page, name: string, kind: string, court?: string
 async function openInfo(page: Page) {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
 }
 test.beforeEach(async ({ page }) => {
   await page.goto('/?preview=1');

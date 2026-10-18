@@ -1,7 +1,8 @@
 import { Plus, CircleCheck, Crosshair } from 'lucide-react';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import type { CaseFile, Proceeding, Workspace } from '../../domain/types';
 import { currentStage, proceedingName } from '../../domain/proceedings';
+import { workflowLayout } from '../../domain/workflow-layout';
 export default function ProceedingPath({
   item,
   programs,
@@ -21,6 +22,12 @@ export default function ProceedingPath({
 }) {
   const [expanded, setExpanded] = useState(false);
   const focus = programs.find((p) => p.id === item.currentProceedingId);
+  const layout = workflowLayout(programs);
+  const marker = useId().replace(/:/g, '');
+  const parentName = (id: string) => {
+    const p = programs.find((p) => p.id === id);
+    return p ? proceedingName(p, programs) : '前序流程';
+  };
   return (
     <section
       className={`proceeding-path ${compact && !expanded ? 'is-compact' : ''}`}
@@ -52,46 +59,72 @@ export default function ProceedingPath({
         <nav className="program-map" aria-label="办理流程节点">
           <div
             className={`program-map-track ${programs.some((p) => p.parentId) ? 'has-links' : ''}`}
-            style={{ width: programs.length * 178 - 14 }}
+            style={{ width: layout.width, height: layout.height }}
           >
             <svg
               className="program-edges"
-              width={programs.length * 178 - 14}
-              height="122"
+              width={layout.width}
+              height={layout.height}
               aria-hidden="true"
             >
-              {programs.map((p, i) => {
-                const parent = programs.findIndex((x) => x.id === p.parentId);
-                return parent < 0 ? null : (
+              <defs>
+                <marker
+                  id={marker}
+                  markerWidth="7"
+                  markerHeight="7"
+                  refX="6"
+                  refY="3.5"
+                  orient="auto"
+                >
+                  <polygon points="0 0, 7 3.5, 0 7" fill="var(--muted)" />
+                </marker>
+              </defs>
+              {layout.nodes.map(({ program: p, x, y }) => {
+                const parent = layout.nodes.find((n) => n.program.id === p.parentId);
+                if (!parent) return null;
+                const start = parent.x + layout.nodeWidth,
+                  sy = parent.y + layout.nodeHeight / 2,
+                  ty = y + layout.nodeHeight / 2;
+                return (
                   <path
                     key={p.id}
-                    d={`M${parent * 178 + 82} 80 V${106 + (i % 2) * 8} H${i * 178 + 82} V80`}
+                    markerEnd={`url(#${marker})`}
+                    d={`M${start} ${sy} H${start + 34} V${ty} H${x - 4}`}
                   />
                 );
               })}
             </svg>
-            {programs.map((p) => (
+            {layout.nodes.map(({ program: p, x, y }) => (
               <button
                 key={p.id}
                 className={`program-node ${selected === p.id ? 'is-selected' : ''} ${item.currentProceedingId === p.id ? 'is-focus' : ''}`}
                 aria-label={`查看${proceedingName(p, programs)}流程`}
                 aria-pressed={selected === p.id}
+                title={proceedingName(p, programs)}
+                style={{ left: x, top: y }}
                 onClick={() => onSelect(p.id)}
               >
                 <span className="program-node-heading">
                   <strong>{proceedingName(p, programs)}</strong>
-                  {item.currentProceedingId === p.id ? (
-                    <Crosshair aria-label="当前关注" />
-                  ) : p.state === 'completed' ? (
-                    <CircleCheck />
-                  ) : (
-                    <i />
-                  )}
+                  {p.state === 'completed' && <CircleCheck aria-label="已办结" />}
                 </span>
                 <span
                   className={`program-node-stage ${p.state !== 'completed' && !p.stage ? 'is-empty' : ''}`}
                 >
                   {p.state === 'completed' ? '已办结' : currentStage(data, p)}
+                </span>
+                <span className="program-node-badges">
+                  {item.currentProceedingId === p.id && (
+                    <span className="focus-badge">
+                      <Crosshair />
+                      当前关注
+                    </span>
+                  )}
+                  {selected === p.id && <span className="viewing-badge">查看中</span>}
+                </span>
+                <span className="program-parent">
+                  {p.parentId ? `承接：${parentName(p.parentId)}` : '独立流程'}
+                  <span>{p.state === 'completed' ? '已办结' : '办理中'}</span>
                 </span>
                 {p.caseNumber && <small>{p.caseNumber}</small>}
               </button>

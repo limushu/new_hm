@@ -4,6 +4,30 @@ use std::path::PathBuf;
 use tauri::{Manager, State};
 use tauri_plugin_dialog::DialogExt;
 use tauri_plugin_opener::OpenerExt;
+#[tauri::command(async)]
+pub fn pick_receipt_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
+    app.dialog()
+        .file()
+        .set_title("选择报销凭据或发票")
+        .blocking_pick_file()
+        .map(|file| {
+            file.into_path()
+                .map(|p| p.to_string_lossy().into_owned())
+                .map_err(|e| e.to_string())
+        })
+        .transpose()
+}
+#[tauri::command(async)]
+pub fn save_ledger_with_receipt(
+    state: State<'_, AppState>,
+    input: hm_core::LedgerEntry,
+    source_path: PathBuf,
+    receipt_id: String,
+) -> Result<(), String> {
+    access(&state, |s| {
+        s.save_ledger_with_receipt(input, &source_path, &receipt_id)
+    })
+}
 
 #[tauri::command(async)]
 pub fn pick_materials(

@@ -7,7 +7,7 @@ async function openCase(page: Page) {
 }
 async function materials(page: Page) {
   await openCase(page);
-  await page.getByRole('button', { name: '材料', exact: true }).click();
+  await page.getByRole('tab', { name: '材料', exact: true }).click();
 }
 function samplePdf() {
   const objects = [
@@ -102,7 +102,7 @@ test('联系对象原位关联、关系图和双向案件跳转', async ({ page 
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.locator('.feature-list')).toContainText('虚构王甲');
   await openCase(page);
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await page.getByRole('button', { name: '关联对象', exact: true }).click();
   await page.getByRole('combobox', { name: '选择联系对象', exact: true }).fill('虚构王甲');
   await page.getByRole('option', { name: /虚构王甲/ }).click();
@@ -121,7 +121,7 @@ test('联系对象原位关联、关系图和双向案件跳转', async ({ page 
 });
 test('律师费与垫付支出使用精确金额并独立跟踪报销', async ({ page }) => {
   await openCase(page);
-  await page.getByRole('button', { name: '收支', exact: true }).click();
+  await page.getByRole('tab', { name: '收支', exact: true }).click();
   await page.getByRole('button', { name: '修改约定', exact: true }).click();
   await page.getByRole('textbox', { name: '约定律师费', exact: true }).fill('10000');
   await page.getByRole('button', { name: '保存', exact: true }).click();
@@ -144,7 +144,7 @@ test('律师费与垫付支出使用精确金额并独立跟踪报销', async ({
 });
 test('阶段管理和记录关键事件，不自动将流程结束等同结案', async ({ page }) => {
   await openCase(page);
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await page.getByRole('button', { name: '举证', exact: true }).click();
   await expect(page.locator('.stage-chip.stage-current')).toContainText('举证');
   await expect(page.getByLabel('案件状态', { exact: true })).toHaveAttribute(

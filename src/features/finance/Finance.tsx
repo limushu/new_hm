@@ -2,7 +2,7 @@ import DateField from '../../components/DateField';
 import Select from '../../components/Select';
 import { cents, money } from '../../domain/money';
 import { useState } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Paperclip } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import type { CaseDetail, LedgerEntry, SaveAction, Workspace } from '../../domain/types';
 import { proceedingName } from '../../domain/proceedings';
@@ -11,6 +11,8 @@ import { command } from '../../services/repository';
 import { useAction } from '../../components/useAction';
 import FinanceChart from './FinanceChart';
 import './finance-chart.css';
+import ReceiptField, { type PendingReceipt } from './ReceiptField';
+import './receipts.css';
 export default function Finance({
   caseId,
   data,
@@ -155,6 +157,12 @@ export default function Finance({
                 凭证
               </button>
             )}
+            {!row.materialId && (
+              <button className="receipt-link" onClick={() => setEdit(row)}>
+                <Paperclip />
+                添加凭据
+              </button>
+            )}
           </div>
         ))}
       {!rows.length && <p className="quiet-empty">暂无收支，先记录一笔收入或支出。</p>}
@@ -225,6 +233,7 @@ function EntryForm({
   onDelete?: () => void;
 }) {
   const [input, setInput] = useState(value);
+  const [receipt, setReceipt] = useState<PendingReceipt | null>(null);
   const [amount, setAmount] = useState(
     value.amountCents ? (value.amountCents / 100).toFixed(2) : '',
   );
@@ -236,7 +245,13 @@ function EntryForm({
       onSubmit={async () => {
         const amountCents = cents(amount);
         if (!amountCents) throw new Error('金额必须大于0');
-        await save('save_ledger', { input: { ...input, amountCents } });
+        if (receipt)
+          await save('save_ledger_with_receipt', {
+            input: { ...input, amountCents },
+            sourcePath: receipt.path,
+            receiptId: receipt.id,
+          });
+        else await save('save_ledger', { input: { ...input, amountCents } });
       }}
     >
       <div className="form-columns">
@@ -269,6 +284,14 @@ function EntryForm({
           />
         </label>
       </div>
+      <ReceiptField
+        caseId={input.caseId}
+        data={data}
+        value={input.materialId}
+        onChange={(materialId) => update({ materialId })}
+        pending={receipt}
+        onPending={setReceipt}
+      />
       <div className="form-columns">
         <label>
           日期
@@ -290,7 +313,7 @@ function EntryForm({
         </label>
       </div>
       <label>
-        所属程序
+        所属流程
         <Select
           aria-label="收支所属程序"
           value={input.proceedingId ?? ''}
@@ -322,23 +345,6 @@ function EntryForm({
           </Select>
         </label>
       )}
-      <label>
-        凭证（可选）
-        <Select
-          aria-label="收支凭证"
-          value={input.materialId ?? ''}
-          onValueChange={(value) => update({ materialId: value || null })}
-        >
-          <option value="">不关联凭证</option>
-          {data.materials
-            .filter((m) => m.caseId === input.caseId && !m.deletedAt && m.kind === 'file')
-            .map((m) => (
-              <option key={m.id} value={m.id}>
-                {m.name}
-              </option>
-            ))}
-        </Select>
-      </label>
       <label>
         备注
         <textarea

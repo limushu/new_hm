@@ -43,13 +43,13 @@ test('新建只有案件档案，身份按流程独立、概览使用关注流�
   await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
   await expect(page.getByRole('region', { name: '办理阶段' })).toHaveCount(1);
   await expect(parties(page)).toContainText('原告');
-  await page.getByRole('button', { name: '概览', exact: true }).click();
+  await page.getByRole('tab', { name: '概览', exact: true }).click();
   await expect(parties(page)).toContainText('二审中的身份');
   await expect(parties(page)).toContainText('被上诉人');
   await expect(parties(page)).not.toContainText('原告');
   await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
   await page.getByRole('button', { name: '设为当前关注', exact: true }).click();
-  await page.getByRole('button', { name: '概览', exact: true }).click();
+  await page.getByRole('tab', { name: '概览', exact: true }).click();
   await expect(parties(page)).toContainText('一审中的身份');
   await expect(parties(page)).toContainText('原告');
   await page.screenshot({ path: '.local/representation-overview.png' });

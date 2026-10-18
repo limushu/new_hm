@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Paperclip } from 'lucide-react';
+import { Plus, Paperclip, NotebookPen } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import Materials from '../materials/Materials';
 import type { RecordInput, SaveAction, Workspace, WorkRecord } from '../../domain/types';
@@ -17,9 +17,12 @@ export default function Records({
   const [attachments, setAttachments] = useState<WorkRecord | null>(null);
   const rows = data.workRecords.filter((r) => r.caseId === caseId);
   return (
-    <section className="case-section">
+    <section className="case-section" data-tone="violet">
       <div className="section-title">
-        <h3>工作记录</h3>
+        <h3>
+          <NotebookPen aria-hidden="true" />
+          工作记录
+        </h3>
         <button onClick={() => setEdit({ id: crypto.randomUUID(), caseId, body: '' })}>
           <Plus />
           记录

@@ -1,0 +1,90 @@
+.receipt-field {
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface-raised);
+  min-width: 0;
+}
+.receipt-field > header {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin: 0 0 10px;
+  font-size: var(--text-base);
+}
+.receipt-field > header > span {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+}
+.receipt-field > header > small {
+  color: var(--quiet);
+  font-size: var(--text-xs);
+}
+.receipt-field header svg {
+  width: 14px;
+  height: 14px;
+  color: var(--blue-text);
+}
+.receipt-upload {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  text-align: left;
+  border: 1px dashed var(--blue-line);
+  border-radius: 6px;
+  background: var(--blue-faint);
+  padding: 12px;
+  width: 100%;
+  color: var(--blue-text);
+  font-size: var(--text-base);
+}
+.receipt-upload > svg {
+  width: 20px;
+  height: 20px;
+}
+.receipt-upload small,
+.receipt-selected small {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  font-weight: 400;
+  margin-top: 3px;
+}
+.receipt-selected {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.receipt-selected > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.receipt-selected > svg {
+  color: var(--blue-text);
+}
+.receipt-options {
+  display: flex;
+  gap: 14px;
+  margin-top: 10px;
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.receipt-options button {
+  padding: 0;
+}
+.receipt-field .select-field {
+  margin-top: 10px;
+}
+.ledger-row .receipt-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+.ledger-row .receipt-link svg {
+  width: 12px;
+  height: 12px;
+}

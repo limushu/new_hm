@@ -262,7 +262,7 @@ try {
   await page.reload();
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '材料', exact: true }).click();
+  await page.getByRole('tab', { name: '材料', exact: true }).click();
   await expect(page.locator('.material-row')).toHaveCount(3);
   await page.getByRole('button', { name: '阅读示例.pdf', exact: true }).dblclick();
   await expect(
@@ -401,7 +401,7 @@ try {
   await tags.fill('#合同纠纷');
   await tags.press('Enter');
   await expect(page.getByRole('button', { name: '移除标签合同纠纷' })).toBeVisible();
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(
     '虚构甲法院新名称',
   );
@@ -653,6 +653,54 @@ try {
   )
     throw new Error('Stage reopen and history did not survive restore/restart');
   await page.screenshot({ path: join(root, 'board.png') });
+  // Direct receipt IPC and both themes, including a native restart/restore.
+  const directReceipt = {
+    id: crypto.randomUUID(),
+    caseId: item.id,
+    proceedingId: null,
+    kind: 'expense',
+    amountCents: 12850,
+    entryDate: '2026-10-18',
+    category: '差旅费',
+    notes: '凭据直接上传验收',
+    reimbursement: 'pending',
+    materialId: null,
+  };
+  const receiptId = crypto.randomUUID();
+  await invoke(page, 'save_ledger_with_receipt', {
+    input: directReceipt,
+    sourcePath: source,
+    receiptId,
+  });
+  await invoke(page, 'save_ledger_with_receipt', {
+    input: directReceipt,
+    sourcePath: source,
+    receiptId,
+  });
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('button', { name: '浅色', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  const receiptBackup = await invoke(page, 'run_backup');
+  await invoke(page, 'delete_ledger', { id: directReceipt.id });
+  await invoke(page, 'apply_restore_backup', { path: receiptBackup.directory, confirmed: true });
+  await stop(page);
+  page = await start();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    workspace.ledgerEntries.find((r) => r.id === directReceipt.id)?.materialId !== receiptId ||
+    workspace.materials.filter((m) => m.id === receiptId).length !== 1 ||
+    readFileSync(source, 'utf8') !== 'original evidence'
+  )
+    throw new Error('Direct receipt/theme persistence failed');
+  await page.getByRole('button', { name: '案件', exact: true }).click();
+  await page.locator('.case-card').first().click();
+  await page.getByRole('tab', { name: '收支', exact: true }).click();
+  await expect(page.locator('.ledger-row').filter({ hasText: '凭据直接上传验收' })).toContainText(
+    '128.50',
+  );
+  await page.screenshot({ path: join(root, 'finance-light.png') });
+  await page.getByRole('button', { name: '返回看板', exact: true }).click();
   if (process.env.HM_CHECK_UPDATE === '1') {
     const update = await invoke(page, 'check_update');
     console.log('Native update service check:', JSON.stringify(update));

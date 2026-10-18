@@ -60,7 +60,14 @@ export default function FinanceChart({
               role="img"
               aria-label={`${kind === 'income' ? '收入' : '支出'}分类，总额 ${money(total)} 元`}
             >
-              <circle cx="80" cy="80" r="62" fill="none" stroke="#363636" strokeWidth="17" />
+              <circle
+                cx="80"
+                cy="80"
+                r="62"
+                fill="none"
+                stroke="var(--line-strong)"
+                strokeWidth="17"
+              />
               {parts.map(([name, amount], i) => {
                 const length = (amount / total) * 100;
                 const start = offset;

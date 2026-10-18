@@ -11,6 +11,7 @@ import CaseSchedule from './CaseSchedule';
 import { proceedingName } from '../../domain/proceedings';
 import './case-overview.css';
 import './program-detail.css';
+import './case-workspace.css';
 import ProgramContacts from '../contacts/ProgramContacts';
 import Finance from '../finance/Finance';
 import { CaseContacts } from '../contacts/Contacts';
@@ -28,6 +29,11 @@ import {
   Plus,
   Trash2,
   X,
+  LayoutDashboard,
+  Files,
+  Workflow,
+  Wallet,
+  CheckSquare,
 } from 'lucide-react';
 import type { CaseFile, CaseInput, SaveAction, Workspace } from '../../domain/types';
 
@@ -269,6 +275,54 @@ export default function CasePage({
               />
             </div>
           </div>
+          {localError && (
+            <p className="error-message" role="alert">
+              {localError}
+            </p>
+          )}
+          <nav className="case-tabs" aria-label="案件功能" role="tablist">
+            {[
+              { id: 'overview', label: '概览', Icon: LayoutDashboard },
+              { id: 'materials', label: '材料', Icon: Files },
+              { id: 'info', label: '流程详情', Icon: Workflow },
+              { id: 'finance', label: '收支', Icon: Wallet },
+            ].map(({ id, label, Icon }, index) => (
+              <button
+                key={id}
+                role="tab"
+                aria-selected={tab === id}
+                tabIndex={tab === id ? 0 : -1}
+                className={tab === id ? 'active' : ''}
+                onClick={() => setTab(id)}
+                onKeyDown={(e) => {
+                  const ids = ['overview', 'materials', 'info', 'finance'];
+                  const next =
+                    e.key === 'ArrowRight'
+                      ? (index + 1) % 4
+                      : e.key === 'ArrowLeft'
+                        ? (index + 3) % 4
+                        : e.key === 'Home'
+                          ? 0
+                          : e.key === 'End'
+                            ? 3
+                            : -1;
+                  if (next >= 0) {
+                    e.preventDefault();
+                    setTab(ids[next]);
+                    e.currentTarget.parentElement
+                      ?.querySelectorAll<HTMLButtonElement>('[role="tab"]')
+                      [next]?.focus();
+                  }
+                }}
+              >
+                <Icon aria-hidden="true" />
+                {label}
+              </button>
+            ))}
+            <span className="save-state" aria-live="polite">
+              {saving ? '保存中…' : saved ? '已保存' : '填写名称开始'}
+            </span>
+          </nav>
           {saved && (
             <ProceedingPath
               compact={tab === 'info'}
@@ -280,26 +334,6 @@ export default function CasePage({
               onAdd={addProgram}
             />
           )}
-          {localError && (
-            <p className="error-message" role="alert">
-              {localError}
-            </p>
-          )}
-          <nav className="case-tabs" aria-label="案件功能">
-            {[
-              ['overview', '概览'],
-              ['materials', '材料'],
-              ['info', '流程详情'],
-              ['finance', '收支'],
-            ].map(([id, label]) => (
-              <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
-                {label}
-              </button>
-            ))}
-            <span className="save-state" aria-live="polite">
-              {saving ? '保存中…' : saved ? '已保存' : '填写名称开始'}
-            </span>
-          </nav>
           {!saved ? (
             <div className="empty-case">
               <p>先为案件起个名称</p>
@@ -316,9 +350,12 @@ export default function CasePage({
                     onCase={onCase}
                     onProgram={viewProgram}
                   />
-                  <section className="case-section">
+                  <section className="case-section" data-tone="amber">
                     <div className="section-title">
-                      <h3>待办</h3>
+                      <h3>
+                        <CheckSquare aria-hidden="true" />
+                        待办
+                      </h3>
                       <button disabled={saving} onClick={() => setTaskForm(!taskForm)}>
                         <Plus />
                         添加待办
@@ -356,9 +393,12 @@ export default function CasePage({
                     })}
                   </section>
                   <CaseSchedule caseId={item.id} data={data} save={save} />
-                  <section className="case-section">
+                  <section className="case-section" data-tone="violet">
                     <div className="section-title">
-                      <h3>材料</h3>
+                      <h3>
+                        <Files aria-hidden="true" />
+                        材料
+                      </h3>
                       <button onClick={() => setTab('materials')}>
                         查看材料
                         <ChevronRight />

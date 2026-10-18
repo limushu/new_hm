@@ -99,7 +99,7 @@ test('日历关联事件在案件出现，案件修改同一日程并同步回�
 
 test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async ({ page }) => {
   await add(page, 'enforcement', '一审');
-  await page.getByRole('button', { name: '概览', exact: true }).click();
+  await page.getByRole('tab', { name: '概览', exact: true }).click();
   await page.locator('.overview-materials button').filter({ hasText: '执行' }).click();
   await expect(page.locator('.materials-scope')).toContainText('执行');
   await page.setViewportSize({ width: 390, height: 844 });
@@ -111,7 +111,7 @@ test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async
 });
 
 test('收支图按整数分统计、分类筛选不改变总额，超收明确显示', async ({ page }) => {
-  await page.getByRole('button', { name: '收支', exact: true }).click();
+  await page.getByRole('tab', { name: '收支', exact: true }).click();
   await expect(page.getByRole('img', { name: '收入分类，总额 0.00 元' })).toBeVisible();
   await page.getByRole('button', { name: '修改约定', exact: true }).click();
   await page.getByRole('textbox', { name: '约定律师费', exact: true }).fill('1000');
@@ -136,7 +136,7 @@ test('收支图按整数分统计、分类筛选不改变总额，超收明确�
 });
 
 test('中间阶段完成后可重开，保留后续完成状态、当前阶段与历史', async ({ page }) => {
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await page.getByRole('button', { name: '举证', exact: true }).click();
   await expect(page.locator('.stage-done')).toHaveCount(0);
   await page.getByRole('button', { name: '管理阶段', exact: true }).click();
@@ -167,7 +167,7 @@ test('中间阶段完成后可重开，保留后续完成状态、当前阶段�
 });
 
 test('当前阶段可直接删除，取消不变更；删除保留历史且不替用户选择下一步', async ({ page }) => {
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   const initialCount = await page.locator('.stage-chip').count();
   await page.getByRole('button', { name: '举证', exact: true }).click();
   await page.getByRole('button', { name: '举证', exact: true }).click();
@@ -188,8 +188,8 @@ test('当前阶段可直接删除，取消不变更；删除保留历史且不�
   await page.getByText(/阶段变更记录 ·/).click();
   await expect(page.locator('.stage-history-list')).toContainText('设为当前阶段：举证');
   await expect(page.locator('.stage-history-list')).toContainText('删除阶段：举证');
-  await page.getByRole('button', { name: '概览', exact: true }).click();
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '概览', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await expect(page.getByRole('button', { name: '举证', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '开庭', exact: true }).click();
   await expect(page.locator('.stage-current')).toHaveText('开庭');

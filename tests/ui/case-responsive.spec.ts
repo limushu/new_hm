@@ -93,7 +93,7 @@ test('窄屏长阶段名、法院搜索和管理弹窗不挤出窗口', async ({
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await page.getByRole('button', { name: '管理阶段', exact: true }).click();
   await page.getByRole('button', { name: '新增阶段', exact: true }).click();
   const name = '核对全部证据材料并联系委托人确认补充说明'.repeat(3);

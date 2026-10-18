@@ -10,9 +10,9 @@
   gap: 16px;
   width: 100%;
   padding: 8px 10px;
-  border: 1px solid #393939;
+  border: 1px solid var(--line);
   border-radius: 7px;
-  background: #242424;
+  background: var(--surface-raised);
   font-size: var(--text-base);
   font-weight: 400;
   text-align: left;
@@ -26,26 +26,26 @@
 .select-trigger > svg {
   width: 13px;
   height: 13px;
-  color: #959595;
+  color: var(--muted);
 }
 .select-trigger:hover {
-  background: #2b2b2b;
+  background: var(--control);
 }
 .select-trigger[aria-expanded='true'] {
-  background: #303030;
+  background: var(--hover);
 }
 .field-popover {
   position: fixed;
   inset: auto;
   margin: 0;
   padding: 5px;
-  border: 1px solid #414141;
+  border: 1px solid var(--line);
   border-radius: 9px;
   color: var(--text);
-  background: #272727;
+  background: var(--popup);
   box-shadow:
-    0 8px 28px #0005,
-    0 2px 6px #0003;
+    0 8px 28px var(--shadow-color),
+    0 2px 6px var(--shadow-color);
   font: inherit;
   overflow: auto;
 }
@@ -66,12 +66,12 @@
   color: var(--text);
 }
 .select-menu [role='option'].is-active {
-  background: #383838;
+  background: var(--surface-strong);
 }
 .select-menu [role='option'] svg {
   width: 13px;
   height: 13px;
-  color: #a5b6c3;
+  color: var(--blue-text);
 }
 .contacts-tools .select-trigger,
 .materials-scope .select-trigger,
@@ -84,7 +84,7 @@
 .contacts-tools .select-trigger:hover,
 .materials-scope .select-trigger:hover,
 .graph-controls .select-trigger:hover {
-  background: #2b2b2b;
+  background: var(--control);
 }
 .workspace-dialog label > .select-field,
 .case-properties label > .select-field,
@@ -111,11 +111,11 @@
   place-items: center;
   padding: 5px;
   border-radius: 5px;
-  color: #929292;
+  color: var(--muted);
 }
 .date-field .date-open:hover {
-  background: #363636;
-  color: #ccc;
+  background: var(--surface-strong);
+  color: var(--text);
 }
 .date-menu {
   padding: 12px;
@@ -142,7 +142,7 @@
   text-align: center;
 }
 .date-weekdays {
-  color: #8e8e8e;
+  color: var(--muted);
   font-size: var(--text-xs);
   margin-bottom: 7px;
 }
@@ -155,28 +155,28 @@
 }
 .date-days > button:hover,
 .date-menu header button:hover {
-  background: #3a3a3a;
+  background: var(--surface-strong);
 }
 .date-days > button.outside-month {
-  color: #777;
+  color: var(--muted);
 }
 .date-days > button[aria-current='date'] {
-  color: #91b9d5;
+  color: var(--blue-text);
 }
 .date-days > button.selected {
-  background: #3b6c90;
-  color: #fff;
+  background: var(--blue-soft);
+  color: var(--text);
 }
 .date-menu footer {
   display: flex;
   justify-content: space-between;
   margin-top: 11px;
-  border-top: 1px solid #3a3a3a;
+  border-top: 1px solid var(--line);
   padding-top: 10px;
 }
 .date-menu footer button {
   font-size: var(--text-sm);
-  color: #b4b4b4;
+  color: var(--muted);
   padding: 3px;
 }
 .workspace-dialog label > .date-field {

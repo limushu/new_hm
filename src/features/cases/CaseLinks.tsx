@@ -1,4 +1,5 @@
 import Select from '../../components/Select';
+import { AlignLeft } from 'lucide-react';
 import { useState } from 'react';
 import Dialog from '../../components/Dialog';
 import type { SaveAction, Workspace } from '../../domain/types';
@@ -28,9 +29,12 @@ export default function CaseLinks({
     .map((d) => data.cases.find((c) => c.id === d.caseId && !c.deletedAt))
     .filter((c) => !!c);
   return (
-    <section className="feature-section">
+    <section className="feature-section" data-tone="violet">
       <header>
-        <h3>案情摘要与相关案件</h3>
+        <h3>
+          <AlignLeft aria-hidden="true" />
+          案情摘要与相关案件
+        </h3>
         <button
           onClick={() => {
             setRelated(detail.relatedCaseId ?? '');

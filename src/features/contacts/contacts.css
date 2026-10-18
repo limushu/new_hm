@@ -32,7 +32,7 @@
   gap: 8px;
   flex: 1;
   max-width: 380px;
-  color: #888;
+  color: var(--muted);
 }
 .contact-search input {
   border: 0;
@@ -54,16 +54,16 @@
   width: 30px;
   height: 30px;
   border-radius: 8px;
-  background: #2a2b2c;
-  color: #9da9b1;
+  background: var(--control);
+  color: var(--muted);
   display: grid;
   place-items: center;
 }
 .entity-mark.kind-court {
-  color: #b4afa4;
+  color: var(--muted);
 }
 .entity-mark.kind-judge {
-  color: #92a9bc;
+  color: var(--blue-text);
 }
 .contact-directory-row .row-main > span {
   display: flex;
@@ -76,18 +76,18 @@
   display: inline;
   font-size: var(--text-xs);
   font-weight: 400;
-  color: #878787;
+  color: var(--muted);
 }
 .contact-directory-row .row-main > small {
   margin-top: 5px;
-  color: #969696;
+  color: var(--muted);
   line-height: 1.5;
 }
 .backlink-count {
   display: flex;
   align-items: center;
   gap: 6px;
-  color: #9aabb7;
+  color: var(--blue-text);
   font-size: var(--text-sm);
   white-space: nowrap;
 }
@@ -111,21 +111,21 @@
 .picker-input {
   display: flex;
   align-items: center;
-  border: 1px solid #393939;
+  border: 1px solid var(--line);
   border-radius: 7px;
-  background: #242424;
+  background: var(--surface-raised);
   padding: 0 8px;
   gap: 7px;
   min-width: 0;
 }
 .picker-input.is-open {
-  border-color: #617d91;
-  box-shadow: 0 0 0 2px #63829a19;
+  border-color: var(--blue-line);
+  box-shadow: 0 0 0 2px var(--shadow-color);
 }
 .picker-input > svg {
   width: 14px;
   height: 14px;
-  color: #777;
+  color: var(--muted);
 }
 .picker-input input {
   width: 100%;
@@ -140,7 +140,7 @@
   padding: 3px;
   display: grid;
   place-items: center;
-  color: #999;
+  color: var(--muted);
   flex: none;
 }
 .picker-input button svg {
@@ -152,9 +152,9 @@
   inset: auto;
   z-index: 12;
   min-width: 230px;
-  background: #272727;
-  border: 1px solid #414141;
-  box-shadow: 0 12px 32px #0005;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
+  box-shadow: 0 12px 32px var(--shadow-color);
   border-radius: 9px;
   padding: 5px;
 }
@@ -165,7 +165,7 @@
 .picker-caption {
   padding: 7px 8px;
   font-size: var(--text-xs);
-  color: #999;
+  color: var(--muted);
 }
 .picker-popover [role='option'] {
   display: flex;
@@ -176,33 +176,33 @@
   width: 100%;
   padding: 9px;
   border-radius: 5px;
-  color: #ddd;
+  color: var(--text);
 }
 .picker-popover [role='option'].is-active,
 .picker-popover [role='option']:hover {
-  background: #343434;
+  background: var(--surface-strong);
 }
 .picker-popover small {
   display: block;
-  color: #999;
+  color: var(--muted);
   font-size: var(--text-xs);
   margin-top: 3px;
 }
 .picker-empty {
   padding: 12px 9px;
-  color: #929292;
+  color: var(--muted);
   font-size: var(--text-sm);
 }
 .picker-create {
   display: flex;
   align-items: center;
   gap: 6px;
-  border-top: 1px solid #3c3c3c;
+  border-top: 1px solid var(--line);
   width: 100%;
   padding: 11px 8px;
   text-align: left;
   font-size: var(--text-sm);
-  color: #a5bed0;
+  color: var(--blue-text);
 }
 .program-fields > .program-contacts {
   grid-column: 1/-1;
@@ -219,17 +219,17 @@
   align-items: center;
   gap: 7px;
   font-size: var(--text-sm);
-  color: #aaa;
+  color: var(--muted);
   margin-bottom: 8px;
 }
 .relation-label > svg {
   width: 14px;
   height: 14px;
-  color: #858585;
+  color: var(--muted);
 }
 .relation-label button {
   display: flex;
-  color: #91a3af;
+  color: var(--blue-text);
   margin-left: auto;
   padding: 0;
 }
@@ -241,7 +241,7 @@
   grid-column: 1/-1;
   font-size: var(--text-xs);
   line-height: 1.65;
-  color: #8b8b8b;
+  color: var(--muted);
   margin-top: 0;
 }
 .program-contacts > .error-message {
@@ -249,20 +249,20 @@
 }
 .section-description {
   font-size: var(--text-sm);
-  color: #8e8e8e;
+  color: var(--muted);
   margin-top: 7px;
   line-height: 1.5;
 }
 .role-pill {
   padding: 3px 7px;
   border-radius: 5px;
-  background: #2b2b2b;
+  background: var(--control);
   font-size: var(--text-xs);
-  color: #bbb;
+  color: var(--muted);
   white-space: nowrap;
 }
 .entity-open {
-  color: #7d929f;
+  color: var(--blue-text);
   display: flex;
 }
 .entity-open svg {
@@ -273,7 +273,7 @@
   min-width: 0;
 }
 .field-label {
-  color: #aaa;
+  color: var(--muted);
   font-size: var(--text-sm);
   display: block;
   margin-bottom: 9px;
@@ -288,8 +288,8 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  background: #30353a;
-  color: #bccbd5;
+  background: var(--surface-strong);
+  color: var(--blue-text);
   border-radius: 5px;
   font-size: var(--text-sm);
   padding: 4px 7px;
@@ -297,32 +297,32 @@
 .entity-chips button {
   display: flex;
   padding: 0;
-  color: #99a9b4;
+  color: var(--blue-text);
 }
 .entity-chips svg {
   width: 12px;
   height: 12px;
 }
 .existing-suggestion {
-  background: #2b2b2b;
+  background: var(--control);
   border-radius: 7px;
   padding: 10px;
 }
 .existing-suggestion > span {
   font-size: var(--text-xs);
-  color: #a4a4a4;
+  color: var(--muted);
 }
 .existing-suggestion button {
   display: block;
   width: 100%;
   text-align: left;
   padding: 7px 0;
-  color: #abc0d0;
+  color: var(--blue-text);
 }
 .existing-suggestion small {
   display: block;
   font-size: var(--text-xs);
-  color: #888;
+  color: var(--muted);
 }
 .contact-detail-dialog {
   width: min(990px, calc(100vw - 40px));
@@ -357,7 +357,7 @@
   margin-bottom: 12px;
 }
 .entity-details .is-empty {
-  color: #828282;
+  color: var(--muted);
 }
 .entity-details .contact-notes {
   white-space: pre-wrap;
@@ -381,13 +381,13 @@
   align-items: center;
   gap: 5px;
   padding: 4px 8px;
-  background: #2d2d2d;
+  background: var(--hover);
   border-radius: 5px;
 }
 .entity-detail-affiliations svg {
   width: 12px;
   height: 12px;
-  color: #8a9ca8;
+  color: var(--blue-text);
 }
 .entity-related-entry {
   display: flex;
@@ -423,27 +423,27 @@
   align-items: center;
   gap: 15px;
   flex-wrap: wrap;
-  color: #949494;
+  color: var(--muted);
   font-size: var(--text-sm);
 }
 .entity-context > span:first-child {
   padding: 2px 7px;
-  background: #2e2e2e;
+  background: var(--hover);
   border-radius: 5px;
-  color: #bbb;
+  color: var(--muted);
 }
 .entity-context > button {
   display: flex;
   align-items: center;
   gap: 5px;
   font-size: var(--text-xs);
-  color: #a1b3bf;
+  color: var(--blue-text);
 }
 .entity-context > button:first-of-type {
   margin-left: auto;
 }
 .entity-context > .entity-delete {
-  color: #c79591;
+  color: var(--red-text);
 }
 .entity-context svg {
   width: 12px;
@@ -454,7 +454,7 @@
   gap: 24px;
   flex-wrap: wrap;
   font-size: var(--text-base);
-  color: #b5b5b5;
+  color: var(--muted);
   padding: 9px 0;
 }
 .entity-properties > span {
@@ -465,7 +465,7 @@
 .entity-properties svg {
   width: 14px;
   height: 14px;
-  color: #888;
+  color: var(--muted);
 }
 .contact-notes {
   font-size: var(--text-base);
@@ -477,7 +477,7 @@
   display: flex;
   align-items: center;
   gap: 22px;
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--line);
   margin-top: 13px;
 }
 .entity-view-tabs button {
@@ -485,13 +485,13 @@
   align-items: center;
   gap: 6px;
   padding: 11px 0;
-  color: #999;
+  color: var(--muted);
   font-size: var(--text-sm);
   border-bottom: 2px solid transparent;
 }
 .entity-view-tabs .active {
-  color: #ddd;
-  border-bottom-color: #a7a7a7;
+  color: var(--text);
+  border-bottom-color: var(--line-strong);
 }
 .entity-view-tabs svg {
   width: 14px;
@@ -507,7 +507,7 @@
 .entity-links-layout h3 {
   font-size: var(--text-sm);
   font-weight: 500;
-  color: #aaa;
+  color: var(--muted);
   display: flex;
   gap: 9px;
   margin-bottom: 12px;
@@ -516,7 +516,7 @@
   grid-template-columns: 1fr;
 }
 .entity-links-layout h3 span {
-  color: #6e6e6e;
+  color: var(--quiet);
   font-variant-numeric: tabular-nums;
 }
 .entity-links-layout .backlink-row {
@@ -527,13 +527,13 @@
   width: 100%;
   padding: 12px 9px;
   margin: 0;
-  border-bottom: 1px solid #303030;
+  border-bottom: 1px solid var(--line);
   border-radius: 5px;
   background: none;
   gap: 12px;
 }
 .backlink-row:hover {
-  background: #292929;
+  background: var(--control);
 }
 .backlink-row > span {
   font-size: var(--text-base);
@@ -549,7 +549,7 @@
 .backlink-row svg {
   width: 13px;
   height: 13px;
-  color: #738995;
+  color: var(--blue-text);
 }
 .entity-links-layout .quiet-empty {
   line-height: 1.8;
@@ -557,19 +557,19 @@
   padding-top: 10px;
 }
 .local-graph {
-  border: 1px solid #333;
+  border: 1px solid var(--line);
   border-radius: 9px;
   overflow: hidden;
-  background: #1c1d1e;
+  background: var(--bg);
 }
 .graph-controls {
   display: flex;
   align-items: center;
   gap: 14px;
   padding: 12px 14px;
-  border-bottom: 1px solid #2c2d2e;
+  border-bottom: 1px solid var(--line);
   font-size: var(--text-sm);
-  color: #c1c1c1;
+  color: var(--text);
 }
 .graph-controls > span {
   overflow: hidden;
@@ -579,7 +579,7 @@
 }
 .graph-controls small {
   font-size: var(--text-xs);
-  color: #81878b;
+  color: var(--muted);
 }
 .graph-controls > div {
   display: flex;
@@ -596,18 +596,18 @@
 .graph-controls select {
   width: auto;
   border: 0;
-  background: #2b2d2e;
+  background: var(--hover);
   padding: 3px 5px;
   font-size: var(--text-xs);
 }
 .graph-controls button {
   display: flex;
   padding: 4px;
-  color: #a1a8ac;
+  color: var(--muted);
   border-radius: 4px;
 }
 .graph-controls button:hover {
-  background: #333;
+  background: var(--surface-strong);
 }
 .graph-controls svg {
   width: 13px;
@@ -623,80 +623,80 @@
   cursor: grab;
 }
 .graph-edge path {
-  stroke: #414b52;
+  stroke: var(--quiet);
   stroke-width: 1;
   fill: none;
 }
 .graph-edge text {
-  fill: #68747c;
+  fill: var(--muted);
   font-size: var(--text-xs);
   paint-order: stroke;
-  stroke: #1c1d1e;
+  stroke: var(--quiet);
   stroke-width: 5px;
   stroke-linejoin: round;
 }
 .graph-edge.is-lit path {
-  stroke: #8cabbf;
+  stroke: var(--blue-text);
   stroke-width: 1.4;
 }
 .graph-edge.is-lit text {
-  fill: #abbac4;
+  fill: var(--blue-text);
 }
 .graph-node {
   cursor: pointer;
   outline: none;
 }
 .graph-node circle {
-  fill: #a2acb3;
-  stroke: #242b30;
+  fill: var(--muted);
+  stroke: var(--quiet);
   stroke-width: 5px;
 }
 .graph-node.kind-court circle {
-  fill: #b3a69b;
+  fill: var(--red-text);
 }
 .graph-node.kind-judge circle {
-  fill: #89a9c0;
+  fill: var(--blue-text);
 }
 .graph-node.kind-program circle {
-  fill: #888;
+  fill: var(--muted);
   stroke-width: 3px;
 }
 .graph-node.is-focused circle {
-  fill: #a4c6df;
-  stroke: #304654;
+  fill: var(--blue-text);
+  stroke: var(--blue-text);
   stroke-width: 7px;
 }
 .graph-node text {
-  fill: #c3c7ca;
+  fill: var(--text);
   font-size: var(--text-body);
   paint-order: stroke;
-  stroke: #1c1d1e;
+  stroke: var(--quiet);
   stroke-width: 5px;
   stroke-linejoin: round;
 }
 .graph-node:focus-visible circle,
 .graph-node:hover circle {
-  stroke: #718d9f;
+  stroke: var(--blue-text);
 }
 .graph-node.is-focused text {
   font-weight: 600;
-  fill: #e1e7ec;
+  fill: var(--text);
 }
 .graph-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  border-top: 1px solid #2c2d2e;
+  border-top: 1px solid var(--line);
   padding: 10px 14px;
   font-size: var(--text-xs);
-  color: #7b8389;
+  color: var(--muted);
 }
 .graph-footer button {
   display: flex;
   gap: 5px;
   align-items: center;
-  color: #a8bdcc;
+  color: var(--blue-text);
   font-size: var(--text-xs);
 }
 .graph-footer button svg {

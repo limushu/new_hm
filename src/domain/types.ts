@@ -295,6 +295,11 @@ export interface Commands {
   delete_contact: { args: { id: string }; result: null };
   delete_contact_link: { args: { id: string }; result: null };
   save_ledger: { args: { input: LedgerEntry }; result: null };
+  pick_receipt_file: { args: Record<string, never>; result: string | null };
+  save_ledger_with_receipt: {
+    args: { input: LedgerEntry; sourcePath: string; receiptId: string };
+    result: null;
+  };
   delete_ledger: { args: { id: string }; result: null };
   save_case_detail: { args: { input: CaseDetail }; result: null };
   save_stage: { args: { input: Stage }; result: null };

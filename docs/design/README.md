@@ -1,5 +1,7 @@
 # 设计入口
 
+1.3.0 的[浅色案件](current/case-light-1.3.0.png)、[深色案件](current/case-dark-1.3.0.png)、[浅色记账凭据](current/receipt-light-1.3.0.png)、[浅色看板](current/board-light-1.3.0.png)、[浅色日历](current/calendar-light-1.3.0.png)来自实际渲染，均为虚构示例。参考用户提供的 Notion 模板：浅色大底、柔和语义色、统一字形和图标；概览保持逐行分区。主标签前移、选中明确；路径用真实承接箭头，查看与关注分别标记，独立流程不假连线。主题规则见[字体与颜色规范](typography.md)。
+
 1.2.0 的[案件概览与我方身份](current/representation-overview-1.2.0.png)、[身份联想编辑](current/representation-editor-1.2.0.png)、[非诉模板编辑](current/workflow-template-1.2.0.png)使用虚构数据。概览按当前关注流程显示身份，法院和法官不替代委托关系；编辑使用共用深色选择器与联想浮层。各功能保持整行，卡片右上角明确删除，拖拽仅移动状态。
 
 1.2.0 的[Windows 原生概览](current/representation-app-1.2.0.png)与[800×600 原生流程页](current/workflow-app-small-1.2.0.png)来自隔离虚构工作区，未读取个人数据；截图像素随系统 DPI 缩放。

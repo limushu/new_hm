@@ -2,6 +2,42 @@ use crate::people::{checked_date, checked_text, valid_id};
 use crate::*;
 use rusqlite::{params, OptionalExtension};
 impl Store {
+    pub fn save_ledger_with_receipt(
+        &self,
+        mut input: LedgerEntry,
+        source: &std::path::Path,
+        receipt_id: &str,
+    ) -> Result<()> {
+        let target = MaterialTarget {
+            case_id: input.case_id.clone(),
+            proceeding_id: input.proceeding_id.clone(),
+            parent_id: None,
+            record_id: None,
+        };
+        let existed: bool = self.connection.query_row(
+            "SELECT EXISTS(SELECT 1 FROM materials WHERE id=?1)",
+            [receipt_id],
+            |r| r.get(0),
+        )?;
+        let tx = self.connection.unchecked_transaction()?;
+        let id = self.import_one_with_id(&target, source, receipt_id)?;
+        let path = self.material_path(&id)?;
+        input.material_id = Some(id);
+        let result = (|| -> Result<()> {
+            self.save_ledger(input)?;
+            tx.commit()?;
+            Ok(())
+        })();
+        if result.is_err() && !existed {
+            // Only the newly copied UUID object is ours to remove. Original and
+            // previously attached receipts are never modified or deleted.
+            let _ = std::fs::remove_file(&path);
+            if let Some(parent) = path.parent() {
+                let _ = std::fs::remove_dir(parent);
+            }
+        }
+        result
+    }
     pub fn ledger_entries(&self) -> Result<Vec<LedgerEntry>> {
         Ok(self.connection.prepare("SELECT id,case_id,proceeding_id,kind,amount_cents,entry_date,category,notes,reimbursement,material_id FROM ledger_entries ORDER BY entry_date DESC,created_at DESC,id")?.query_map([],|r|Ok(LedgerEntry{id:r.get(0)?,case_id:r.get(1)?,proceeding_id:r.get(2)?,kind:r.get(3)?,amount_cents:r.get(4)?,entry_date:r.get(5)?,category:r.get(6)?,notes:r.get(7)?,reimbursement:r.get(8)?,material_id:r.get(9)?}))?.collect::<rusqlite::Result<Vec<_>>>()?)
     }

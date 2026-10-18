@@ -230,6 +230,32 @@ impl Store {
         Ok(report)
     }
     fn import_one(&self, target: &MaterialTarget, path: &Path) -> Result<String> {
+        self.import_one_with_id(target, path, &Uuid::new_v4().to_string())
+    }
+    pub(crate) fn import_one_with_id(
+        &self,
+        target: &MaterialTarget,
+        path: &Path,
+        id: &str,
+    ) -> Result<String> {
+        self.target(target)?;
+        crate::people::valid_id(id)?;
+        let exists: bool = self.connection.query_row(
+            "SELECT EXISTS(SELECT 1 FROM materials WHERE id=?1)",
+            [id],
+            |r| r.get(0),
+        )?;
+        if exists {
+            let item = self.material(id)?;
+            if item.case_id != target.case_id
+                || item.proceeding_id != target.proceeding_id
+                || item.parent_id != target.parent_id
+                || item.kind != "file"
+            {
+                return Err(Error::Validation("凭据归属与本次记录不一致".into()));
+            }
+            return Ok(id.into());
+        }
         let source = path.canonicalize()?;
         if !source.is_file() {
             return Err(Error::Validation(
@@ -243,8 +269,7 @@ impl Store {
         )?;
         let name = self.unique_name(target, &stored, None)?;
         let stored = name.clone();
-        let id = Uuid::new_v4().to_string();
-        let dir = self.object_dir(&target.case_id, &id, true)?;
+        let dir = self.object_dir(&target.case_id, id, true)?;
         let result = (|| {
             let mut temporary = tempfile::NamedTempFile::new_in(&dir)?;
             let size = std::io::copy(&mut std::fs::File::open(&source)?, &mut temporary)?;
@@ -253,7 +278,7 @@ impl Store {
                 .persist_noclobber(dir.join(&stored))
                 .map_err(|e| Error::Io(e.error))?;
             self.connection.execute("INSERT INTO materials(id,case_id,proceeding_id,parent_id,name,kind,storage_name,size,record_id) VALUES(?1,?2,?3,?4,?5,'file',?6,?7,?8)",params![id,target.case_id,target.proceeding_id,target.parent_id,name,stored,size as i64,target.record_id])?;
-            Ok(id.clone())
+            Ok(id.to_string())
         })();
         if result.is_err() {
             let _ = std::fs::remove_file(dir.join(&stored));

@@ -45,8 +45,8 @@
   border-color: transparent;
 }
 .proceeding-path.is-compact .program-node.is-selected {
-  background: #29343b;
-  border-color: #465b69;
+  background: var(--hover);
+  border-color: var(--blue-line);
 }
 .proceeding-path.is-compact .program-node:hover {
   background: var(--hover);
@@ -69,7 +69,7 @@
 }
 .program-detail-heading > span {
   font-size: var(--text-xs);
-  color: #a4b7a9;
+  color: var(--muted);
 }
 .program-detail-actions {
   margin-left: auto;
@@ -79,7 +79,7 @@
 }
 .program-detail-actions button {
   font-size: var(--text-sm);
-  color: #a7b5bf;
+  color: var(--blue-text);
   padding: 5px 8px;
   border-radius: 5px;
 }
@@ -173,7 +173,7 @@
 .program-detail .program-fields > label > input:focus,
 .program-detail .select-trigger:hover,
 .program-detail .select-trigger[aria-expanded='true'] {
-  background: #292929;
+  background: var(--control);
 }
 .program-detail .program-contacts {
   display: grid;
@@ -196,10 +196,10 @@
 }
 .program-detail .picker-input:hover,
 .program-detail .picker-input.is-open {
-  background: #292929;
+  background: var(--control);
 }
 .program-detail .picker-input.is-open {
-  border-color: #617d91;
+  border-color: var(--blue-line);
 }
 .program-detail .picker-input > svg {
   display: none;

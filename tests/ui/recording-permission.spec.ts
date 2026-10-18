@@ -12,7 +12,7 @@ test('拒绝麦克风权限时保留窗口并说明失败，不伪装成录音�
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '材料', exact: true }).click();
+  await page.getByRole('tab', { name: '材料', exact: true }).click();
   await page.getByRole('button', { name: '录音', exact: true }).click();
   await page.getByRole('button', { name: '开始录音', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('无法开始录音');

@@ -58,7 +58,7 @@ export default function CaseOverview({
         onCase={onCase}
       />
       <CaseLinks caseId={item.id} data={data} save={save} onCase={onCase} />
-      <section className="case-section case-people-summary">
+      <section className="case-section case-people-summary" data-tone="teal">
         <div className="section-title">
           <h3>
             <Users />

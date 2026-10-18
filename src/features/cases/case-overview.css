@@ -26,8 +26,8 @@
 .case-page-icon {
   width: 28px;
   height: 28px;
-  color: #91b2c7;
-  fill: #91b2c724;
+  color: var(--blue-text);
+  fill: var(--backdrop);
   stroke-width: 1.6;
 }
 .case-body .feature-section h3,
@@ -80,7 +80,7 @@
   align-items: center;
   gap: 5px;
   color: var(--text);
-  background: #2c3032;
+  background: var(--hover);
   border-radius: 5px;
   padding: 3px 7px;
   font-size: var(--text-sm);
@@ -88,7 +88,7 @@
 .case-tag-chips button {
   padding: 0;
   display: flex;
-  color: #8b969c;
+  color: var(--muted);
 }
 .case-tag-chips svg {
   width: 11px;
@@ -109,11 +109,11 @@
   min-width: 200px;
   max-height: 220px;
   overflow: auto;
-  background: #272727;
-  border: 1px solid #414141;
+  background: var(--surface-raised);
+  border: 1px solid var(--line);
   border-radius: 8px;
   padding: 5px;
-  box-shadow: 0 8px 28px #0005;
+  box-shadow: 0 8px 28px var(--shadow-color);
 }
 .tag-suggestions button {
   display: flex;
@@ -128,11 +128,11 @@
 }
 .tag-suggestions button:hover,
 .tag-suggestions button[aria-selected='true'] {
-  background: #383838;
+  background: var(--surface-strong);
 }
 .tag-error {
   display: block;
-  color: #d49c91;
+  color: var(--red-text);
   font-size: var(--text-xs);
 }
 .initial-program-option {
@@ -140,13 +140,13 @@
   align-items: center;
   gap: 8px;
   font-size: var(--text-sm);
-  color: #999;
+  color: var(--muted);
   margin: 10px 0 20px;
 }
 .proceeding-path {
   margin: 24px 0 18px;
   padding-top: 18px;
-  border-top: 1px solid #303030;
+  border-top: 1px solid var(--line);
 }
 .proceeding-path > header {
   display: flex;
@@ -162,19 +162,19 @@
 .proceeding-path h3 > span {
   font-size: var(--text-xs);
   font-weight: 400;
-  color: #8e8e8e;
+  color: var(--muted);
   margin-left: 8px;
 }
 .proceeding-path header p {
   font-size: var(--text-sm);
-  color: #999;
+  color: var(--muted);
   margin-top: 6px;
 }
 .proceeding-path header button {
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  color: #a5b8c6;
+  color: var(--blue-text);
   font-size: var(--text-sm);
   white-space: nowrap;
   padding: 4px 0;
@@ -198,7 +198,7 @@
 }
 .program-edges path {
   fill: none;
-  stroke: #52636d;
+  stroke: var(--blue-text);
   stroke-width: 1.2;
 }
 .program-node {
@@ -209,14 +209,14 @@
   align-self: flex-start;
   height: 86px;
   padding: 10px 12px;
-  border: 1px solid #3b3b3b;
+  border: 1px solid var(--line);
   border-radius: 9px;
-  background: #252525;
+  background: var(--surface-raised);
   text-align: left;
 }
 .program-node.is-selected {
-  border-color: #7896aa;
-  background: #25323c;
+  border-color: var(--blue-line);
+  background: var(--blue-soft);
 }
 .program-node-heading {
   display: flex;
@@ -231,13 +231,13 @@
 .program-node-heading svg {
   width: 13px;
   height: 13px;
-  color: #91afc0;
+  color: var(--blue-text);
 }
 .program-node-heading i {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #758f7e;
+  background: var(--green-soft);
 }
 .program-node-stage {
   display: block;
@@ -255,7 +255,7 @@
   margin-top: 3px;
 }
 .program-map-caption {
-  color: #858585;
+  color: var(--muted);
   font-size: var(--text-xs);
 }
 .case-focus-summary {
@@ -294,7 +294,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  color: #9caebc;
+  color: var(--blue-text);
   font-size: var(--text-sm);
   white-space: nowrap;
 }
@@ -309,7 +309,7 @@
   gap: 3px 12px;
   text-align: left;
   padding: 8px 11px;
-  background: #282828;
+  background: var(--popup);
   border-radius: 7px;
 }
 .overview-people button > span {
@@ -326,7 +326,7 @@
   align-self: center;
   width: 13px;
   height: 13px;
-  color: #889ca9;
+  color: var(--blue-text);
 }
 .case-people-summary h3 {
   display: flex;
@@ -340,10 +340,10 @@
   gap: 12px;
   text-align: left;
   padding: 12px 2px;
-  border-bottom: 1px solid #303030;
+  border-bottom: 1px solid var(--line);
 }
 .case-schedule-row > svg {
-  color: #8da6b9;
+  color: var(--blue-text);
   margin-top: 2px;
 }
 .case-schedule-row strong {
@@ -359,7 +359,7 @@
 .case-history {
   margin-top: 18px;
   font-size: var(--text-sm);
-  color: #919191;
+  color: var(--muted);
 }
 .case-history summary {
   cursor: pointer;
@@ -380,7 +380,7 @@
   align-items: center;
   gap: 16px;
   padding: 8px 10px;
-  border: 1px solid #343434;
+  border: 1px solid var(--line);
   border-radius: 6px;
   font-size: var(--text-sm);
 }
@@ -389,7 +389,7 @@
   color: var(--text);
 }
 .case-section h3 > span {
-  color: #858585;
+  color: var(--muted);
   font-size: var(--text-sm);
   font-weight: 400;
   margin-left: 6px;
@@ -471,7 +471,7 @@
   position: absolute;
   width: 14px;
   height: 1px;
-  background: #4b4b4b;
+  background: var(--surface-strong);
   right: -17px;
   top: 50%;
 }

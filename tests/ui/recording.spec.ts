@@ -7,7 +7,7 @@ test('录音可开始、暂停、继续、结束和归档，不会自动关联�
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '材料', exact: true }).click();
+  await page.getByRole('tab', { name: '材料', exact: true }).click();
   await page.getByRole('button', { name: '录音', exact: true }).click();
   await page.getByRole('textbox', { name: '录音名称', exact: true }).fill('会见测试.webm');
   await page.getByRole('button', { name: '开始录音', exact: true }).click();

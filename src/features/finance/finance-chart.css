@@ -4,7 +4,7 @@
   gap: 28px;
   margin: 26px 0;
   padding: 22px 0;
-  border-block: 1px solid #343434;
+  border-block: 1px solid var(--line);
 }
 .finance-visuals h4 {
   font-size: var(--text-base);
@@ -21,18 +21,18 @@
 .chart-kind {
   display: flex;
   padding: 2px;
-  background: #292929;
+  background: var(--control);
   border-radius: 6px;
 }
 .chart-kind button {
   font-size: var(--text-xs);
-  color: #999;
+  color: var(--muted);
   padding: 3px 7px;
   border-radius: 4px;
 }
 .chart-kind button[aria-pressed='true'] {
-  color: #ddd;
-  background: #3a3a3a;
+  color: var(--text);
+  background: var(--surface-strong);
 }
 .finance-chart-body {
   display: flex;
@@ -60,7 +60,7 @@
   pointer-events: none;
 }
 .donut-total small {
-  color: #999;
+  color: var(--muted);
   font-size: var(--text-xs);
 }
 .donut-total strong {
@@ -84,7 +84,7 @@
 }
 .chart-legend button:hover,
 .chart-legend button[aria-pressed='true'] {
-  background: #2a2a2a;
+  background: var(--control);
 }
 .chart-legend i {
   width: 6px;
@@ -98,7 +98,7 @@
 .chart-legend small {
   display: block;
   font-size: var(--text-xs);
-  color: #888;
+  color: var(--muted);
 }
 .chart-legend strong {
   margin-left: auto;
@@ -108,7 +108,7 @@
   white-space: nowrap;
 }
 .fee-progress {
-  border-left: 1px solid #343434;
+  border-left: 1px solid var(--line);
   padding-left: 22px;
 }
 .fee-progress > strong {
@@ -120,7 +120,7 @@
 }
 .fee-progress strong small {
   font-size: var(--text-sm);
-  color: #999;
+  color: var(--muted);
   font-weight: 400;
 }
 .fee-progress progress {
@@ -131,23 +131,23 @@
   border: 0;
   border-radius: 4px;
   overflow: hidden;
-  background: #343434;
+  background: var(--surface-strong);
 }
 .fee-progress progress::-webkit-progress-bar {
-  background: #343434;
+  background: var(--surface-strong);
 }
 .fee-progress progress::-webkit-progress-value {
-  background: #7d9eae;
+  background: var(--teal-soft);
   border-radius: 4px;
 }
 .fee-progress p {
   margin: 10px 0;
   font-size: var(--text-sm);
-  color: #b0b8bc;
+  color: var(--muted);
 }
 .fee-progress > small {
   font-size: var(--text-xs);
-  color: #888;
+  color: var(--muted);
 }
 @media (max-width: 900px) {
   .finance-visuals {
@@ -157,7 +157,7 @@
   .fee-progress {
     border-left: 0;
     padding: 20px 0 0;
-    border-top: 1px solid #343434;
+    border-top: 1px solid var(--line);
   }
   .fee-progress > strong {
     margin-top: 16px;

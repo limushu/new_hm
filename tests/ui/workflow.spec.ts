@@ -44,7 +44,7 @@ test('不同流程独立保存案号，新增流程不改变案件状态', async
   await expect(page.locator('.program-node')).toHaveCount(0);
   await page.getByRole('button', { name: '新增流程', exact: true }).click();
   await page.getByRole('button', { name: '新增', exact: true }).click();
-  await page.getByRole('button', { name: '流程详情', exact: true }).click();
+  await page.getByRole('tab', { name: '流程详情', exact: true }).click();
   await page.getByRole('textbox', { name: '案号', exact: true }).fill('一审独立案号');
   await page.getByRole('textbox', { name: '案号', exact: true }).press('Tab');
   await expect(page.locator('.save-state')).toHaveText('已保存');
