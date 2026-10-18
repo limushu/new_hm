@@ -22,7 +22,7 @@ impl Store {
         Ok(self.connection.prepare("SELECT id,proceeding_id,name,position,state FROM stages ORDER BY proceeding_id,position,id")?.query_map([],|r|Ok(Stage{id:r.get(0)?,proceeding_id:r.get(1)?,name:r.get(2)?,position:r.get(3)?,state:r.get(4)?}))?.collect::<rusqlite::Result<Vec<_>>>()?)
     }
     pub fn case_events(&self) -> Result<Vec<CaseEvent>> {
-        Ok(self.connection.prepare("SELECT id,case_id,proceeding_id,title,event_date,notes,kind FROM case_events ORDER BY event_date DESC,created_at DESC,id")?.query_map([],|r|Ok(CaseEvent{id:r.get(0)?,case_id:r.get(1)?,proceeding_id:r.get(2)?,title:r.get(3)?,event_date:r.get(4)?,notes:r.get(5)?,kind:r.get(6)?}))?.collect::<rusqlite::Result<Vec<_>>>()?)
+        Ok(self.connection.prepare("SELECT id,case_id,proceeding_id,title,event_date,notes,kind FROM case_events ORDER BY event_date DESC,created_at DESC,rowid DESC")?.query_map([],|r|Ok(CaseEvent{id:r.get(0)?,case_id:r.get(1)?,proceeding_id:r.get(2)?,title:r.get(3)?,event_date:r.get(4)?,notes:r.get(5)?,kind:r.get(6)?}))?.collect::<rusqlite::Result<Vec<_>>>()?)
     }
     pub fn save_stage(&mut self, input: Stage) -> Result<()> {
         let completed: bool = self
@@ -71,9 +71,21 @@ impl Store {
         } else {
             valid_id(&input.id)?;
         }
+        let previous_focus: Option<String> = self
+            .connection
+            .query_row(
+                "SELECT name FROM stages WHERE proceeding_id=?1 AND state='current' AND id<>?2",
+                params![input.proceeding_id, input.id],
+                |r| r.get(0),
+            )
+            .optional()?;
+        let changed = previous
+            .as_ref()
+            .map(|(_, state)| state != &input.state)
+            .unwrap_or(input.state == "current");
         let tx = self.connection.transaction()?;
         if input.state == "current" {
-            tx.execute("UPDATE stages SET state='done' WHERE proceeding_id=?1 AND state='current' AND id<>?2",params![input.proceeding_id,input.id])?;
+            tx.execute("UPDATE stages SET state='pending' WHERE proceeding_id=?1 AND state='current' AND id<>?2",params![input.proceeding_id,input.id])?;
         }
         tx.execute("INSERT INTO stages(id,proceeding_id,name,position,state) VALUES(?1,?2,?3,?4,?5) ON CONFLICT(id) DO UPDATE SET name=excluded.name,position=excluded.position,state=excluded.state",params![input.id,input.proceeding_id,name,input.position,input.state])?;
         if input.state == "current" {
@@ -81,17 +93,49 @@ impl Store {
                 "UPDATE proceedings SET stage=?1 WHERE id=?2",
                 params![name, input.proceeding_id],
             )?;
-            if previous
-                .as_ref()
-                .is_none_or(|(_, state)| state != "current")
-            {
-                tx.execute("INSERT INTO case_events(id,case_id,proceeding_id,title,event_date,kind) VALUES(?1,?2,?3,?4,date('now','localtime'),'stage_change')",params![Uuid::new_v4().to_string(),owner,input.proceeding_id,format!("切换阶段：{name}")])?;
-            }
-        } else if previous.is_some_and(|(_, state)| state == "current") {
+        } else if previous
+            .as_ref()
+            .is_some_and(|(_, state)| state == "current")
+        {
             tx.execute(
                 "UPDATE proceedings SET stage='' WHERE id=?1",
                 [&input.proceeding_id],
             )?;
+        }
+        if changed {
+            let from = previous
+                .as_ref()
+                .map(|(_, state)| stage_state_label(state))
+                .unwrap_or("未设置");
+            let action = match input.state.as_str() {
+                "done" => "完成阶段",
+                "skipped" => "跳过阶段",
+                "pending"
+                    if previous
+                        .as_ref()
+                        .is_some_and(|(_, state)| state == "done" || state == "skipped") =>
+                {
+                    "重新打开阶段"
+                }
+                "pending" => "阶段转为待办理",
+                "current"
+                    if previous
+                        .as_ref()
+                        .is_some_and(|(_, state)| state == "done" || state == "skipped") =>
+                {
+                    "重新办理阶段"
+                }
+                _ => "设为当前阶段",
+            };
+            let mut notes = format!("{from} → {}", stage_state_label(&input.state));
+            if input.state == "current" {
+                if let Some(focus) = previous_focus {
+                    notes.push_str(&format!(
+                        "；原当前阶段「{focus}」仍待办理，未自动标记完成。"
+                    ));
+                }
+            }
+            tx.execute("INSERT INTO case_events(id,case_id,proceeding_id,title,event_date,notes,kind) VALUES(?1,?2,?3,?4,date('now','localtime'),?5,'stage_change')",params![Uuid::new_v4().to_string(),owner,input.proceeding_id,format!("{action}：{name}"),notes])?;
         }
         tx.commit()?;
         Ok(())
@@ -181,6 +225,15 @@ impl Store {
         }
         self.connection.execute("INSERT INTO case_events(id,case_id,proceeding_id,title,event_date,notes) VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(id) DO UPDATE SET proceeding_id=excluded.proceeding_id,title=excluded.title,event_date=excluded.event_date,notes=excluded.notes",params![input.id,input.case_id,input.proceeding_id,title,input.event_date,notes])?;
         Ok(())
+    }
+}
+
+fn stage_state_label(state: &str) -> &'static str {
+    match state {
+        "current" => "当前办理",
+        "done" => "已完成",
+        "skipped" => "已跳过",
+        _ => "待办理",
     }
 }
 

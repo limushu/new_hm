@@ -297,7 +297,7 @@ export default function CasePage({
           ) : (
             <>
               {tab === 'overview' && (
-                <>
+                <div className="case-overview-content">
                   <CaseOverview
                     item={item}
                     data={data}
@@ -305,48 +305,46 @@ export default function CasePage({
                     onCase={onCase}
                     onProgram={viewProgram}
                   />
-                  <div className="overview-next-grid">
-                    <section className="case-section">
-                      <div className="section-title">
-                        <h3>待办</h3>
-                        <button disabled={saving} onClick={() => setTaskForm(!taskForm)}>
-                          <Plus />
-                          添加待办
-                        </button>
-                      </div>
-                      {!tasks.length && !taskForm && <p className="empty-text">暂无待办</p>}
-                      {tasks.map((t) => {
-                        const completed = taskOverrides[t.id] ?? t.completed;
-                        return (
-                          <label key={t.id} className={`todo-row ${completed ? 'completed' : ''}`}>
-                            <input
-                              type="checkbox"
-                              checked={completed}
-                              disabled={saving}
-                              onChange={(e) => {
-                                const checked = e.target.checked;
-                                setTaskOverrides((value) => ({ ...value, [t.id]: checked }));
-                                void act(async () => {
-                                  try {
-                                    await save('toggle_task', { id: t.id, completed: checked });
-                                  } finally {
-                                    setTaskOverrides((value) => {
-                                      const next = { ...value };
-                                      delete next[t.id];
-                                      return next;
-                                    });
-                                  }
-                                });
-                              }}
-                            />
-                            <span>{t.title}</span>
-                            {t.dueDate && <time>{t.dueDate}</time>}
-                          </label>
-                        );
-                      })}
-                    </section>
-                    <CaseSchedule caseId={item.id} data={data} save={save} />
-                  </div>
+                  <section className="case-section">
+                    <div className="section-title">
+                      <h3>待办</h3>
+                      <button disabled={saving} onClick={() => setTaskForm(!taskForm)}>
+                        <Plus />
+                        添加待办
+                      </button>
+                    </div>
+                    {!tasks.length && !taskForm && <p className="empty-text">暂无待办</p>}
+                    {tasks.map((t) => {
+                      const completed = taskOverrides[t.id] ?? t.completed;
+                      return (
+                        <label key={t.id} className={`todo-row ${completed ? 'completed' : ''}`}>
+                          <input
+                            type="checkbox"
+                            checked={completed}
+                            disabled={saving}
+                            onChange={(e) => {
+                              const checked = e.target.checked;
+                              setTaskOverrides((value) => ({ ...value, [t.id]: checked }));
+                              void act(async () => {
+                                try {
+                                  await save('toggle_task', { id: t.id, completed: checked });
+                                } finally {
+                                  setTaskOverrides((value) => {
+                                    const next = { ...value };
+                                    delete next[t.id];
+                                    return next;
+                                  });
+                                }
+                              });
+                            }}
+                          />
+                          <span>{t.title}</span>
+                          {t.dueDate && <time>{t.dueDate}</time>}
+                        </label>
+                      );
+                    })}
+                  </section>
+                  <CaseSchedule caseId={item.id} data={data} save={save} />
                   <section className="case-section">
                     <div className="section-title">
                       <h3>材料</h3>
@@ -385,7 +383,7 @@ export default function CasePage({
                     </div>
                   </section>
                   <Records caseId={item.id} data={data} save={save} />
-                </>
+                </div>
               )}
               {tab === 'info' && (
                 <section className="case-section">

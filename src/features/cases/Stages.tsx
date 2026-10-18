@@ -6,6 +6,12 @@ import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
 import type { CaseEvent, SaveAction, Stage, Workspace } from '../../domain/types';
 import { dateKey } from '../../domain/calendar';
+const stageLabels = {
+  pending: '待办理',
+  current: '当前办理',
+  done: '已完成',
+  skipped: '已跳过',
+} as const;
 export default function Stages({
   caseId,
   proceedingId,
@@ -29,6 +35,12 @@ export default function Stages({
   const [name, setName] = useState('');
   const [remove, setRemove] = useState<Stage | null>(null);
   const [event, setEvent] = useState<CaseEvent | null>(null);
+  const [statusStage, setStatusStage] = useState<Stage | null>(null);
+  const [nextState, setNextState] = useState<Stage['state']>('pending');
+  function adjust(stage: Stage) {
+    setStatusStage(stage);
+    setNextState(stage.state === 'done' || stage.state === 'skipped' ? 'pending' : stage.state);
+  }
   const { busy, error, run } = useAction();
   async function reorder(index: number, delta: number) {
     const values = [...rows];
@@ -50,10 +62,15 @@ export default function Stages({
               key={stage.id}
               className={`stage-chip stage-${stage.state}`}
               disabled={busy || closed}
-              title={stage.state === 'current' ? '当前阶段' : '点击切换到此阶段'}
+              title={`${stageLabels[stage.state]} · ${stage.state === 'pending' ? '点击设为当前阶段' : '点击调整状态'}`}
+              onContextMenu={(e) => {
+                e.preventDefault();
+                if (!busy && !closed) adjust(stage);
+              }}
               onClick={() => {
-                if (stage.state !== 'current')
+                if (stage.state === 'pending')
                   void run(() => save('save_stage', { input: { ...stage, state: 'current' } }));
+                else adjust(stage);
               }}
             >
               {stage.state === 'done' ? (
@@ -67,6 +84,9 @@ export default function Stages({
             </button>
           ))}
         </div>
+        <p className="stage-guidance">
+          顺序仅作办理参考，切换当前阶段不会自动完成其他阶段。点击已完成阶段可重新打开，也可在“管理阶段”中调整状态。
+        </p>
         {error && (
           <p role="alert" className="error-message">
             {error}
@@ -114,11 +134,17 @@ export default function Stages({
       {history.length > 0 && (
         <details className="case-history">
           <summary>阶段变更记录 · {history.length}</summary>
+          <p className="field-hint">
+            最新变更在前。这里保留完成、重开和当前阶段调整的历史，不限制实际办理顺序。
+          </p>
           <div className="stage-history-list">
             {history.map((e) => (
               <article className="case-event" key={e.id}>
                 <time>{e.eventDate}</time>
-                <div>{e.title}</div>
+                <div>
+                  <strong>{e.title}</strong>
+                  {e.notes && <p>{e.notes}</p>}
+                </div>
               </article>
             ))}
           </div>
@@ -131,20 +157,7 @@ export default function Stages({
               <div className="feature-row" key={stage.id}>
                 <span className="row-main">
                   {stage.name}
-                  <small>
-                    {' '}
-                    ·{' '}
-                    {
-                      (
-                        {
-                          pending: '未开始',
-                          current: '当前',
-                          done: '已完成',
-                          skipped: '已跳过',
-                        } as const
-                      )[stage.state]
-                    }
-                  </small>
+                  <small> · {stageLabels[stage.state]}</small>
                 </span>
                 <div className="row-actions">
                   <button
@@ -174,19 +187,11 @@ export default function Stages({
                   </button>
                   <button
                     type="button"
-                    disabled={busy || stage.state === 'current'}
-                    onClick={() =>
-                      void run(() =>
-                        save('save_stage', {
-                          input: {
-                            ...stage,
-                            state: stage.state === 'skipped' ? 'pending' : 'skipped',
-                          },
-                        }),
-                      )
-                    }
+                    disabled={busy}
+                    aria-label={`调整${stage.name}状态`}
+                    onClick={() => adjust(stage)}
                   >
-                    {stage.state === 'skipped' ? '恢复' : '跳过'}
+                    {stage.state === 'done' || stage.state === 'skipped' ? '重新打开' : '状态'}
                   </button>
                   <button
                     type="button"
@@ -216,6 +221,37 @@ export default function Stages({
             <Plus />
             新增阶段
           </button>
+        </Dialog>
+      )}
+      {statusStage && (
+        <Dialog
+          title={`调整阶段状态 · ${statusStage.name}`}
+          onClose={() => setStatusStage(null)}
+          submitLabel="应用"
+          onSubmit={async () => {
+            await save('save_stage', { input: { ...statusStage, state: nextState } });
+          }}
+        >
+          <p className="feature-description">
+            {statusStage.name} · {stageLabels[statusStage.state]}
+          </p>
+          <label>
+            调整为
+            <Select
+              aria-label="阶段状态"
+              value={nextState}
+              onValueChange={(value) => setNextState(value as Stage['state'])}
+            >
+              {Object.entries(stageLabels).map(([state, label]) => (
+                <option key={state} value={state}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <p className="field-hint">
+            重新打开只调整此阶段，其他阶段的完成状态保持不变。设为当前时，原当前阶段回到待办理；不会自动标记完成。历史记录保留。
+          </p>
         </Dialog>
       )}
       {edit && (

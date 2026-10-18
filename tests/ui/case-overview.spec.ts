@@ -134,3 +134,34 @@ test('收支图按整数分统计、分类筛选不改变总额，超收明确�
   await page.getByRole('button', { name: /清除分类筛选/ }).click();
   await expect(page.locator('.ledger-row')).toHaveCount(2);
 });
+
+test('中间阶段完成后可重开，保留后续完成状态、当前阶段与历史', async ({ page }) => {
+  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await page.getByRole('button', { name: '举证', exact: true }).click();
+  await expect(page.locator('.stage-done')).toHaveCount(0);
+  await page.getByRole('button', { name: '管理阶段', exact: true }).click();
+  for (const name of ['立案', '裁判']) {
+    await page.getByRole('button', { name: `调整${name}状态`, exact: true }).click();
+    await selectOption(page, page.getByRole('combobox', { name: '阶段状态', exact: true }), 'done');
+    await page.getByRole('button', { name: '应用', exact: true }).click();
+  }
+  const manager = page.getByRole('dialog', { name: '管理办理阶段', exact: true });
+  await manager.getByRole('button', { name: '关闭', exact: true }).last().click();
+  await page.getByRole('button', { name: '立案', exact: true }).click();
+  await expect(page.getByRole('combobox', { name: '阶段状态', exact: true })).toHaveAttribute(
+    'data-value',
+    'pending',
+  );
+  await page.getByRole('button', { name: '应用', exact: true }).click();
+  await expect(page.getByRole('button', { name: '立案', exact: true })).toHaveClass(
+    /stage-pending/,
+  );
+  await expect(page.getByRole('button', { name: '裁判', exact: true })).toHaveClass(/stage-done/);
+  await expect(page.getByRole('button', { name: '举证', exact: true })).toHaveClass(
+    /stage-current/,
+  );
+  await page.getByText(/阶段变更记录 ·/).click();
+  await expect(page.locator('.stage-history-list')).toContainText('完成阶段：立案');
+  await expect(page.locator('.stage-history-list')).toContainText('重新打开阶段：立案');
+  await expect(page.locator('.stage-history-list')).toContainText('已完成 → 待办理');
+});

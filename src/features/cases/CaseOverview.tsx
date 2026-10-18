@@ -51,34 +51,32 @@ export default function CaseOverview({
           </button>
         )}
       </section>
-      <div className="overview-context-grid">
-        <CaseLinks caseId={item.id} data={data} save={save} onCase={onCase} />
-        <section className="case-section case-people-summary">
-          <div className="section-title">
-            <h3>
-              <Users />
-              相关人员与机构
-            </h3>
+      <CaseLinks caseId={item.id} data={data} save={save} onCase={onCase} />
+      <section className="case-section case-people-summary">
+        <div className="section-title">
+          <h3>
+            <Users />
+            相关人员与机构
+          </h3>
+        </div>
+        {people.length ? (
+          <div className="overview-people">
+            {people.map((c) => (
+              <button key={c.id} onClick={() => setContact(c)}>
+                <span>{c.name}</span>
+                <small>
+                  {[...new Set(links.filter((l) => l.contactId === c.id).map((l) => l.role))].join(
+                    ' / ',
+                  )}
+                </small>
+                <ArrowUpRight />
+              </button>
+            ))}
           </div>
-          {people.length ? (
-            <div className="overview-people">
-              {people.map((c) => (
-                <button key={c.id} onClick={() => setContact(c)}>
-                  <span>{c.name}</span>
-                  <small>
-                    {[
-                      ...new Set(links.filter((l) => l.contactId === c.id).map((l) => l.role)),
-                    ].join(' / ')}
-                  </small>
-                  <ArrowUpRight />
-                </button>
-              ))}
-            </div>
-          ) : (
-            <p className="empty-text">在程序详情选择法院、法官，或关联本案当事人后会显示在这里。</p>
-          )}
-        </section>
-      </div>
+        ) : (
+          <p className="empty-text">在程序详情选择法院、法官，或关联本案当事人后会显示在这里。</p>
+        )}
+      </section>
       {contact && (
         <ContactDetail
           contact={contact}

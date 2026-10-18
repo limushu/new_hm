@@ -212,3 +212,62 @@ fn update_sources_allow_https_without_credentials_and_reject_unsafe_urls() {
     );
     s.set_setting("update_endpoint", "").unwrap();
 }
+
+#[test]
+fn stages_can_reopen_in_the_middle_without_resetting_other_work_or_erasing_history() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("workspace.sqlite3");
+    let mut store = Store::open(&path).unwrap();
+    let case = create(&mut store, None);
+    let program = case.current_proceeding_id.as_ref().unwrap();
+    let stages = store.stages().unwrap();
+    let mut middle = stages[1].clone();
+    let mut current = stages[2].clone();
+    current.state = "current".into();
+    store.save_stage(current.clone()).unwrap();
+    assert_eq!(store.stages().unwrap()[0].state, "pending");
+    middle.state = "done".into();
+    store.save_stage(middle.clone()).unwrap();
+    let mut later = stages[4].clone();
+    later.state = "done".into();
+    store.save_stage(later.clone()).unwrap();
+    middle.state = "pending".into();
+    store.save_stage(middle.clone()).unwrap();
+    let rows = store.stages().unwrap();
+    assert_eq!(rows[1].state, "pending");
+    assert_eq!(rows[2].state, "current");
+    assert_eq!(rows[4].state, "done");
+    let history = store.case_events().unwrap();
+    assert!(history[0].title.contains("重新打开阶段"));
+    assert_eq!(history[0].notes, "已完成 → 待办理");
+    assert!(history.iter().any(|e| e.title.contains("完成阶段")));
+    store.save_stage(middle.clone()).unwrap();
+    assert_eq!(store.case_events().unwrap().len(), history.len());
+    middle.state = "current".into();
+    store.save_stage(middle.clone()).unwrap();
+    assert_eq!(store.stages().unwrap()[2].state, "pending");
+    assert_eq!(store.stages().unwrap()[4].state, "done");
+    middle.state = "done".into();
+    store.save_stage(middle.clone()).unwrap();
+    assert!(store.stages().unwrap().iter().all(|s| s.state != "current"));
+    assert!(store.workspace().unwrap().proceedings[0].stage.is_empty());
+    middle.state = "current".into();
+    store.save_stage(middle).unwrap();
+    let newest = store.case_events().unwrap()[0].clone();
+    assert!(newest.title.contains("重新办理阶段"));
+    assert!(store
+        .save_case_event(CaseEvent {
+            kind: "milestone".into(),
+            ..newest
+        })
+        .is_err());
+    drop(store);
+    let reopened = Store::open(&path).unwrap().workspace().unwrap();
+    assert_eq!(reopened.stages[1].state, "current");
+    assert_eq!(reopened.stages[4].state, "done");
+    assert_eq!(
+        reopened.cases[0].current_proceeding_id.as_ref(),
+        Some(program)
+    );
+    assert_eq!(reopened.cases[0].status_id, "in_progress");
+}

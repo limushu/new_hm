@@ -128,6 +128,19 @@ try {
   let workspace = await invoke(page, 'load_workspace');
   const item = workspace.cases[0];
   if (workspace.stages.length !== 5) throw new Error('Default stages missing');
+  const middleStage = workspace.stages[1];
+  const followingStage = workspace.stages[2];
+  await invoke(page, 'save_stage', { input: { ...followingStage, state: 'current' } });
+  await invoke(page, 'save_stage', { input: { ...middleStage, state: 'done' } });
+  await invoke(page, 'save_stage', { input: { ...middleStage, state: 'pending' } });
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    workspace.stages[0].state !== 'pending' ||
+    workspace.stages[1].state !== 'pending' ||
+    workspace.stages[2].state !== 'current' ||
+    !workspace.caseEvents.some((e) => e.title.includes('重新打开阶段'))
+  )
+    throw new Error('Native stage reopen reset unrelated progress or lost history');
   const typography = await page.context().newCDPSession(page);
   await typography.send('DOM.enable');
   await typography.send('CSS.enable');
@@ -499,6 +512,12 @@ try {
     workspace.cases[0].currentProceedingId !== first
   )
     throw new Error('Programs, tags, schedule or focus lost after restart');
+  if (
+    workspace.stages.find((s) => s.id === middleStage.id)?.state !== 'pending' ||
+    workspace.stages.find((s) => s.id === followingStage.id)?.state !== 'current' ||
+    !workspace.caseEvents.some((e) => e.title.includes('重新打开阶段'))
+  )
+    throw new Error('Stage reopen and history did not survive restore/restart');
   await page.screenshot({ path: join(root, 'board.png') });
   if (process.env.HM_CHECK_UPDATE === '1') {
     const update = await invoke(page, 'check_update');

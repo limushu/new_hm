@@ -192,27 +192,57 @@ export async function previewCommand<K extends keyof Commands>(
       const exists = rows.find((row) =>
         name === 'save_case_detail' ? row.caseId === input.caseId : row.id === input.id,
       );
-      if (name === 'save_stage' && input.state === 'current') {
-        if (!exists || (exists as { state?: string }).state !== 'current')
+      if (name === 'save_stage') {
+        const previousState = (exists as { state?: string } | undefined)?.state;
+        const program = data.proceedings.find((p) => p.id === input.proceedingId)!;
+        if (program.state === 'completed') throw new Error('程序已办结，请先恢复办理再调整阶段');
+        const labels: Record<string, string> = {
+          pending: '待办理',
+          current: '当前办理',
+          done: '已完成',
+          skipped: '已跳过',
+        };
+        const oldFocus = data.stages.find(
+          (s) => s.proceedingId === program.id && s.id !== input.id && s.state === 'current',
+        );
+        if ((exists && previousState !== input.state) || (!exists && input.state === 'current')) {
+          const action =
+            input.state === 'done'
+              ? '完成阶段'
+              : input.state === 'skipped'
+                ? '跳过阶段'
+                : input.state === 'pending'
+                  ? previousState === 'done' || previousState === 'skipped'
+                    ? '重新打开阶段'
+                    : '阶段转为待办理'
+                  : previousState === 'done' || previousState === 'skipped'
+                    ? '重新办理阶段'
+                    : '设为当前阶段';
           data.caseEvents.unshift({
             id: crypto.randomUUID(),
-            caseId: data.proceedings.find((p) => p.id === input.proceedingId)!.caseId,
+            caseId: program.caseId,
             proceedingId: input.proceedingId as string,
-            title: `切换阶段：${input.name}`,
+            title: `${action}：${input.name}`,
             eventDate: dateKey(new Date()),
-            notes: '',
+            notes:
+              `${labels[previousState ?? ''] || '未设置'} → ${labels[input.state as string]}` +
+              (input.state === 'current' && oldFocus
+                ? `；原当前阶段「${oldFocus.name}」仍待办理，未自动标记完成。`
+                : ''),
             kind: 'stage_change',
           });
-        data.stages
-          .filter(
-            (stage) =>
-              stage.proceedingId === input.proceedingId &&
-              stage.state === 'current' &&
-              stage.id !== input.id,
-          )
-          .forEach((stage) => (stage.state = 'done'));
-        const program = data.proceedings.find((program) => program.id === input.proceedingId);
-        if (program) program.stage = input.name as string;
+        }
+        if (input.state === 'current') {
+          data.stages
+            .filter(
+              (stage) =>
+                stage.proceedingId === input.proceedingId &&
+                stage.state === 'current' &&
+                stage.id !== input.id,
+            )
+            .forEach((stage) => (stage.state = 'pending'));
+          program.stage = input.name as string;
+        } else if (previousState === 'current') program.stage = '';
       }
       if (exists) Object.assign(exists, input);
       else rows.push({ ...input });
