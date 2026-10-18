@@ -79,9 +79,7 @@ test('法院法官搜索复用、筛选与反向关联，无需重复建档或�
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue('');
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('乙法院');
   await page.getByRole('option', { name: /示例乙法院/ }).click();
-  await selectOption(page, page.getByRole('combobox', { name: '查看程序', exact: true }), {
-    label: '一审',
-  });
+  await page.getByRole('button', { name: '查看一审程序', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(
     '示例甲法院',
   );

@@ -1,4 +1,5 @@
 import { Plus, CircleCheck, Crosshair } from 'lucide-react';
+import { useState } from 'react';
 import type { CaseFile, Proceeding, Workspace } from '../../domain/types';
 import { currentStage, proceedingName } from '../../domain/proceedings';
 export default function ProceedingPath({
@@ -8,6 +9,7 @@ export default function ProceedingPath({
   data,
   onSelect,
   onAdd,
+  compact = false,
 }: {
   item: CaseFile;
   programs: Proceeding[];
@@ -15,10 +17,15 @@ export default function ProceedingPath({
   data: Workspace;
   onSelect: (id: string) => void;
   onAdd: () => void;
+  compact?: boolean;
 }) {
+  const [expanded, setExpanded] = useState(false);
   const focus = programs.find((p) => p.id === item.currentProceedingId);
   return (
-    <section className="proceeding-path" aria-label="案件办理路径">
+    <section
+      className={`proceeding-path ${compact && !expanded ? 'is-compact' : ''}`}
+      aria-label="案件办理路径"
+    >
       <header>
         <div>
           <h3>
@@ -29,10 +36,17 @@ export default function ProceedingPath({
             {focus ? ` · 当前关注：${proceedingName(focus, programs)}` : ' · 尚未指定当前关注'}
           </p>
         </div>
-        <button onClick={onAdd}>
-          <Plus />
-          新增程序
-        </button>
+        <div className="program-path-actions">
+          {compact && programs.length > 0 && (
+            <button aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>
+              {expanded ? '收起办理路径' : '展开办理路径'}
+            </button>
+          )}
+          <button onClick={onAdd}>
+            <Plus />
+            新增程序
+          </button>
+        </div>
       </header>
       {programs.length ? (
         <nav className="program-map" aria-label="办理程序节点">

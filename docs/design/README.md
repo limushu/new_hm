@@ -2,6 +2,12 @@
 
 当前以 Notion 为主要视觉参考：中性深灰、适度标题、可读正文、内容自适应分组和组间留白。当前配色与细节是暂定基线。
 
+1.1.2 程序详情调整：[宽屏侧页](current/case-programs-side-1.1.2.png)、[1024×768 小窗口](current/case-programs-small-1.1.2.png)、[800×600 最小桌面验收](current/case-programs-minimum-1.1.2.png)、[手机宽度布局](current/case-programs-mobile-1.1.2.png)使用浏览器与虚构数据，移动端安装包尚未发布。
+
+详情的阅读顺序是“正在查看的程序 → 当前办理阶段 → 程序资料 → 程序事项 → 案件联系人”。案号、前序、法院、法官各占一行属性。程序导航在详情页默认紧凑，按需展开关系图；不再重复提供程序选择下拉框。阶段帮助和变更历史按需展开，空分区只保留一行提示。
+
+响应式以案件侧页容器宽度为准，而不是只看整个窗口。600px 以内的侧页阶段自动换行，资料始终逐行排列，工具栏允许换行，边距随可用宽度缩减；程序关系图的横向滚动仅发生在图内。选择菜单使用窗口边界定位，不能被侧页裁掉。字号仍遵循[字体规范](typography.md)，不靠整体缩小解决拥挤。
+
 [HM 标志](current/brand-1.1.1.png)、[单列概览](current/case-overview-1.1.1.png)、[阶段重开](current/case-stage-reopen-1.1.1.png)为 1.1.1 当前方向。
 
 1.1.1 正式 Windows 程序的[单列概览](current/case-overview-app-1.1.1.png)及[程序详情](current/case-programs-app-1.1.1.png)使用隔离虚构数据，窗口及任务栏实际图标均验证为 HM。

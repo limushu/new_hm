@@ -343,6 +343,40 @@ try {
     '虚构法官',
   );
   await page.screenshot({ path: join(root, 'case-info.png') });
+  for (const [width, height] of [
+    [800, 600],
+    [1024, 768],
+    [1440, 960],
+  ]) {
+    const resized = spawnSync(
+      'pwsh',
+      [
+        '-NoProfile',
+        '-NonInteractive',
+        '-File',
+        resolve('tests/native/resize-owned-window.ps1'),
+        '-TaskPid',
+        String(pid),
+        '-ExpectedExecutable',
+        executable,
+        '-Width',
+        String(width),
+        '-Height',
+        String(height),
+      ],
+      { encoding: 'utf8', windowsHide: true },
+    );
+    if (resized.status !== 0) throw new Error(resized.stderr);
+    await expect.poll(() => page.evaluate(() => innerWidth)).toBe(width);
+    await expect
+      .poll(() => page.locator('.case-page').evaluate((e) => e.scrollWidth - e.clientWidth))
+      .toBeLessThanOrEqual(1);
+    await page.locator('.case-page').evaluate((e) => (e.scrollTop = 0));
+    await page.screenshot({ path: join(root, `case-info-${width}.png`) });
+    await page.getByLabel('前序程序', { exact: true }).click();
+    await expect(page.getByRole('listbox', { name: '前序程序选项', exact: true })).toBeVisible();
+    await page.getByLabel('前序程序', { exact: true }).press('Escape');
+  }
   await page.getByRole('button', { name: '查看法院关联', exact: true }).click();
   const detail = page.getByRole('dialog', { name: '虚构甲法院新名称', exact: true });
   await expect(detail).toContainText('虚构法官');

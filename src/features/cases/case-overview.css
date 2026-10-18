@@ -325,27 +325,6 @@
   font-weight: 400;
   color: #a8b6c0;
 }
-.program-detail-context {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  margin: 12px 0 20px;
-  font-size: var(--text-sm);
-}
-.program-detail-context > label {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #9c9c9c;
-}
-.program-detail-context > span {
-  color: #9eafa3;
-}
-.program-detail-context > button {
-  color: #a6bac8;
-  padding: 4px 0;
-}
 .case-section h3 > span {
   color: #858585;
   font-size: var(--text-sm);

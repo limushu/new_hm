@@ -48,9 +48,9 @@ test('不同程序独立保存案号，新增程序不改变案件状态', async
   await page.getByRole('button', { name: '新增程序', exact: true }).click();
   await selectOption(page, page.getByRole('combobox', { name: '新增程序类型' }), 'appeal');
   await page.getByRole('button', { name: '新增', exact: true }).click();
-  await expect(page.getByRole('combobox', { name: '查看程序' })).toContainText('二审');
+  await expect(page.locator('.program-detail-heading h2')).toHaveText('二审');
   await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue('');
-  await selectOption(page, page.getByRole('combobox', { name: '查看程序' }), { label: '一审' });
+  await page.getByRole('button', { name: '查看一审程序', exact: true }).click();
   await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue(
     '一审独立案号',
   );

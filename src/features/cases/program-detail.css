@@ -1,0 +1,286 @@
+/* Respond to the actual case pane, including a narrow pane on a wide desktop. */
+.case-page {
+  container: case-panel / inline-size;
+  max-width: 100vw;
+}
+.case-page .case-body {
+  padding: 24px clamp(18px, 5cqw, 48px) 48px;
+  min-width: 0;
+}
+.program-detail {
+  min-width: 0;
+}
+.program-path-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 16px;
+}
+.case-body .proceeding-path.is-compact > header {
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.proceeding-path.is-compact header p,
+.proceeding-path.is-compact .program-edges,
+.proceeding-path.is-compact .program-node-stage,
+.proceeding-path.is-compact .program-node > small,
+.proceeding-path.is-compact .program-map-caption {
+  display: none;
+}
+.case-body .proceeding-path.is-compact .program-map-track {
+  width: auto !important;
+  min-height: 0;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.proceeding-path.is-compact .program-node {
+  width: auto;
+  height: auto;
+  padding: 6px 10px;
+  border-radius: 6px;
+  background: transparent;
+  border-color: transparent;
+}
+.proceeding-path.is-compact .program-node.is-selected {
+  background: #29343b;
+  border-color: #465b69;
+}
+.proceeding-path.is-compact .program-node:hover {
+  background: var(--hover);
+}
+.proceeding-path.is-compact .program-node-heading {
+  font-size: var(--text-sm);
+}
+.program-detail-heading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  padding: 22px 0 16px;
+}
+.program-detail-heading h2 {
+  font-size: var(--text-title-sm);
+  font-weight: 600;
+  margin: 0;
+}
+.program-detail-heading > span {
+  font-size: var(--text-xs);
+  color: #a4b7a9;
+}
+.program-detail-actions {
+  margin-left: auto;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.program-detail-actions button {
+  font-size: var(--text-sm);
+  color: #a7b5bf;
+  padding: 5px 8px;
+  border-radius: 5px;
+}
+.program-detail-actions button:hover {
+  background: var(--hover);
+}
+.program-detail .feature-section,
+.program-details-section {
+  margin: 0;
+  padding: 20px 0;
+  border-top: 1px solid var(--line);
+  min-width: 0;
+}
+.program-detail .feature-section > header,
+.program-details-section > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+.program-details-section h3 {
+  font-size: var(--text-body);
+  font-weight: 500;
+}
+.program-current-stage {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 14px;
+}
+.program-detail .program-current-stage h3 {
+  font-size: var(--text-sm);
+  font-weight: 400;
+  color: var(--muted);
+}
+.program-current-stage strong {
+  color: #d2e1ec;
+  font-size: var(--text-heading);
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.program-detail .stage-chip {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.stage-help {
+  margin-top: 3px;
+  font-size: var(--text-xs);
+  color: var(--quiet);
+}
+.stage-help summary {
+  cursor: pointer;
+  width: fit-content;
+}
+.stage-help[open] summary {
+  color: var(--muted);
+}
+.program-detail .program-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+}
+.program-detail .program-fields > label,
+.program-detail .program-relation-field {
+  display: grid;
+  grid-template-columns: 104px minmax(0, 1fr);
+  align-items: center;
+  gap: 6px 12px;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.program-detail .program-fields input,
+.program-detail .select-trigger {
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 6px;
+  padding: 6px 9px;
+  font-size: var(--text-base);
+}
+.program-detail .program-fields > label > input:hover,
+.program-detail .program-fields > label > input:focus,
+.program-detail .select-trigger:hover,
+.program-detail .select-trigger[aria-expanded='true'] {
+  background: #292929;
+}
+.program-detail .program-contacts {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
+  margin: 0;
+}
+.program-detail .relation-label {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.program-detail .relation-label > svg {
+  display: none;
+}
+.program-detail .picker-input {
+  border-color: transparent;
+  background: transparent;
+}
+.program-detail .picker-input:hover,
+.program-detail .picker-input.is-open {
+  background: #292929;
+}
+.program-detail .picker-input.is-open {
+  border-color: #617d91;
+}
+.program-detail .picker-input > svg {
+  display: none;
+}
+.program-detail .picker-input input {
+  padding: 6px 0;
+  outline: none;
+}
+.program-detail .program-relation-field .field-hint {
+  grid-column: 2;
+  overflow-wrap: anywhere;
+}
+.program-detail .program-relation-hint {
+  padding-left: 125px;
+}
+.program-detail .quiet-empty {
+  padding: 0;
+}
+.program-detail .feature-section > header .feature-toolbar {
+  margin: 0;
+  gap: 4px;
+}
+.program-detail .case-history {
+  margin: 0;
+  padding: 12px 0;
+  border-top: 1px solid var(--line);
+}
+.program-detail .section-description {
+  margin-top: 4px;
+  font-size: var(--text-xs);
+}
+.program-detail .case-event > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+@container case-panel (max-width: 600px) {
+  .case-body .case-properties {
+    gap: 12px;
+  }
+  .case-body .case-category {
+    min-width: 160px;
+    flex: 1;
+  }
+  .case-body .case-tabs {
+    gap: 16px;
+  }
+  .case-tabs > button {
+    white-space: nowrap;
+  }
+  .program-detail .stage-strip {
+    flex-wrap: wrap;
+    gap: 8px;
+    overflow: visible;
+    padding-bottom: 8px;
+  }
+  .program-detail .stage-chip::after {
+    display: none;
+  }
+  .program-detail .program-fields > label,
+  .program-detail .program-relation-field {
+    grid-template-columns: 80px minmax(0, 1fr);
+    column-gap: 8px;
+  }
+  .program-detail .program-relation-hint {
+    padding-left: 96px;
+  }
+  .program-detail .feature-section > header .feature-toolbar {
+    flex-wrap: wrap;
+  }
+  .case-toolbar {
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .section-title,
+  .case-page .feature-section > header {
+    flex-wrap: wrap;
+  }
+}
+@container case-panel (max-width: 400px) {
+  .program-detail-heading {
+    gap: 8px;
+  }
+  .case-tabs .save-state {
+    font-size: var(--text-xs);
+  }
+  .program-detail .feature-section > header .feature-toolbar button {
+    padding-left: 0;
+  }
+}

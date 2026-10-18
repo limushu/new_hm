@@ -1,6 +1,6 @@
 import DateField from '../../components/DateField';
 import Select from '../../components/Select';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Plus, ArrowUp, ArrowDown, CheckCircle2, SkipForward } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
@@ -17,11 +17,13 @@ export default function Stages({
   proceedingId,
   data,
   save,
+  children,
 }: {
   caseId: string;
   proceedingId: string;
   data: Workspace;
   save: SaveAction;
+  children?: ReactNode;
 }) {
   const closed = data.proceedings.find((p) => p.id === proceedingId)?.state === 'completed';
   const history = data.caseEvents.filter(
@@ -49,9 +51,12 @@ export default function Stages({
   }
   return (
     <>
-      <section className="feature-section">
+      <section className="feature-section program-stage-section" aria-label="办理阶段">
         <header>
-          <h3>{closed ? '最后办理阶段' : '程序内阶段'}</h3>
+          <div className="program-current-stage">
+            <h3>{closed ? '最后办理阶段' : '当前办理'}</h3>
+            <strong>{rows.find((s) => s.state === 'current')?.name || '尚未指定阶段'}</strong>
+          </div>
           <button disabled={closed} onClick={() => setManage(true)}>
             管理阶段
           </button>
@@ -84,16 +89,20 @@ export default function Stages({
             </button>
           ))}
         </div>
-        <p className="stage-guidance">
-          顺序仅作办理参考，切换当前阶段不会自动完成其他阶段。点击已完成阶段可重新打开，也可在“管理阶段”中调整状态。
-        </p>
+        <details className="stage-help">
+          <summary>阶段如何调整</summary>
+          <p className="stage-guidance">
+            顺序仅作办理参考，切换当前阶段不会自动完成其他阶段。点击已完成阶段可重新打开，也可在“管理阶段”中调整状态。
+          </p>
+        </details>
         {error && (
           <p role="alert" className="error-message">
             {error}
           </p>
         )}
       </section>
-      <section className="feature-section">
+      {children}
+      <section className="feature-section" aria-label="程序事项">
         <header>
           <h3>程序事项</h3>
           <button
@@ -125,11 +134,7 @@ export default function Stages({
           ))}
         {!data.caseEvents.some(
           (e) => e.proceedingId === proceedingId && e.kind !== 'stage_change',
-        ) && (
-          <p className="quiet-empty">
-            记录本程序的沟通、递交或处理事项。需要提醒的开庭等安排，可加入案件日程。
-          </p>
-        )}
+        ) && <p className="quiet-empty">暂无事项，可记录沟通、递交或办理进展。</p>}
       </section>
       {history.length > 0 && (
         <details className="case-history">

@@ -97,11 +97,9 @@ export default function ProgramContacts({
           <p className="field-hint">原记录：{program.judge} · 请选择对应对象</p>
         )}
       </div>
-      <p className="program-relation-hint">
-        {court
-          ? '优先显示该法院及尚未关联法院的法官。修改法院后，请重新确认承办法官。'
-          : '选择已有法院和法官，即可建立程序关系，无需再次手动关联。'}
-      </p>
+      {court && !judge && (
+        <p className="program-relation-hint">可选择该法院的法官；更换法院后请重新确认。</p>
+      )}
       {error && (
         <p role="alert" className="error-message">
           {error}

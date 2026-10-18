@@ -7,6 +7,7 @@ import ProceedingPath from './ProceedingPath';
 import CaseSchedule from './CaseSchedule';
 import { proceedingName } from '../../domain/proceedings';
 import './case-overview.css';
+import './program-detail.css';
 import ProgramContacts from '../contacts/ProgramContacts';
 import Finance from '../finance/Finance';
 import { CaseContacts } from '../contacts/Contacts';
@@ -261,6 +262,7 @@ export default function CasePage({
           )}
           {saved && (
             <ProceedingPath
+              compact={tab === 'info'}
               item={item}
               programs={programs}
               selected={program?.id ?? null}
@@ -386,27 +388,11 @@ export default function CasePage({
                 </div>
               )}
               {tab === 'info' && (
-                <section className="case-section">
-                  <div className="section-title">
-                    <h3>{program ? proceedingName(program, programs) : '办理程序'} · 程序详情</h3>
-                  </div>
+                <div className="program-detail">
                   {!program && <p className="empty-text">尚未建立办理程序。</p>}
                   {program && (
-                    <div className="program-detail-context">
-                      <label>
-                        查看程序
-                        <Select
-                          aria-label="查看程序"
-                          value={program.id}
-                          onValueChange={setViewedId}
-                        >
-                          {programs.map((p) => (
-                            <option value={p.id} key={p.id}>
-                              {proceedingName(p, programs)}
-                            </option>
-                          ))}
-                        </Select>
-                      </label>
+                    <header className="program-detail-heading">
+                      <h2>{proceedingName(program, programs)}</h2>
                       <span>
                         {program.state === 'completed'
                           ? '已办结'
@@ -414,102 +400,109 @@ export default function CasePage({
                             ? '当前关注 · 办理中'
                             : '办理中'}
                       </span>
-                      {program.state === 'active' && item.currentProceedingId !== program.id && (
-                        <button
-                          disabled={saving}
-                          onClick={() =>
-                            void act(() =>
-                              save('select_proceeding', {
-                                caseId: item.id,
-                                proceedingId: program.id,
-                              }),
-                            )
-                          }
-                        >
-                          设为当前关注
+                      <div className="program-detail-actions">
+                        {program.state === 'active' && item.currentProceedingId !== program.id && (
+                          <button
+                            disabled={saving}
+                            onClick={() =>
+                              void act(() =>
+                                save('select_proceeding', {
+                                  caseId: item.id,
+                                  proceedingId: program.id,
+                                }),
+                              )
+                            }
+                          >
+                            设为当前关注
+                          </button>
+                        )}
+                        <button disabled={saving} onClick={() => setFinishProgram(true)}>
+                          {program.state === 'completed' ? '恢复办理' : '标记办结'}
                         </button>
-                      )}
-                      <button disabled={saving} onClick={() => setFinishProgram(true)}>
-                        {program.state === 'completed' ? '恢复办理' : '标记办结'}
-                      </button>
-                    </div>
+                      </div>
+                    </header>
                   )}
                   {program && (
-                    <div className="program-fields" key={program.id}>
-                      <label>
-                        承接自
-                        <Select
-                          aria-label="前序程序"
-                          value={program.parentId ?? ''}
-                          disabled={saving}
-                          onValueChange={(value) =>
-                            void act(() =>
-                              save('update_proceeding_meta', {
-                                input: {
-                                  id: program.id,
-                                  parentId: value || null,
-                                  state: program.state,
-                                },
-                              }),
-                            )
-                          }
-                        >
-                          <option value="">独立程序 / 未指定</option>
-                          {programs
-                            .filter((p) => p.id !== program.id)
-                            .map((p) => (
-                              <option key={p.id} value={p.id}>
-                                {proceedingName(p, programs)}
-                                {p.caseNumber ? ' · ' + p.caseNumber : ''}
-                              </option>
-                            ))}
-                        </Select>
-                      </label>
-                      {([['caseNumber', '案号']] as const).map(([key, label]) => (
-                        <label key={key}>
-                          {label}
-                          <input
-                            aria-label={label}
-                            defaultValue={program[key]}
-                            maxLength={200}
-                            placeholder="未填写"
-                            disabled={saving}
-                            onBlur={(e) => {
-                              if (e.target.value !== program[key])
+                    <Stages
+                      key={program.id}
+                      caseId={item.id}
+                      proceedingId={program.id}
+                      data={data}
+                      save={save}
+                    >
+                      <section className="program-details-section" aria-label="程序资料">
+                        <header>
+                          <h3>程序资料</h3>
+                        </header>
+                        <div className="program-fields" key={program.id}>
+                          {([['caseNumber', '案号']] as const).map(([key, label]) => (
+                            <label key={key}>
+                              <span>{label}</span>
+                              <input
+                                aria-label={label}
+                                defaultValue={program[key]}
+                                maxLength={200}
+                                placeholder="未填写"
+                                disabled={saving}
+                                onBlur={(e) => {
+                                  if (e.target.value !== program[key])
+                                    void act(() =>
+                                      save('update_proceeding', {
+                                        input: {
+                                          id: program.id,
+                                          stage: program.stage,
+                                          court: program.court,
+                                          judge: program.judge,
+                                          [key]: e.target.value,
+                                        },
+                                      }),
+                                    );
+                                }}
+                              />
+                            </label>
+                          ))}
+                          <label>
+                            <span>承接自</span>
+                            <Select
+                              aria-label="前序程序"
+                              value={program.parentId ?? ''}
+                              disabled={saving}
+                              onValueChange={(value) =>
                                 void act(() =>
-                                  save('update_proceeding', {
+                                  save('update_proceeding_meta', {
                                     input: {
                                       id: program.id,
-                                      stage: program.stage,
-                                      court: program.court,
-                                      judge: program.judge,
-                                      [key]: e.target.value,
+                                      parentId: value || null,
+                                      state: program.state,
                                     },
                                   }),
-                                );
-                            }}
+                                )
+                              }
+                            >
+                              <option value="">独立程序 / 未指定</option>
+                              {programs
+                                .filter((p) => p.id !== program.id)
+                                .map((p) => (
+                                  <option key={p.id} value={p.id}>
+                                    {proceedingName(p, programs)}
+                                    {p.caseNumber ? ' · ' + p.caseNumber : ''}
+                                  </option>
+                                ))}
+                            </Select>
+                          </label>
+                          <ProgramContacts
+                            key={program.id}
+                            program={program}
+                            data={data}
+                            save={save}
+                            onCase={onCase}
                           />
-                        </label>
-                      ))}
-                      <ProgramContacts
-                        key={program.id}
-                        program={program}
-                        data={data}
-                        save={save}
-                        onCase={onCase}
-                      />
-                    </div>
-                  )}
-                </section>
-              )}
-              {tab === 'info' && (
-                <>
-                  {' '}
-                  {program && (
-                    <Stages caseId={item.id} proceedingId={program.id} data={data} save={save} />
+                        </div>
+                      </section>
+                    </Stages>
                   )}
                   <CaseContacts caseId={item.id} data={data} save={save} onCase={onCase} />
-                </>
+                </div>
               )}
               {tab === 'materials' && (
                 <Materials
