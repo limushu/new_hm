@@ -4,7 +4,7 @@ import { Plus, Network, ArrowUpRight } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
 import type { Contact, SaveAction, Workspace } from '../../domain/types';
-import { programLabels } from '../../domain/types';
+import { proceedingName } from '../../domain/proceedings';
 import ContactPicker, { contactLabels } from './ContactPicker';
 import ContactForm from './ContactForm';
 import ContactDetail from './ContactDetail';
@@ -49,7 +49,7 @@ export default function CaseContacts({
     <section className="feature-section case-people">
       <header>
         <div>
-          <h3>当事人与其他联系人</h3>
+          <h3>其他联系人</h3>
         </div>
         <div className="feature-toolbar">
           <button onClick={() => setGraph(true)}>
@@ -82,7 +82,7 @@ export default function CaseContacts({
               <span>{c.name}</span>
               <small>
                 {l.proceedingId
-                  ? programLabels[programs.find((p) => p.id === l.proceedingId)!.kind]
+                  ? proceedingName(programs.find((p) => p.id === l.proceedingId)!, programs)
                   : '案件共用'}
                 {c.phone ? ` · ${c.phone}` : ''}
               </small>
@@ -148,7 +148,7 @@ export default function CaseContacts({
               <option value="">案件共用</option>
               {programs.map((p) => (
                 <option key={p.id} value={p.id}>
-                  {programLabels[p.kind]}
+                  {proceedingName(p, data.proceedings)}
                 </option>
               ))}
             </Select>

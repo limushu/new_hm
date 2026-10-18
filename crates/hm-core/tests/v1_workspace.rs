@@ -105,7 +105,7 @@ fn version_two_stage_migration_keeps_one_current_stage_and_original_database() {
     );
 }
 fn case(store: &mut Store, title: &str) -> Case {
-    store
+    let mut item = store
         .create_case(CreateCase {
             tags: None,
             id: Uuid::new_v4().to_string(),
@@ -113,7 +113,9 @@ fn case(store: &mut Store, title: &str) -> Case {
             case_type: "civil".into(),
             status_id: "not_started".into(),
         })
-        .unwrap()
+        .unwrap();
+    item.current_proceeding_id = Some(store.add_proceeding(&item.id, "first_instance").unwrap());
+    item
 }
 fn target(c: &Case) -> MaterialTarget {
     MaterialTarget {

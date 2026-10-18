@@ -13,7 +13,7 @@ impl Store {
             .ok_or(Error::NotFound)?;
         if state == "completed" {
             return Err(Error::Validation(
-                "程序已办结，请先恢复办理再调整阶段".into(),
+                "流程已办结，请先恢复办理再调整阶段".into(),
             ));
         }
         Ok(())
@@ -36,7 +36,7 @@ impl Store {
             .ok_or(Error::NotFound)?;
         if completed {
             return Err(Error::Validation(
-                "程序已办结，请先恢复办理再调整阶段".into(),
+                "流程已办结，请先恢复办理再调整阶段".into(),
             ));
         }
         let owner: String = self
@@ -262,16 +262,11 @@ fn stage_state_label(state: &str) -> &'static str {
     }
 }
 
-pub(crate) fn seed_default_stages(
+pub(crate) fn seed_stages(
     connection: &rusqlite::Connection,
     proceeding_id: &str,
-    kind: &str,
+    names: &[String],
 ) -> Result<()> {
-    let names = if kind == "enforcement" {
-        vec!["申请执行", "执行立案", "财产调查", "执行措施", "执行结果"]
-    } else {
-        vec!["材料准备", "立案", "举证", "开庭", "裁判"]
-    };
     for (position, name) in names.iter().enumerate() {
         connection.execute(
             "INSERT INTO stages(id,proceeding_id,name,position,state) VALUES(?1,?2,?3,?4,?5)",
@@ -286,7 +281,10 @@ pub(crate) fn seed_default_stages(
     }
     connection.execute(
         "UPDATE proceedings SET stage=?1 WHERE id=?2",
-        params![names[0], proceeding_id],
+        params![
+            names.first().map(String::as_str).unwrap_or(""),
+            proceeding_id
+        ],
     )?;
     Ok(())
 }

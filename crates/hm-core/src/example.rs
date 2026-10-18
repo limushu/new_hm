@@ -13,6 +13,7 @@ impl Store {
             case_type: "civil".into(),
             status_id: "in_progress".into(),
         })?;
+        let workflow = self.add_proceeding(&item.id, "first_instance")?;
         let person = Contact {
             id: Uuid::new_v4().to_string(),
             name: "示例当事人甲".into(),
@@ -22,12 +23,17 @@ impl Store {
             notes: "可安全删除此示例，不包含真实个人信息。".into(),
         };
         self.save_contact(person.clone())?;
-        self.save_contact_link(ContactLink {
-            id: Uuid::new_v4().to_string(),
-            contact_id: person.id,
-            case_id: item.id.clone(),
-            proceeding_id: None,
-            role: "委托人".into(),
+        self.save_case_party(SaveCaseParty {
+            party: CaseParty {
+                id: Uuid::new_v4().to_string(),
+                contact_id: Some(person.id),
+                case_id: item.id.clone(),
+                name: person.name,
+                side: "client".into(),
+                service_type: "代理".into(),
+            },
+            proceeding_id: Some(workflow.clone()),
+            role: "原告".into(),
         })?;
         self.add_task(AddTask {
             case_id: item.id.clone(),
@@ -50,7 +56,7 @@ impl Store {
         self.save_ledger(LedgerEntry {
             id: Uuid::new_v4().to_string(),
             case_id: item.id.clone(),
-            proceeding_id: item.current_proceeding_id.clone(),
+            proceeding_id: Some(workflow),
             kind: "income".into(),
             amount_cents: 200000,
             entry_date: date,

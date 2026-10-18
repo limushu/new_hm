@@ -17,3 +17,5 @@ Windows 同时配置可执行文件资源图标、窗口图标和安装器快捷
 矢量源为 [app-icon.svg](../../public/app-icon.svg)，Windows、macOS 和移动平台图标由 `npx tauri icon public/app-icon.svg --output src-tauri/icons` 生成。品牌仅改变显示名称，应用标识、升级公钥、本地数据位置与旧安装注册标识保持兼容。
 
 安装器沿用 Tauri 模板并固定旧注册表身份，见 [installer.nsi](../../src-tauri/windows/installer.nsi)。模板源码来自 [Tauri 官方仓库](https://github.com/tauri-apps/tauri/blob/dev/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi)，更新 CLI 时应核对上游模板变化。启动项也沿用原身份，避免改名造成重复自启动。
+
+1.2.0 补充 Windows Shell 缓存同步：窗口图标与 Shell 任务栏分组图标是不同来源。启动时在独立 COM 线程中定向通知本安装 exe、branding/hm-mark.ico 及图标资源属于本安装的已存在快捷方式，保留全部快捷方式属性。仅在旧图像资源位置非空时使用其实际位置与索引更新图像项；资源解析返回的 Windows verbatim 路径先恢复普通 UTF-16 Shell 路径。后台状态分别报告窗口和缓存错误，不把 exe 资源检查当成实际任务栏验收。

@@ -2,6 +2,8 @@ import DateField from '../../components/DateField';
 import Dialog from '../../components/Dialog';
 import Select from '../../components/Select';
 import CaseOverview from './CaseOverview';
+import CaseParties from './CaseParties';
+import WorkflowForm from './WorkflowForm';
 import CaseTags from './CaseTags';
 import CaseStatusPicker from './CaseStatusPicker';
 import ProceedingPath from './ProceedingPath';
@@ -27,8 +29,7 @@ import {
   Trash2,
   X,
 } from 'lucide-react';
-import type { CaseFile, CaseInput, ProgramKind, SaveAction, Workspace } from '../../domain/types';
-import { programLabels } from '../../domain/types';
+import type { CaseFile, CaseInput, SaveAction, Workspace } from '../../domain/types';
 
 interface Props {
   item: CaseFile;
@@ -53,20 +54,21 @@ export default function CasePage({
   focusMaterialId,
 }: Props) {
   const [title, setTitle] = useState(item.title);
-  const [caseType, setCaseType] = useState(item.caseType);
+  const caseType = item.caseType;
   const [tags, setTags] = useState(() =>
     data.caseTags.filter((t) => t.caseId === item.id).map((t) => t.tag),
   );
   const [viewedId, setViewedId] = useState(item.currentProceedingId);
   const [parentId, setParentId] = useState<string | null>(null);
   const [finishProgram, setFinishProgram] = useState(false);
+  const [renaming, setRenaming] = useState(false);
+  const [workflowName, setWorkflowName] = useState('');
   const [statusId, setStatusId] = useState(item.statusId);
   const [tab, setTab] = useState(initialTab);
   const [materialScope, setMaterialScope] = useState('shared');
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState('');
-  const [newProgram, setNewProgram] = useState<ProgramKind>('appeal');
   const [programForm, setProgramForm] = useState(false);
   const [taskTitle, setTaskTitle] = useState('');
   const [taskDate, setTaskDate] = useState('');
@@ -267,16 +269,6 @@ export default function CasePage({
               />
             </div>
           </div>
-          {!saved && (
-            <label className="initial-program-option">
-              <input
-                type="checkbox"
-                checked={caseType === 'civil'}
-                onChange={(e) => setCaseType(e.target.checked ? 'civil' : 'other')}
-              />
-              建案时建立一审程序（也可稍后添加）
-            </label>
-          )}
           {saved && (
             <ProceedingPath
               compact={tab === 'info'}
@@ -297,7 +289,7 @@ export default function CasePage({
             {[
               ['overview', '概览'],
               ['materials', '材料'],
-              ['info', '程序详情'],
+              ['info', '流程详情'],
               ['finance', '收支'],
             ].map(([id, label]) => (
               <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
@@ -406,7 +398,7 @@ export default function CasePage({
               )}
               {tab === 'info' && (
                 <div className="program-detail">
-                  {!program && <p className="empty-text">尚未建立办理程序。</p>}
+                  {!program && <p className="empty-text">尚未建立办理流程。</p>}
                   {program && (
                     <header className="program-detail-heading">
                       <h2>{proceedingName(program, programs)}</h2>
@@ -418,6 +410,14 @@ export default function CasePage({
                             : '办理中'}
                       </span>
                       <div className="program-detail-actions">
+                        <button
+                          onClick={() => {
+                            setWorkflowName(program.name);
+                            setRenaming(true);
+                          }}
+                        >
+                          重命名
+                        </button>
                         {program.state === 'active' && item.currentProceedingId !== program.id && (
                           <button
                             disabled={saving}
@@ -447,12 +447,19 @@ export default function CasePage({
                       data={data}
                       save={save}
                     >
-                      <section className="program-details-section" aria-label="程序资料">
+                      <section className="program-details-section" aria-label="流程资料">
                         <header>
-                          <h3>程序资料</h3>
+                          <h3>流程资料</h3>
                         </header>
                         <div className="program-fields" key={program.id}>
-                          {([['caseNumber', '案号']] as const).map(([key, label]) => (
+                          {(
+                            [
+                              [
+                                'caseNumber',
+                                program.category === 'non_litigation' ? '参考编号' : '案号',
+                              ],
+                            ] as const
+                          ).map(([key, label]) => (
                             <label key={key}>
                               <span>{label}</span>
                               <input
@@ -481,7 +488,7 @@ export default function CasePage({
                           <label>
                             <span>承接自</span>
                             <Select
-                              aria-label="前序程序"
+                              aria-label="前序流程"
                               value={program.parentId ?? ''}
                               disabled={saving}
                               onValueChange={(value) =>
@@ -496,7 +503,7 @@ export default function CasePage({
                                 )
                               }
                             >
-                              <option value="">独立程序 / 未指定</option>
+                              <option value="">独立流程 / 未指定</option>
                               {programs
                                 .filter((p) => p.id !== program.id)
                                 .map((p) => (
@@ -507,17 +514,41 @@ export default function CasePage({
                                 ))}
                             </Select>
                           </label>
-                          <ProgramContacts
-                            key={program.id}
-                            program={program}
-                            data={data}
-                            save={save}
-                            onCase={onCase}
-                          />
+                          {program.category === 'non_litigation' ? (
+                            <details className="optional-judicial">
+                              <summary>司法信息（可选）</summary>{' '}
+                              <ProgramContacts
+                                key={program.id}
+                                program={program}
+                                data={data}
+                                save={save}
+                                onCase={onCase}
+                              />
+                            </details>
+                          ) : (
+                            <>
+                              {' '}
+                              <ProgramContacts
+                                key={program.id}
+                                program={program}
+                                data={data}
+                                save={save}
+                                onCase={onCase}
+                              />
+                            </>
+                          )}
                         </div>
                       </section>
                     </Stages>
                   )}
+                  <CaseParties
+                    key={`parties-${program?.id ?? 'no-flow'}`}
+                    caseId={item.id}
+                    program={program}
+                    data={data}
+                    save={save}
+                    onCase={onCase}
+                  />
                   <CaseContacts caseId={item.id} data={data} save={save} onCase={onCase} />
                 </div>
               )}
@@ -539,58 +570,42 @@ export default function CasePage({
         </button>
       </section>
       {programForm && (
-        <Dialog
-          title="新增办理程序"
+        <WorkflowForm
+          caseId={item.id}
+          programs={programs}
+          parent={parentId}
+          data={data}
+          save={save}
           onClose={() => setProgramForm(false)}
-          submitLabel="新增"
-          onSubmit={async () => {
-            const id = await save('add_proceeding', {
-              caseId: item.id,
-              kind: newProgram,
-              parentId,
-            });
+          onCreated={(id) => {
             setViewedId(id);
             setTab('info');
           }}
+        />
+      )}
+      {renaming && program && (
+        <Dialog
+          title="重命名流程"
+          onClose={() => setRenaming(false)}
+          onSubmit={async () => {
+            await save('rename_proceeding', { id: program.id, name: workflowName.trim() });
+          }}
         >
           <label>
-            程序类型
-            <Select
-              aria-label="新增程序类型"
-              value={newProgram}
-              onValueChange={(value) => setNewProgram(value as ProgramKind)}
-            >
-              {Object.entries(programLabels).map(([id, label]) => (
-                <option key={id} value={id}>
-                  {label}
-                </option>
-              ))}
-            </Select>
+            流程名称
+            <input
+              aria-label="新的流程名称"
+              required
+              maxLength={80}
+              value={workflowName}
+              onChange={(e) => setWorkflowName(e.target.value)}
+            />
           </label>
-          <label>
-            承接自
-            <Select
-              aria-label="新程序的前序程序"
-              value={parentId ?? ''}
-              onValueChange={(value) => setParentId(value || null)}
-            >
-              <option value="">独立程序</option>
-              {programs.map((p) => (
-                <option key={p.id} value={p.id}>
-                  {proceedingName(p, programs)}
-                  {p.caseNumber ? ' · ' + p.caseNumber : ''}
-                </option>
-              ))}
-            </Select>
-          </label>
-          <p className="field-hint">
-            新程序有独立的案号、法院、法官、阶段和材料。不会自动办结其他程序或整个案件，可并行推进。
-          </p>
         </Dialog>
       )}
       {finishProgram && program && (
         <Dialog
-          title={program.state === 'active' ? '办结程序' : '恢复程序办理'}
+          title={program.state === 'active' ? '办结流程' : '恢复流程办理'}
           onClose={() => setFinishProgram(false)}
           onSubmit={async () => {
             await save('update_proceeding_meta', {
@@ -604,8 +619,8 @@ export default function CasePage({
         >
           <p className="feature-description">
             {program.state === 'active'
-              ? '将此程序标记为办结，保留阶段与全部资料；如果正在关注此程序，会取消关注。'
-              : '恢复此程序的办理状态。'}
+              ? '将此流程标记为办结，保留阶段与全部资料；如果正在关注此流程，会取消关注。'
+              : '恢复此流程的办理状态。'}
             此操作不改变整个案件的结案状态。
           </p>
         </Dialog>

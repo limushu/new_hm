@@ -2,12 +2,12 @@ import { expect, test, type Page } from '@playwright/test';
 import { selectOption } from './fields';
 
 const node = (page: Page, title: string) =>
-  page.getByRole('button', { name: `查看${title}程序`, exact: true });
+  page.getByRole('button', { name: `查看${title}流程`, exact: true });
 const path = (page: Page) => page.getByRole('region', { name: '案件办理路径' });
 async function add(page: Page, kind: string, parent: string) {
-  await page.getByRole('button', { name: '新增程序', exact: true }).click();
-  await selectOption(page, page.getByLabel('新增程序类型'), kind);
-  await selectOption(page, page.getByLabel('新程序的前序程序'), { label: parent });
+  await page.getByRole('button', { name: '新增流程', exact: true }).click();
+  await selectOption(page, page.getByLabel('流程模板'), kind);
+  await selectOption(page, page.getByLabel('新流程的前序流程'), { label: parent });
   await page.getByRole('button', { name: '新增', exact: true }).click();
   await expect(page.getByRole('dialog')).toHaveCount(0);
 }
@@ -17,7 +17,7 @@ test.beforeEach(async ({ page }) => {
   await page.locator('.case-card').first().click();
 });
 
-test('并行程序、明确前序与关注独立于浏览，办结不关闭整个案件', async ({ page }) => {
+test('并行流程、明确前序与关注独立于浏览，办结不关闭整个案件', async ({ page }) => {
   await add(page, 'appeal', '一审');
   await add(page, 'enforcement', '一审');
   await expect(page.locator('.program-node')).toHaveCount(3);
@@ -33,12 +33,12 @@ test('并行程序、明确前序与关注独立于浏览，办结不关闭整�
   await node(page, '执行').click();
   await expect(page.locator('.stage-current')).toContainText('申请执行');
   await node(page, '一审').click();
-  await selectOption(page, page.getByLabel('前序程序', { exact: true }), { label: '二审' });
+  await selectOption(page, page.getByLabel('前序流程', { exact: true }), { label: '二审' });
   await expect(page.getByRole('alert')).toContainText('循环');
-  await expect(page.getByLabel('前序程序', { exact: true })).toHaveAttribute('data-value', '');
+  await expect(page.getByLabel('前序流程', { exact: true })).toHaveAttribute('data-value', '');
   await page.getByRole('button', { name: '标记办结', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '办结程序' })
+    .getByRole('dialog', { name: '办结流程' })
     .getByRole('button', { name: '保存', exact: true })
     .click();
   await expect(path(page)).toContainText('2 个办理中 · 尚未指定当前关注');
@@ -50,7 +50,7 @@ test('并行程序、明确前序与关注独立于浏览，办结不关闭整�
   );
   await page.getByRole('button', { name: '恢复办理', exact: true }).click();
   await page
-    .getByRole('dialog', { name: '恢复程序办理' })
+    .getByRole('dialog', { name: '恢复流程办理' })
     .getByRole('button', { name: '保存', exact: true })
     .click();
   await expect(path(page)).toContainText('3 个办理中 · 尚未指定当前关注');
@@ -97,16 +97,16 @@ test('日历关联事件在案件出现，案件修改同一日程并同步回�
   await expect(page.locator('.time-event')).toContainText('已调整');
 });
 
-test('程序材料入口直达目标，窄屏节点滚动不撑开页面', async ({ page }) => {
+test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async ({ page }) => {
   await add(page, 'enforcement', '一审');
   await page.getByRole('button', { name: '概览', exact: true }).click();
   await page.locator('.overview-materials button').filter({ hasText: '执行' }).click();
   await expect(page.locator('.materials-scope')).toContainText('执行');
   await page.setViewportSize({ width: 390, height: 844 });
-  await expect(page.getByRole('navigation', { name: '按程序查看材料' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: '按流程查看材料' })).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
   await expect(
-    page.getByRole('navigation', { name: '按程序查看材料' }).getByRole('button', { name: /^执行/ }),
+    page.getByRole('navigation', { name: '按流程查看材料' }).getByRole('button', { name: /^执行/ }),
   ).toBeVisible();
 });
 
@@ -136,7 +136,7 @@ test('收支图按整数分统计、分类筛选不改变总额，超收明确�
 });
 
 test('中间阶段完成后可重开，保留后续完成状态、当前阶段与历史', async ({ page }) => {
-  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await page.getByRole('button', { name: '流程详情', exact: true }).click();
   await page.getByRole('button', { name: '举证', exact: true }).click();
   await expect(page.locator('.stage-done')).toHaveCount(0);
   await page.getByRole('button', { name: '管理阶段', exact: true }).click();
@@ -167,7 +167,7 @@ test('中间阶段完成后可重开，保留后续完成状态、当前阶段�
 });
 
 test('当前阶段可直接删除，取消不变更；删除保留历史且不替用户选择下一步', async ({ page }) => {
-  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await page.getByRole('button', { name: '流程详情', exact: true }).click();
   const initialCount = await page.locator('.stage-chip').count();
   await page.getByRole('button', { name: '举证', exact: true }).click();
   await page.getByRole('button', { name: '举证', exact: true }).click();
@@ -189,7 +189,7 @@ test('当前阶段可直接删除，取消不变更；删除保留历史且不�
   await expect(page.locator('.stage-history-list')).toContainText('设为当前阶段：举证');
   await expect(page.locator('.stage-history-list')).toContainText('删除阶段：举证');
   await page.getByRole('button', { name: '概览', exact: true }).click();
-  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await page.getByRole('button', { name: '流程详情', exact: true }).click();
   await expect(page.getByRole('button', { name: '举证', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '开庭', exact: true }).click();
   await expect(page.locator('.stage-current')).toHaveText('开庭');

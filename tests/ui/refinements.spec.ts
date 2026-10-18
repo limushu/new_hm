@@ -52,7 +52,7 @@ test('从详情编辑、取消和删除时不嵌套表单、不刷新页面，�
 test('有案件和法官关系的法院可直接删除，案件原记录保留', async ({ page }) => {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await page.getByRole('button', { name: '流程详情', exact: true }).click();
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('可删除法院');
   await page.getByRole('button', { name: '新建「可删除法院」', exact: true }).click();
   await page.getByRole('button', { name: '保存', exact: true }).click();
@@ -76,29 +76,28 @@ test('有案件和法官关系的法院可直接删除，案件原记录保留',
   await expect(page.locator('.contact-directory-row')).toHaveCount(1);
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await page.getByRole('button', { name: '流程详情', exact: true }).click();
   await expect(page.locator('.program-contacts')).toContainText('原记录：可删除法院');
 });
-test('拖入回收站支持撤销，键盘也可删除，回收站恢复案件', async ({ page }) => {
+test('卡片删除先确认，可取消和撤销，键盘可操作且回收站可恢复', async ({ page }) => {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   const card = page.locator('.case-card').first();
-  const source = (await card.boundingBox())!;
-  const target = page.getByRole('region', { name: '拖拽删除案件' });
-  const rect = (await target.boundingBox())!;
-  await page.mouse.move(source.x + 40, source.y + 20);
-  await page.mouse.down();
-  await page.mouse.move(source.x + 50, source.y + 25);
-  await page.mouse.move(rect.x + rect.width / 2, rect.y + rect.height / 2, { steps: 10 });
-  await expect(target).toHaveClass(/is-over/);
-  await page.mouse.up();
+  const remove = page.getByRole('button', {
+    name: '删除案件「张某与李某借款纠纷（示例）」',
+    exact: true,
+  });
+  await remove.click();
+  await expect(page.getByRole('region', { name: '案件详情' })).toHaveCount(0);
+  await page.getByRole('button', { name: '取消', exact: true }).click();
+  await expect(card).toBeVisible();
+  await remove.focus();
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: '移入回收站', exact: true }).click();
   await expect(page.locator('.case-card')).toHaveCount(0);
   await page.getByRole('button', { name: '撤销', exact: true }).click();
   await expect(card).toBeVisible();
-  await card.focus();
-  await page.keyboard.press('Space');
-  await page.keyboard.press('ArrowDown');
-  await page.keyboard.press('Enter');
-  await expect(page.locator('.case-card')).toHaveCount(0);
+  await remove.click();
+  await page.getByRole('button', { name: '移入回收站', exact: true }).click();
   await page.getByRole('button', { name: '回收站', exact: true }).click();
   await page.getByRole('button', { name: '恢复', exact: true }).click();
   await page.getByRole('button', { name: '案件', exact: true }).click();

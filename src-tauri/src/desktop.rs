@@ -183,6 +183,23 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     }
+    #[cfg(windows)]
+    {
+        let handle = app.handle().clone();
+        std::thread::spawn(move || {
+            let result = crate::windows_icon::refresh_shell_icons(&handle);
+            if let Ok(mut status) = handle.state::<DesktopState>().background.lock() {
+                match result {
+                    Ok(()) => {
+                        status.insert("iconCacheReady".into(), "true".into());
+                    }
+                    Err(error) => {
+                        status.insert("iconCacheError".into(), error);
+                    }
+                }
+            }
+        });
+    }
     let updater_handle = app.handle().clone();
     std::thread::spawn(move || {
         std::thread::sleep(std::time::Duration::from_secs(15));

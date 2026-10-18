@@ -66,6 +66,10 @@ impl Store {
             }
         }
         self.connection.execute("INSERT INTO contacts(id,name,kind,phone,address,notes) VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(id) DO UPDATE SET name=excluded.name,kind=excluded.kind,phone=excluded.phone,address=excluded.address,notes=excluded.notes",params![input.id,name,input.kind,phone,address,notes])?;
+        self.connection.execute(
+            "UPDATE case_parties SET name=?1 WHERE contact_id=?2",
+            params![name, input.id],
+        )?;
         for (kind, field) in [("court", "court"), ("judge", "judge")] {
             if input.kind == kind {
                 self.connection.execute(&format!("UPDATE proceedings SET {field}=?1 WHERE id IN (SELECT proceeding_id FROM contact_links WHERE contact_id=?2 AND role=?3)"),params![name,input.id,if kind=="court"{"法院"}else{"法官"}])?;
@@ -76,6 +80,14 @@ impl Store {
     pub fn save_contact_link(&self, input: ContactLink) -> Result<()> {
         valid_id(&input.id)?;
         self.validate_proceeding(&input.case_id, input.proceeding_id.as_deref())?;
+        let managed: bool = self.connection.query_row(
+            "SELECT EXISTS(SELECT 1 FROM contact_links WHERE id=?1 AND party_id IS NOT NULL)",
+            [&input.id],
+            |r| r.get(0),
+        )?;
+        if managed {
+            return Err(Error::Validation("请在委托与当事人中编辑此关系".into()));
+        }
         let role = checked_text(&input.role, "身份", 50, true)?;
         let kind: Option<String> = self
             .connection
@@ -87,7 +99,7 @@ impl Store {
             .optional()?;
         let kind = kind.ok_or(Error::NotFound)?;
         if ["court", "judge"].contains(&kind.as_str()) && input.proceeding_id.is_none() {
-            return Err(Error::Validation("法院和法官请关联到具体办理程序".into()));
+            return Err(Error::Validation("法院和法官请关联到具体办理流程".into()));
         }
         if kind == "court" || kind == "judge" {
             let program = input.proceeding_id.as_ref().unwrap();
@@ -149,8 +161,10 @@ impl Store {
                 });
             }
         }
-        self.connection
-            .execute("DELETE FROM contact_links WHERE id=?1", [id])?;
+        let tx = self.connection.unchecked_transaction()?;
+        tx.execute("UPDATE case_parties SET contact_id=NULL WHERE id=(SELECT party_id FROM contact_links WHERE id=?1)", [id])?;
+        tx.execute("DELETE FROM contact_links WHERE id=?1", [id])?;
+        tx.commit()?;
         Ok(())
     }
     pub fn delete_contact(&self, id: &str) -> Result<()> {

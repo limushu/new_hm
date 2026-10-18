@@ -15,6 +15,8 @@ mkdirSync(resolve('.local'), { recursive: true });
 const root = mkdtempSync(join(resolve('.local'), 'native-v1-'));
 const executable = join(root, '案笺.exe');
 copyFileSync(resolve(process.argv[2] ?? 'target/release/hm-app.exe'), executable);
+mkdirSync(join(root, 'branding'));
+copyFileSync(resolve('src-tauri/icons/icon.ico'), join(root, 'branding', 'hm-mark.ico'));
 writeFileSync(join(root, '.portable'), '');
 let pid, browser;
 const logs = [];
@@ -60,6 +62,19 @@ async function start() {
   page.on('pageerror', (error) => logs.push(error.message));
   await page.getByRole('button', { name: '案件', exact: true }).waitFor();
   console.log('Owned native page:', page.url());
+  await expect
+    .poll(
+      async () => {
+        const status = await invoke(page, 'background_status');
+        if (status.iconCacheError) throw new Error(status.iconCacheError);
+        return status.iconCacheReady;
+      },
+      { timeout: 15000 },
+    )
+    .toBe('true');
+  const iconStatus = await invoke(page, 'background_status');
+  if (iconStatus.iconError || iconStatus.iconCacheError)
+    throw new Error(`Native icon setup failed: ${JSON.stringify(iconStatus)}`);
   return page;
 }
 const invoke = (page, name, args = {}) =>
@@ -127,6 +142,15 @@ try {
   await expect(page.locator('.save-state')).toHaveText('已保存');
   let workspace = await invoke(page, 'load_workspace');
   const item = workspace.cases[0];
+  if (workspace.proceedings.length || workspace.stages.length || item.currentProceedingId)
+    throw new Error('New archive created an implicit workflow');
+  const firstId = await invoke(page, 'add_proceeding', {
+    caseId: item.id,
+    kind: 'first_instance',
+    parentId: null,
+  });
+  item.currentProceedingId = firstId;
+  workspace = await invoke(page, 'load_workspace');
   const stateField = page.getByRole('combobox', { name: '案件状态', exact: true });
   await stateField.fill('#原生候选验收');
   await stateField.press('Enter');
@@ -331,6 +355,21 @@ try {
     kind: 'enforcement',
     parentId: first,
   });
+  const party = {
+    id: crypto.randomUUID(),
+    caseId: item.id,
+    contactId: person.id,
+    name: person.name,
+    side: 'client',
+    serviceType: '代理',
+  };
+  for (const [proceedingId, role] of [
+    [first, '原告'],
+    [second, '被上诉人'],
+    [enforcement, '申请执行人'],
+  ]) {
+    await invoke(page, 'save_case_party', { input: { ...party, proceedingId, role } });
+  }
   await invoke(page, 'update_proceeding_meta', {
     input: { id: enforcement, parentId: first, state: 'completed' },
   });
@@ -353,16 +392,16 @@ try {
   await page.locator('.case-card').first().click();
   await expect(page.locator('.program-node')).toHaveCount(3);
   await expect(page.locator('.program-edges path')).toHaveCount(2);
-  await page.getByRole('button', { name: '查看二审程序', exact: true }).click();
+  await page.getByRole('button', { name: '查看二审流程', exact: true }).click();
   workspace = await invoke(page, 'load_workspace');
   if (workspace.cases[0].currentProceedingId !== first)
     throw new Error('Browsing changed persistent focus');
-  await page.getByRole('button', { name: '查看一审程序', exact: true }).click();
+  await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
   const tags = page.getByRole('combobox', { name: '案件标签', exact: true });
   await tags.fill('#合同纠纷');
   await tags.press('Enter');
   await expect(page.getByRole('button', { name: '移除标签合同纠纷' })).toBeVisible();
-  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await page.getByRole('button', { name: '流程详情', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(
     '虚构甲法院新名称',
   );
@@ -400,14 +439,14 @@ try {
       .toBeLessThanOrEqual(1);
     await page.locator('.case-page').evaluate((e) => (e.scrollTop = 0));
     await page.screenshot({ path: join(root, `case-info-${width}.png`) });
-    await page.getByLabel('前序程序', { exact: true }).click();
-    await expect(page.getByRole('listbox', { name: '前序程序选项', exact: true })).toBeVisible();
-    await page.getByLabel('前序程序', { exact: true }).press('Escape');
+    await page.getByLabel('前序流程', { exact: true }).click();
+    await expect(page.getByRole('listbox', { name: '前序流程选项', exact: true })).toBeVisible();
+    await page.getByLabel('前序流程', { exact: true }).press('Escape');
   }
   const deletedCurrent = workspace.stages.find(
     (s) => s.proceedingId === second && s.state === 'current',
   );
-  await page.getByRole('button', { name: '查看二审程序', exact: true }).click();
+  await page.getByRole('button', { name: '查看二审流程', exact: true }).click();
   await page.getByRole('button', { name: deletedCurrent.name, exact: true }).click();
   await page.getByRole('button', { name: '删除此阶段', exact: true }).click();
   const deleteStageDialog = page.getByRole('dialog', { name: '删除阶段', exact: true });
@@ -427,7 +466,7 @@ try {
   )
     throw new Error('Native stage deletion changed unrelated work or lost history');
   await page.screenshot({ path: join(root, 'stage-deletion.png') });
-  await page.getByRole('button', { name: '查看一审程序', exact: true }).click();
+  await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
   await page.getByRole('button', { name: '查看法院关联', exact: true }).click();
   const detail = page.getByRole('dialog', { name: '虚构甲法院新名称', exact: true });
   await expect(detail).toContainText('虚构法官');
@@ -508,6 +547,11 @@ try {
       caseType: 'civil',
       statusId: 'not_started',
     },
+  });
+  deletionCase.currentProceedingId = await invoke(page, 'add_proceeding', {
+    caseId: deletionCase.id,
+    kind: 'first_instance',
+    parentId: null,
   });
   const deletedCourt = {
     id: crypto.randomUUID(),
@@ -615,6 +659,14 @@ try {
     if (update !== null) throw new Error('Unexpected version in published update service');
   }
   await stop(page);
+  const identities = workspace.proceedingPartyRoles.filter((r) => r.partyId === party.id);
+  if (
+    workspace.caseParties.find((p) => p.id === party.id)?.contactId !== person.id ||
+    identities.length !== 3 ||
+    identities.find((r) => r.proceedingId === first)?.role !== '原告' ||
+    identities.find((r) => r.proceedingId === second)?.role !== '被上诉人'
+  )
+    throw new Error('Workflow identities or optional contact lost after restore/restart');
   console.log(
     'PASS: native case/stages, copy import/duplicates/rename, PDF asset worker preview, fake microphone pause/resume + binary recording IPC, contacts, exact ledger cents, backup/restore/recovery, and restart persistence. Isolated data only.',
   );

@@ -29,7 +29,7 @@ export default function ProceedingPath({
       <header>
         <div>
           <h3>
-            办理路径 <span>{programs.length} 个程序</span>
+            办理路径 <span>{programs.length} 个流程</span>
           </h3>
           <p>
             {programs.filter((p) => p.state === 'active').length} 个办理中
@@ -44,12 +44,12 @@ export default function ProceedingPath({
           )}
           <button onClick={onAdd}>
             <Plus />
-            新增程序
+            新增流程
           </button>
         </div>
       </header>
       {programs.length ? (
-        <nav className="program-map" aria-label="办理程序节点">
+        <nav className="program-map" aria-label="办理流程节点">
           <div
             className={`program-map-track ${programs.some((p) => p.parentId) ? 'has-links' : ''}`}
             style={{ width: programs.length * 178 - 14 }}
@@ -74,7 +74,7 @@ export default function ProceedingPath({
               <button
                 key={p.id}
                 className={`program-node ${selected === p.id ? 'is-selected' : ''} ${item.currentProceedingId === p.id ? 'is-focus' : ''}`}
-                aria-label={`查看${proceedingName(p, programs)}程序`}
+                aria-label={`查看${proceedingName(p, programs)}流程`}
                 aria-pressed={selected === p.id}
                 onClick={() => onSelect(p.id)}
               >
@@ -99,7 +99,7 @@ export default function ProceedingPath({
           </div>
         </nav>
       ) : (
-        <p className="quiet-empty">暂无办理程序</p>
+        <p className="quiet-empty">暂无办理流程</p>
       )}
     </section>
   );

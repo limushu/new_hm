@@ -105,9 +105,9 @@ export default function Stages({
         )}
       </section>
       {children}
-      <section className="feature-section" aria-label="程序事项">
+      <section className="feature-section" aria-label="流程事项">
         <header>
-          <h3>程序事项</h3>
+          <h3>流程事项</h3>
           <button
             onClick={() =>
               setEvent({
@@ -137,7 +137,7 @@ export default function Stages({
           ))}
         {!data.caseEvents.some(
           (e) => e.proceedingId === proceedingId && e.kind !== 'stage_change',
-        ) && <p className="quiet-empty">暂无程序事项</p>}
+        ) && <p className="quiet-empty">暂无流程事项</p>}
       </section>
       {history.length > 0 && (
         <details className="case-history">

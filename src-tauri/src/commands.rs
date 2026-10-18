@@ -2,6 +2,42 @@ use crate::{access, AppState};
 use hm_core::*;
 use tauri::State;
 #[tauri::command(async)]
+pub fn save_workflow_template(
+    state: State<'_, AppState>,
+    input: WorkflowTemplate,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.save_workflow_template(input))
+}
+#[tauri::command(async)]
+pub fn delete_workflow_template(
+    state: State<'_, AppState>,
+    id: String,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.delete_workflow_template(&id))
+}
+#[tauri::command(async)]
+pub fn rename_proceeding(
+    state: State<'_, AppState>,
+    id: String,
+    name: String,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.rename_proceeding(&id, &name))
+}
+#[tauri::command(async)]
+pub fn save_case_party(
+    state: State<'_, AppState>,
+    input: SaveCaseParty,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.save_case_party(input))
+}
+#[tauri::command(async)]
+pub fn delete_case_party(
+    state: State<'_, AppState>,
+    id: String,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.delete_case_party(&id))
+}
+#[tauri::command(async)]
 pub fn update_proceeding_meta(
     state: State<'_, AppState>,
     input: ProceedingMeta,

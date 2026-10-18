@@ -1,0 +1,142 @@
+.case-parties {
+  min-width: 0;
+}
+.party-scope {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin: -4px 0 12px;
+}
+.party-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--line);
+}
+.party-content {
+  flex: 1;
+  min-width: 0;
+}
+.party-side {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: var(--text-xs);
+  background: #323232;
+  color: var(--text);
+}
+.party-side.client {
+  background: #283e36;
+}
+.party-name {
+  font-weight: var(--weight-strong);
+  margin: 7px 0 4px;
+  overflow-wrap: anywhere;
+}
+.party-name button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  color: var(--text);
+  text-align: left;
+}
+.party-name svg,
+.party-link-action svg {
+  width: 14px;
+  height: 14px;
+}
+.party-identity {
+  font-size: var(--text-sm);
+  color: var(--text);
+}
+.case-parties .is-empty {
+  color: var(--quiet);
+  font-weight: 400;
+}
+.party-actions {
+  display: flex;
+  gap: 4px;
+}
+.party-actions button {
+  width: 28px;
+  height: 28px;
+}
+.party-link-action {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-sm);
+}
+.party-link-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.party-link-picker > button {
+  text-align: left;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.suggest-input {
+  position: relative;
+  min-width: 0;
+}
+.suggest-input > input {
+  width: 100%;
+}
+.workflow-template-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.workflow-template-actions button {
+  padding: 4px 0;
+  font-size: var(--text-sm);
+}
+.workflow-template-actions svg {
+  width: 14px;
+  height: 14px;
+}
+.optional-judicial {
+  padding: 8px 0;
+}
+.optional-judicial summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  margin-bottom: 8px;
+}
+.workflow-template-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--line);
+}
+.workflow-template-row > span {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.workflow-template-row small {
+  display: block;
+  color: var(--muted);
+  margin-top: 4px;
+}
+.workflow-template-row .icon-button {
+  width: 28px;
+  height: 28px;
+}
+.workflow-template-editor textarea {
+  min-height: 140px;
+}
+@container case-panel (max-width:480px) {
+  .party-row {
+    align-items: flex-start;
+    gap: 6px;
+  }
+  .party-actions {
+    flex-direction: column;
+  }
+}

@@ -39,18 +39,21 @@ test('侧页建案、待办、工作记录与可恢复删除', async ({ page }) 
   await expect(page.locator('.work-record')).toContainText('已与当事人核对现有证据。');
 });
 
-test('不同程序独立保存案号，新增程序不改变案件状态', async ({ page }) => {
-  await createCase(page, '程序隔离测试');
-  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+test('不同流程独立保存案号，新增流程不改变案件状态', async ({ page }) => {
+  await createCase(page, '流程隔离测试');
+  await expect(page.locator('.program-node')).toHaveCount(0);
+  await page.getByRole('button', { name: '新增流程', exact: true }).click();
+  await page.getByRole('button', { name: '新增', exact: true }).click();
+  await page.getByRole('button', { name: '流程详情', exact: true }).click();
   await page.getByRole('textbox', { name: '案号', exact: true }).fill('一审独立案号');
   await page.getByRole('textbox', { name: '案号', exact: true }).press('Tab');
   await expect(page.locator('.save-state')).toHaveText('已保存');
-  await page.getByRole('button', { name: '新增程序', exact: true }).click();
-  await selectOption(page, page.getByRole('combobox', { name: '新增程序类型' }), 'appeal');
+  await page.getByRole('button', { name: '新增流程', exact: true }).click();
+  await selectOption(page, page.getByRole('combobox', { name: '流程模板' }), 'appeal');
   await page.getByRole('button', { name: '新增', exact: true }).click();
   await expect(page.locator('.program-detail-heading h2')).toHaveText('二审');
   await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue('');
-  await page.getByRole('button', { name: '查看一审程序', exact: true }).click();
+  await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
   await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue(
     '一审独立案号',
   );

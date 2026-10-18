@@ -14,7 +14,7 @@ async function addContact(page: Page, name: string, kind: string, court?: string
 async function openInfo(page: Page) {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '程序详情', exact: true }).click();
+  await page.getByRole('button', { name: '流程详情', exact: true }).click();
 }
 test.beforeEach(async ({ page }) => {
   await page.goto('/?preview=1');
@@ -74,12 +74,13 @@ test('法院法官搜索复用、筛选与反向关联，无需重复建档或�
   await expect(dialog.getByRole('button', { name: '查看示例甲法院', exact: true })).toBeVisible();
   await dialog.getByRole('button', { name: '放大关系图', exact: true }).click();
   await dialog.getByRole('button', { name: '关闭', exact: true }).last().click();
-  await page.getByRole('button', { name: '新增程序', exact: true }).click();
+  await page.getByRole('button', { name: '新增流程', exact: true }).click();
+  await selectOption(page, page.getByLabel('流程模板', { exact: true }), 'appeal');
   await page.getByRole('button', { name: '新增', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue('');
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('乙法院');
   await page.getByRole('option', { name: /示例乙法院/ }).click();
-  await page.getByRole('button', { name: '查看一审程序', exact: true }).click();
+  await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(
     '示例甲法院',
   );
@@ -90,7 +91,7 @@ test('法院法官搜索复用、筛选与反向关联，无需重复建档或�
   await page.getByRole('button', { name: '联系对象', exact: true }).click();
   await expect(page.locator('.contact-directory-row')).toHaveCount(4);
 });
-test('程序内新建对象立即关联，已有名称联想支持键盘，手机详情不溢出', async ({ page }) => {
+test('流程内新建对象立即关联，已有名称联想支持键盘，手机详情不溢出', async ({ page }) => {
   await openInfo(page);
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('虚构新法院');
   await page.getByRole('button', { name: '新建「虚构新法院」', exact: true }).click();

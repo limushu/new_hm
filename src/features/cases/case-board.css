@@ -133,6 +133,32 @@
   display: grid;
   gap: 8px;
 }
+.case-card-shell {
+  position: relative;
+}
+.case-card-shell .case-card-title {
+  padding-right: 25px;
+}
+.card-delete-button {
+  position: absolute;
+  right: 7px;
+  top: 9px;
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 5px;
+  color: var(--muted);
+}
+.card-delete-button svg {
+  width: 14px;
+  height: 14px;
+}
+.card-delete-button:hover,
+.card-delete-button:focus-visible {
+  background: #53332f;
+  color: #e1aaa5;
+}
 .case-card {
   border: 1px solid var(--card-border, #333333);
   background: var(--card-bg, #202020);
@@ -254,30 +280,6 @@
   gap: 18px;
   flex-wrap: wrap;
   margin-top: 24px;
-}
-.case-trash-target {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  border: 1px dashed #3c3c3c;
-  border-radius: 8px;
-  padding: 11px 15px;
-  font-size: var(--text-sm);
-  color: #919191;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-}
-.case-trash-target.drag-ready {
-  border-color: #8c625f;
-  color: #c7a19d;
-  background: #2c2423;
-}
-.case-trash-target.is-over {
-  border-style: solid;
-  border-color: #c4857f;
-  color: #edc6c0;
-  background: #49302d;
 }
 .case-trash-notice {
   display: flex;

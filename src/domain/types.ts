@@ -1,5 +1,24 @@
 export type CaseType = 'civil' | 'other';
-export type ProgramKind = 'first_instance' | 'appeal' | 'retrial' | 'enforcement';
+export type ProgramKind = string;
+export interface WorkflowTemplate {
+  id: string;
+  name: string;
+  category: 'litigation' | 'non_litigation';
+  stages: string[];
+}
+export interface CaseParty {
+  id: string;
+  caseId: string;
+  contactId: string | null;
+  name: string;
+  side: 'client' | 'opponent' | 'other';
+  serviceType: string;
+}
+export interface ProceedingPartyRole {
+  partyId: string;
+  proceedingId: string;
+  role: string;
+}
 export interface CaseStatus {
   id: string;
   name: string;
@@ -22,6 +41,8 @@ export interface Proceeding {
   id: string;
   caseId: string;
   kind: ProgramKind;
+  name: string;
+  category: WorkflowTemplate['category'];
   stage: string;
   caseNumber: string;
   court: string;
@@ -41,6 +62,9 @@ export interface WorkRecord {
   createdAt: string;
 }
 export interface Workspace {
+  workflowTemplates: WorkflowTemplate[];
+  caseParties: CaseParty[];
+  proceedingPartyRoles: ProceedingPartyRole[];
   tagCatalog: string[];
   caseTags: { caseId: string; tag: string }[];
   statuses: CaseStatus[];
@@ -100,9 +124,17 @@ export interface Commands {
   update_case: { args: { input: CaseInput }; result: null };
   set_case_status: { args: { id: string; statusId: string }; result: null };
   add_proceeding: {
-    args: { caseId: string; kind: ProgramKind; parentId?: string | null };
+    args: { caseId: string; kind: ProgramKind; parentId?: string | null; name?: string };
     result: string;
   };
+  save_workflow_template: { args: { input: WorkflowTemplate }; result: null };
+  delete_workflow_template: { args: { id: string }; result: null };
+  rename_proceeding: { args: { id: string; name: string }; result: null };
+  save_case_party: {
+    args: { input: CaseParty & { proceedingId: string | null; role: string } };
+    result: null;
+  };
+  delete_case_party: { args: { id: string }; result: null };
   update_proceeding_meta: {
     args: { input: { id: string; parentId: string | null; state: 'active' | 'completed' } };
     result: null;
@@ -125,6 +157,9 @@ export const programLabels: Record<ProgramKind, string> = {
   enforcement: '执行',
 };
 export const emptyWorkspace: Workspace = {
+  workflowTemplates: [],
+  caseParties: [],
+  proceedingPartyRoles: [],
   tagCatalog: [],
   caseTags: [],
   statuses: [],

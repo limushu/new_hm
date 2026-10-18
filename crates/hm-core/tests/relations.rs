@@ -11,14 +11,17 @@ fn person(name: &str, kind: &str) -> Contact {
     }
 }
 fn case(s: &mut Store) -> Case {
-    s.create_case(CreateCase {
-        tags: None,
-        id: Uuid::new_v4().to_string(),
-        title: "关系验收（虚构）".into(),
-        case_type: "civil".into(),
-        status_id: "in_progress".into(),
-    })
-    .unwrap()
+    let mut item = s
+        .create_case(CreateCase {
+            tags: None,
+            id: Uuid::new_v4().to_string(),
+            title: "关系验收（虚构）".into(),
+            case_type: "civil".into(),
+            status_id: "in_progress".into(),
+        })
+        .unwrap();
+    item.current_proceeding_id = Some(s.add_proceeding(&item.id, "first_instance").unwrap());
+    item
 }
 #[test]
 fn program_selection_reuses_objects_and_keeps_proceedings_and_history_separate() {
@@ -294,8 +297,25 @@ fn version_three_complete_backup_restores_and_migrates_with_materials() {
     let b = s.create_backup(&dir.path().join("backups"), false).unwrap();
     let root = std::path::Path::new(&b.directory);
     let db = rusqlite::Connection::open(root.join("workspace.sqlite3")).unwrap();
-    db.execute_batch("DROP TABLE case_tags; DROP TABLE tag_catalog; ALTER TABLE proceedings DROP COLUMN parent_id; ALTER TABLE proceedings DROP COLUMN state; ALTER TABLE proceedings DROP COLUMN completed_at; ALTER TABLE case_events DROP COLUMN kind; DROP TABLE contact_relations; PRAGMA user_version=3;")
+    drop(db);
+    let legacy = root.join("legacy.sqlite3");
+    let db = rusqlite::Connection::open(&legacy).unwrap();
+    db.execute_batch(include_str!("../migrations/001_initial.sql"))
         .unwrap();
+    db.execute_batch(include_str!("../migrations/002_calendar_events.sql"))
+        .unwrap();
+    db.execute_batch(include_str!("../migrations/003_v1_workspace.sql"))
+        .unwrap();
+    db.execute(
+        "ATTACH DATABASE ?1 AS recent",
+        [root.join("workspace.sqlite3").to_str().unwrap()],
+    )
+    .unwrap();
+    db.execute_batch("PRAGMA foreign_keys=OFF; INSERT INTO cases SELECT * FROM recent.cases; INSERT INTO proceedings(id,case_id,kind,stage,case_number,court,judge,created_at) SELECT id,case_id,kind,stage,case_number,court,judge,created_at FROM recent.proceedings; INSERT INTO materials SELECT * FROM recent.materials; DETACH DATABASE recent;").unwrap();
+    drop(db);
+    std::fs::remove_file(root.join("workspace.sqlite3")).unwrap();
+    std::fs::rename(&legacy, root.join("workspace.sqlite3")).unwrap();
+    let db = rusqlite::Connection::open(root.join("workspace.sqlite3")).unwrap();
     drop(db);
     let mut manifest: serde_json::Value =
         serde_json::from_slice(&std::fs::read(root.join("manifest.json")).unwrap()).unwrap();

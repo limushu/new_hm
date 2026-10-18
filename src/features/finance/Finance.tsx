@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Plus } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import type { CaseDetail, LedgerEntry, SaveAction, Workspace } from '../../domain/types';
-import { programLabels } from '../../domain/types';
+import { proceedingName } from '../../domain/proceedings';
 import { dateKey } from '../../domain/calendar';
 import { command } from '../../services/repository';
 import { useAction } from '../../components/useAction';
@@ -139,7 +139,7 @@ export default function Finance({
                   ? ` · ${row.reimbursement === 'pending' ? '待报销' : '已报销'}`
                   : ''}
                 {row.proceedingId
-                  ? ` · ${programLabels[data.proceedings.find((p) => p.id === row.proceedingId)!.kind]}`
+                  ? ` · ${proceedingName(data.proceedings.find((p) => p.id === row.proceedingId)!, data.proceedings)}`
                   : ''}
               </small>
             </button>
@@ -301,7 +301,7 @@ function EntryForm({
             .filter((p) => p.caseId === input.caseId)
             .map((p) => (
               <option key={p.id} value={p.id}>
-                {programLabels[p.kind]}
+                {proceedingName(p, data.proceedings)}
               </option>
             ))}
         </Select>

@@ -26,6 +26,8 @@ pub struct Proceeding {
     pub id: String,
     pub case_id: String,
     pub kind: String,
+    pub name: String,
+    pub category: String,
     pub stage: String,
     pub case_number: String,
     pub court: String,
@@ -69,6 +71,9 @@ pub struct WorkRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Workspace {
+    pub workflow_templates: Vec<WorkflowTemplate>,
+    pub case_parties: Vec<CaseParty>,
+    pub proceeding_party_roles: Vec<ProceedingPartyRole>,
     pub tag_catalog: Vec<String>,
     pub case_tags: Vec<CaseTag>,
     pub statuses: Vec<CaseStatus>,
@@ -86,6 +91,41 @@ pub struct Workspace {
     pub stages: Vec<Stage>,
     pub case_events: Vec<CaseEvent>,
     pub deleted_records: Vec<WorkRecord>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkflowTemplate {
+    pub id: String,
+    pub name: String,
+    pub category: String,
+    pub stages: Vec<String>,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CaseParty {
+    pub id: String,
+    pub case_id: String,
+    pub contact_id: Option<String>,
+    pub name: String,
+    pub side: String,
+    pub service_type: String,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ProceedingPartyRole {
+    pub party_id: String,
+    pub proceeding_id: String,
+    pub role: String,
+}
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaveCaseParty {
+    #[serde(flatten)]
+    pub party: CaseParty,
+    pub proceeding_id: Option<String>,
+    #[serde(default)]
+    pub role: String,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

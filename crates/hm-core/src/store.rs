@@ -26,12 +26,6 @@ fn case_type(value: &str) -> Result<()> {
     }
     Ok(())
 }
-fn kind(value: &str) -> Result<()> {
-    if !["first_instance", "appeal", "retrial", "enforcement"].contains(&value) {
-        return Err(Error::Validation("办理程序类型无效".into()));
-    }
-    Ok(())
-}
 fn map_case(r: &rusqlite::Row<'_>) -> rusqlite::Result<Case> {
     Ok(Case {
         id: r.get(0)?,
@@ -57,13 +51,13 @@ impl Store {
         let mut connection = Connection::open(path)?;
         crate::backup::recover_on_open(&mut connection, directory)?;
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 0 && version < 5 {
+        if version > 0 && version < 6 {
             let safety = directory.join("migration-backups");
             std::fs::create_dir_all(&safety)?;
             connection.backup(
                 "main",
                 safety.join(format!(
-                    "before-v5-from-v{version}-{}.sqlite3",
+                    "before-v6-from-v{version}-{}.sqlite3",
                     Uuid::new_v4()
                 )),
                 None,
@@ -89,28 +83,47 @@ impl Store {
     }
     pub(crate) fn migrate(connection: &mut Connection) -> Result<()> {
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 5 {
+        if version > 6 {
             return Err(Error::Validation(
                 "数据库来自较新版本，请使用新版软件打开".into(),
             ));
         }
-        if version < 5 {
-            let tx = connection.transaction()?;
-            if version == 0 {
-                tx.execute_batch(include_str!("../migrations/001_initial.sql"))?;
-            }
-            if version < 2 {
-                tx.execute_batch(include_str!("../migrations/002_calendar_events.sql"))?;
-            }
-            if version < 3 {
-                tx.execute_batch(include_str!("../migrations/003_v1_workspace.sql"))?;
-            }
-            if version < 4 {
-                tx.execute_batch(include_str!("../migrations/004_contact_relations.sql"))?;
-                crate::relations::backfill(&tx)?;
-            }
-            tx.execute_batch(include_str!("../migrations/005_case_overview.sql"))?;
-            tx.commit()?;
+        if version < 6 {
+            // SQLite cannot remove the legacy kind CHECK in place. Disable FK
+            // enforcement before the atomic rebuild, validate before committing,
+            // and restore enforcement on success and failure alike.
+            connection.execute_batch("PRAGMA foreign_keys=OFF;")?;
+            let result = (|| -> Result<()> {
+                let tx = connection.transaction()?;
+                if version == 0 {
+                    tx.execute_batch(include_str!("../migrations/001_initial.sql"))?;
+                }
+                if version < 2 {
+                    tx.execute_batch(include_str!("../migrations/002_calendar_events.sql"))?;
+                }
+                if version < 3 {
+                    tx.execute_batch(include_str!("../migrations/003_v1_workspace.sql"))?;
+                }
+                if version < 4 {
+                    tx.execute_batch(include_str!("../migrations/004_contact_relations.sql"))?;
+                    crate::relations::backfill(&tx)?;
+                }
+                if version < 5 {
+                    tx.execute_batch(include_str!("../migrations/005_case_overview.sql"))?;
+                }
+                tx.execute_batch(include_str!(
+                    "../migrations/006_workflows_and_representation.sql"
+                ))?;
+                if tx.prepare("PRAGMA foreign_key_check")?.exists([])? {
+                    return Err(Error::Validation(
+                        "升级关系校验未通过，已保留原数据库".into(),
+                    ));
+                }
+                tx.commit()?;
+                Ok(())
+            })();
+            connection.execute_batch("PRAGMA foreign_keys=ON;")?;
+            result?;
         }
         Ok(())
     }
@@ -149,7 +162,7 @@ impl Store {
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
         let cases=self.connection.prepare("SELECT id,title,case_type,status_id,current_proceeding_id,created_at,updated_at,deleted_at FROM cases ORDER BY created_at DESC,id")?.query_map([],map_case)?.collect::<rusqlite::Result<Vec<_>>>()?;
-        let proceedings=self.connection.prepare("SELECT id,case_id,kind,stage,case_number,court,judge,parent_id,state,completed_at FROM proceedings ORDER BY created_at,id")?.query_map([],|r|Ok(Proceeding{id:r.get(0)?,case_id:r.get(1)?,kind:r.get(2)?,stage:r.get(3)?,case_number:r.get(4)?,court:r.get(5)?,judge:r.get(6)?,parent_id:r.get(7)?,state:r.get(8)?,completed_at:r.get(9)?}))?.collect::<rusqlite::Result<Vec<_>>>()?;
+        let proceedings=self.connection.prepare("SELECT id,case_id,kind,stage,case_number,court,judge,parent_id,state,completed_at,name,category FROM proceedings ORDER BY created_at,id")?.query_map([],|r|Ok(Proceeding{id:r.get(0)?,case_id:r.get(1)?,kind:r.get(2)?,stage:r.get(3)?,case_number:r.get(4)?,court:r.get(5)?,judge:r.get(6)?,parent_id:r.get(7)?,state:r.get(8)?,completed_at:r.get(9)?,name:r.get(10)?,category:r.get(11)?}))?.collect::<rusqlite::Result<Vec<_>>>()?;
         let tasks = self
             .connection
             .prepare(
@@ -180,6 +193,9 @@ impl Store {
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
         Ok(Workspace {
+            workflow_templates: self.workflow_templates()?,
+            case_parties: self.case_parties()?,
+            proceeding_party_roles: self.proceeding_party_roles()?,
             tag_catalog: self
                 .connection
                 .prepare("SELECT name FROM tag_catalog ORDER BY name")?
@@ -224,18 +240,6 @@ impl Store {
             "INSERT INTO cases(id,title,case_type,status_id) VALUES(?1,?2,?3,?4)",
             params![input.id, title, input.case_type, input.status_id],
         )?;
-        if input.case_type == "civil" {
-            let id = Uuid::new_v4().to_string();
-            tx.execute(
-                "INSERT INTO proceedings(id,case_id,kind) VALUES(?1,?2,'first_instance')",
-                params![id, input.id],
-            )?;
-            tx.execute(
-                "UPDATE cases SET current_proceeding_id=?1 WHERE id=?2",
-                params![id, input.id],
-            )?;
-            crate::stages::seed_default_stages(&tx, &id, "first_instance")?;
-        }
         crate::case_overview::write_tags(&tx, &input.id, &tags)?;
         tx.commit()?;
         Ok(self.connection.query_row("SELECT id,title,case_type,status_id,current_proceeding_id,created_at,updated_at,deleted_at FROM cases WHERE id=?1",[input.id],map_case)?)
@@ -278,22 +282,36 @@ impl Store {
         program_kind: &str,
         parent_id: Option<&str>,
     ) -> Result<String> {
+        self.add_named_proceeding(case_id, program_kind, parent_id, None)
+    }
+    pub fn add_named_proceeding(
+        &mut self,
+        case_id: &str,
+        program_kind: &str,
+        parent_id: Option<&str>,
+        name: Option<&str>,
+    ) -> Result<String> {
         self.active_case(case_id)?;
-        kind(program_kind)?;
+        let template = self
+            .workflow_templates()?
+            .into_iter()
+            .find(|t| t.id == program_kind)
+            .ok_or_else(|| Error::Validation("请选择有效的办理流程模板".into()))?;
+        let name = text(name.unwrap_or(&template.name), "流程名称", 80)?;
         if let Some(parent) = parent_id {
             self.validate_proceeding(case_id, Some(parent))?;
         }
         let id = Uuid::new_v4().to_string();
         let tx = self.connection.transaction()?;
         tx.execute(
-            "INSERT INTO proceedings(id,case_id,kind,parent_id) VALUES(?1,?2,?3,?4)",
-            params![id, case_id, program_kind, parent_id],
+            "INSERT INTO proceedings(id,case_id,kind,parent_id,name,category) VALUES(?1,?2,?3,?4,?5,?6)",
+            params![id, case_id, program_kind, parent_id, name, template.category],
         )?;
         tx.execute(
             "UPDATE cases SET current_proceeding_id=?1 WHERE id=?2",
             params![id, case_id],
         )?;
-        crate::stages::seed_default_stages(&tx, &id, program_kind)?;
+        crate::stages::seed_stages(&tx, &id, &template.stages)?;
         tx.commit()?;
         Ok(id)
     }

@@ -21,6 +21,8 @@ function fixture(): Workspace {
         id: 'program',
         caseId: 'case',
         kind: 'first_instance',
+        name: '一审',
+        category: 'litigation',
         parentId: null,
         state: 'active',
         completedAt: null,
@@ -42,13 +44,13 @@ function fixture(): Workspace {
   };
 }
 describe('程序与对象关系', () => {
-  it('法院通过办理程序关联案件，法官与法院连通，反向案件去重', () => {
+  it('法院通过办理流程关联案件，法官与法院连通，反向案件去重', () => {
     const data = fixture();
     const graph = workspaceGraph(data);
     expect(graph.edges).toContainEqual({
       source: 'case:case',
       target: 'program:program',
-      label: '办理程序',
+      label: '办理流程',
     });
     expect(graph.edges).toContainEqual({
       source: 'program:program',

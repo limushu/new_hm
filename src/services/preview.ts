@@ -5,7 +5,6 @@ import type {
   CaseFile,
   CaseInput,
   ProceedingInput,
-  ProgramKind,
   CalendarEvent,
 } from '../domain/types';
 import type { MaterialTarget, RecordInput } from '../domain/types';
@@ -22,6 +21,38 @@ export function registerPreviewFiles(files: File[]) {
 const settings: Record<string, string> = { close_to_tray: 'true', notifications: 'true' };
 const now = new Date().toISOString();
 const data: Workspace = {
+  workflowTemplates: [
+    ...[
+      ['first_instance', '一审'],
+      ['appeal', '二审'],
+      ['retrial', '再审'],
+    ].map(([id, name]) => ({
+      id,
+      name,
+      category: 'litigation' as const,
+      stages: ['材料准备', '立案', '举证', '开庭', '裁判'],
+    })),
+    {
+      id: 'enforcement',
+      name: '执行',
+      category: 'litigation',
+      stages: ['申请执行', '执行立案', '财产调查', '执行措施', '执行结果'],
+    },
+    {
+      id: 'contract_review',
+      name: '合同审查',
+      category: 'non_litigation',
+      stages: ['需求确认', '资料审阅', '意见沟通', '成果交付'],
+    },
+    {
+      id: 'advisory',
+      name: '专项顾问',
+      category: 'non_litigation',
+      stages: ['委托确认', '调查分析', '方案沟通', '成果交付'],
+    },
+  ],
+  caseParties: [],
+  proceedingPartyRoles: [],
   statuses: [
     { id: 'not_started', name: '未开始', color: '#96938b' },
     { id: 'in_progress', name: '进行中', color: '#7098b9' },
@@ -44,6 +75,8 @@ const data: Workspace = {
       id: 'demo-program',
       caseId: 'demo',
       kind: 'first_instance',
+      name: '一审',
+      category: 'litigation',
       parentId: null,
       state: 'active',
       completedAt: null,
@@ -70,7 +103,13 @@ const data: Workspace = {
   contactRelations: [],
   ledgerEntries: [],
   caseDetails: [],
-  stages: [],
+  stages: ['材料准备', '立案', '举证', '开庭', '裁判', '庭前准备'].map((name, position) => ({
+    id: crypto.randomUUID(),
+    proceedingId: 'demo-program',
+    name,
+    position,
+    state: name === '庭前准备' ? 'current' : 'pending',
+  })),
   caseEvents: [],
   tagCatalog: [],
   caseTags: [],
@@ -157,6 +196,8 @@ export async function previewCommand<K extends keyof Commands>(
     case 'save_case_event': {
       const input = a.input as Record<string, unknown>;
       if (name === 'save_contact') {
+        for (const p of data.caseParties)
+          if (p.contactId === input.id) p.name = input.name as string;
         const courts = a.courtIds as string[] | undefined;
         if (courts) {
           data.contactRelations = data.contactRelations.filter((r) => r.judgeId !== input.id);
@@ -249,6 +290,7 @@ export async function previewCommand<K extends keyof Commands>(
       break;
     }
     case 'delete_contact':
+      for (const p of data.caseParties) if (p.contactId === a.id) p.contactId = null;
       data.contacts = data.contacts.filter((row) => row.id !== a.id);
       data.contactLinks = data.contactLinks.filter((row) => row.contactId !== a.id);
       data.contactRelations = data.contactRelations.filter(
@@ -256,6 +298,7 @@ export async function previewCommand<K extends keyof Commands>(
       );
       break;
     case 'delete_contact_link':
+      for (const p of data.caseParties) if ('party-' + p.id === a.id) p.contactId = null;
       data.contactLinks = data.contactLinks.filter((row) => row.id !== a.id);
       break;
     case 'delete_ledger':
@@ -402,7 +445,16 @@ export async function previewCommand<K extends keyof Commands>(
       if (a.kind === 'case') {
         if (name === 'trash_item') findCase(id).deletedAt = new Date().toISOString();
         else if (name === 'restore_item') findCase(id).deletedAt = null;
-        else data.cases = data.cases.filter((c) => c.id !== id);
+        else {
+          const parties = new Set(data.caseParties.filter((p) => p.caseId === id).map((p) => p.id));
+          data.caseParties = data.caseParties.filter((p) => p.caseId !== id);
+          data.proceedingPartyRoles = data.proceedingPartyRoles.filter(
+            (r) => !parties.has(r.partyId),
+          );
+          data.proceedings = data.proceedings.filter((p) => p.caseId !== id);
+          data.contactLinks = data.contactLinks.filter((l) => l.caseId !== id);
+          data.cases = data.cases.filter((c) => c.id !== id);
+        }
       } else if (a.kind === 'record') {
         if (name === 'trash_item') {
           const row = data.workRecords.find((r) => r.id === id);
@@ -462,25 +514,6 @@ export async function previewCommand<K extends keyof Commands>(
       data.calendarEvents = data.calendarEvents.filter((event) => event.id !== a.id);
       break;
     case 'load_workspace':
-      for (const program of data.proceedings)
-        if (!data.stages.some((s) => s.proceedingId === program.id)) {
-          const names =
-            program.kind === 'enforcement'
-              ? ['申请执行', '执行立案', '财产调查', '执行措施', '执行结果']
-              : ['材料准备', '立案', '举证', '开庭', '裁判'];
-          const current = program.stage || names[0];
-          if (!names.includes(current)) names.push(current);
-          program.stage = current;
-          names.forEach((name, position) =>
-            data.stages.push({
-              id: crypto.randomUUID(),
-              proceedingId: program.id,
-              name,
-              position,
-              state: name === current ? 'current' : 'pending',
-            }),
-          );
-        }
       result = data;
       break;
     case 'create_case': {
@@ -488,29 +521,15 @@ export async function previewCommand<K extends keyof Commands>(
       if (!input.title.trim()) throw new Error('请输入案件名称');
       let c = data.cases.find((c) => c.id === input.id);
       if (!c) {
-        const id = input.caseType === 'civil' ? crypto.randomUUID() : null;
         c = {
           ...input,
           title: input.title.trim(),
-          currentProceedingId: id,
+          currentProceedingId: null,
           createdAt: now,
           updatedAt: now,
           deletedAt: null,
         };
         data.cases.unshift(c);
-        if (id)
-          data.proceedings.push({
-            id,
-            caseId: c.id,
-            kind: 'first_instance',
-            parentId: null,
-            state: 'active',
-            completedAt: null,
-            stage: '',
-            caseNumber: '',
-            court: '',
-            judge: '',
-          });
       }
       if (input.tags) writeTags(input.id, input.tags);
       result = c;
@@ -531,21 +550,128 @@ export async function previewCommand<K extends keyof Commands>(
       item.updatedAt = new Date().toISOString();
       break;
     }
+    case 'save_workflow_template': {
+      const input = a.input as Commands['save_workflow_template']['args']['input'];
+      const value = {
+        ...input,
+        name: input.name.trim(),
+        stages: input.stages.map((s) => s.trim()),
+      };
+      if (
+        !value.name ||
+        value.name.length > 80 ||
+        value.stages.length > 40 ||
+        value.stages.some((s) => !s || s.length > 80)
+      )
+        throw new Error('模板名称或阶段无效');
+      if (new Set(value.stages.map((s) => s.toLowerCase())).size !== value.stages.length)
+        throw new Error('模板中的阶段名称不能重复');
+      if (
+        data.workflowTemplates.some(
+          (t) => t.id !== value.id && t.name.toLowerCase() === value.name.toLowerCase(),
+        )
+      )
+        throw new Error('已有同名流程模板');
+      const old = data.workflowTemplates.find((t) => t.id === value.id);
+      if (old) Object.assign(old, value);
+      else data.workflowTemplates.push(value);
+      break;
+    }
+    case 'delete_workflow_template':
+      data.workflowTemplates = data.workflowTemplates.filter((t) => t.id !== a.id);
+      break;
+    case 'rename_proceeding': {
+      const p = data.proceedings.find((p) => p.id === a.id)!;
+      const name = (a.name as string).trim();
+      if (!name || name.length > 80) throw new Error('请输入流程名称（最多80字）');
+      p.name = name;
+      break;
+    }
+    case 'save_case_party': {
+      const {
+        proceedingId,
+        role: raw,
+        ...input
+      } = a.input as Commands['save_case_party']['args']['input'];
+      const owner = findCase(input.caseId);
+      if (owner.deletedAt) throw new Error('案件已删除');
+      if (
+        proceedingId &&
+        !data.proceedings.some((p) => p.id === proceedingId && p.caseId === input.caseId)
+      )
+        throw new Error('流程不属于此案件');
+      const contact = data.contacts.find((c) => c.id === input.contactId);
+      if (input.contactId && !contact) throw new Error('联系对象不存在');
+      const value = {
+        ...input,
+        name: contact?.name ?? input.name.trim(),
+        serviceType: input.serviceType.trim(),
+      };
+      const role = raw.trim();
+      if (
+        (!value.name && !role) ||
+        value.name.length > 120 ||
+        role.length > 80 ||
+        value.serviceType.length > 80
+      )
+        throw new Error('请填写名称或当前流程中的身份');
+      if (role && !proceedingId) throw new Error('请为身份选择办理流程');
+      const old = data.caseParties.find((p) => p.id === input.id);
+      if (old && old.caseId !== input.caseId) throw new Error('当事人不属于此案件');
+      if (old) Object.assign(old, value);
+      else data.caseParties.push(value);
+      if (proceedingId) {
+        data.proceedingPartyRoles = data.proceedingPartyRoles.filter(
+          (r) => !(r.partyId === input.id && r.proceedingId === proceedingId),
+        );
+        if (role) data.proceedingPartyRoles.push({ partyId: input.id, proceedingId, role });
+      }
+      data.contactLinks = data.contactLinks.filter((l) => l.id !== 'party-' + input.id);
+      if (value.contactId)
+        data.contactLinks.push({
+          id: 'party-' + input.id,
+          contactId: value.contactId,
+          caseId: value.caseId,
+          proceedingId: null,
+          role: { client: '我方委托人', opponent: '对方当事人', other: '其他参与人' }[value.side],
+        });
+      break;
+    }
+    case 'delete_case_party':
+      data.caseParties = data.caseParties.filter((p) => p.id !== a.id);
+      data.proceedingPartyRoles = data.proceedingPartyRoles.filter((r) => r.partyId !== a.id);
+      data.contactLinks = data.contactLinks.filter((l) => l.id !== 'party-' + a.id);
+      break;
     case 'add_proceeding': {
       const id = crypto.randomUUID();
       const c = findCase(a.caseId as string);
+      const template = data.workflowTemplates.find((t) => t.id === a.kind);
+      if (!template || c.deletedAt) throw new Error('流程模板或案件不存在');
+      if (a.parentId && !data.proceedings.some((p) => p.id === a.parentId && p.caseId === c.id))
+        throw new Error('前序流程必须属于同一案件');
       data.proceedings.push({
         id,
         caseId: c.id,
-        kind: a.kind as ProgramKind,
+        kind: template.id,
+        name: (a.name as string | undefined)?.trim() || template.name,
+        category: template.category,
         parentId: (a.parentId as string | null) ?? null,
         state: 'active',
         completedAt: null,
-        stage: '',
+        stage: template.stages[0] ?? '',
         caseNumber: '',
         court: '',
         judge: '',
       });
+      template.stages.forEach((name, position) =>
+        data.stages.push({
+          id: crypto.randomUUID(),
+          proceedingId: id,
+          name,
+          position,
+          state: position === 0 ? 'current' : 'pending',
+        }),
+      );
       c.currentProceedingId = id;
       result = id;
       break;

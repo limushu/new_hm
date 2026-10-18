@@ -59,9 +59,10 @@ fn add_proceeding(
     case_id: String,
     kind: String,
     parent_id: Option<String>,
+    name: Option<String>,
 ) -> Result<String, String> {
     access(&state, |s| {
-        s.add_proceeding_from(&case_id, &kind, parent_id.as_deref())
+        s.add_named_proceeding(&case_id, &kind, parent_id.as_deref(), name.as_deref())
     })
 }
 #[tauri::command(async)]
@@ -183,6 +184,11 @@ pub fn run() {
             update_case,
             set_case_status,
             add_proceeding,
+            commands::save_workflow_template,
+            commands::delete_workflow_template,
+            commands::rename_proceeding,
+            commands::save_case_party,
+            commands::delete_case_party,
             select_proceeding,
             update_proceeding,
             add_task,

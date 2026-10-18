@@ -4,6 +4,7 @@ import type { CaseFile, Contact, Workspace, SaveAction } from '../../domain/type
 import { currentStage, proceedingName } from '../../domain/proceedings';
 import ContactDetail from '../contacts/ContactDetail';
 import CaseLinks from './CaseLinks';
+import CaseParties from './CaseParties';
 export default function CaseOverview({
   item,
   data,
@@ -35,7 +36,7 @@ export default function CaseOverview({
           <strong className={!focus ? 'is-empty' : undefined}>
             {focus
               ? `${proceedingName(focus, programs)} · ${currentStage(data, focus)}`
-              : '尚未指定关注程序'}
+              : '尚未指定关注流程'}
           </strong>
           {focus && (focus.caseNumber || focus.court || focus.judge) && (
             <p>{[focus.caseNumber, focus.court, focus.judge].filter(Boolean).join(' · ')}</p>
@@ -43,11 +44,19 @@ export default function CaseOverview({
         </div>
         {focus && (
           <button onClick={() => onProgram(focus.id)}>
-            查看当前程序
+            查看当前流程
             <ArrowUpRight />
           </button>
         )}
       </section>
+      <CaseParties
+        key={focus?.id ?? 'no-focus'}
+        caseId={item.id}
+        program={focus}
+        data={data}
+        save={save}
+        onCase={onCase}
+      />
       <CaseLinks caseId={item.id} data={data} save={save} onCase={onCase} />
       <section className="case-section case-people-summary">
         <div className="section-title">

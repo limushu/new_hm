@@ -2,7 +2,7 @@ use hm_core::*;
 use uuid::Uuid;
 
 fn create(store: &mut Store, title: &str) -> Case {
-    store
+    let mut item = store
         .create_case(CreateCase {
             tags: None,
             id: Uuid::new_v4().to_string(),
@@ -10,7 +10,9 @@ fn create(store: &mut Store, title: &str) -> Case {
             case_type: "civil".into(),
             status_id: "not_started".into(),
         })
-        .unwrap()
+        .unwrap();
+    item.current_proceeding_id = Some(store.add_proceeding(&item.id, "first_instance").unwrap());
+    item
 }
 #[test]
 fn reopening_keeps_cases_programs_tasks_and_records() {
@@ -53,7 +55,7 @@ fn retries_are_idempotent_and_invalid_titles_leave_no_records() {
             .unwrap();
     }
     assert_eq!(store.workspace().unwrap().cases.len(), 1);
-    assert_eq!(store.workspace().unwrap().proceedings.len(), 1);
+    assert!(store.workspace().unwrap().proceedings.is_empty());
     assert!(store
         .create_case(CreateCase {
             tags: None,

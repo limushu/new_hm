@@ -3,7 +3,7 @@ import { ArrowLeft, ArrowUpRight, Network, Link2, FileText, Pencil, Trash2 } fro
 import DeleteContact from './DeleteContact';
 import Dialog from '../../components/Dialog';
 import type { Contact, SaveAction, Workspace } from '../../domain/types';
-import { programLabels } from '../../domain/types';
+import { proceedingName } from '../../domain/proceedings';
 import { linkedCases, relatedContacts } from '../../domain/relations';
 import { contactLabels } from './ContactPicker';
 import ContactForm from './ContactForm';
@@ -167,13 +167,29 @@ export default function ContactDetail({
                 <span>
                   {c.title}
                   <small>
-                    {data.contactLinks
-                      .filter((l) => l.caseId === c.id && l.contactId === current.id)
-                      .map(
-                        (l) =>
-                          `${l.proceedingId ? programLabels[data.proceedings.find((p) => p.id === l.proceedingId)!.kind] + ' · ' : ''}${l.role}`,
-                      )
-                      .join(' / ')}
+                    {[
+                      ...new Set([
+                        ...data.contactLinks
+                          .filter((l) => l.caseId === c.id && l.contactId === current.id)
+                          .map(
+                            (l) =>
+                              `${l.proceedingId ? proceedingName(data.proceedings.find((p) => p.id === l.proceedingId)!, data.proceedings) + ' · ' : ''}${l.role}`,
+                          ),
+                        ...data.proceedingPartyRoles
+                          .filter((r) =>
+                            data.caseParties.some(
+                              (p) =>
+                                p.id === r.partyId &&
+                                p.caseId === c.id &&
+                                p.contactId === current.id,
+                            ),
+                          )
+                          .map(
+                            (r) =>
+                              `${proceedingName(data.proceedings.find((p) => p.id === r.proceedingId)!, data.proceedings)} · ${r.role}`,
+                          ),
+                      ]),
+                    ].join(' / ')}
                   </small>
                 </span>
                 <ArrowUpRight />

@@ -1,4 +1,3 @@
-import { proceedingName } from '../../domain/proceedings';
 import Select from '../../components/Select';
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import {
@@ -18,7 +17,7 @@ import { getCurrentWebview } from '@tauri-apps/api/webview';
 import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
 import type { Material, MaterialTarget, SaveAction, Workspace } from '../../domain/types';
-import { programLabels } from '../../domain/types';
+import { proceedingName } from '../../domain/proceedings';
 import { command, desktopRuntime } from '../../services/repository';
 import Recorder from './Recorder';
 import './materials.css';
@@ -232,7 +231,7 @@ export default function Materials({
       }}
     >
       {!recordId && (
-        <nav className="material-scopes" aria-label="按程序查看材料">
+        <nav className="material-scopes" aria-label="按流程查看材料">
           {[
             { id: 'shared', name: '案件共用' },
             ...programs.map((p) => ({ id: p.id, name: proceedingName(p, programs) })),
@@ -273,7 +272,7 @@ export default function Materials({
       </div>
       {!recordId && (
         <p className="field-hint">
-          材料按程序归档；举证、开庭等具体阶段可建立文件夹细分。添加文件会进入当前选中的归档位置。
+          材料按流程归档；举证、开庭等具体阶段可建立文件夹细分。添加文件会进入当前选中的归档位置。
         </p>
       )}
       <div className="feature-toolbar material-toolbar">
@@ -536,7 +535,7 @@ export default function Materials({
                   <option value="shared">案件共用</option>
                   {programs.map((p) => (
                     <option value={p.id} key={p.id}>
-                      {programLabels[p.kind]}
+                      {proceedingName(p, data.proceedings)}
                     </option>
                   ))}
                 </Select>

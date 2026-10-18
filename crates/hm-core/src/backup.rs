@@ -93,7 +93,7 @@ fn inspect(path: &Path) -> Result<(PathBuf, Manifest)> {
     let version: i64 = db.query_row("PRAGMA user_version", [], |r| r.get(0))?;
     let integrity: String = db.query_row("PRAGMA integrity_check", [], |r| r.get(0))?;
     let foreign = db.prepare("PRAGMA foreign_key_check")?.exists([])?;
-    if ![3, 4, 5].contains(&version) || integrity != "ok" || foreign {
+    if ![3, 4, 5, 6].contains(&version) || integrity != "ok" || foreign {
         return Err(Error::Validation("备份数据库版本或完整性检查失败".into()));
     }
     let cases = db.query_row("SELECT count(*) FROM cases", [], |r| r.get::<_, i64>(0))? as usize;

@@ -47,13 +47,11 @@ export function workspaceGraph(data: Workspace) {
     nodes.push({
       id: `program:${p.id}`,
       entityId: p.id,
-      label: { first_instance: '一审', appeal: '二审', retrial: '再审', enforcement: '执行' }[
-        p.kind
-      ],
+      label: p.name,
       kind: 'program',
       meta: p.caseNumber || p.stage,
     });
-    edges.push({ source: `case:${p.caseId}`, target: `program:${p.id}`, label: '办理程序' });
+    edges.push({ source: `case:${p.caseId}`, target: `program:${p.id}`, label: '办理流程' });
   }
   for (const c of data.contacts)
     nodes.push({
@@ -76,6 +74,15 @@ export function workspaceGraph(data: Workspace) {
       target: `contact:${r.judgeId}`,
       label: '法院 · 法官',
     });
+  for (const r of data.proceedingPartyRoles) {
+    const party = data.caseParties.find((p) => p.id === r.partyId);
+    if (party?.contactId && programs.some((p) => p.id === r.proceedingId))
+      edges.push({
+        source: `program:${r.proceedingId}`,
+        target: `contact:${party.contactId}`,
+        label: r.role,
+      });
+  }
   return {
     nodes,
     edges: edges.filter(

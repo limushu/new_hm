@@ -1,14 +1,17 @@
 use hm_core::*;
 use uuid::Uuid;
 fn create(s: &mut Store, tags: Option<Vec<String>>) -> Case {
-    s.create_case(CreateCase {
-        id: Uuid::new_v4().to_string(),
-        title: "案件全貌验收（虚构）".into(),
-        case_type: "civil".into(),
-        status_id: "in_progress".into(),
-        tags,
-    })
-    .unwrap()
+    let mut item = s
+        .create_case(CreateCase {
+            id: Uuid::new_v4().to_string(),
+            title: "案件全貌验收（虚构）".into(),
+            case_type: "civil".into(),
+            status_id: "in_progress".into(),
+            tags,
+        })
+        .unwrap();
+    item.current_proceeding_id = Some(s.add_proceeding(&item.id, "first_instance").unwrap());
+    item
 }
 #[test]
 fn parallel_programs_have_explicit_links_and_focus_without_closing_other_programs() {
