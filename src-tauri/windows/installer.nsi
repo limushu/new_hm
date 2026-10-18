@@ -1,7 +1,7 @@
 ; Tauri NSIS template (Apache-2.0 OR MIT). Vendored 2026-10-18.
 ; Source: https://github.com/tauri-apps/tauri/blob/dev/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi
-; Local changes: stable install/startup identity and owned shortcut migration
-; across the 案笺 display-name change. Other installer behavior follows upstream.
+; Local changes: stable identity, owned shortcut migration and explicit HM icons.
+; Other installer behavior follows upstream.
 Unicode true
 ManifestDPIAware true
 ; Add in `dpiAwareness` `PerMonitorV2` to manifest for Windows 10 1607+ (note this should not affect lower versions since they should be able to ignore this and pick up `dpiAware` `true` set by `ManifestDPIAware true`)
@@ -953,6 +953,36 @@ Function MigrateLegacyShortcuts
   Pop $0
 FunctionEnd
 
+; Preserve arguments, working directory and user metadata on existing shortcuts.
+; Refresh only shortcuts whose target is this installation, including update mode.
+!macro RefreshOwnedShortcutIcon SHORTCUT
+  Push $0
+  Push $1
+  Push $2
+  Push $3
+  !insertmacro IsShortcutTarget "${SHORTCUT}" "$INSTDIR\${MAINBINARYNAME}.exe"
+  Pop $0
+  ${If} $0 = 1
+    !insertmacro ComHlpr_CreateInProcInstance ${CLSID_ShellLink} ${IID_IShellLink} r0 ""
+    ${If} $0 P<> 0
+      ${IUnknown::QueryInterface} $0 '("${IID_IPersistFile}",.r1)'
+      ${If} $1 P<> 0
+        ${IPersistFile::Load} $1 '("${SHORTCUT}", ${STGM_READWRITE})'
+        ${IShellLink::SetIconLocation} $0 '(w "$INSTDIR\branding\hm-mark.ico", i 0)'
+        ${IPersistFile::Save} $1 '("${SHORTCUT}",1)'
+        ${IUnknown::Release} $1 ""
+      ${EndIf}
+      ${IUnknown::Release} $0 ""
+    ${EndIf}
+    ; Notify Explorer about this shortcut only; do not clear the system icon cache.
+    System::Call 'shell32::SHChangeNotify(i 0x2000, i 5, w "${SHORTCUT}", p 0)'
+  ${EndIf}
+  Pop $3
+  Pop $2
+  Pop $1
+  Pop $0
+!macroend
+
 Function CreateOrUpdateStartMenuShortcut
   ; We used to use product name as MAINBINARYNAME
   ; migrate old shortcuts to target the new MAINBINARYNAME
@@ -972,6 +1002,8 @@ Function CreateOrUpdateStartMenuShortcut
     StrCpy $R0 1
   ${EndIf}
 
+  !insertmacro RefreshOwnedShortcutIcon "$SMPROGRAMS\$AppStartMenuFolder\${PRODUCTNAME}.lnk"
+  !insertmacro RefreshOwnedShortcutIcon "$SMPROGRAMS\${PRODUCTNAME}.lnk"
   ${If} $R0 = 1
     Return
   ${EndIf}
@@ -1002,9 +1034,11 @@ Function CreateOrUpdateDesktopShortcut
   Pop $0
   ${If} $0 = 1
     !insertmacro SetShortcutTarget "$DESKTOP\${PRODUCTNAME}.lnk" "$INSTDIR\${MAINBINARYNAME}.exe"
+    !insertmacro RefreshOwnedShortcutIcon "$DESKTOP\${PRODUCTNAME}.lnk"
     Return
   ${EndIf}
 
+  !insertmacro RefreshOwnedShortcutIcon "$DESKTOP\${PRODUCTNAME}.lnk"
   ; Skip creating shortcut if in update mode or no shortcut mode
   ; but always create if migrating from wix
   ${If} $WixMode = 0

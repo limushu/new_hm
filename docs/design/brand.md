@@ -8,6 +8,8 @@ Windows 同时配置可执行文件资源图标、窗口图标和安装器快捷
 
 安装包额外携带 branding/hm-mark.ico，快捷方式明确引用该文件，不再依赖 exe 的默认图标索引，避免沿用旧折页图标的快捷方式缓存。已在运行的旧程序仍使用其加载时的资源，需用户退出旧实例、安装并重新启动后显示新版图标；不会为换图标强制关闭用户正在工作的程序。
 
+在线升级模式通常跳过新建快捷方式，因此安装模板还会仅为目标等于本安装 exe 的已有快捷方式更新 IconLocation，保留启动参数、工作目录及描述；不创建用户主动删除的入口，不改其他安装目录的链接，并只通知 Explorer 更新该链接。[隔离快捷方式测试](../../tests/native/shortcut-icons.ps1)使用临时链接验证这些规则，不安装到用户注册表或桌面。
+
 本项目锁定的 Tauri 2.12 / tao 路径中，set_icon 仅设置 Windows ICON_SMALL。额外通过 [windows_icon.rs](../../src-tauri/src/windows_icon.rs) 在 UI 线程设置 ICON_BIG，持有独立 CopyIcon 副本并在退出时释放，避免任务栏仍显示通用文件图标。原生验收分别读取 exe 资源、窗口小图标和大图标，不只检查侧栏图片。
 
 矢量源为 [app-icon.svg](../../public/app-icon.svg)，Windows、macOS 和移动平台图标由 `npx tauri icon public/app-icon.svg --output src-tauri/icons` 生成。品牌仅改变显示名称，应用标识、升级公钥、本地数据位置与旧安装注册标识保持兼容。
