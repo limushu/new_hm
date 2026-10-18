@@ -263,9 +263,11 @@ fn v5_rebuild_preserves_dependent_records_and_keeps_foreign_keys_enabled() {
     let s = Store::open(&file).unwrap();
     let w = s.workspace().unwrap();
     assert_eq!(w.proceedings.len(), 2);
-    assert_eq!(w.proceedings[0].case_number, "原案号");
-    assert_eq!(w.proceedings[0].name, "一审");
-    assert_eq!(w.proceedings[1].parent_id.as_deref(), Some("old-first"));
+    let first = w.proceedings.iter().find(|p| p.id == "old-first").unwrap();
+    let appeal = w.proceedings.iter().find(|p| p.id == "old-appeal").unwrap();
+    assert_eq!(first.case_number, "原案号");
+    assert_eq!(first.name, "一审");
+    assert_eq!(appeal.parent_id.as_deref(), Some("old-first"));
     assert_eq!(w.materials[0].id, "old-folder");
     assert_eq!(w.ledger_entries[0].id, "old-income");
     assert_eq!(w.case_events[0].id, "old-event");
