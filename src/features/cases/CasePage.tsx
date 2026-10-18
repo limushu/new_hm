@@ -123,6 +123,24 @@ export default function CasePage({
   useEffect(() => {
     setSaved(!draft);
   }, [draft]);
+  useEffect(() => {
+    // A deleted stage leaves its records at flow scope. Resource views must
+    // follow that move instead of retaining an invisible, impossible filter.
+    const normalize = (scope: WorkScope): WorkScope => {
+      if (
+        scope.proceedingId &&
+        scope.proceedingId !== 'shared' &&
+        !data.proceedings.some((p) => p.id === scope.proceedingId)
+      )
+        return caseScope;
+      return scope.stageId &&
+        !data.stages.some((s) => s.id === scope.stageId && s.proceedingId === scope.proceedingId)
+        ? { ...scope, stageId: null }
+        : scope;
+    };
+    setMaterialScope(normalize);
+    setFinanceScope(normalize);
+  }, [data.stages, data.proceedings]);
 
   function act(action: () => Promise<unknown>): Promise<boolean> {
     if (pendingAction.current) return pendingAction.current;

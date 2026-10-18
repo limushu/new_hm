@@ -113,6 +113,18 @@ test('阶段支出就地上传凭据，收费节点按实际收款核销，范�
   await page.getByRole('button', { name: '保存', exact: true }).click();
   await expect(page.locator('.fee-plan-totals')).toContainText('400.00');
   await expect(page.locator('.ledger-row')).toHaveCount(2);
+  await page.getByRole('button', { name: '返回办理', exact: true }).click();
+  await page.getByRole('button', { name: '调整阶段状态', exact: true }).click();
+  await page.getByRole('button', { name: '删除此阶段', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '删除阶段', exact: true })
+    .getByRole('button', { name: '删除', exact: true })
+    .click();
+  await page.getByRole('tab', { name: '费用', exact: true }).click();
+  await expect(page.locator('.work-scope-banner')).toContainText('一审');
+  await expect(page.locator('.work-scope-banner')).not.toContainText('举证');
+  await expect(page.locator('.ledger-row')).toHaveCount(2);
+  await expect(page.locator('.fee-plan-totals')).toContainText('400.00');
 });
 test('窄屏工作区保留可读字号，无横向溢出，浅深主题都能操作', async ({ page }) => {
   await open(page);
