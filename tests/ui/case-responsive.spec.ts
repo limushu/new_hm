@@ -106,6 +106,13 @@ test('窄屏长阶段名、法院搜索和管理弹窗不挤出窗口', async ({
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('未录入的法院');
   const picker = page.locator('.picker-popover');
   await expect(picker).toBeVisible();
+  // Search changes the menu height; wait for the shared ResizeObserver positioning pass.
+  await expect
+    .poll(async () => {
+      const box = await picker.boundingBox();
+      return box ? box.y + box.height : Infinity;
+    })
+    .toBeLessThanOrEqual(700);
   const box = await picker.boundingBox();
   expect(box!.x + box!.width).toBeLessThanOrEqual(390);
   expect(box!.y + box!.height).toBeLessThanOrEqual(700);
