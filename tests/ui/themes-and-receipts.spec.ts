@@ -42,6 +42,7 @@ test('四个主标签同字号同字重，键盘切换，滚动时入口仍可�
     'aria-selected',
     'true',
   );
+  await expect(page.locator('.proceeding-path')).toHaveClass(/is-compact/);
   await page.keyboard.press('ArrowLeft');
   await expect(page.getByRole('tab', { name: '流程详情', exact: true })).toBeFocused();
   await page.getByRole('tab', { name: '概览', exact: true }).click();

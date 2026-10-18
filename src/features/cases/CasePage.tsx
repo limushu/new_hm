@@ -325,7 +325,7 @@ export default function CasePage({
           </nav>
           {saved && (
             <ProceedingPath
-              compact={tab === 'info'}
+              compact={tab !== 'overview'}
               item={item}
               programs={programs}
               selected={program?.id ?? null}
