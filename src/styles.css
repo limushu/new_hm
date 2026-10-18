@@ -11,11 +11,16 @@
   --text-title: 22px;
   --text-display-mobile: 24px;
   --text-display: 28px;
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-strong: 600;
+  --icon-stroke: 1.7;
+  --icon-muted: #9b9b97;
   font-family: var(--font-ui);
   font-size: var(--text-body);
   line-height: 1.55;
-  font-weight: 400;
-  color: #e6e6e6;
+  font-weight: var(--weight-regular);
+  color: var(--text);
   background: #191919;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -25,8 +30,9 @@
   --surface: #202020;
   --hover: #2b2b2b;
   --line: #303030;
-  --text: #e6e6e6;
-  --muted: #9b9b9b;
+  --text: #d4d4d1;
+  --text-strong: #ececea;
+  --muted: #9c9c97;
   --quiet: #747474;
   --accent: #7d98ac;
   --calendar-blue: #3b6c90;
@@ -82,7 +88,7 @@ select:focus-visible {
 svg {
   width: 16px;
   height: 16px;
-  stroke-width: 1.55;
+  stroke-width: var(--icon-stroke);
   flex-shrink: 0;
 }
 h1,
@@ -95,6 +101,11 @@ h1 {
   font-size: var(--text-display);
   font-weight: 600;
   letter-spacing: -0.6px;
+}
+h1,
+h2,
+h3 {
+  color: var(--text-strong);
 }
 h3 {
   font-size: var(--text-heading);
@@ -381,7 +392,7 @@ h3 {
   line-height: 1.4;
   font-weight: 600;
   letter-spacing: -0.5px;
-  color: #dedede;
+  color: var(--text-strong);
   padding: 0;
   outline: none;
 }

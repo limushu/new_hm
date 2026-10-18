@@ -60,6 +60,7 @@
   flex-wrap: wrap;
   gap: 8px 12px;
   padding: 22px 0 16px;
+  border-bottom: 1px solid var(--line);
 }
 .program-detail-heading h2 {
   font-size: var(--text-title-sm);
@@ -89,7 +90,7 @@
 .program-details-section {
   margin: 0;
   padding: 20px 0;
-  border-top: 1px solid var(--line);
+  border: 0;
   min-width: 0;
 }
 .program-detail .feature-section > header,
@@ -102,8 +103,8 @@
   margin: 0 0 12px;
 }
 .program-details-section h3 {
-  font-size: var(--text-body);
-  font-weight: 500;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-strong);
 }
 .program-current-stage {
   display: flex;
@@ -231,6 +232,19 @@
   overflow-wrap: anywhere;
 }
 @container case-panel (max-width: 600px) {
+  .case-title-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  .case-title-row .case-page-icon {
+    width: 22px;
+    height: 22px;
+  }
+  .case-title-row .page-title-input {
+    min-width: 0;
+    font-size: var(--text-display-mobile);
+  }
   .case-body .case-properties {
     gap: 12px;
   }

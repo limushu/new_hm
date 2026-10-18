@@ -4,10 +4,40 @@
 }
 .case-category > span,
 .case-status-property > span {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   color: var(--muted);
   font-size: var(--text-sm);
   margin-bottom: 8px;
+}
+.case-category > span > svg,
+.case-status-property > span > svg {
+  width: 13px;
+  height: 13px;
+  color: var(--icon-muted);
+}
+.case-title-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+}
+.case-page-icon {
+  width: 28px;
+  height: 28px;
+  color: #91b2c7;
+  fill: #91b2c724;
+  stroke-width: 1.6;
+}
+.case-body .feature-section h3,
+.case-body .section-title h3 {
+  font-size: var(--text-heading);
+  font-weight: var(--weight-strong);
+  color: var(--text-strong);
+}
+.case-body .section-title h3 > svg {
+  color: var(--icon-muted);
 }
 .case-tags-editor {
   position: relative;
@@ -240,7 +270,7 @@
   align-items: center;
   gap: 6px;
   font-size: var(--text-sm);
-  color: #96a8b5;
+  color: var(--muted);
   margin-bottom: 7px;
 }
 .eyebrow svg {
@@ -406,11 +436,11 @@
   width: 100%;
   min-width: 0;
   margin: 0;
-  padding: 24px 0;
-  border-bottom: 1px solid var(--line);
+  padding: 20px 0;
+  border: 0;
 }
-.case-overview-content > section:last-child {
-  border-bottom: 0;
+.case-overview-content > .case-focus-summary {
+  border-bottom: 1px solid var(--line);
 }
 .case-overview-content .quiet-empty {
   padding: 8px 0;

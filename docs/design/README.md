@@ -2,6 +2,8 @@
 
 当前以 Notion 为主要视觉参考：中性深灰、适度标题、可读正文、内容自适应分组和组间留白。当前配色与细节是暂定基线。
 
+1.1.3 的[状态联想](current/status-suggestions-1.1.3.png)与[标签联想](current/tag-suggestions-1.1.3.png)使用虚构数据。参考新的 Notion 详情截图，正文改为中性灰、功能分区标题统一字号与字重、属性使用一致的小型图标，案件页增加柔和书页标识。概览减少重复分隔线，以标题和组间距建立层次，继续保持每行一个功能。实际字体族保持离线系统映射，不声称使用了 Notion 的专有字体。
+
 1.1.2 程序详情调整：[宽屏侧页](current/case-programs-side-1.1.2.png)、[1024×768 小窗口](current/case-programs-small-1.1.2.png)、[800×600 最小桌面验收](current/case-programs-minimum-1.1.2.png)、[手机宽度布局](current/case-programs-mobile-1.1.2.png)使用浏览器与虚构数据，移动端安装包尚未发布。
 
 正式 Windows 程序的[1024×768 原生窗口](current/case-programs-app-small-1.1.2.png)及[800×600 原生窗口](current/case-programs-app-minimum-1.1.2.png)在隔离虚构工作区拍摄；尺寸为逻辑客户区，截图像素随系统 DPI 缩放，未靠浏览器缩放模拟桌面窗口大小。

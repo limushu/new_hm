@@ -16,7 +16,17 @@ import Stages from './Stages';
 import Records from './Records';
 import Materials from '../materials/Materials';
 import { useEffect, useRef, useState } from 'react';
-import { ChevronRight, ChevronsRight, Expand, Folder, Plus, Trash2, X } from 'lucide-react';
+import {
+  BookOpen,
+  CircleDot,
+  Tag,
+  ChevronRight,
+  ChevronsRight,
+  Expand,
+  Plus,
+  Trash2,
+  X,
+} from 'lucide-react';
 import type { CaseFile, CaseInput, ProgramKind, SaveAction, Workspace } from '../../domain/types';
 import { programLabels } from '../../domain/types';
 
@@ -203,25 +213,30 @@ export default function CasePage({
           )}
         </div>
         <div className="case-body">
-          <Folder className="page-symbol" />
-          <input
-            ref={titleInput}
-            aria-label="案件名称"
-            className="page-title-input"
-            placeholder="新建案件"
-            value={title}
-            maxLength={120}
-            onChange={(e) => setTitle(e.target.value)}
-            onBlur={() => {
-              if (title.trim()) void commit();
-            }}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.nativeEvent.isComposing) void commit();
-            }}
-          />
+          <div className="case-title-row">
+            <BookOpen className="case-page-icon" aria-hidden="true" />
+            <input
+              ref={titleInput}
+              aria-label="案件名称"
+              className="page-title-input"
+              placeholder="新建案件"
+              value={title}
+              maxLength={120}
+              onChange={(e) => setTitle(e.target.value)}
+              onBlur={() => {
+                if (title.trim()) void commit();
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) void commit();
+              }}
+            />
+          </div>
           <div className="case-properties">
             <div className="case-status-property">
-              <span>案件状态</span>
+              <span>
+                <CircleDot aria-hidden="true" />
+                案件状态
+              </span>
               <CaseStatusPicker
                 value={statusId}
                 statuses={data.statuses}
@@ -237,7 +252,10 @@ export default function CasePage({
               />
             </div>
             <div className="case-category">
-              <span>案件类型 / 标签</span>
+              <span>
+                <Tag aria-hidden="true" />
+                案件类型 / 标签
+              </span>
               <CaseTags
                 value={tags}
                 catalog={data.tagCatalog}
