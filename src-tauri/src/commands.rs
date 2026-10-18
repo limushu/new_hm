@@ -1,6 +1,13 @@
 use crate::{access, AppState};
 use hm_core::*;
 use tauri::State;
+#[tauri::command(async)]
+pub fn update_proceeding_meta(
+    state: State<'_, AppState>,
+    input: ProceedingMeta,
+) -> std::result::Result<(), String> {
+    access(&state, |s| s.update_proceeding_meta(input))
+}
 
 #[tauri::command(async)]
 pub fn create_material_folder(

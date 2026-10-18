@@ -1,16 +1,24 @@
 use crate::{access, AppState};
 use serde::Serialize;
-use std::{collections::BTreeMap, sync::Mutex};
+use std::{
+    collections::BTreeMap,
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Mutex,
+    },
+};
 use tauri::{Emitter, Manager, State};
 use tauri_plugin_autostart::ManagerExt;
 use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_updater::{Update, UpdaterExt};
 #[derive(Default)]
 pub struct DesktopState {
+    checking: AtomicBool,
+    available: Mutex<Option<UpdateInfo>>,
     pub pending: Mutex<Option<Update>>,
     pub background: Mutex<BTreeMap<String, String>>,
 }
-#[derive(Serialize)]
+#[derive(Serialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateInfo {
     version: String,
@@ -44,13 +52,43 @@ pub fn background_status(
         .map_err(|_| "后台状态不可用".into())
 }
 #[tauri::command]
-pub async fn check_update(
-    app: tauri::AppHandle,
-    state: State<'_, DesktopState>,
-) -> Result<Option<UpdateInfo>, String> {
+pub async fn check_update(app: tauri::AppHandle) -> Result<Option<UpdateInfo>, String> {
+    fetch_update(&app).await
+}
+#[tauri::command]
+pub fn get_update_status(state: State<'_, DesktopState>) -> Result<Option<UpdateInfo>, String> {
+    Ok(state
+        .available
+        .lock()
+        .map_err(|_| "更新状态不可用")?
+        .clone())
+}
+struct CheckGuard<'a>(&'a AtomicBool);
+impl Drop for CheckGuard<'_> {
+    fn drop(&mut self) {
+        self.0.store(false, Ordering::Release);
+    }
+}
+async fn fetch_update(app: &tauri::AppHandle) -> Result<Option<UpdateInfo>, String> {
+    let state = app.state::<DesktopState>();
+    if state.checking.swap(true, Ordering::AcqRel) {
+        return Err("正在检查更新，请稍候".into());
+    }
+    let _guard = CheckGuard(&state.checking);
+    let custom = access(&app.state::<AppState>(), |s| s.setting("update_endpoint"))?;
+    let mut endpoints = Vec::new();
+    if let Some(custom) = custom.filter(|s| !s.is_empty()) {
+        endpoints.push(tauri::Url::parse(&custom).map_err(|_| "更新源地址无效")?);
+    }
+    endpoints.push(
+        tauri::Url::parse("https://github.com/limushu/new_hm/releases/latest/download/latest.json")
+            .map_err(|e| e.to_string())?,
+    );
     let update = app
         .updater_builder()
-        .timeout(std::time::Duration::from_secs(60))
+        .endpoints(endpoints)
+        .map_err(|e| e.to_string())?
+        .timeout(std::time::Duration::from_secs(15))
         .build()
         .map_err(|e| e.to_string())?
         .check()
@@ -61,6 +99,8 @@ pub async fn check_update(
         notes: u.body.clone(),
     });
     *state.pending.lock().map_err(|_| "更新状态不可用")? = update;
+    *state.available.lock().map_err(|_| "更新状态不可用")? = info.clone();
+    let _ = app.emit("update-available", &info);
     Ok(info)
 }
 #[tauri::command]
@@ -115,6 +155,22 @@ pub async fn install_update(
 }
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(DesktopState::default());
+    // Explicitly set the window icon as well as the executable/installer icons.
+    // This also covers the separately-created legacy portable window.
+    if let Some(icon) = app.default_window_icon() {
+        for window in app.webview_windows().values() {
+            window.set_icon(icon.clone())?;
+        }
+    }
+    let updater_handle = app.handle().clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(std::time::Duration::from_secs(15));
+        loop {
+            // Failures stay quiet; the manual update page reports errors on demand.
+            let _ = tauri::async_runtime::block_on(fetch_update(&updater_handle));
+            std::thread::sleep(std::time::Duration::from_secs(6 * 60 * 60));
+        }
+    });
     let show = tauri::menu::MenuItem::with_id(app, "show", "打开案笺", true, None::<&str>)?;
     let quit = tauri::menu::MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
     let menu = tauri::menu::Menu::with_items(app, &[&show, &quit])?;

@@ -30,6 +30,22 @@ pub struct Proceeding {
     pub case_number: String,
     pub court: String,
     pub judge: String,
+    pub parent_id: Option<String>,
+    pub state: String,
+    pub completed_at: Option<String>,
+}
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CaseTag {
+    pub case_id: String,
+    pub tag: String,
+}
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProceedingMeta {
+    pub id: String,
+    pub parent_id: Option<String>,
+    pub state: String,
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
@@ -53,6 +69,8 @@ pub struct WorkRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Workspace {
+    pub tag_catalog: Vec<String>,
+    pub case_tags: Vec<CaseTag>,
     pub statuses: Vec<CaseStatus>,
     pub cases: Vec<Case>,
     pub proceedings: Vec<Proceeding>,
@@ -88,6 +106,8 @@ pub struct CalendarEvent {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateCase {
+    #[serde(default)]
+    pub tags: Option<Vec<String>>,
     pub id: String,
     pub title: String,
     pub case_type: String,
@@ -97,6 +117,8 @@ pub struct CreateCase {
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct UpdateCase {
+    #[serde(default)]
+    pub tags: Option<Vec<String>>,
     pub id: String,
     pub title: String,
     pub case_type: String,
@@ -218,12 +240,17 @@ pub struct Stage {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct CaseEvent {
+    #[serde(default = "milestone_kind")]
+    pub kind: String,
     pub id: String,
     pub case_id: String,
     pub proceeding_id: Option<String>,
     pub title: String,
     pub event_date: String,
     pub notes: String,
+}
+fn milestone_kind() -> String {
+    "milestone".into()
 }
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]

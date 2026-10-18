@@ -41,16 +41,16 @@ test('侧页建案、待办、工作记录与可恢复删除', async ({ page }) 
 
 test('不同程序独立保存案号，新增程序不改变案件状态', async ({ page }) => {
   await createCase(page, '程序隔离测试');
-  await page.getByRole('button', { name: '案件信息', exact: true }).click();
+  await page.getByRole('button', { name: '程序详情', exact: true }).click();
   await page.getByRole('textbox', { name: '案号', exact: true }).fill('一审独立案号');
   await page.getByRole('textbox', { name: '案号', exact: true }).press('Tab');
   await expect(page.locator('.save-state')).toHaveText('已保存');
   await page.getByRole('button', { name: '新增程序', exact: true }).click();
   await selectOption(page, page.getByRole('combobox', { name: '新增程序类型' }), 'appeal');
   await page.getByRole('button', { name: '新增', exact: true }).click();
-  await expect(page.getByRole('combobox', { name: '当前程序' })).toContainText('二审');
+  await expect(page.getByRole('combobox', { name: '查看程序' })).toContainText('二审');
   await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue('');
-  await selectOption(page, page.getByRole('combobox', { name: '当前程序' }), { label: '一审' });
+  await selectOption(page, page.getByRole('combobox', { name: '查看程序' }), { label: '一审' });
   await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue(
     '一审独立案号',
   );

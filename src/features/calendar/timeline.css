@@ -3,7 +3,7 @@
   margin: 25px 6px 4px;
 }
 .storage-path {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: var(--muted);
   display: grid;
   gap: 8px;
@@ -22,7 +22,7 @@
 }
 .calendar-sidebar > header span {
   flex: 1;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #b3b3b3;
 }
 .calendar-sidebar .icon-button {
@@ -50,7 +50,7 @@
   height: 25px;
   padding: 0;
   border-radius: 50%;
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: #aeaeae;
   justify-self: center;
 }
@@ -76,7 +76,7 @@
   padding: 0 3px;
 }
 .calendar-legend > span {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: #737373;
 }
 .calendar-legend p {
@@ -84,7 +84,7 @@
   align-items: center;
   gap: 8px;
   margin-top: 12px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #a1a1a1;
 }
 .calendar-legend i {
@@ -102,7 +102,7 @@
   padding: 5px 9px;
   border-radius: 6px;
   border: 1px solid #383838;
-  font-size: 12px;
+  font-size: var(--text-sm);
   min-width: 82px;
   background: #202020;
 }
@@ -167,11 +167,11 @@
   gap: 5px;
 }
 .time-date small {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: #8a8a8a;
 }
 .time-date strong {
-  font-size: 18px;
+  font-size: var(--text-title-sm);
   font-weight: 450;
   width: 32px;
   height: 32px;
@@ -225,10 +225,10 @@
   text-overflow: ellipsis;
   border-radius: 3px;
   padding: 4px;
-  font-size: 10px;
+  font-size: var(--text-xs);
 }
 .time-all-day {
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 500;
   line-height: 1.35;
   background: var(--calendar-card);
@@ -252,7 +252,7 @@
   height: 10px;
 }
 .all-day-create {
-  font-size: 13px;
+  font-size: var(--text-base);
   color: #828282;
   padding: 2px 1px;
   opacity: 0;
@@ -273,7 +273,7 @@
   position: absolute;
   right: 8px;
   color: #999999;
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   transform: translateY(-50%);
 }
@@ -327,7 +327,7 @@
 .time-event strong {
   flex-shrink: 0;
   font-weight: 500;
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.35;
   width: 100%;
   display: -webkit-box;
@@ -338,13 +338,13 @@
   overflow-wrap: anywhere;
 }
 .time-event > span {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--calendar-card-meta);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 .time-event > small {
-  font-size: 10px;
+  font-size: var(--text-xs);
   color: var(--calendar-card-meta);
   white-space: nowrap;
   overflow: hidden;
@@ -369,7 +369,7 @@
 }
 .time-event.is-short strong {
   flex-shrink: 0;
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 16px;
   display: block;
   white-space: nowrap;
@@ -398,7 +398,7 @@
   padding: 2px 3px;
   background: #292929;
   color: var(--calendar-now);
-  font-size: 10px;
+  font-size: var(--text-xs);
   font-variant-numeric: tabular-nums;
   z-index: 3;
   transform: translateY(-50%);
@@ -447,10 +447,10 @@
     opacity: 1;
   }
   .time-event strong {
-    font-size: 12px;
+    font-size: var(--text-sm);
   }
   .time-event > span,
   .time-event > small {
-    font-size: 11px;
+    font-size: var(--text-xs);
   }
 }

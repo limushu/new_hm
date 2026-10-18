@@ -256,11 +256,26 @@ impl Store {
             "close_to_tray",
             "notifications",
             "onboarding_done",
+            "update_endpoint",
         ]
         .contains(&key)
             || value.len() > 4096
         {
             return Err(Error::Validation("设置项无效".into()));
+        }
+        if key == "update_endpoint" && !value.is_empty() {
+            let url =
+                url::Url::parse(value).map_err(|_| Error::Validation("更新源地址无效".into()))?;
+            if url.scheme() != "https"
+                || url.host_str().is_none()
+                || !url.username().is_empty()
+                || url.password().is_some()
+                || url.fragment().is_some()
+            {
+                return Err(Error::Validation(
+                    "更新源必须是无账号信息的 HTTPS 更新清单地址".into(),
+                ));
+            }
         }
         self.connection.execute("INSERT INTO settings(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",params![key,value])?;
         Ok(())

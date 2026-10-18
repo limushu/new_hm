@@ -44,6 +44,9 @@ const data: Workspace = {
       id: 'demo-program',
       caseId: 'demo',
       kind: 'first_instance',
+      parentId: null,
+      state: 'active',
+      completedAt: null,
       stage: '庭前准备',
       caseNumber: '',
       court: '',
@@ -69,12 +72,21 @@ const data: Workspace = {
   caseDetails: [],
   stages: [],
   caseEvents: [],
+  tagCatalog: [],
+  caseTags: [],
   deletedRecords: [],
 };
 function findCase(id: string): CaseFile {
   const value = data.cases.find((c) => c.id === id);
   if (!value) throw new Error('未找到案件');
   return value;
+}
+function writeTags(caseId: string, tags: string[]) {
+  const names = [...new Set(tags.map((t) => t.trim().replace(/^#+/, '').toLowerCase()))];
+  data.caseTags = data.caseTags
+    .filter((t) => t.caseId !== caseId)
+    .concat(names.map((tag) => ({ caseId, tag })));
+  data.tagCatalog = [...new Set([...data.tagCatalog, ...names])].sort();
 }
 export async function previewCommand<K extends keyof Commands>(
   name: K,
@@ -125,6 +137,9 @@ export async function previewCommand<K extends keyof Commands>(
       break;
     case 'background_status':
       result = {};
+      break;
+    case 'get_update_status':
+      result = null;
       break;
     case 'autostart_status':
       result = false;
@@ -178,6 +193,16 @@ export async function previewCommand<K extends keyof Commands>(
         name === 'save_case_detail' ? row.caseId === input.caseId : row.id === input.id,
       );
       if (name === 'save_stage' && input.state === 'current') {
+        if (!exists || (exists as { state?: string }).state !== 'current')
+          data.caseEvents.unshift({
+            id: crypto.randomUUID(),
+            caseId: data.proceedings.find((p) => p.id === input.proceedingId)!.caseId,
+            proceedingId: input.proceedingId as string,
+            title: `切换阶段：${input.name}`,
+            eventDate: dateKey(new Date()),
+            notes: '',
+            kind: 'stage_change',
+          });
         data.stages
           .filter(
             (stage) =>
@@ -382,8 +407,11 @@ export async function previewCommand<K extends keyof Commands>(
     case 'load_workspace':
       for (const program of data.proceedings)
         if (!data.stages.some((s) => s.proceedingId === program.id)) {
-          const current = program.stage || '材料准备';
-          const names = ['材料准备', '立案', '举证', '开庭', '裁判'];
+          const names =
+            program.kind === 'enforcement'
+              ? ['申请执行', '执行立案', '财产调查', '执行措施', '执行结果']
+              : ['材料准备', '立案', '举证', '开庭', '裁判'];
+          const current = program.stage || names[0];
           if (!names.includes(current)) names.push(current);
           program.stage = current;
           names.forEach((name, position) =>
@@ -418,12 +446,16 @@ export async function previewCommand<K extends keyof Commands>(
             id,
             caseId: c.id,
             kind: 'first_instance',
+            parentId: null,
+            state: 'active',
+            completedAt: null,
             stage: '',
             caseNumber: '',
             court: '',
             judge: '',
           });
       }
+      if (input.tags) writeTags(input.id, input.tags);
       result = c;
       break;
     }
@@ -431,6 +463,7 @@ export async function previewCommand<K extends keyof Commands>(
       const input = a.input as CaseInput;
       if (!input.title.trim()) throw new Error('请输入案件名称');
       Object.assign(findCase(input.id), input);
+      if (input.tags) writeTags(input.id, input.tags);
       break;
     }
     case 'set_case_status': {
@@ -448,6 +481,9 @@ export async function previewCommand<K extends keyof Commands>(
         id,
         caseId: c.id,
         kind: a.kind as ProgramKind,
+        parentId: (a.parentId as string | null) ?? null,
+        state: 'active',
+        completedAt: null,
         stage: '',
         caseNumber: '',
         court: '',
@@ -455,6 +491,25 @@ export async function previewCommand<K extends keyof Commands>(
       });
       c.currentProceedingId = id;
       result = id;
+      break;
+    }
+    case 'update_proceeding_meta': {
+      const input = a.input as Commands['update_proceeding_meta']['args']['input'];
+      const p = data.proceedings.find((p) => p.id === input.id)!;
+      const ancestors = new Set([p.id]);
+      let parent = input.parentId;
+      while (parent) {
+        if (ancestors.has(parent)) throw new Error('程序承接关系不能形成循环');
+        ancestors.add(parent);
+        const value = data.proceedings.find((x) => x.id === parent && x.caseId === p.caseId);
+        if (!value) throw new Error('前序程序必须属于同一案件');
+        parent = value.parentId;
+      }
+      Object.assign(p, input, {
+        completedAt: input.state === 'completed' ? new Date().toISOString() : null,
+      });
+      if (input.state === 'completed' && findCase(p.caseId).currentProceedingId === p.id)
+        findCase(p.caseId).currentProceedingId = null;
       break;
     }
     case 'select_proceeding':

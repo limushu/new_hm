@@ -14,7 +14,7 @@ async function addContact(page: Page, name: string, kind: string, court?: string
 async function openInfo(page: Page) {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '案件信息', exact: true }).click();
+  await page.getByRole('button', { name: '程序详情', exact: true }).click();
 }
 test.beforeEach(async ({ page }) => {
   await page.goto('/?preview=1');
@@ -79,7 +79,7 @@ test('法院法官搜索复用、筛选与反向关联，无需重复建档或�
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue('');
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('乙法院');
   await page.getByRole('option', { name: /示例乙法院/ }).click();
-  await selectOption(page, page.getByRole('combobox', { name: '当前程序', exact: true }), {
+  await selectOption(page, page.getByRole('combobox', { name: '查看程序', exact: true }), {
     label: '一审',
   });
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(

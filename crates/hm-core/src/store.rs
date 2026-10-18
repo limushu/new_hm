@@ -57,13 +57,13 @@ impl Store {
         let mut connection = Connection::open(path)?;
         crate::backup::recover_on_open(&mut connection, directory)?;
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 0 && version < 4 {
+        if version > 0 && version < 5 {
             let safety = directory.join("migration-backups");
             std::fs::create_dir_all(&safety)?;
             connection.backup(
                 "main",
                 safety.join(format!(
-                    "before-v4-from-v{version}-{}.sqlite3",
+                    "before-v5-from-v{version}-{}.sqlite3",
                     Uuid::new_v4()
                 )),
                 None,
@@ -89,12 +89,12 @@ impl Store {
     }
     pub(crate) fn migrate(connection: &mut Connection) -> Result<()> {
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 4 {
+        if version > 5 {
             return Err(Error::Validation(
                 "数据库来自较新版本，请使用新版软件打开".into(),
             ));
         }
-        if version < 4 {
+        if version < 5 {
             let tx = connection.transaction()?;
             if version == 0 {
                 tx.execute_batch(include_str!("../migrations/001_initial.sql"))?;
@@ -105,8 +105,11 @@ impl Store {
             if version < 3 {
                 tx.execute_batch(include_str!("../migrations/003_v1_workspace.sql"))?;
             }
-            tx.execute_batch(include_str!("../migrations/004_contact_relations.sql"))?;
-            crate::relations::backfill(&tx)?;
+            if version < 4 {
+                tx.execute_batch(include_str!("../migrations/004_contact_relations.sql"))?;
+                crate::relations::backfill(&tx)?;
+            }
+            tx.execute_batch(include_str!("../migrations/005_case_overview.sql"))?;
             tx.commit()?;
         }
         Ok(())
@@ -146,7 +149,7 @@ impl Store {
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
         let cases=self.connection.prepare("SELECT id,title,case_type,status_id,current_proceeding_id,created_at,updated_at,deleted_at FROM cases ORDER BY created_at DESC,id")?.query_map([],map_case)?.collect::<rusqlite::Result<Vec<_>>>()?;
-        let proceedings=self.connection.prepare("SELECT id,case_id,kind,stage,case_number,court,judge FROM proceedings ORDER BY created_at,id")?.query_map([],|r|Ok(Proceeding{id:r.get(0)?,case_id:r.get(1)?,kind:r.get(2)?,stage:r.get(3)?,case_number:r.get(4)?,court:r.get(5)?,judge:r.get(6)?}))?.collect::<rusqlite::Result<Vec<_>>>()?;
+        let proceedings=self.connection.prepare("SELECT id,case_id,kind,stage,case_number,court,judge,parent_id,state,completed_at FROM proceedings ORDER BY created_at,id")?.query_map([],|r|Ok(Proceeding{id:r.get(0)?,case_id:r.get(1)?,kind:r.get(2)?,stage:r.get(3)?,case_number:r.get(4)?,court:r.get(5)?,judge:r.get(6)?,parent_id:r.get(7)?,state:r.get(8)?,completed_at:r.get(9)?}))?.collect::<rusqlite::Result<Vec<_>>>()?;
         let tasks = self
             .connection
             .prepare(
@@ -177,6 +180,21 @@ impl Store {
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
         Ok(Workspace {
+            tag_catalog: self
+                .connection
+                .prepare("SELECT name FROM tag_catalog ORDER BY name")?
+                .query_map([], |r| r.get(0))?
+                .collect::<rusqlite::Result<Vec<_>>>()?,
+            case_tags: self
+                .connection
+                .prepare("SELECT case_id,tag FROM case_tags ORDER BY case_id,tag")?
+                .query_map([], |r| {
+                    Ok(CaseTag {
+                        case_id: r.get(0)?,
+                        tag: r.get(1)?,
+                    })
+                })?
+                .collect::<rusqlite::Result<Vec<_>>>()?,
             statuses,
             cases,
             proceedings,
@@ -199,6 +217,7 @@ impl Store {
         let title = text(&input.title, "案件名称", 120)?;
         case_type(&input.case_type)?;
         self.status(&input.status_id)?;
+        let tags = crate::case_overview::normalized_tags(input.tags.as_deref().unwrap_or(&[]))?;
         if let Some(existing)=self.connection.query_row("SELECT id,title,case_type,status_id,current_proceeding_id,created_at,updated_at,deleted_at FROM cases WHERE id=?1",[&input.id],map_case).optional()? { return Ok(existing); }
         let tx = self.connection.transaction()?;
         tx.execute(
@@ -217,6 +236,7 @@ impl Store {
             )?;
             crate::stages::seed_default_stages(&tx, &id, "first_instance")?;
         }
+        crate::case_overview::write_tags(&tx, &input.id, &tags)?;
         tx.commit()?;
         Ok(self.connection.query_row("SELECT id,title,case_type,status_id,current_proceeding_id,created_at,updated_at,deleted_at FROM cases WHERE id=?1",[input.id],map_case)?)
     }
@@ -225,7 +245,17 @@ impl Store {
         case_type(&input.case_type)?;
         self.status(&input.status_id)?;
         self.active_case(&input.id)?;
-        self.connection.execute("UPDATE cases SET title=?1,case_type=?2,status_id=?3,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?4",params![title,input.case_type,input.status_id,input.id])?;
+        let tags = input
+            .tags
+            .as_deref()
+            .map(crate::case_overview::normalized_tags)
+            .transpose()?;
+        let tx = self.connection.unchecked_transaction()?;
+        tx.execute("UPDATE cases SET title=?1,case_type=?2,status_id=?3,updated_at=strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id=?4",params![title,input.case_type,input.status_id,input.id])?;
+        if let Some(tags) = tags {
+            crate::case_overview::write_tags(&tx, &input.id, &tags)?;
+        }
+        tx.commit()?;
         Ok(())
     }
     pub fn set_case_status(&self, id: &str, status_id: &str) -> Result<()> {
@@ -240,13 +270,24 @@ impl Store {
         Ok(())
     }
     pub fn add_proceeding(&mut self, case_id: &str, program_kind: &str) -> Result<String> {
+        self.add_proceeding_from(case_id, program_kind, None)
+    }
+    pub fn add_proceeding_from(
+        &mut self,
+        case_id: &str,
+        program_kind: &str,
+        parent_id: Option<&str>,
+    ) -> Result<String> {
         self.active_case(case_id)?;
         kind(program_kind)?;
+        if let Some(parent) = parent_id {
+            self.validate_proceeding(case_id, Some(parent))?;
+        }
         let id = Uuid::new_v4().to_string();
         let tx = self.connection.transaction()?;
         tx.execute(
-            "INSERT INTO proceedings(id,case_id,kind) VALUES(?1,?2,?3)",
-            params![id, case_id, program_kind],
+            "INSERT INTO proceedings(id,case_id,kind,parent_id) VALUES(?1,?2,?3,?4)",
+            params![id, case_id, program_kind, parent_id],
         )?;
         tx.execute(
             "UPDATE cases SET current_proceeding_id=?1 WHERE id=?2",
@@ -259,7 +300,7 @@ impl Store {
     pub fn select_proceeding(&self, case_id: &str, proceeding_id: &str) -> Result<()> {
         self.active_case(case_id)?;
         let belongs: bool = self.connection.query_row(
-            "SELECT EXISTS(SELECT 1 FROM proceedings WHERE id=?1 AND case_id=?2)",
+            "SELECT EXISTS(SELECT 1 FROM proceedings WHERE id=?1 AND case_id=?2 AND state='active')",
             params![proceeding_id, case_id],
             |r| r.get(0),
         )?;

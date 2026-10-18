@@ -30,7 +30,7 @@ export default function CaseLinks({
   return (
     <section className="feature-section">
       <header>
-        <h3>案件备注与关联原案</h3>
+        <h3>案情摘要与相关案件</h3>
         <button
           onClick={() => {
             setRelated(detail.relatedCaseId ?? '');
@@ -55,7 +55,9 @@ export default function CaseLinks({
         </button>
       ))}
       {!detail.notes && !original && !relatedCases.length && (
-        <p className="quiet-empty">可补充案件说明，或与原委托案件建立关联。</p>
+        <p className="quiet-empty">
+          记下案情、争议焦点和办理目标，让再次打开案件时知道要解决什么。
+        </p>
       )}
       {editing && (
         <Dialog

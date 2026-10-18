@@ -1,7 +1,7 @@
 {
   "name": "hm-workspace",
   "private": true,
-  "version": "1.0.2",
+  "version": "1.1.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
@@ -23,6 +23,7 @@
     "ios:dev": "tauri ios dev",
     "artifacts:debug": "node scripts/collect-artifacts.mjs debug",
     "artifacts:release": "node scripts/collect-release.mjs",
+    "artifacts:mirror": "node scripts/prepare-update-mirror.mjs",
     "artifacts:portable": "node scripts/collect-portable.mjs",
     "postinstall": "node scripts/copy-pdf-assets.mjs",
     "test:native": "node --no-warnings tests/native/workspace.mjs",

@@ -2,6 +2,10 @@
 
 当前以 Notion 为主要视觉参考：中性深灰、适度标题、可读正文、内容自适应分组和组间留白。当前配色与细节是暂定基线。
 
+正式应用 1.1 的案件信息层次见[案件建模](../case-model.md)，字体、字号、字重与图标映射见[字体规范](typography.md)，品牌源与 Windows 图标配置见[品牌说明](brand.md)。[案件概览](current/case-overview-1.1.0.png)、[程序节点与详情](current/case-programs-1.1.0.png)、[收支图表](current/case-finance-1.1.0.png)、[AJ 标志](current/brand-1.1.0.png)使用虚构数据。
+
+这些规范优先于下方历史原型说明；正式应用已实现材料管理、自定义状态和程序节点。
+
 ## 如何使用这些资料
 
 | 位置 | 用途 |

@@ -1,7 +1,7 @@
+import { currentStage, proceedingName } from '../../domain/proceedings';
 import Dialog from '../../components/Dialog';
 import { useId, useRef, useState, type CSSProperties } from 'react';
 import { ArrowRightCircle, Folder, Plus, Search, MoreHorizontal, Trash2 } from 'lucide-react';
-import { programLabels } from '../../domain/types';
 import type { CaseFile, CaseStatus, SaveAction, Workspace } from '../../domain/types';
 import { useBoardDrag, trashTarget } from './useBoardDrag';
 import './case-board.css';
@@ -94,6 +94,9 @@ export default function CaseBoard({
   const queryText = query.trim().toLocaleLowerCase();
   const matches = (item: CaseFile) =>
     item.title.toLocaleLowerCase().includes(queryText) ||
+    data.caseTags.some(
+      (t) => t.caseId === item.id && t.tag.includes(queryText.replace(/^#/, '')),
+    ) ||
     data.proceedings.some(
       (program) =>
         program.caseId === item.id && program.caseNumber.toLocaleLowerCase().includes(queryText),
@@ -168,13 +171,19 @@ export default function CaseBoard({
           <span>{item.title}</span>
         </span>
         <span className="case-card-meta">
-          {program
-            ? programLabels[program.kind]
-            : item.caseType === 'civil'
-              ? '民商事诉讼'
-              : '其他案件'}
-          {program?.stage ? ` · ${program.stage}` : ''}
+          {program ? '关注 ' + proceedingName(program, data.proceedings) : '案件档案'}
+          {program ? ` · ${currentStage(data, program)}` : ' · 未指定关注程序'}
         </span>
+        {data.caseTags.some((t) => t.caseId === item.id) && (
+          <span className="case-card-tags">
+            {data.caseTags
+              .filter((t) => t.caseId === item.id)
+              .slice(0, 2)
+              .map((t) => (
+                <span key={t.tag}>#{t.tag}</span>
+              ))}
+          </span>
+        )}
         {next && (
           <time dateTime={next.dueDate!} title={next.title}>
             {next.dueDate} · {next.title}

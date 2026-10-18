@@ -13,7 +13,7 @@
   border: 1px solid #393939;
   border-radius: 7px;
   background: #242424;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 400;
   text-align: left;
 }
@@ -60,7 +60,7 @@
   padding: 7px 9px;
   border-radius: 5px;
   text-align: left;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 400;
   color: #d9d9d9;
 }
@@ -100,7 +100,7 @@
   width: 100%;
   min-width: 0;
   padding-right: 33px;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-variant-numeric: tabular-nums;
 }
 .date-field .date-open {
@@ -124,7 +124,7 @@
   align-items: center;
   justify-content: space-between;
   margin: 0 0 12px;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
 }
 .date-menu header button {
@@ -142,14 +142,14 @@
 }
 .date-weekdays {
   color: #8e8e8e;
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin-bottom: 7px;
 }
 .date-days > button {
   height: 30px;
   padding: 0;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-weight: 400;
 }
 .date-days > button:hover,
@@ -174,7 +174,7 @@
   padding-top: 10px;
 }
 .date-menu footer button {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #b4b4b4;
   padding: 3px;
 }
@@ -185,7 +185,7 @@
   width: 100%;
   border: 0;
   background: transparent;
-  font-size: 19px;
+  font-size: var(--text-title-sm);
   padding: 10px 0 20px;
 }
 .task-editor .task-date {
@@ -198,7 +198,7 @@
 .task-editor .task-date > span {
   white-space: nowrap;
   color: var(--muted);
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .task-editor .task-date > .date-field {
   width: 190px;

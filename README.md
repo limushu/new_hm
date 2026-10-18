@@ -4,11 +4,11 @@
 
 面向独立执业律师的本地工作应用：案件、办理程序、材料归档、日程、联系人和简单收支。无需登录，离线使用。技术栈为 Tauri 2、React/TypeScript、Rust、SQLite。
 
-当前交付版本 **1.0.2，Windows x64 安装版**。macOS、Android、iOS 是后续目标，尚未做发布验收。视觉延续已确认的 Notion 式深灰、圆角和舒展留白。
+当前交付版本 **1.1.0，Windows x64 安装版**。macOS、Android、iOS 是后续目标，尚未做发布验收。视觉延续已确认的 Notion 式深灰、圆角和舒展留白。
 
 ## 使用与验收
 
-安装包、签名与更新清单位于本地 artifacts/windows/1.0.2/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
+安装包、签名与更新清单位于本地 artifacts/windows/1.1.0/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
 
 详见[1.0 使用与验收](docs/v1.0-acceptance.md)：功能检查、数据位置、备份、提醒与升级边界。软件尚无 Windows 发布者代码签名证书，在线升级使用独立签名验证。
 
@@ -17,6 +17,8 @@
 - 录音、联系人与案件身份、双向关系、关系图、整数金额收支与报销记录。
 - 日/周/月日历、半小时创建、可选案件关联、重叠布局、当前时间线及提前提醒。
 - 名称搜索、每天完整备份、手动备份、校验恢复、托盘、可选自启动、用户确认在线升级。
+
+1.1 新增[案件全貌与并行程序模型](docs/case-model.md)、持久 #标签、案件/日历共用日程、明确材料归档范围、收支环图，以及后台更新提示与可配置 HTTPS 更新源。[字体映射规范](docs/design/typography.md)约束全局排版。
 
 ## 开发
 

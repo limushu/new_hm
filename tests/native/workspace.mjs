@@ -141,6 +141,24 @@ try {
   if (fonts.some((font) => /SimSun|Times New Roman/i.test(font.familyName)))
     throw new Error('Native UI unexpectedly uses serif fallback');
   await typography.detach();
+  const iconCheck = spawnSync(
+    'pwsh',
+    [
+      '-NoProfile',
+      '-NonInteractive',
+      '-File',
+      resolve('tests/native/inspect-icons.ps1'),
+      '-TaskPid',
+      String(pid),
+      '-ExpectedExecutable',
+      executable,
+      '-OutputDirectory',
+      root,
+    ],
+    { encoding: 'utf8', windowsHide: true },
+  );
+  if (iconCheck.status !== 0) throw new Error(iconCheck.stderr);
+  console.log(iconCheck.stdout.trim());
   await page.getByRole('combobox', { name: '案件状态', exact: true }).click();
   await expect(page.getByRole('listbox', { name: '案件状态选项', exact: true })).toBeVisible();
   await page.screenshot({ path: join(root, 'case-menu.png') });
@@ -263,7 +281,28 @@ try {
   await invoke(page, 'set_proceeding_contacts', {
     input: { proceedingId: first, courtId: court.id, judgeId: judge.id },
   });
-  const second = await invoke(page, 'add_proceeding', { caseId: item.id, kind: 'appeal' });
+  const second = await invoke(page, 'add_proceeding', {
+    caseId: item.id,
+    kind: 'appeal',
+    parentId: first,
+  });
+  const enforcement = await invoke(page, 'add_proceeding', {
+    caseId: item.id,
+    kind: 'enforcement',
+    parentId: first,
+  });
+  await invoke(page, 'update_proceeding_meta', {
+    input: { id: enforcement, parentId: first, state: 'completed' },
+  });
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    workspace.cases[0].currentProceedingId !== null ||
+    workspace.proceedings.filter((p) => p.state === 'active').length !== 2
+  )
+    throw new Error('Completing a focused program changed other programs');
+  await invoke(page, 'update_proceeding_meta', {
+    input: { id: enforcement, parentId: first, state: 'active' },
+  });
   await invoke(page, 'set_proceeding_contacts', {
     input: { proceedingId: second, courtId: other.id, judgeId: null },
   });
@@ -272,7 +311,18 @@ try {
   await page.reload();
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '案件信息', exact: true }).click();
+  await expect(page.locator('.program-node')).toHaveCount(3);
+  await expect(page.locator('.program-edges path')).toHaveCount(2);
+  await page.getByRole('button', { name: '查看二审程序', exact: true }).click();
+  workspace = await invoke(page, 'load_workspace');
+  if (workspace.cases[0].currentProceedingId !== first)
+    throw new Error('Browsing changed persistent focus');
+  await page.getByRole('button', { name: '查看一审程序', exact: true }).click();
+  const tags = page.getByRole('combobox', { name: '案件标签', exact: true });
+  await tags.fill('#合同纠纷');
+  await tags.press('Enter');
+  await expect(page.getByRole('button', { name: '移除标签合同纠纷' })).toBeVisible();
+  await page.getByRole('button', { name: '程序详情', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '办理法院', exact: true })).toHaveValue(
     '虚构甲法院新名称',
   );
@@ -291,6 +341,37 @@ try {
     .getByRole('button', { name: '返回主页面', exact: true })
     .click({ position: { x: 30, y: 300 } });
   await expect(page.locator('.case-page')).toHaveCount(0);
+  const today = new Date().toLocaleDateString('en-CA');
+  const eventId = crypto.randomUUID();
+  await invoke(page, 'save_calendar_event', {
+    input: {
+      id: eventId,
+      caseId: item.id,
+      title: '原生日历关联验收',
+      startDate: today,
+      endDate: today,
+      startTime: '14:00',
+      endTime: '14:30',
+      location: '',
+      notes: '',
+      reminderMinutes: null,
+    },
+  });
+  await page.reload();
+  await page.getByRole('button', { name: '案件', exact: true }).click();
+  await page.locator('.case-card').first().click();
+  await page.locator('.case-schedule-row').filter({ hasText: '原生日历关联验收' }).click();
+  await page.getByLabel('日程名称', { exact: true }).fill('原生日历关联验收（已调整）');
+  await page.getByRole('button', { name: '保存日程', exact: true }).click();
+  workspace = await invoke(page, 'load_workspace');
+  if (
+    workspace.calendarEvents.length !== 1 ||
+    workspace.calendarEvents[0].id !== eventId ||
+    !workspace.calendarEvents[0].title.includes('已调整')
+  )
+    throw new Error('Case schedule duplicated or failed to edit original event');
+  await page.screenshot({ path: join(root, 'case-overview.png') });
+  await page.getByRole('button', { name: '返回看板', exact: true }).click();
   await invoke(page, 'set_setting', { key: 'backup_directory', value: join(root, 'backups') });
   console.log('Before manual backup');
   const backup = await invoke(page, 'run_backup');
@@ -314,6 +395,13 @@ try {
   )
     throw new Error('Native relation or field flush did not survive restore');
   if (!existsSync(join(root, 'data', 'recovery'))) throw new Error('Recovery snapshot missing');
+  if (
+    workspace.proceedings.length !== 3 ||
+    workspace.proceedings.find((p) => p.id === enforcement)?.parentId !== first ||
+    !workspace.caseTags.some((t) => t.caseId === item.id && t.tag === '合同纠纷') ||
+    workspace.calendarEvents[0]?.id !== eventId
+  )
+    throw new Error('New case overview data did not survive restore');
   // Exercise deletion against real SQLite in this owned, fictional workspace only.
   const deletionCase = await invoke(page, 'create_case', {
     input: {
@@ -404,6 +492,13 @@ try {
     workspace.ledgerEntries.length !== 1
   )
     throw new Error('Persistence after restart failed');
+  if (
+    workspace.proceedings.length !== 3 ||
+    workspace.caseTags[0]?.tag !== '合同纠纷' ||
+    workspace.calendarEvents[0]?.id !== eventId ||
+    workspace.cases[0].currentProceedingId !== first
+  )
+    throw new Error('Programs, tags, schedule or focus lost after restart');
   await page.screenshot({ path: join(root, 'board.png') });
   if (process.env.HM_CHECK_UPDATE === '1') {
     const update = await invoke(page, 'check_update');

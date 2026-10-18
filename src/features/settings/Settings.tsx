@@ -21,6 +21,7 @@ export default function Settings({
   const [update, setUpdate] = useState<Commands['check_update']['result']>(null);
   const [updateDialog, setUpdateDialog] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [endpoint, setEndpoint] = useState('');
   const [progress, setProgress] = useState('');
   const { busy, error, run } = useAction();
   useEffect(() => {
@@ -29,12 +30,15 @@ export default function Settings({
       command('get_settings', {}),
       command('background_status', {}),
       command('autostart_status', {}),
+      command('get_update_status', {}),
     ])
-      .then(([settings, health, auto]) => {
+      .then(([settings, health, auto, available]) => {
         if (!canceled) {
           setSettings(settings);
           setHealth(health);
           setAuto(auto);
+          setEndpoint(settings.update_endpoint ?? '');
+          setUpdate(available);
         }
       })
       .catch(() => {});
@@ -48,6 +52,10 @@ export default function Settings({
     const stops: Array<() => void> = [];
     void Promise.all([
       listen<Record<string, string>>('background-status', (e) => setHealth(e.payload)),
+      listen<Commands['get_update_status']['result']>('update-available', (e) => {
+        setUpdate(e.payload);
+        setChecked(false);
+      }),
       listen<{ downloaded: number; total: number | null }>('update-progress', (e) =>
         setProgress(
           e.payload.total
@@ -55,10 +63,12 @@ export default function Settings({
             : `${Math.round(e.payload.downloaded / 1024)} KB`,
         ),
       ),
-    ]).then((values) => {
-      if (canceled) values.forEach((stop) => stop());
-      else stops.push(...values);
-    });
+    ])
+      .then((values) => {
+        if (canceled) values.forEach((stop) => stop());
+        else stops.push(...values);
+      })
+      .catch(() => {});
     return () => {
       canceled = true;
       stops.forEach((stop) => stop());
@@ -213,11 +223,38 @@ export default function Settings({
           </p>
         )}
       </section>
-      <section className="settings-section">
+      <section className="settings-section" id="version-update-section">
         <h2>版本与更新</h2>
         <p className="feature-description">案笺 {metadata.version} · Windows 安装版</p>
         <p className="field-hint">
-          检查新版本后，由你确认下载和安装。升级包会验证签名，安装前会备份当前工作区。
+          启动后及运行期间会在后台检查，有新版时在侧栏提示。由你确认下载和安装；升级包会验证签名，安装前会备份当前工作区。
+        </p>
+        <form
+          className="update-source-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            void setting('update_endpoint', endpoint.trim());
+            setChecked(false);
+          }}
+        >
+          <label>
+            优先更新源（可选）
+            <input
+              type="url"
+              aria-label="优先更新源"
+              value={endpoint}
+              onChange={(e) => setEndpoint(e.target.value)}
+              placeholder="https://你的下载站/latest.json"
+              pattern="https://.*"
+            />
+          </label>
+          <button type="submit" disabled={busy}>
+            保存更新源
+          </button>
+        </form>
+        <p className="field-hint">
+          留空使用 GitHub。可填写 GitLab 或自有下载站的更新清单 HTTPS 地址；优先源不可用时尝试
+          GitHub。安装包也需上传到该下载站，不能只复制清单链接。无法连接不影响离线使用。
         </p>
         <div className="feature-toolbar">
           <button

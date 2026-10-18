@@ -16,6 +16,9 @@ export interface CaseFile {
   deletedAt: string | null;
 }
 export interface Proceeding {
+  parentId: string | null;
+  state: 'active' | 'completed';
+  completedAt: string | null;
   id: string;
   caseId: string;
   kind: ProgramKind;
@@ -38,6 +41,8 @@ export interface WorkRecord {
   createdAt: string;
 }
 export interface Workspace {
+  tagCatalog: string[];
+  caseTags: { caseId: string; tag: string }[];
   statuses: CaseStatus[];
   cases: CaseFile[];
   proceedings: Proceeding[];
@@ -71,13 +76,18 @@ export type SaveAction = <K extends keyof Commands>(
   args: Commands[K]['args'],
 ) => Promise<Commands[K]['result']>;
 export interface CaseInput {
+  tags?: string[];
   id: string;
   title: string;
   caseType: CaseType;
   statusId: string;
 }
-export type ProceedingInput = Omit<Proceeding, 'caseId' | 'kind'>;
+export type ProceedingInput = Pick<Proceeding, 'id' | 'stage' | 'caseNumber' | 'court' | 'judge'>;
 export interface Commands {
+  get_update_status: {
+    args: Record<string, never>;
+    result: { version: string; notes: string | null } | null;
+  };
   seed_example: { args: { id: string }; result: string };
   storage_info: {
     args: Record<string, never>;
@@ -89,7 +99,14 @@ export interface Commands {
   create_case: { args: { input: CaseInput }; result: CaseFile };
   update_case: { args: { input: CaseInput }; result: null };
   set_case_status: { args: { id: string; statusId: string }; result: null };
-  add_proceeding: { args: { caseId: string; kind: ProgramKind }; result: string };
+  add_proceeding: {
+    args: { caseId: string; kind: ProgramKind; parentId?: string | null };
+    result: string;
+  };
+  update_proceeding_meta: {
+    args: { input: { id: string; parentId: string | null; state: 'active' | 'completed' } };
+    result: null;
+  };
   select_proceeding: { args: { caseId: string; proceedingId: string }; result: null };
   update_proceeding: { args: { input: ProceedingInput }; result: null };
   add_task: {
@@ -108,6 +125,8 @@ export const programLabels: Record<ProgramKind, string> = {
   enforcement: '执行',
 };
 export const emptyWorkspace: Workspace = {
+  tagCatalog: [],
+  caseTags: [],
   statuses: [],
   cases: [],
   proceedings: [],
@@ -190,6 +209,7 @@ export interface Stage {
   state: 'pending' | 'current' | 'done' | 'skipped';
 }
 export interface CaseEvent {
+  kind?: 'milestone' | 'stage_change';
   id: string;
   caseId: string;
   proceedingId: string | null;

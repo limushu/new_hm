@@ -17,10 +17,10 @@
   background: none;
   border: 0;
   padding-left: 0;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 .materials-scope > span {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #808080;
 }
 .material-search {
@@ -38,7 +38,7 @@
 .material-search input {
   background: none;
   border: 0;
-  font-size: 12px;
+  font-size: var(--text-sm);
   min-width: 0;
   padding: 6px 0;
   width: 100%;
@@ -53,7 +53,7 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #999;
   margin: 18px 0 12px;
   min-width: 0;
@@ -63,7 +63,7 @@
   display: flex;
   align-items: center;
   gap: 3px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 .material-breadcrumb > span {
@@ -83,7 +83,7 @@
   gap: 12px;
 }
 .material-list-heading {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #777;
   padding: 10px 2px;
   border-bottom: 1px solid #343434;
@@ -92,14 +92,14 @@
   padding: 12px 2px;
   min-height: 52px;
   border-bottom: 1px solid #2a2a2a;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .material-row:hover {
   background: #ffffff03;
 }
 .material-row > small,
 .material-row > time {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #858585;
 }
 .material-name {
@@ -109,7 +109,7 @@
   min-width: 0;
   text-align: left;
   padding: 0;
-  font-size: 13px;
+  font-size: var(--text-base);
   color: #d5d5d5;
 }
 .material-name > span {
@@ -124,14 +124,14 @@
 .material-name small {
   display: block;
   color: #888;
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin-top: 4px;
   max-height: 32px;
   overflow: hidden;
   white-space: pre-wrap;
 }
 .material-notice {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #99ad9e;
   margin: 8px 0;
 }
@@ -145,12 +145,12 @@
   color: #747b80;
 }
 .materials-empty p {
-  font-size: 13px;
+  font-size: var(--text-base);
   color: #aaa;
   margin: 14px 0 6px;
 }
 .materials-empty span {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #747474;
 }
 .material-menu {
@@ -169,7 +169,7 @@
   width: 100%;
   padding: 8px 10px;
   border-radius: 5px;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .material-menu button:hover {
   background: #ffffff0a;
@@ -196,7 +196,7 @@
   border-bottom: 1px solid #343434;
 }
 .material-preview > header strong {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   flex: 1;
   min-width: 0;
@@ -208,7 +208,7 @@
   display: flex;
   align-items: center;
   gap: 5px;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .preview-content {
   height: calc(100% - 54px);
@@ -235,7 +235,7 @@
   margin-top: 40px;
 }
 .recording-clock {
-  font-size: 30px;
+  font-size: var(--text-display);
   font-weight: 400;
   color: #b4c5d3;
   font-variant-numeric: tabular-nums;
@@ -277,4 +277,33 @@
   border-radius: 5px;
   outline: 1px solid #63819866;
   outline-offset: -1px;
+}
+.material-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin: 18px 0 14px;
+}
+.material-scopes button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-radius: 7px;
+  border: 1px solid #353535;
+  color: #aaa;
+  padding: 7px 10px;
+  font-size: var(--text-sm);
+}
+.material-scopes button.active {
+  color: #d1dce4;
+  background: #26343f;
+  border-color: #546d7e;
+}
+.material-scopes small {
+  font-size: var(--text-xs);
+  color: #8c9aa3;
+}
+.materials-scope strong {
+  font-weight: 500;
+  color: #d0d0d0;
 }

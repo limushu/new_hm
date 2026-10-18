@@ -2,7 +2,7 @@
   padding: 56px 48px 48px;
 }
 .cases-page h1 {
-  font-size: 28px;
+  font-size: var(--text-display);
   font-weight: 600;
   letter-spacing: -0.5px;
 }
@@ -22,7 +22,7 @@
   border-radius: 20px;
   padding: 7px 12px;
   color: #e5e5e5;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
 }
 .view-pill svg {
@@ -54,13 +54,13 @@
   border: 0;
   padding: 0;
   outline: none;
-  font-size: 12px;
+  font-size: var(--text-sm);
   width: 100%;
   min-width: 0;
 }
 .case-count {
   color: #808080;
-  font-size: 11px;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 .case-board {
@@ -106,7 +106,7 @@
   color: #e7ecef;
   border-radius: 15px;
   padding: 3px 9px 3px 7px;
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   line-height: 17px;
 }
@@ -118,7 +118,7 @@
 }
 .case-column > header small {
   color: var(--status-accent);
-  font-size: 12px;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
 .case-column .column-create {
@@ -157,7 +157,7 @@
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: 500;
   line-height: 1.5;
 }
@@ -176,7 +176,7 @@
   overflow: hidden;
 }
 .case-card-meta {
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 18px;
   color: #a7abae;
   padding-left: 23px;
@@ -184,7 +184,7 @@
 .case-card > time {
   display: block;
   padding-left: 23px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 16px;
   color: #9fa6ab;
   white-space: nowrap;
@@ -198,7 +198,7 @@
   gap: 8px;
   width: 100%;
   padding: 11px 12px;
-  font-size: 13px;
+  font-size: var(--text-base);
   color: #a9a9a5;
   margin-top: 8px;
   border: 1px solid #333333;
@@ -214,7 +214,7 @@
   height: 15px;
 }
 .column-empty {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #898989;
   padding: 8px 4px;
 }
@@ -243,7 +243,7 @@
   user-select: none;
 }
 .board-error {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #df9895;
   line-height: 1.6;
   margin: 0 0 12px;
@@ -262,7 +262,7 @@
   border: 1px dashed #3c3c3c;
   border-radius: 8px;
   padding: 11px 15px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #919191;
   transition:
     background 0.15s,
@@ -284,7 +284,7 @@
   align-items: center;
   gap: 10px;
   color: #aaa;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .case-trash-notice button {
   color: #9dbbd1;
@@ -313,7 +313,7 @@
     padding: 32px 20px;
   }
   .cases-page h1 {
-    font-size: 25px;
+    font-size: var(--text-display-mobile);
   }
   .board-toolbar {
     gap: 8px;

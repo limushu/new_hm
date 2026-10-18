@@ -44,6 +44,7 @@ fn version_two_stage_migration_keeps_one_current_stage_and_original_database() {
 fn case(store: &mut Store, title: &str) -> Case {
     store
         .create_case(CreateCase {
+            tags: None,
             id: Uuid::new_v4().to_string(),
             title: title.into(),
             case_type: "civil".into(),

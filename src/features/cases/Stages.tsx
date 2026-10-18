@@ -17,6 +17,10 @@ export default function Stages({
   data: Workspace;
   save: SaveAction;
 }) {
+  const closed = data.proceedings.find((p) => p.id === proceedingId)?.state === 'completed';
+  const history = data.caseEvents.filter(
+    (e) => e.proceedingId === proceedingId && e.kind === 'stage_change',
+  );
   const rows = data.stages
     .filter((s) => s.proceedingId === proceedingId)
     .sort((a, b) => a.position - b.position);
@@ -35,15 +39,17 @@ export default function Stages({
     <>
       <section className="feature-section">
         <header>
-          <h3>办理阶段</h3>
-          <button onClick={() => setManage(true)}>管理阶段</button>
+          <h3>{closed ? '最后办理阶段' : '程序内阶段'}</h3>
+          <button disabled={closed} onClick={() => setManage(true)}>
+            管理阶段
+          </button>
         </header>
         <div className="stage-strip">
           {rows.map((stage) => (
             <button
               key={stage.id}
               className={`stage-chip stage-${stage.state}`}
-              disabled={busy}
+              disabled={busy || closed}
               title={stage.state === 'current' ? '当前阶段' : '点击切换到此阶段'}
               onClick={() => {
                 if (stage.state !== 'current')
@@ -69,7 +75,7 @@ export default function Stages({
       </section>
       <section className="feature-section">
         <header>
-          <h3>程序事件与关键日期</h3>
+          <h3>程序事项</h3>
           <button
             onClick={() =>
               setEvent({
@@ -87,7 +93,7 @@ export default function Stages({
           </button>
         </header>
         {data.caseEvents
-          .filter((e) => e.proceedingId === proceedingId)
+          .filter((e) => e.proceedingId === proceedingId && e.kind !== 'stage_change')
           .map((e) => (
             <article className="case-event" key={e.id}>
               <time>{e.eventDate}</time>
@@ -97,10 +103,27 @@ export default function Stages({
               </div>
             </article>
           ))}
-        {!data.caseEvents.some((e) => e.proceedingId === proceedingId) && (
-          <p className="quiet-empty">阶段切换会保留记录，也可记录开庭、鉴定、调解等事件。</p>
+        {!data.caseEvents.some(
+          (e) => e.proceedingId === proceedingId && e.kind !== 'stage_change',
+        ) && (
+          <p className="quiet-empty">
+            记录本程序的沟通、递交或处理事项。需要提醒的开庭等安排，可加入案件日程。
+          </p>
         )}
       </section>
+      {history.length > 0 && (
+        <details className="case-history">
+          <summary>阶段变更记录 · {history.length}</summary>
+          <div className="stage-history-list">
+            {history.map((e) => (
+              <article className="case-event" key={e.id}>
+                <time>{e.eventDate}</time>
+                <div>{e.title}</div>
+              </article>
+            ))}
+          </div>
+        </details>
+      )}
       {manage && (
         <Dialog title="管理办理阶段" onClose={() => setManage(false)}>
           <div className="feature-list">

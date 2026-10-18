@@ -56,8 +56,11 @@ fn add_proceeding(
     state: State<'_, AppState>,
     case_id: String,
     kind: String,
+    parent_id: Option<String>,
 ) -> Result<String, String> {
-    access(&state, |s| s.add_proceeding(&case_id, &kind))
+    access(&state, |s| {
+        s.add_proceeding_from(&case_id, &kind, parent_id.as_deref())
+    })
 }
 #[tauri::command(async)]
 fn select_proceeding(
@@ -191,6 +194,7 @@ pub fn run() {
             commands::update_material_notes,
             commands::move_material,
             commands::save_contact,
+            commands::update_proceeding_meta,
             commands::set_proceeding_contacts,
             commands::save_contact_link,
             commands::delete_contact,
@@ -227,6 +231,7 @@ pub fn run() {
             desktop::autostart_status,
             desktop::set_autostart,
             desktop::check_update,
+            desktop::get_update_status,
             desktop::install_update,
         ])
         .run(context)

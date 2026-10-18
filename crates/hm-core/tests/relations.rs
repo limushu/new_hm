@@ -12,6 +12,7 @@ fn person(name: &str, kind: &str) -> Contact {
 }
 fn case(s: &mut Store) -> Case {
     s.create_case(CreateCase {
+        tags: None,
         id: Uuid::new_v4().to_string(),
         title: "关系验收（虚构）".into(),
         case_type: "civil".into(),
@@ -293,7 +294,7 @@ fn version_three_complete_backup_restores_and_migrates_with_materials() {
     let b = s.create_backup(&dir.path().join("backups"), false).unwrap();
     let root = std::path::Path::new(&b.directory);
     let db = rusqlite::Connection::open(root.join("workspace.sqlite3")).unwrap();
-    db.execute_batch("DROP TABLE contact_relations; PRAGMA user_version=3;")
+    db.execute_batch("DROP TABLE case_tags; DROP TABLE tag_catalog; ALTER TABLE proceedings DROP COLUMN parent_id; ALTER TABLE proceedings DROP COLUMN state; ALTER TABLE proceedings DROP COLUMN completed_at; ALTER TABLE case_events DROP COLUMN kind; DROP TABLE contact_relations; PRAGMA user_version=3;")
         .unwrap();
     drop(db);
     let mut manifest: serde_json::Value =

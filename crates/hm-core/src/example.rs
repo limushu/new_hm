@@ -7,6 +7,7 @@ impl Store {
             return Ok(id.into());
         }
         let item = self.create_case(CreateCase {
+            tags: None,
             id: id.into(),
             title: "示例 · 借款合同纠纷".into(),
             case_type: "civil".into(),

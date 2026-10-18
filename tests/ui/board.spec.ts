@@ -35,7 +35,7 @@ test('跨列拖动保存状态并更新数量，松手不会误打开案件', as
     'data-value',
     'closed',
   );
-  await expect(page.getByRole('combobox', { name: '当前程序' })).toContainText('庭前准备');
+  await expect(page.getByRole('region', { name: '当前办理概况' })).toContainText('庭前准备');
 });
 
 test('拖出看板或按 Escape 取消时保留原状态', async ({ page }) => {

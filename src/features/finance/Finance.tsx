@@ -9,6 +9,8 @@ import { programLabels } from '../../domain/types';
 import { dateKey } from '../../domain/calendar';
 import { command } from '../../services/repository';
 import { useAction } from '../../components/useAction';
+import FinanceChart from './FinanceChart';
+import './finance-chart.css';
 export default function Finance({
   caseId,
   data,
@@ -28,6 +30,7 @@ export default function Finance({
   const [fee, setFee] = useState<string | null>(null);
   const [remove, setRemove] = useState<LedgerEntry | null>(null);
   const [filter, setFilter] = useState('all');
+  const [category, setCategory] = useState<string | null>(null);
   const { error, run } = useAction();
   const rows = data.ledgerEntries.filter((row) => row.caseId === caseId);
   const total = (predicate: (row: LedgerEntry) => boolean) =>
@@ -86,13 +89,33 @@ export default function Finance({
         待收仅按“律师费”类别的收入统计。垫付款报销单独跟踪，不重复计入律师费收入。
       </p>
       <div className="feature-toolbar">
-        <Select aria-label="筛选收支" value={filter} onValueChange={(value) => setFilter(value)}>
+        <Select
+          aria-label="筛选收支"
+          value={filter}
+          onValueChange={(value) => {
+            setFilter(value);
+            setCategory(null);
+          }}
+        >
           <option value="all">全部收支</option>
           <option value="income">收入</option>
           <option value="expense">支出</option>
           <option value="pending">待报销</option>
         </Select>
       </div>
+      <FinanceChart
+        rows={rows}
+        agreed={detail.agreedFeeCents}
+        onCategory={(kind, name) => {
+          setFilter(kind);
+          setCategory(name);
+        }}
+      />
+      {category && (
+        <button className="inline-link" onClick={() => setCategory(null)}>
+          正在查看：{category} · 清除分类筛选
+        </button>
+      )}
       {error && (
         <p role="alert" className="error-message">
           {error}
@@ -101,8 +124,9 @@ export default function Finance({
       {rows
         .filter(
           (r) =>
-            filter === 'all' ||
-            (filter === 'pending' ? r.reimbursement === 'pending' : r.kind === filter),
+            (filter === 'all' ||
+              (filter === 'pending' ? r.reimbursement === 'pending' : r.kind === filter)) &&
+            (!category || (r.category || '未分类') === category),
         )
         .map((row) => (
           <div className="feature-row ledger-row" key={row.id}>

@@ -1,7 +1,12 @@
 import DateField from '../../components/DateField';
 import Dialog from '../../components/Dialog';
 import Select from '../../components/Select';
-import CaseLinks from './CaseLinks';
+import CaseOverview from './CaseOverview';
+import CaseTags from './CaseTags';
+import ProceedingPath from './ProceedingPath';
+import CaseSchedule from './CaseSchedule';
+import { proceedingName } from '../../domain/proceedings';
+import './case-overview.css';
 import ProgramContacts from '../contacts/ProgramContacts';
 import Finance from '../finance/Finance';
 import { CaseContacts } from '../contacts/Contacts';
@@ -37,8 +42,15 @@ export default function CasePage({
 }: Props) {
   const [title, setTitle] = useState(item.title);
   const [caseType, setCaseType] = useState(item.caseType);
+  const [tags, setTags] = useState(() =>
+    data.caseTags.filter((t) => t.caseId === item.id).map((t) => t.tag),
+  );
+  const [viewedId, setViewedId] = useState(item.currentProceedingId);
+  const [parentId, setParentId] = useState<string | null>(null);
+  const [finishProgram, setFinishProgram] = useState(false);
   const [statusId, setStatusId] = useState(item.statusId);
   const [tab, setTab] = useState(initialTab);
+  const [materialScope, setMaterialScope] = useState('shared');
   const [expanded, setExpanded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState('');
@@ -55,7 +67,19 @@ export default function CasePage({
   const section = useRef<HTMLElement>(null);
   const titleInput = useRef<HTMLInputElement>(null);
   const programs = data.proceedings.filter((p) => p.caseId === item.id);
-  const program = programs.find((p) => p.id === item.currentProceedingId);
+  const program =
+    programs.find((p) => p.id === viewedId) ??
+    programs.find((p) => p.id === item.currentProceedingId) ??
+    programs[0];
+  function viewProgram(id: string) {
+    setViewedId(id);
+    setTab('info');
+  }
+  function addProgram() {
+    setParentId(program?.id ?? null);
+    setProgramForm(true);
+    setTab('info');
+  }
   const tasks = data.tasks.filter((t) => t.caseId === item.id);
   useEffect(() => {
     if (draft) titleInput.current?.focus();
@@ -89,13 +113,20 @@ export default function CasePage({
   }
   function commit(overrides: Partial<CaseInput> = {}): Promise<boolean> {
     if (inFlight.current) return inFlight.current;
-    const value = { id: item.id, title: title.trim(), caseType, statusId, ...overrides };
+    const value = { id: item.id, title: title.trim(), caseType, statusId, tags, ...overrides };
     if (!value.title) return Promise.resolve(false);
     if (
       saved &&
       value.title === item.title &&
       value.caseType === item.caseType &&
-      value.statusId === item.statusId
+      value.statusId === item.statusId &&
+      JSON.stringify([...value.tags].sort()) ===
+        JSON.stringify(
+          data.caseTags
+            .filter((t) => t.caseId === item.id)
+            .map((t) => t.tag)
+            .sort(),
+        )
     )
       return Promise.resolve(true);
     setLocalError('');
@@ -205,45 +236,39 @@ export default function CasePage({
                 ))}
               </Select>
             </label>
-            <label>
-              案件类型
-              <Select
-                aria-label="案件类型"
-                value={caseType}
+            <div className="case-category">
+              <span>案件类型 / 标签</span>
+              <CaseTags
+                value={tags}
+                catalog={data.tagCatalog}
                 disabled={saving}
-                onValueChange={(value) => {
-                  const type = value as CaseFile['caseType'];
-                  setCaseType(type);
-                  if (title.trim()) void commit({ caseType: type });
+                onChange={(value) => {
+                  setTags(value);
+                  if (title.trim()) void commit({ tags: value });
                 }}
-              >
-                <option value="civil">民商事诉讼</option>
-                <option value="other">其他案件</option>
-              </Select>
-            </label>
-            {program && (
-              <label>
-                当前程序
-                <Select
-                  aria-label="当前程序"
-                  disabled={saving}
-                  value={program.id}
-                  onValueChange={(value) =>
-                    void act(() =>
-                      save('select_proceeding', { caseId: item.id, proceedingId: value }),
-                    )
-                  }
-                >
-                  {programs.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {programLabels[p.kind]}
-                      {p.stage ? ` · ${p.stage}` : ''}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-            )}
+              />
+            </div>
           </div>
+          {!saved && (
+            <label className="initial-program-option">
+              <input
+                type="checkbox"
+                checked={caseType === 'civil'}
+                onChange={(e) => setCaseType(e.target.checked ? 'civil' : 'other')}
+              />
+              建案时建立一审程序（也可稍后添加）
+            </label>
+          )}
+          {saved && (
+            <ProceedingPath
+              item={item}
+              programs={programs}
+              selected={program?.id ?? null}
+              data={data}
+              onSelect={viewProgram}
+              onAdd={addProgram}
+            />
+          )}
           {localError && (
             <p className="error-message" role="alert">
               {localError}
@@ -253,7 +278,7 @@ export default function CasePage({
             {[
               ['overview', '概览'],
               ['materials', '材料'],
-              ['info', '案件信息'],
+              ['info', '程序详情'],
               ['finance', '收支'],
             ].map(([id, label]) => (
               <button key={id} className={tab === id ? 'active' : ''} onClick={() => setTab(id)}>
@@ -273,45 +298,55 @@ export default function CasePage({
             <>
               {tab === 'overview' && (
                 <>
-                  <section className="case-section">
-                    <div className="section-title">
-                      <h3>待办</h3>
-                      <button disabled={saving} onClick={() => setTaskForm(!taskForm)}>
-                        <Plus />
-                        添加待办
-                      </button>
-                    </div>
-                    {!tasks.length && !taskForm && <p className="empty-text">暂无待办</p>}
-                    {tasks.map((t) => {
-                      const completed = taskOverrides[t.id] ?? t.completed;
-                      return (
-                        <label key={t.id} className={`todo-row ${completed ? 'completed' : ''}`}>
-                          <input
-                            type="checkbox"
-                            checked={completed}
-                            disabled={saving}
-                            onChange={(e) => {
-                              const checked = e.target.checked;
-                              setTaskOverrides((value) => ({ ...value, [t.id]: checked }));
-                              void act(async () => {
-                                try {
-                                  await save('toggle_task', { id: t.id, completed: checked });
-                                } finally {
-                                  setTaskOverrides((value) => {
-                                    const next = { ...value };
-                                    delete next[t.id];
-                                    return next;
-                                  });
-                                }
-                              });
-                            }}
-                          />
-                          <span>{t.title}</span>
-                          {t.dueDate && <time>{t.dueDate}</time>}
-                        </label>
-                      );
-                    })}
-                  </section>
+                  <CaseOverview
+                    item={item}
+                    data={data}
+                    save={save}
+                    onCase={onCase}
+                    onProgram={viewProgram}
+                  />
+                  <div className="overview-next-grid">
+                    <section className="case-section">
+                      <div className="section-title">
+                        <h3>待办</h3>
+                        <button disabled={saving} onClick={() => setTaskForm(!taskForm)}>
+                          <Plus />
+                          添加待办
+                        </button>
+                      </div>
+                      {!tasks.length && !taskForm && <p className="empty-text">暂无待办</p>}
+                      {tasks.map((t) => {
+                        const completed = taskOverrides[t.id] ?? t.completed;
+                        return (
+                          <label key={t.id} className={`todo-row ${completed ? 'completed' : ''}`}>
+                            <input
+                              type="checkbox"
+                              checked={completed}
+                              disabled={saving}
+                              onChange={(e) => {
+                                const checked = e.target.checked;
+                                setTaskOverrides((value) => ({ ...value, [t.id]: checked }));
+                                void act(async () => {
+                                  try {
+                                    await save('toggle_task', { id: t.id, completed: checked });
+                                  } finally {
+                                    setTaskOverrides((value) => {
+                                      const next = { ...value };
+                                      delete next[t.id];
+                                      return next;
+                                    });
+                                  }
+                                });
+                              }}
+                            />
+                            <span>{t.title}</span>
+                            {t.dueDate && <time>{t.dueDate}</time>}
+                          </label>
+                        );
+                      })}
+                    </section>
+                    <CaseSchedule caseId={item.id} data={data} save={save} />
+                  </div>
                   <section className="case-section">
                     <div className="section-title">
                       <h3>材料</h3>
@@ -320,7 +355,34 @@ export default function CasePage({
                         <ChevronRight />
                       </button>
                     </div>
-                    <p className="empty-text">案件共用材料与程序材料分别管理。</p>
+                    <div className="overview-materials">
+                      {[
+                        { id: 'shared', name: '案件共用' },
+                        ...programs.map((p) => ({ id: p.id, name: proceedingName(p, programs) })),
+                      ].map((scope) => (
+                        <button
+                          key={scope.id}
+                          onClick={() => {
+                            setMaterialScope(scope.id);
+                            setTab('materials');
+                          }}
+                        >
+                          <span>{scope.name}</span>
+                          <strong>
+                            {
+                              data.materials.filter(
+                                (m) =>
+                                  m.caseId === item.id &&
+                                  !m.deletedAt &&
+                                  m.kind === 'file' &&
+                                  (m.proceedingId ?? 'shared') === scope.id,
+                              ).length
+                            }{' '}
+                            份
+                          </strong>
+                        </button>
+                      ))}
+                    </div>
                   </section>
                   <Records caseId={item.id} data={data} save={save} />
                 </>
@@ -328,43 +390,83 @@ export default function CasePage({
               {tab === 'info' && (
                 <section className="case-section">
                   <div className="section-title">
-                    <h3>办理程序</h3>
-                    <button disabled={saving} onClick={() => setProgramForm(!programForm)}>
-                      <Plus />
-                      新增程序
-                    </button>
+                    <h3>{program ? proceedingName(program, programs) : '办理程序'} · 程序详情</h3>
                   </div>
-                  {programForm && (
-                    <form
-                      className="inline-form program-form"
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        void act(async () => {
-                          await save('add_proceeding', { caseId: item.id, kind: newProgram });
-                          setProgramForm(false);
-                        });
-                      }}
-                    >
-                      <Select
-                        aria-label="新增程序类型"
-                        value={newProgram}
-                        onValueChange={(value) => setNewProgram(value as ProgramKind)}
-                      >
-                        {Object.entries(programLabels).map(([id, label]) => (
-                          <option key={id} value={id}>
-                            {label}
-                          </option>
-                        ))}
-                      </Select>
-                      <button type="submit" disabled={saving}>
-                        新增
-                      </button>
-                      <p>原程序的信息会保留，不会自动将案件结案。</p>
-                    </form>
-                  )}
                   {!program && <p className="empty-text">尚未建立办理程序。</p>}
                   {program && (
+                    <div className="program-detail-context">
+                      <label>
+                        查看程序
+                        <Select
+                          aria-label="查看程序"
+                          value={program.id}
+                          onValueChange={setViewedId}
+                        >
+                          {programs.map((p) => (
+                            <option value={p.id} key={p.id}>
+                              {proceedingName(p, programs)}
+                            </option>
+                          ))}
+                        </Select>
+                      </label>
+                      <span>
+                        {program.state === 'completed'
+                          ? '已办结'
+                          : item.currentProceedingId === program.id
+                            ? '当前关注 · 办理中'
+                            : '办理中'}
+                      </span>
+                      {program.state === 'active' && item.currentProceedingId !== program.id && (
+                        <button
+                          disabled={saving}
+                          onClick={() =>
+                            void act(() =>
+                              save('select_proceeding', {
+                                caseId: item.id,
+                                proceedingId: program.id,
+                              }),
+                            )
+                          }
+                        >
+                          设为当前关注
+                        </button>
+                      )}
+                      <button disabled={saving} onClick={() => setFinishProgram(true)}>
+                        {program.state === 'completed' ? '恢复办理' : '标记办结'}
+                      </button>
+                    </div>
+                  )}
+                  {program && (
                     <div className="program-fields" key={program.id}>
+                      <label>
+                        承接自
+                        <Select
+                          aria-label="前序程序"
+                          value={program.parentId ?? ''}
+                          disabled={saving}
+                          onValueChange={(value) =>
+                            void act(() =>
+                              save('update_proceeding_meta', {
+                                input: {
+                                  id: program.id,
+                                  parentId: value || null,
+                                  state: program.state,
+                                },
+                              }),
+                            )
+                          }
+                        >
+                          <option value="">独立程序 / 未指定</option>
+                          {programs
+                            .filter((p) => p.id !== program.id)
+                            .map((p) => (
+                              <option key={p.id} value={p.id}>
+                                {proceedingName(p, programs)}
+                                {p.caseNumber ? ' · ' + p.caseNumber : ''}
+                              </option>
+                            ))}
+                        </Select>
+                      </label>
                       {([['caseNumber', '案号']] as const).map(([key, label]) => (
                         <label key={key}>
                           {label}
@@ -409,11 +511,16 @@ export default function CasePage({
                     <Stages caseId={item.id} proceedingId={program.id} data={data} save={save} />
                   )}
                   <CaseContacts caseId={item.id} data={data} save={save} onCase={onCase} />
-                  <CaseLinks caseId={item.id} data={data} save={save} onCase={onCase} />
                 </>
               )}
               {tab === 'materials' && (
-                <Materials caseId={item.id} data={data} save={save} focusId={focusMaterialId} />
+                <Materials
+                  caseId={item.id}
+                  data={data}
+                  save={save}
+                  focusId={focusMaterialId}
+                  initialScope={materialScope}
+                />
               )}
               {tab === 'finance' && <Finance caseId={item.id} data={data} save={save} />}
             </>
@@ -423,6 +530,78 @@ export default function CasePage({
           <X />
         </button>
       </section>
+      {programForm && (
+        <Dialog
+          title="新增办理程序"
+          onClose={() => setProgramForm(false)}
+          submitLabel="新增"
+          onSubmit={async () => {
+            const id = await save('add_proceeding', {
+              caseId: item.id,
+              kind: newProgram,
+              parentId,
+            });
+            setViewedId(id);
+            setTab('info');
+          }}
+        >
+          <label>
+            程序类型
+            <Select
+              aria-label="新增程序类型"
+              value={newProgram}
+              onValueChange={(value) => setNewProgram(value as ProgramKind)}
+            >
+              {Object.entries(programLabels).map(([id, label]) => (
+                <option key={id} value={id}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <label>
+            承接自
+            <Select
+              aria-label="新程序的前序程序"
+              value={parentId ?? ''}
+              onValueChange={(value) => setParentId(value || null)}
+            >
+              <option value="">独立程序</option>
+              {programs.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {proceedingName(p, programs)}
+                  {p.caseNumber ? ' · ' + p.caseNumber : ''}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <p className="field-hint">
+            新程序有独立的案号、法院、法官、阶段和材料。不会自动办结其他程序或整个案件，可并行推进。
+          </p>
+        </Dialog>
+      )}
+      {finishProgram && program && (
+        <Dialog
+          title={program.state === 'active' ? '办结程序' : '恢复程序办理'}
+          onClose={() => setFinishProgram(false)}
+          onSubmit={async () => {
+            await save('update_proceeding_meta', {
+              input: {
+                id: program.id,
+                parentId: program.parentId,
+                state: program.state === 'active' ? 'completed' : 'active',
+              },
+            });
+          }}
+        >
+          <p className="feature-description">
+            {program.state === 'active'
+              ? '将此程序标记为办结，保留阶段与全部资料；如果正在关注此程序，会取消关注。'
+              : '恢复此程序的办理状态。'}
+            此操作不改变整个案件的结案状态。
+          </p>
+        </Dialog>
+      )}
       {taskForm && (
         <Dialog
           title="新建待办"

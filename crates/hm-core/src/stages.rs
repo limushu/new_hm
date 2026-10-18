@@ -3,13 +3,42 @@ use crate::*;
 use rusqlite::{params, OptionalExtension};
 use uuid::Uuid;
 impl Store {
+    fn require_open_program(&self, id: &str) -> Result<()> {
+        let state: String = self
+            .connection
+            .query_row("SELECT state FROM proceedings WHERE id=?1", [id], |r| {
+                r.get(0)
+            })
+            .optional()?
+            .ok_or(Error::NotFound)?;
+        if state == "completed" {
+            return Err(Error::Validation(
+                "程序已办结，请先恢复办理再调整阶段".into(),
+            ));
+        }
+        Ok(())
+    }
     pub fn stages(&self) -> Result<Vec<Stage>> {
         Ok(self.connection.prepare("SELECT id,proceeding_id,name,position,state FROM stages ORDER BY proceeding_id,position,id")?.query_map([],|r|Ok(Stage{id:r.get(0)?,proceeding_id:r.get(1)?,name:r.get(2)?,position:r.get(3)?,state:r.get(4)?}))?.collect::<rusqlite::Result<Vec<_>>>()?)
     }
     pub fn case_events(&self) -> Result<Vec<CaseEvent>> {
-        Ok(self.connection.prepare("SELECT id,case_id,proceeding_id,title,event_date,notes FROM case_events ORDER BY event_date DESC,created_at DESC,id")?.query_map([],|r|Ok(CaseEvent{id:r.get(0)?,case_id:r.get(1)?,proceeding_id:r.get(2)?,title:r.get(3)?,event_date:r.get(4)?,notes:r.get(5)?}))?.collect::<rusqlite::Result<Vec<_>>>()?)
+        Ok(self.connection.prepare("SELECT id,case_id,proceeding_id,title,event_date,notes,kind FROM case_events ORDER BY event_date DESC,created_at DESC,id")?.query_map([],|r|Ok(CaseEvent{id:r.get(0)?,case_id:r.get(1)?,proceeding_id:r.get(2)?,title:r.get(3)?,event_date:r.get(4)?,notes:r.get(5)?,kind:r.get(6)?}))?.collect::<rusqlite::Result<Vec<_>>>()?)
     }
     pub fn save_stage(&mut self, input: Stage) -> Result<()> {
+        let completed: bool = self
+            .connection
+            .query_row(
+                "SELECT state='completed' FROM proceedings WHERE id=?1",
+                [&input.proceeding_id],
+                |r| r.get(0),
+            )
+            .optional()?
+            .ok_or(Error::NotFound)?;
+        if completed {
+            return Err(Error::Validation(
+                "程序已办结，请先恢复办理再调整阶段".into(),
+            ));
+        }
         let owner: String = self
             .connection
             .query_row(
@@ -56,7 +85,7 @@ impl Store {
                 .as_ref()
                 .is_none_or(|(_, state)| state != "current")
             {
-                tx.execute("INSERT INTO case_events(id,case_id,proceeding_id,title,event_date) VALUES(?1,?2,?3,?4,date('now','localtime'))",params![Uuid::new_v4().to_string(),owner,input.proceeding_id,format!("切换阶段：{name}")])?;
+                tx.execute("INSERT INTO case_events(id,case_id,proceeding_id,title,event_date,kind) VALUES(?1,?2,?3,?4,date('now','localtime'),'stage_change')",params![Uuid::new_v4().to_string(),owner,input.proceeding_id,format!("切换阶段：{name}")])?;
             }
         } else if previous.is_some_and(|(_, state)| state == "current") {
             tx.execute(
@@ -68,6 +97,7 @@ impl Store {
         Ok(())
     }
     pub fn reorder_stages(&mut self, proceeding_id: &str, ids: &[String]) -> Result<()> {
+        self.require_open_program(proceeding_id)?;
         let owner: String = self
             .connection
             .query_row(
@@ -107,6 +137,7 @@ impl Store {
             .into_iter()
             .find(|s| s.id == id)
             .ok_or(Error::NotFound)?;
+        self.require_open_program(&stage.proceeding_id)?;
         let owner: String = self.connection.query_row(
             "SELECT case_id FROM proceedings WHERE id=?1",
             [&stage.proceeding_id],
@@ -122,6 +153,9 @@ impl Store {
     }
     pub fn save_case_event(&self, input: CaseEvent) -> Result<()> {
         valid_id(&input.id)?;
+        if input.kind != "milestone" {
+            return Err(Error::Validation("阶段变更记录不能手动修改".into()));
+        }
         self.validate_proceeding(&input.case_id, input.proceeding_id.as_deref())?;
         checked_date(&input.event_date)?;
         let title = checked_text(&input.title, "事件名称", 200, true)?;
@@ -136,6 +170,14 @@ impl Store {
             .optional()?;
         if owner.is_some_and(|id| id != input.case_id) {
             return Err(Error::Validation("事件不属于此案件".into()));
+        }
+        let historical: bool = self.connection.query_row(
+            "SELECT EXISTS(SELECT 1 FROM case_events WHERE id=?1 AND kind='stage_change')",
+            [&input.id],
+            |r| r.get(0),
+        )?;
+        if historical {
+            return Err(Error::Validation("阶段变更记录不能手动修改".into()));
         }
         self.connection.execute("INSERT INTO case_events(id,case_id,proceeding_id,title,event_date,notes) VALUES(?1,?2,?3,?4,?5,?6) ON CONFLICT(id) DO UPDATE SET proceeding_id=excluded.proceeding_id,title=excluded.title,event_date=excluded.event_date,notes=excluded.notes",params![input.id,input.case_id,input.proceeding_id,title,input.event_date,notes])?;
         Ok(())

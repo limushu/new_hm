@@ -1,4 +1,5 @@
 import BrandMark from './components/BrandMark';
+import UpdateNotice from './components/UpdateNotice';
 import Contacts, { ContactDetail } from './features/contacts/Contacts';
 import SettingsPage from './features/settings/Settings';
 import GlobalSearch from './components/GlobalSearch';
@@ -160,6 +161,16 @@ export default function App() {
           ))}
         </div>
         <div className="sidebar-bottom">
+          <UpdateNotice
+            onOpen={() => {
+              setPage('settings');
+              requestAnimationFrame(() =>
+                document
+                  .getElementById('version-update-section')
+                  ?.scrollIntoView({ block: 'start', behavior: 'smooth' }),
+              );
+            }}
+          />
           <span className="storage-indicator">
             <i />
             {previewMode

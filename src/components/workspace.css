@@ -22,7 +22,7 @@
   gap: 16px;
 }
 .workspace-dialog h2 {
-  font-size: 17px;
+  font-size: var(--text-title-sm);
   font-weight: 500;
 }
 .workspace-dialog fieldset {
@@ -37,7 +37,7 @@
 .feature-form label {
   display: grid;
   gap: 7px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #aaa;
 }
 .workspace-dialog input,
@@ -58,7 +58,7 @@
 .workspace-dialog footer button,
 .feature-button {
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   padding: 7px 12px;
 }
 .primary-action {
@@ -66,7 +66,7 @@
   color: #f1f3f5;
   border-radius: 6px;
   padding: 7px 12px;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .primary-action:hover {
   background: #467a9f;
@@ -82,7 +82,7 @@
 }
 .field-hint {
   color: #858585;
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.7;
 }
 .feature-toolbar {
@@ -100,7 +100,7 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   padding: 6px 8px;
   border-radius: 6px;
 }
@@ -122,19 +122,19 @@
   gap: 12px;
 }
 .feature-section h3 {
-  font-size: 14px;
+  font-size: var(--text-body);
   font-weight: 500;
 }
 .feature-section > header button {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #aebbc4;
 }
 .quiet-empty {
   color: #858585;
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.8;
   padding: 18px 0;
 }
@@ -147,7 +147,7 @@
   gap: 10px;
   padding: 13px 2px;
   border-bottom: 1px solid #2c2c2c;
-  font-size: 13px;
+  font-size: var(--text-base);
   min-width: 0;
 }
 .feature-row > span:first-of-type,
@@ -155,7 +155,7 @@
   min-width: 0;
 }
 .feature-row small {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #939393;
   line-height: 1.7;
 }
@@ -173,7 +173,7 @@
   margin-left: auto;
   display: flex;
   gap: 8px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #9aa8b4;
 }
 .feature-row .row-actions button {
@@ -184,14 +184,14 @@
   background: #ffffff08;
 }
 .feature-label {
-  font-size: 11px;
+  font-size: var(--text-xs);
   padding: 2px 6px;
   background: #ffffff08;
   border-radius: 4px;
   color: #b4bec5;
 }
 .feature-description {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #999;
   line-height: 1.8;
 }
@@ -214,7 +214,7 @@
   align-items: center;
   gap: 6px;
   text-align: left;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #8faec3;
   padding: 3px 0;
 }
@@ -224,7 +224,7 @@
 }
 .contact-notes {
   white-space: pre-wrap;
-  font-size: 13px;
+  font-size: var(--text-base);
   color: #bbb;
   line-height: 1.8;
 }
@@ -234,14 +234,14 @@
   text-align: left;
   padding: 11px 0;
   border-bottom: 1px solid #333;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 .contact-case-link small {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #999;
 }
 .minor-heading {
-  font-size: 13px;
+  font-size: var(--text-base);
   font-weight: 500;
   margin: 8px 0;
 }
@@ -268,11 +268,11 @@
 .finance-summary small {
   display: block;
   color: #8d8d8d;
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin-bottom: 9px;
 }
 .finance-summary strong {
-  font-size: 17px;
+  font-size: var(--text-title-sm);
   font-weight: 450;
   font-variant-numeric: tabular-nums;
 }
@@ -281,7 +281,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 14px;
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #999;
   padding: 18px 0 8px;
 }
@@ -292,28 +292,28 @@
 .fee-summary button {
   color: #99b5c8;
   margin-left: auto;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .ledger-row > time {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #888;
   flex-shrink: 0;
 }
 .money-income {
   color: #94b5a0;
-  font-size: 13px;
+  font-size: var(--text-base);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .money-expense {
   color: #c4a3a0;
-  font-size: 13px;
+  font-size: var(--text-base);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
 .receipt-link {
   color: #8ea9bb;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 @media (max-width: 760px) {
   .finance-summary {
@@ -341,7 +341,7 @@
   border: 1px solid #353535;
   border-radius: 6px;
   color: #929292;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .stage-chip i {
   width: 5px;
@@ -370,10 +370,10 @@
   align-items: flex-start;
   gap: 15px;
   margin: 17px 0;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .case-event > time {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #888;
   flex-shrink: 0;
   line-height: 1.8;
@@ -392,7 +392,7 @@
   display: flex !important;
   align-items: center;
   gap: 8px !important;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .checkbox-field input {
   width: auto !important;
@@ -414,7 +414,7 @@
   align-items: center;
   gap: 4px;
   color: #888;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .work-record > footer svg {
   width: 12px;
@@ -426,7 +426,7 @@
   border-bottom: 1px solid #303030;
 }
 .settings-section h2 {
-  font-size: 15px;
+  font-size: var(--text-body);
   font-weight: 500;
   margin-bottom: 13px;
 }
@@ -435,7 +435,7 @@
   align-items: center;
   gap: 14px;
   margin: 15px 0;
-  font-size: 12px;
+  font-size: var(--text-sm);
   flex-wrap: wrap;
 }
 .settings-path code {
@@ -449,7 +449,7 @@
   align-items: center;
   gap: 6px;
   color: #9db5c7;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .settings-path svg {
   width: 14px;
@@ -461,12 +461,12 @@
   justify-content: space-between;
   gap: 18px;
   padding: 12px 0;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 .setting-toggle small {
   display: block;
   color: #8c8c8c;
-  font-size: 11px;
+  font-size: var(--text-xs);
   line-height: 1.8;
   margin-top: 5px;
 }
@@ -474,7 +474,7 @@
   accent-color: #5982a1;
 }
 .backup-success {
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #a3bdab;
   display: flex;
   align-items: center;
@@ -487,11 +487,11 @@
   flex-basis: 100%;
   overflow-wrap: anywhere;
   color: #8d9f92;
-  font-size: 11px;
+  font-size: var(--text-xs);
 }
 .update-notes {
   white-space: pre-wrap;
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.8;
   color: #aaa;
   max-height: 250px;
@@ -511,7 +511,7 @@
   overflow: auto;
 }
 .global-search-results h3 {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #888;
   font-weight: 500;
   margin: 18px 0 6px;
@@ -524,7 +524,7 @@
   border-radius: 6px;
   width: 100%;
   text-align: left;
-  font-size: 13px;
+  font-size: var(--text-base);
 }
 .global-search-results button:hover {
   background: #2a2a2a;
@@ -537,7 +537,7 @@
 .global-search-results small {
   display: block;
   color: #8e8e8e;
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin-top: 5px;
 }
 .sidebar-search-row {
@@ -553,7 +553,7 @@
   color: #929292;
   padding: 7px 9px;
   border-radius: 6px;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }
 .sidebar-search-row > button:first-child {
   flex: 1;
@@ -586,23 +586,23 @@
 .trash-item .row-main > small {
   display: block;
   color: #888;
-  font-size: 11px;
+  font-size: var(--text-xs);
   margin-top: 5px;
 }
 .trash-item > button {
   margin-left: 0;
-  font-size: 11px;
+  font-size: var(--text-xs);
   flex-shrink: 0;
 }
 .event-reminder-field {
   display: grid;
   gap: 7px;
-  font-size: 12px;
+  font-size: var(--text-sm);
   color: #999;
   margin: 14px 0;
 }
 .event-reminder-field small {
-  font-size: 11px;
+  font-size: var(--text-xs);
   color: #888;
 }
 .case-column .column-menu {
@@ -660,7 +660,7 @@
 }
 .onboarding-note {
   color: #939393;
-  font-size: 12px;
+  font-size: var(--text-sm);
   line-height: 1.8;
   margin-top: 18px;
 }
@@ -669,5 +669,5 @@
   padding: 0 4px;
   text-decoration: underline;
   text-underline-offset: 3px;
-  font-size: 12px;
+  font-size: var(--text-sm);
 }

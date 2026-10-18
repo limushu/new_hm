@@ -1,3 +1,4 @@
+import { proceedingName } from '../../domain/proceedings';
 import Select from '../../components/Select';
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import {
@@ -45,17 +46,19 @@ export default function Materials({
   save,
   recordId = null,
   focusId,
+  initialScope = 'shared',
 }: {
   caseId: string;
   data: Workspace;
   save: SaveAction;
   recordId?: string | null;
   focusId?: string;
+  initialScope?: string;
 }) {
   const focused = data.materials.find(
     (m) => m.id === focusId && m.caseId === caseId && !m.deletedAt,
   );
-  const [scope, setScope] = useState(focused?.proceedingId ?? 'shared');
+  const [scope, setScope] = useState(focused?.proceedingId ?? initialScope);
   const [folder, setFolder] = useState<string | null>(focused?.parentId ?? null);
   const [query, setQuery] = useState('');
   const [preview, setPreview] = useState<Material | null>(null);
@@ -228,26 +231,51 @@ export default function Materials({
         });
       }}
     >
-      <div className="materials-scope">
-        <Select
-          aria-label="材料归属范围"
-          value={scope}
-          onValueChange={(value) => {
-            setScope(value);
-            setFolder(null);
-            setQuery('');
-          }}
-        >
-          <option value="shared">案件共用</option>
-          {programs.map((p) => (
-            <option key={p.id} value={p.id}>
-              {programLabels[p.kind]}
-              {p.caseNumber ? ` · ${p.caseNumber}` : ''}
-            </option>
+      {!recordId && (
+        <nav className="material-scopes" aria-label="按程序查看材料">
+          {[
+            { id: 'shared', name: '案件共用' },
+            ...programs.map((p) => ({ id: p.id, name: proceedingName(p, programs) })),
+          ].map((group) => (
+            <button
+              key={group.id}
+              aria-pressed={scope === group.id}
+              className={scope === group.id ? 'active' : ''}
+              onClick={() => {
+                setScope(group.id);
+                setFolder(null);
+                setQuery('');
+              }}
+            >
+              <span>{group.name}</span>
+              <small>
+                {
+                  materials.filter(
+                    (m) => (m.proceedingId ?? 'shared') === group.id && m.kind === 'file',
+                  ).length
+                }
+              </small>
+            </button>
           ))}
-        </Select>
+        </nav>
+      )}
+      <div className="materials-scope">
+        <span>
+          归档到：
+          <strong>
+            {scope === 'shared'
+              ? '案件共用'
+              : proceedingName(programs.find((p) => p.id === scope)!, programs)}
+          </strong>
+          {folder ? ' / ' + current?.name : ''}
+        </span>
         <span>{rows.length} 项</span>
       </div>
+      {!recordId && (
+        <p className="field-hint">
+          材料按程序归档；举证、开庭等具体阶段可建立文件夹细分。添加文件会进入当前选中的归档位置。
+        </p>
+      )}
       <div className="feature-toolbar material-toolbar">
         <label className="material-search">
           <Search />

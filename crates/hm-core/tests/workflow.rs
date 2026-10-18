@@ -4,6 +4,7 @@ use uuid::Uuid;
 fn create(store: &mut Store, title: &str) -> Case {
     store
         .create_case(CreateCase {
+            tags: None,
             id: Uuid::new_v4().to_string(),
             title: title.into(),
             case_type: "civil".into(),
@@ -43,6 +44,7 @@ fn retries_are_idempotent_and_invalid_titles_leave_no_records() {
     for _ in 0..2 {
         store
             .create_case(CreateCase {
+                tags: None,
                 id: id.clone(),
                 title: "重复提交".into(),
                 case_type: "civil".into(),
@@ -54,6 +56,7 @@ fn retries_are_idempotent_and_invalid_titles_leave_no_records() {
     assert_eq!(store.workspace().unwrap().proceedings.len(), 1);
     assert!(store
         .create_case(CreateCase {
+            tags: None,
             id: Uuid::new_v4().to_string(),
             title: "  \n ".into(),
             case_type: "civil".into(),
@@ -141,6 +144,7 @@ fn dates_statuses_and_ownership_are_validated() {
     assert!(store.add_record("missing", "不应写入").is_err());
     assert!(store
         .update_case(UpdateCase {
+            tags: None,
             id: c.id,
             title: "测试".into(),
             case_type: "civil".into(),

@@ -59,7 +59,7 @@ fn version_one_upgrades_without_losing_existing_case_or_task() {
     assert_eq!(
         db.query_row("PRAGMA user_version", [], |row| row.get::<_, i64>(0))
             .unwrap(),
-        4
+        5
     );
     assert_eq!(
         db.query_row("PRAGMA integrity_check", [], |row| row.get::<_, String>(0))
@@ -138,6 +138,7 @@ fn all_day_cross_day_and_case_archive_keep_independent_events() {
     let mut store = Store::memory().unwrap();
     let case = store
         .create_case(CreateCase {
+            tags: None,
             id: Uuid::new_v4().to_string(),
             title: "案件".into(),
             case_type: "civil".into(),
