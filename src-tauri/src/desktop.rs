@@ -13,6 +13,8 @@ use tauri_plugin_notification::NotificationExt;
 use tauri_plugin_updater::{Update, UpdaterExt};
 #[derive(Default)]
 pub struct DesktopState {
+    #[cfg(windows)]
+    icons: Mutex<Vec<crate::windows_icon::TaskbarIcon>>,
     checking: AtomicBool,
     available: Mutex<Option<UpdateInfo>>,
     pub pending: Mutex<Option<Update>>,
@@ -160,6 +162,25 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     if let Some(icon) = app.default_window_icon() {
         for window in app.webview_windows().values() {
             window.set_icon(icon.clone())?;
+            #[cfg(windows)]
+            {
+                let owned = window.clone();
+                window.run_on_main_thread(move || {
+                    match crate::windows_icon::set_taskbar_icon(&owned) {
+                        Ok(icon) => {
+                            if let Ok(mut icons) = owned.state::<DesktopState>().icons.lock() {
+                                icons.push(icon);
+                            }
+                        }
+                        Err(error) => {
+                            if let Ok(mut status) = owned.state::<DesktopState>().background.lock()
+                            {
+                                status.insert("iconError".into(), error);
+                            }
+                        }
+                    }
+                })?;
+            }
         }
     }
     let updater_handle = app.handle().clone();

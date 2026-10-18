@@ -1,6 +1,8 @@
 mod commands;
 mod desktop;
 mod files;
+#[cfg(windows)]
+mod windows_icon;
 use hm_core::{
     AddTask, CalendarEvent, Case, CreateCase, StorageLocation, Store, UpdateCase, UpdateProceeding,
     Workspace,

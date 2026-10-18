@@ -33,7 +33,7 @@ $script:ownedIcon = [IntPtr]::Zero
   [void][OwnedIconWindow]::GetWindowThreadProcessId($window, [ref]$windowPid)
   if ($windowPid -eq $TaskPid) {
     $candidate = [OwnedIconWindow]::SendMessage($window, 0x007F, [IntPtr]1, [IntPtr]::Zero)
-    if ($candidate -ne [IntPtr]::Zero) { $script:ownedIcon = $candidate; return $false }
+    if ($candidate -ne [IntPtr]::Zero) { $script:ownedIcon = $candidate; $script:ownedWindow = $window; return $false }
   }
   return $true
 }, [IntPtr]::Zero) | Out-Null
@@ -43,4 +43,11 @@ $windowBitmap = $windowIcon.ToBitmap()
 $windowBitmap.Save((Join-Path $output 'window-icon.png'), [Drawing.Imaging.ImageFormat]::Png)
 $windowBitmap.Dispose()
 $windowIcon.Dispose()
+$smallHandle = [OwnedIconWindow]::SendMessage($script:ownedWindow, 0x007F, [IntPtr]::Zero, [IntPtr]::Zero)
+if ($smallHandle -eq [IntPtr]::Zero) { throw 'Owned native small window icon missing' }
+$smallIcon = [Drawing.Icon]::FromHandle($smallHandle).Clone()
+$smallBitmap = $smallIcon.ToBitmap()
+$smallBitmap.Save((Join-Path $output 'window-small-icon.png'), [Drawing.Imaging.ImageFormat]::Png)
+$smallBitmap.Dispose()
+$smallIcon.Dispose()
 Write-Output 'Executable resource and native window icons found in owned test process.'
