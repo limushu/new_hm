@@ -36,6 +36,18 @@ test('图内选择保留上下文，关联可沿节点探索，详情独立打�
     'true',
   );
   await inspector.getByRole('button', { name: '以此为中心', exact: true }).click();
+  for (const width of [1440, 800, 390]) {
+    await page.setViewportSize({ width, height: 900 });
+    const control = dialog.getByRole('combobox', { name: '关系图层级', exact: true });
+    const label = dialog.locator('.graph-depth');
+    await expect(control).toBeVisible();
+    const dimensions = await label.evaluate((n) => ({
+      label: n.getBoundingClientRect().height,
+      control: n.querySelector('button')!.getBoundingClientRect().height,
+    }));
+    expect(dimensions.label).toBeLessThanOrEqual(dimensions.control + 2);
+  }
+  await page.setViewportSize({ width: 1600, height: 1000 });
   await expect(dialog.getByRole('button', { name: '局部', exact: true })).toHaveAttribute(
     'aria-pressed',
     'true',
