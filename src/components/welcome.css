@@ -1,4 +1,9 @@
 .welcome-screen {
+  --welcome-action-bg: #e8e7e2;
+  --welcome-action-hover: #f5f4f0;
+  --welcome-action-text: #252622;
+  --welcome-action-line: #d8d7d1;
+  --welcome-focus: #a8a8a0;
   inset: 0;
   margin: 0;
   width: 100vw;
@@ -9,6 +14,13 @@
   padding: 24px;
   background: var(--bg);
   color: var(--text);
+}
+:root[data-theme='light'] .welcome-screen {
+  --welcome-action-bg: #30312e;
+  --welcome-action-hover: #43443f;
+  --welcome-action-text: #f6f5f0;
+  --welcome-action-line: #30312e;
+  --welcome-focus: #777b73;
 }
 .welcome-screen[open] {
   display: grid;
@@ -103,9 +115,21 @@
   display: inline-flex;
   align-items: center;
   gap: 24px;
-  padding: 10px 19px;
+  padding: 9px 18px;
   font-size: var(--text-body);
   border-radius: 8px;
+  border: 1px solid var(--welcome-action-line);
+  background: var(--welcome-action-bg);
+  color: var(--welcome-action-text);
+  transition: background-color 140ms ease;
+}
+.welcome-content .welcome-start:hover:not(:disabled) {
+  background: var(--welcome-action-hover);
+}
+.welcome-content .welcome-start:focus-visible,
+.welcome-screen .welcome-skip:focus-visible {
+  outline: 2px solid var(--welcome-focus);
+  outline-offset: 4px;
 }
 .welcome-start svg {
   width: 17px;
@@ -145,5 +169,6 @@
   .welcome-screen *,
   .welcome-screen *::before {
     animation: none !important;
+    transition: none !important;
   }
 }

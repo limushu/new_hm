@@ -55,12 +55,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
         </div>
         <h1>案笺</h1>
         <p>每一份托付，都有清晰的脉络。</p>
-        <button
-          autoFocus
-          className="primary-action welcome-start"
-          disabled={busy}
-          onClick={() => void finish()}
-        >
+        <button autoFocus className="welcome-start" disabled={busy} onClick={() => void finish()}>
           {busy ? '正在进入…' : '开始使用'}
           <ArrowRight />
         </button>
