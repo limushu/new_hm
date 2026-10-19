@@ -21,7 +21,7 @@ writeFileSync(join(root, '.portable'), '');
 let pid, browser;
 let launches = 0;
 const logs = [];
-async function start() {
+async function start(welcomeExpected = launches === 0) {
   const server = createServer();
   await new Promise((r) => server.listen(0, '127.0.0.1', r));
   const port = server.address().port;
@@ -63,14 +63,15 @@ async function start() {
   page.on('pageerror', (error) => logs.push(error.message));
   await page.getByRole('button', { name: '案件', exact: true }).waitFor();
   const welcome = page.getByRole('dialog', { name: '欢迎使用案笺', exact: true });
-  if (launches++ === 0) {
+  launches++;
+  if (welcomeExpected) {
     await expect(welcome).toBeVisible();
     await welcome.getByRole('button', { name: '开始使用', exact: true }).click();
     await expect(welcome).toHaveCount(0);
   } else {
     await expect
       .poll(async () => (await invoke(page, 'get_settings')).onboarding_done)
-      .toBe('true');
+      .toBe('hm-welcome-1');
     await expect(welcome).toHaveCount(0);
   }
   console.log('Owned native page:', page.url());
@@ -151,6 +152,14 @@ function pdf() {
 let page;
 try {
   page = await start();
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('button', { name: '重播欢迎动画', exact: true }).click();
+  const replay = page.getByRole('dialog', { name: '欢迎使用案笺', exact: true });
+  await expect(replay).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(replay).toHaveCount(0);
+  if ((await invoke(page, 'get_settings')).onboarding_done !== 'hm-welcome-1')
+    throw new Error('Welcome completion not persisted');
   await invoke(page, 'set_setting', { key: 'notifications', value: 'false' });
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.getByRole('button', { name: '新建案件', exact: true }).click();
@@ -681,10 +690,10 @@ try {
   await invoke(page, 'delete_contact', { id: retainedJudge.id });
   await invoke(page, 'trash_case', { id: deletionCase.id });
   await invoke(page, 'purge_item', { kind: 'case', id: deletionCase.id, confirmed: true });
-  // Simulate an existing workspace upgrading from a build without the welcome marker.
-  await invoke(page, 'set_setting', { key: 'onboarding_done', value: 'false' });
+  // 1.4.1 marked existing users as seen without showing the animation.
+  await invoke(page, 'set_setting', { key: 'onboarding_done', value: 'true' });
   await stop(page);
-  page = await start();
+  page = await start(true);
   workspace = await invoke(page, 'load_workspace');
   if (
     workspace.materials.length !== 4 ||

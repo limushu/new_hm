@@ -1,5 +1,6 @@
 import BrandMark from './components/BrandMark';
 import Welcome from './components/Welcome';
+import { WELCOME_EDITION } from './domain/welcome';
 import UpdateNotice from './components/UpdateNotice';
 import Contacts, { ContactDetail } from './features/contacts/Contacts';
 import SettingsPage from './features/settings/Settings';
@@ -52,18 +53,9 @@ export default function App() {
       .then(([value, settings]) => {
         if (canceled) return;
         setData(value);
-        if (settings && settings.onboarding_done !== 'true') {
-          const occupied =
-            value.cases.length +
-              value.contacts.length +
-              value.materials.length +
-              value.tasks.length +
-              value.calendarEvents.length >
-            0;
+        if (settings && settings.onboarding_done !== WELCOME_EDITION) {
           const previewWelcome = previewMode && new URLSearchParams(location.search).has('welcome');
-          if (previewWelcome || (!previewMode && !occupied)) setWelcome(true);
-          else if (!previewMode)
-            void command('set_setting', { key: 'onboarding_done', value: 'true' }).catch(() => {});
+          if (previewWelcome || !previewMode) setWelcome(true);
         }
       })
       .catch((e) => {

@@ -5,6 +5,7 @@ import type { BackupInfo, Commands, SaveAction } from '../../domain/types';
 import { command, desktopRuntime } from '../../services/repository';
 import Dialog from '../../components/Dialog';
 import UpdateDialog from '../../components/UpdateDialog';
+import Welcome from '../../components/Welcome';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
 import { useTheme } from '../../components/ThemeProvider';
@@ -23,6 +24,7 @@ export default function Settings({
   const [update, setUpdate] = useState<Commands['check_update']['result']>(null);
   const [updateDialog, setUpdateDialog] = useState(false);
   const [checked, setChecked] = useState(false);
+  const [welcome, setWelcome] = useState(false);
   const [endpoint, setEndpoint] = useState('');
   const { busy, error, run } = useAction();
   const { theme, setTheme } = useTheme();
@@ -106,6 +108,12 @@ export default function Settings({
               <span>{label}</span>
             </button>
           ))}
+        </div>
+        <div className="feature-toolbar">
+          <button onClick={() => setWelcome(true)}>
+            <RotateCcw />
+            重播欢迎动画
+          </button>
         </div>
       </section>
       <section className="settings-section">
@@ -321,6 +329,7 @@ export default function Settings({
       {updateDialog && update && (
         <UpdateDialog update={update} onClose={() => setUpdateDialog(false)} />
       )}
+      {welcome && <Welcome onDone={() => setWelcome(false)} />}
     </div>
   );
 }

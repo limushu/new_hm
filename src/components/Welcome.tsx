@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { command } from '../services/repository';
+import { createPortal } from 'react-dom';
+import { WELCOME_EDITION } from '../domain/welcome';
 import './welcome.css';
 
 export default function Welcome({ onDone }: { onDone: () => void }) {
@@ -20,7 +22,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
     setBusy(true);
     setError('');
     try {
-      await command('set_setting', { key: 'onboarding_done', value: 'true' });
+      await command('set_setting', { key: 'onboarding_done', value: WELCOME_EDITION });
       onDone();
     } catch {
       setError('未能保存欢迎设置，请重试。');
@@ -29,7 +31,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
       setBusy(false);
     }
   }
-  return (
+  return createPortal(
     <dialog
       ref={dialog}
       className="welcome-screen"
@@ -68,6 +70,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
           </p>
         )}
       </div>
-    </dialog>
+    </dialog>,
+    document.body,
   );
 }
