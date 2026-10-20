@@ -1,10 +1,12 @@
 //! Composition root for host services. Business commands continue to use hm-core.
+pub mod documents;
 mod health;
 #[cfg(desktop)]
 pub mod host;
 pub mod maintenance;
 #[cfg(mobile)]
 pub mod mobile;
+pub mod recording;
 #[cfg(desktop)]
 pub mod updates;
 use hm_runtime::RuntimeManifest;
@@ -31,6 +33,7 @@ pub fn subsystem_manifest(state: State<'_, RuntimeState>) -> RuntimeManifest {
 
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(health::RuntimeHealth::default());
+    crate::platforms::setup(app);
     #[cfg(desktop)]
     {
         host::setup(app)?;
@@ -38,7 +41,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         updates::setup(app, &workers)?;
         maintenance::setup(app, &workers)?;
         app.manage(RuntimeState {
-            manifest: RuntimeManifest::desktop(),
+            manifest: app.state::<crate::platforms::NativeDrivers>().manifest(),
             workers,
         });
     }
@@ -46,7 +49,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     {
         mobile::setup(app);
         app.manage(RuntimeState {
-            manifest: RuntimeManifest::mobile(),
+            manifest: app.state::<crate::platforms::NativeDrivers>().manifest(),
         });
     }
     Ok(())

@@ -7,7 +7,7 @@ use tauri_plugin_autostart::ManagerExt;
 #[derive(Default)]
 pub struct HostState {
     #[cfg(windows)]
-    icons: Mutex<Vec<crate::windows_icon::TaskbarIcon>>,
+    icons: Mutex<Vec<crate::platforms::desktop::windows_icon::TaskbarIcon>>,
 }
 
 pub(super) fn configure(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wry> {
@@ -66,7 +66,7 @@ pub(super) fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Erro
             {
                 let owned = window.clone();
                 window.run_on_main_thread(move || {
-                    match crate::windows_icon::set_taskbar_icon(&owned) {
+                    match crate::platforms::desktop::windows_icon::set_taskbar_icon(&owned) {
                         Ok(icon) => {
                             if let Ok(mut icons) = owned.state::<HostState>().icons.lock() {
                                 icons.push(icon);
@@ -87,7 +87,7 @@ pub(super) fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Erro
     {
         let handle = app.handle().clone();
         std::thread::spawn(move || {
-            let result = crate::windows_icon::refresh_shell_icons(&handle);
+            let result = crate::platforms::desktop::windows_icon::refresh_shell_icons(&handle);
             let status = match result {
                 Ok(()) => ("iconCacheReady".into(), "true".into()),
                 Err(error) => ("iconCacheError".into(), error),

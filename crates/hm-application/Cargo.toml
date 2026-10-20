@@ -1,0 +1,12 @@
+[package]
+name = "hm-application"
+version.workspace = true
+edition.workspace = true
+publish = false
+
+[dependencies]
+hm-core = { path = "../hm-core" }
+hm-runtime = { path = "../hm-runtime" }
+
+[dev-dependencies]
+tempfile = "3"

@@ -266,17 +266,56 @@ impl Store {
                 "请添加文件；文件夹请在材料页内创建".into(),
             ));
         }
-        let stored = valid_name(
-            path.file_name()
-                .and_then(|s| s.to_str())
-                .ok_or_else(|| Error::Validation("文件名无法读取".into()))?,
+        let name = path
+            .file_name()
+            .and_then(|s| s.to_str())
+            .ok_or_else(|| Error::Validation("文件名无法读取".into()))?;
+        self.import_reader_with_id(target, name, &mut std::fs::File::open(source)?, id)
+    }
+
+    /// Archive an external stream without depending on its provider or address.
+    /// A failed read leaves neither a material row nor a partial archived file.
+    pub fn import_reader(
+        &self,
+        target: &MaterialTarget,
+        name: &str,
+        reader: &mut dyn std::io::Read,
+    ) -> Result<String> {
+        self.import_reader_with_id(target, name, reader, &Uuid::new_v4().to_string())
+    }
+
+    fn import_reader_with_id(
+        &self,
+        target: &MaterialTarget,
+        name: &str,
+        reader: &mut dyn std::io::Read,
+        id: &str,
+    ) -> Result<String> {
+        self.target(target)?;
+        crate::people::valid_id(id)?;
+        let exists: bool = self.connection.query_row(
+            "SELECT EXISTS(SELECT 1 FROM materials WHERE id=?1)",
+            [id],
+            |r| r.get(0),
         )?;
+        if exists {
+            let item = self.material(id)?;
+            if item.case_id != target.case_id
+                || item.proceeding_id != target.proceeding_id
+                || item.parent_id != target.parent_id
+                || item.kind != "file"
+            {
+                return Err(Error::Validation("凭据归属与本次记录不一致".into()));
+            }
+            return Ok(id.into());
+        }
+        let stored = valid_name(name)?;
         let name = self.unique_name(target, &stored, None)?;
         let stored = name.clone();
         let dir = self.object_dir(&target.case_id, id, true)?;
         let result = (|| {
             let mut temporary = tempfile::NamedTempFile::new_in(&dir)?;
-            let size = std::io::copy(&mut std::fs::File::open(&source)?, &mut temporary)?;
+            let size = std::io::copy(reader, &mut temporary)?;
             temporary.as_file().sync_all()?;
             temporary
                 .persist_noclobber(dir.join(&stored))
@@ -321,18 +360,9 @@ impl Store {
         if bytes.is_empty() || bytes.len() > 512 * 1024 * 1024 {
             return Err(Error::Validation("录音为空或超过512MB，请分段录制".into()));
         }
-        let name = valid_name(name)?;
-        let directory = self.data_directory()?.join("recording-staging");
-        std::fs::create_dir_all(&directory)?;
-        let temp = tempfile::Builder::new()
-            .suffix(".webm")
-            .tempfile_in(&directory)?;
-        std::fs::write(temp.path(), bytes)?;
-        let id = self.import_one(&target, temp.path())?;
-        let name = self.unique_name(&target, &name, Some(&id))?;
-        self.rename_material(&id, &name)?;
-        Ok(id)
+        self.import_reader(&target, name, &mut std::io::Cursor::new(bytes))
     }
+
     pub fn rename_material(&self, id: &str, name: &str) -> Result<()> {
         let item = self.material(id)?;
         let target = MaterialTarget {

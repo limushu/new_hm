@@ -1,72 +1,84 @@
+use crate::platforms::NativeDrivers;
 use crate::{access, AppState};
 use hm_core::BackupInfo;
-#[cfg(desktop)]
 use hm_core::{ImportReport, MaterialTarget};
+use hm_runtime::Capability;
 use std::path::PathBuf;
 use tauri::{Manager, State};
-#[cfg(desktop)]
-use tauri_plugin_dialog::DialogExt;
-#[cfg(desktop)]
-use tauri_plugin_opener::OpenerExt;
-#[cfg(desktop)]
 #[tauri::command(async)]
-pub fn pick_receipt_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
-    app.dialog()
-        .file()
-        .set_title("选择报销凭据或发票")
-        .blocking_pick_file()
-        .map(|file| {
-            file.into_path()
-                .map(|p| p.to_string_lossy().into_owned())
-                .map_err(|e| e.to_string())
-        })
-        .transpose()
+pub fn pick_receipt_file(platform: State<'_, NativeDrivers>) -> Result<Option<String>, String> {
+    Ok(platform
+        .local_filesystem
+        .pick_files("选择报销凭据或发票", false)?
+        .and_then(|files| files.into_iter().next())
+        .map(|path| path.to_string_lossy().into_owned()))
 }
-#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn save_ledger_with_receipt(
+    platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     input: hm_core::LedgerEntry,
     source_path: PathBuf,
     receipt_id: String,
 ) -> Result<(), String> {
+    platform.manifest().require(Capability::FilePicker)?;
     access(&state, |s| {
         s.save_ledger_with_receipt(input, &source_path, &receipt_id)
     })
 }
 
-#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn pick_materials(
-    app: tauri::AppHandle,
+    platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     target: MaterialTarget,
 ) -> Result<ImportReport, String> {
-    let files = app
-        .dialog()
-        .file()
-        .set_title("添加材料（复制归档，原文件保留）")
-        .blocking_pick_files();
-    let Some(files) = files else {
+    let Some(documents) = platform.documents.pick(true).map_err(|e| e.to_string())? else {
         return Ok(ImportReport {
             imported: 0,
             errors: vec![],
         });
     };
-    let paths = files
-        .into_iter()
-        .map(|f| f.into_path().map_err(|e| e.to_string()))
-        .collect::<Result<Vec<_>, _>>()?;
-    access(&state, |s| s.import_materials(target, &paths))
+    access(&state, |store| {
+        hm_application::documents::import_documents(store, &target, documents)
+    })
 }
-#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn import_material_paths(
+    platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     target: MaterialTarget,
     paths: Vec<PathBuf>,
 ) -> Result<ImportReport, String> {
-    access(&state, |s| s.import_materials(target, &paths))
+    platform.manifest().require(Capability::NativeDrop)?;
+    #[cfg(desktop)]
+    {
+        if paths.len() > 500 {
+            return Err("单次最多添加500个文件".into());
+        }
+        let mut report = ImportReport {
+            imported: 0,
+            errors: vec![],
+        };
+        for path in paths {
+            match crate::platforms::desktop::documents::open_local(path.clone()) {
+                Ok(document) => {
+                    let imported = access(&state, |store| {
+                        hm_application::documents::import_documents(store, &target, vec![document])
+                    })?;
+                    report.imported += imported.imported;
+                    report.errors.extend(imported.errors);
+                }
+                Err(error) => report.errors.push(format!("{}：{error}", path.display())),
+            }
+        }
+        Ok(report)
+    }
+    #[cfg(mobile)]
+    {
+        let _ = (state, target, paths);
+        Err("当前驱动不支持路径拖入".into())
+    }
 }
 #[tauri::command(async)]
 pub fn material_preview(
@@ -93,10 +105,9 @@ pub fn material_preview(
         .map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().into())
 }
-#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn open_material(
-    app: tauri::AppHandle,
+    platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     id: String,
 ) -> Result<(), String> {
@@ -115,37 +126,30 @@ pub fn open_material(
     {
         return Err("此类型请先导出副本，再自行选择打开方式".into());
     }
-    app.opener()
-        .open_path(path.to_string_lossy().as_ref(), None::<&str>)
-        .map_err(|e| e.to_string())
+    platform.external_open.open_file(&path)
 }
-#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn export_material(
-    app: tauri::AppHandle,
+    platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     id: String,
 ) -> Result<bool, String> {
     let item = access(&state, |s| s.material(&id))?;
-    let Some(file) = app
-        .dialog()
-        .file()
-        .set_title("导出材料副本")
-        .set_file_name(&item.name)
-        .blocking_save_file()
-    else {
-        return Ok(false);
-    };
-    let path = file.into_path().map_err(|e| e.to_string())?;
-    access(&state, |s| s.export_material(&id, &path))?;
-    Ok(true)
+    let path = access(&state, |s| s.material_path(&id))?;
+    let mut source = std::fs::File::open(path).map_err(|e| e.to_string())?;
+    platform
+        .documents
+        .export(&item.name, &mut source)
+        .map(|exported| exported.is_some())
+        .map_err(|e| e.to_string())
 }
-#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn save_recording(
+    platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     request: tauri::ipc::Request<'_>,
 ) -> Result<String, String> {
+    platform.manifest().require(Capability::RecordAudio)?;
     let headers = request.headers();
     let target: MaterialTarget = serde_json::from_str(
         headers
@@ -166,25 +170,15 @@ pub fn save_recording(
     };
     access(&state, |s| s.save_recording(target, &name, bytes))
 }
-#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn choose_backup_directory(
-    app: tauri::AppHandle,
+    platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
 ) -> Result<Option<String>, String> {
-    let Some(folder) = app
-        .dialog()
-        .file()
-        .set_title("选择备份位置")
-        .blocking_pick_folder()
-    else {
+    let Some(path) = platform.local_filesystem.pick_folder("选择备份位置")? else {
         return Ok(None);
     };
-    let path = folder
-        .into_path()
-        .map_err(|e| e.to_string())?
-        .to_string_lossy()
-        .to_string();
+    let path = path.to_string_lossy().into_owned();
     access(&state, |s| s.set_setting("backup_directory", &path))?;
     Ok(Some(path))
 }
@@ -202,28 +196,27 @@ pub fn run_backup(state: State<'_, AppState>) -> Result<BackupInfo, String> {
         Ok(info)
     })
 }
-#[cfg(desktop)]
 #[tauri::command(async)]
-pub fn pick_restore_backup(app: tauri::AppHandle) -> Result<Option<BackupInfo>, String> {
-    let Some(folder) = app
-        .dialog()
-        .file()
-        .set_title("选择一个 hm-backup 备份文件夹")
-        .blocking_pick_folder()
+pub fn pick_restore_backup(
+    platform: State<'_, NativeDrivers>,
+) -> Result<Option<BackupInfo>, String> {
+    let Some(path) = platform
+        .local_filesystem
+        .pick_folder("选择一个 hm-backup 备份文件夹")?
     else {
         return Ok(None);
     };
-    let path = folder.into_path().map_err(|e| e.to_string())?;
     hm_core::Store::inspect_backup(&path)
         .map(Some)
         .map_err(|e| e.to_string())
 }
-#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn apply_restore_backup(
+    platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     path: PathBuf,
     confirmed: bool,
 ) -> Result<BackupInfo, String> {
+    platform.manifest().require(Capability::BackupTransfer)?;
     access(&state, |s| s.restore_backup(&path, confirmed))
 }

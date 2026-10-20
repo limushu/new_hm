@@ -15,7 +15,7 @@
     "check:mobile-boundaries": "node scripts/check-mobile-boundaries.mjs",
     "docs:check": "node scripts/check-doc-links.mjs",
     "test": "vitest run",
-    "test:core": "cargo test -p hm-core -p hm-runtime",
+    "test:core": "cargo test -p hm-core -p hm-runtime -p hm-application",
     "doctor": "node scripts/doctor.mjs",
     "test:ui": "playwright test",
     "android:init": "tauri android init",

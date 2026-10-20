@@ -12,17 +12,17 @@ iOS 可以进入适配阶段，先做到可编译、可启动、案件数据可�
 
 ## 当前实现与缺口
 
-| 代码依据 | 已有基础 | 仍需解决 |
-| --- | --- | --- |
-| `src-tauri/src/lib.rs` | mobile_entry_point、共享 Store 和命令 | 无条件注册桌面插件、关闭隐藏和 desktop::setup；移动启动需剥离 |
-| `src-tauri/Cargo.toml` | staticlib/cdylib/rlib、hm-core | tray-icon、单实例、自启动、updater 尚未按桌面目标隔离 |
-| `src-tauri/tauri.android.conf.json`、`tauri.ios.conf.json` | 平台配置占位 | 仍为旧产品名；没有原生工程和构建验收证据 |
-| `src/services/repository.ts` | 类型化 command、明确的开发内存预览 | desktopRuntime 实际仅代表 isTauri，不能区分手机与桌面 |
-| 窄屏 CSS、案件关闭按钮和 mobile-utilities | 已有移动布局与触摸基础 | 系统返回、安全区、键盘、页面恢复需原生验证 |
-| `src-tauri/src/files.rs` | UUID 复制归档、asset 预览、完整备份 | 选择器结果统一 into_path，不能据此保证 Android URI/iOS 文档提供器可用 |
-| `src/features/materials/Recorder.tsx` | WebView 前台录音 | 仅 WebM/Opus，整段录音经 JS 内存和 IPC，不适合作为跨平台唯一实现 |
-| `src-tauri/src/desktop.rs` | 每分钟提醒、自动备份、签名更新 | 手机挂起后线程不保证运行，不能承担移动端提醒或每日定时备份 |
-| `.github/workflows/ci.yml` | 前端、Linux 核心、Windows 编译 | 尚无 Android/iOS/macOS 原生检查 |
+| 代码依据                                                   | 已有基础                              | 仍需解决                                                              |
+| ---------------------------------------------------------- | ------------------------------------- | --------------------------------------------------------------------- |
+| `src-tauri/src/lib.rs`                                     | mobile_entry_point、共享 Store 和命令 | 无条件注册桌面插件、关闭隐藏和 desktop::setup；移动启动需剥离         |
+| `src-tauri/Cargo.toml`                                     | staticlib/cdylib/rlib、hm-core        | tray-icon、单实例、自启动、updater 尚未按桌面目标隔离                 |
+| `src-tauri/tauri.android.conf.json`、`tauri.ios.conf.json` | 平台配置占位                          | 仍为旧产品名；没有原生工程和构建验收证据                              |
+| `src/services/repository.ts`                               | 类型化 command、明确的开发内存预览    | desktopRuntime 实际仅代表 isTauri，不能区分手机与桌面                 |
+| 窄屏 CSS、案件关闭按钮和 mobile-utilities                  | 已有移动布局与触摸基础                | 系统返回、安全区、键盘、页面恢复需原生验证                            |
+| `src-tauri/src/subsystems/documents/mod.rs`                | UUID 复制归档、asset 预览、完整备份   | 选择器结果统一 into_path，不能据此保证 Android URI/iOS 文档提供器可用 |
+| `src/features/materials/Recorder.tsx`                      | WebView 前台录音                      | 仅 WebM/Opus，整段录音经 JS 内存和 IPC，不适合作为跨平台唯一实现      |
+| `src-tauri/src/desktop.rs`                                 | 每分钟提醒、自动备份、签名更新        | 手机挂起后线程不保证运行，不能承担移动端提醒或每日定时备份            |
+| `.github/workflows/ci.yml`                                 | 前端、Linux 核心、Windows 编译        | 尚无 Android/iOS/macOS 原生检查                                       |
 
 当前远端仅发现 main。已有安卓工作中的窄屏设计继续复用；如原生适配保存在其他未提交工作区，合并前需核对，不能据当前仓库认定 APK 已可用。
 
@@ -135,12 +135,12 @@ iOS 仅安排系统允许数量内的最近提醒并在前台补齐；长期不�
 
 ## 实施顺序与交付门槛
 
-| 阶段 | 工作 | 完成条件 |
-| --- | --- | --- |
-| P0 共享边界 | 能力接口、拆分 desktop/mobile 启动、目标依赖与配置、前端平台调用收口 | Windows 原有检查保持通过；Android/iOS 原生最小启动与 SQLite 写入重启验证 |
-| P1 移动日常使用 | 手机壳、安全区、返回/键盘、文件导入导出、沙盒备份恢复 | 两平台真机完成建案→文件→重启→备份恢复；拒绝权限、取消和大文件中断有清晰结果 |
-| P2 系统体验 | OS 通知协调、生命周期恢复、原生录音 | 两平台覆盖后台/锁屏/中断/时间变化；不重复提醒，录音可保存恢复 |
-| P3 分发 | 图标、权限说明、隐私说明、签名、TestFlight/Android 内测 | 隔离测试数据、安装升级保留业务数据、产物可追溯到源码与验证记录 |
+| 阶段            | 工作                                                                 | 完成条件                                                                    |
+| --------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| P0 共享边界     | 能力接口、拆分 desktop/mobile 启动、目标依赖与配置、前端平台调用收口 | Windows 原有检查保持通过；Android/iOS 原生最小启动与 SQLite 写入重启验证    |
+| P1 移动日常使用 | 手机壳、安全区、返回/键盘、文件导入导出、沙盒备份恢复                | 两平台真机完成建案→文件→重启→备份恢复；拒绝权限、取消和大文件中断有清晰结果 |
+| P2 系统体验     | OS 通知协调、生命周期恢复、原生录音                                  | 两平台覆盖后台/锁屏/中断/时间变化；不重复提醒，录音可保存恢复               |
+| P3 分发         | 图标、权限说明、隐私说明、签名、TestFlight/Android 内测              | 隔离测试数据、安装升级保留业务数据、产物可追溯到源码与验证记录              |
 
 优先交付 P0，再由 Android 和 iOS 分别完成原生验收，避免把某一平台通过当作另一平台完成。首个 iOS 内测包可先验证 P0/P1，未完成录音和提醒明确标记；正式移动发布应完成全部适用门槛。
 
