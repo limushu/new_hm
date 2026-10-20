@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
 import { X, ChevronLeft, ChevronRight, Minus, Plus } from 'lucide-react';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { materialSource } from '../../platform/documents';
 import type { PDFDocumentProxy, PDFDocumentLoadingTask } from 'pdfjs-dist';
 import worker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-import { command, desktopRuntime } from '../../services/repository';
+import { command } from '../../services/repository';
 import type { Material } from '../../domain/types';
 import './materials.css';
 export default function Preview({ item, onClose }: { item: Material; onClose: () => void }) {
@@ -22,7 +22,7 @@ export default function Preview({ item, onClose }: { item: Material; onClose: ()
     let loading: PDFDocumentLoadingTask | undefined;
     void command('material_preview', { id: item.id })
       .then(async (path) => {
-        const source = desktopRuntime ? convertFileSrc(path) : path;
+        const source = materialSource(path);
         if (canceled) return;
         setUrl(source);
         if (extension === 'pdf') {

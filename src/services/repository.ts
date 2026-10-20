@@ -1,7 +1,7 @@
 import { invoke, isTauri } from '@tauri-apps/api/core';
 import type { Commands } from '../domain/types';
 
-export const desktopRuntime = isTauri();
+export const nativeRuntime = isTauri();
 export const previewMode =
   import.meta.env.DEV && new URLSearchParams(location.search).has('preview');
 
@@ -9,7 +9,7 @@ export async function command<K extends keyof Commands>(
   name: K,
   args: Commands[K]['args'],
 ): Promise<Commands[K]['result']> {
-  if (desktopRuntime) return invoke<Commands[K]['result']>(name, args);
+  if (nativeRuntime) return invoke<Commands[K]['result']>(name, args);
   if (previewMode) {
     const { previewCommand } = await import('./preview');
     return previewCommand(name, args);

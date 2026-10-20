@@ -1,6 +1,6 @@
 mod commands;
-mod desktop;
 mod files;
+mod subsystems;
 #[cfg(windows)]
 mod windows_icon;
 use hm_core::{
@@ -100,61 +100,44 @@ fn restore_case(state: State<'_, AppState>, id: String) -> Result<(), String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    #[cfg(desktop)]
     let executable = std::env::current_exe().expect("无法确定程序所在位置");
-    let mut context = tauri::generate_context!();
-    let portable =
-        StorageLocation::portable_directory(&executable, cfg!(target_os = "windows")).is_some();
-    if portable {
-        // A portable workspace has its own data directory. Its single-instance lock
-        // must not forward to an installed app (or another portable workspace).
-        let root = executable.parent().unwrap_or(std::path::Path::new("."));
-        let canonical = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
-        let hash = canonical
-            .to_string_lossy()
-            .to_lowercase()
-            .bytes()
-            .fold(0xcbf29ce484222325u64, |hash, byte| {
-                (hash ^ u64::from(byte)).wrapping_mul(0x100000001b3)
-            });
-        context.config_mut().identifier = format!("com.limushu.hm.portable.p{hash:016x}");
-        // Create the window in setup so its WebView profile can follow the portable data folder.
-        for window in &mut context.config_mut().app.windows {
-            window.create = false;
-        }
-    }
-    tauri::Builder::default()
-        .plugin(tauri_plugin_single_instance::init(|app, _, _| {
-            desktop::show_window(app)
-        }))
-        .plugin(tauri_plugin_dialog::init())
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_notification::init())
-        // Keep the v1 installation's startup identity through display-name changes.
-        .plugin(
-            tauri_plugin_autostart::Builder::new()
-                .app_name("律师工作台")
-                .build(),
-        )
-        .plugin(tauri_plugin_updater::Builder::new().build())
-        .on_window_event(|window, event| {
-            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                let close_to_tray =
-                    access(&window.state::<AppState>(), |s| s.setting("close_to_tray"))
-                        .ok()
-                        .flatten()
-                        .is_none_or(|v| v != "false");
-                if close_to_tray {
-                    api.prevent_close();
-                    let _ = window.hide();
-                }
+    let context = tauri::generate_context!();
+    #[cfg(desktop)]
+    let context = {
+        let mut context = context;
+        let portable =
+            StorageLocation::portable_directory(&executable, cfg!(target_os = "windows")).is_some();
+        if portable {
+            // A portable workspace has its own data directory. Its single-instance lock
+            // must not forward to an installed app (or another portable workspace).
+            let root = executable.parent().unwrap_or(std::path::Path::new("."));
+            let canonical = root.canonicalize().unwrap_or_else(|_| root.to_path_buf());
+            let hash = canonical
+                .to_string_lossy()
+                .to_lowercase()
+                .bytes()
+                .fold(0xcbf29ce484222325u64, |hash, byte| {
+                    (hash ^ u64::from(byte)).wrapping_mul(0x100000001b3)
+                });
+            context.config_mut().identifier = format!("com.limushu.hm.portable.p{hash:016x}");
+            // Create the window in setup so its WebView profile can follow the portable data folder.
+            for window in &mut context.config_mut().app.windows {
+                window.create = false;
             }
-        })
+        }
+        context
+    };
+    subsystems::configure(tauri::Builder::default())
         .setup(move |app| {
+            #[cfg(desktop)]
             let location = StorageLocation::resolve(
                 &executable,
                 &app.path().app_local_data_dir()?,
                 cfg!(target_os = "windows"),
             );
+            #[cfg(mobile)]
+            let location = StorageLocation::sandbox(&app.path().app_local_data_dir()?);
             let store = Store::open(&location.data_directory.join("workspace.sqlite3"))?;
             if store.setting("backup_directory")?.is_none() {
                 store.set_setting(
@@ -172,10 +155,13 @@ pub fn run() {
                     .title("案笺 · 绿色版")
                     .build()?;
             }
-            desktop::setup(app)?;
+            subsystems::setup(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            subsystems::subsystem_manifest,
+            #[cfg(mobile)]
+            subsystems::mobile::resume_runtime,
             load_workspace,
             commands::save_work_link,
             commands::save_work_event,
@@ -188,7 +174,9 @@ pub fn run() {
             commands::delete_fee_plan,
             commands::save_fee_allocation,
             commands::save_fee_agreement,
+            #[cfg(desktop)]
             files::pick_receipt_file,
+            #[cfg(desktop)]
             files::save_ledger_with_receipt,
             storage_info,
             save_calendar_event,
@@ -237,24 +225,44 @@ pub fn run() {
             commands::set_setting,
             commands::due_reminders,
             commands::acknowledge_reminder,
+            #[cfg(desktop)]
             files::pick_materials,
+            #[cfg(desktop)]
             files::import_material_paths,
             files::material_preview,
+            #[cfg(desktop)]
             files::open_material,
+            #[cfg(desktop)]
             files::export_material,
+            #[cfg(desktop)]
             files::save_recording,
+            #[cfg(desktop)]
             files::choose_backup_directory,
             files::run_backup,
+            #[cfg(desktop)]
             files::pick_restore_backup,
+            #[cfg(desktop)]
             files::apply_restore_backup,
-            desktop::background_status,
-            desktop::quit_app,
-            desktop::autostart_status,
-            desktop::set_autostart,
-            desktop::check_update,
-            desktop::get_update_status,
-            desktop::install_update,
+            subsystems::maintenance::background_status,
+            #[cfg(desktop)]
+            subsystems::host::quit_app,
+            #[cfg(desktop)]
+            subsystems::host::autostart_status,
+            #[cfg(desktop)]
+            subsystems::host::set_autostart,
+            #[cfg(desktop)]
+            subsystems::updates::check_update,
+            #[cfg(desktop)]
+            subsystems::updates::get_update_status,
+            #[cfg(desktop)]
+            subsystems::updates::install_update,
         ])
-        .run(context)
-        .expect("应用启动失败");
+        .build(context)
+        .expect("应用启动失败")
+        .run(|app, event| match event {
+            tauri::RunEvent::Exit => subsystems::shutdown(app),
+            #[cfg(mobile)]
+            tauri::RunEvent::Ready | tauri::RunEvent::Resumed => subsystems::mobile::resume(app),
+            _ => {}
+        });
 }

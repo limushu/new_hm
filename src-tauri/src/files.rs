@@ -1,9 +1,14 @@
 use crate::{access, AppState};
-use hm_core::{BackupInfo, ImportReport, MaterialTarget};
+use hm_core::BackupInfo;
+#[cfg(desktop)]
+use hm_core::{ImportReport, MaterialTarget};
 use std::path::PathBuf;
 use tauri::{Manager, State};
+#[cfg(desktop)]
 use tauri_plugin_dialog::DialogExt;
+#[cfg(desktop)]
 use tauri_plugin_opener::OpenerExt;
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn pick_receipt_file(app: tauri::AppHandle) -> Result<Option<String>, String> {
     app.dialog()
@@ -17,6 +22,7 @@ pub fn pick_receipt_file(app: tauri::AppHandle) -> Result<Option<String>, String
         })
         .transpose()
 }
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn save_ledger_with_receipt(
     state: State<'_, AppState>,
@@ -29,6 +35,7 @@ pub fn save_ledger_with_receipt(
     })
 }
 
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn pick_materials(
     app: tauri::AppHandle,
@@ -52,6 +59,7 @@ pub fn pick_materials(
         .collect::<Result<Vec<_>, _>>()?;
     access(&state, |s| s.import_materials(target, &paths))
 }
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn import_material_paths(
     state: State<'_, AppState>,
@@ -85,6 +93,7 @@ pub fn material_preview(
         .map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().into())
 }
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn open_material(
     app: tauri::AppHandle,
@@ -110,6 +119,7 @@ pub fn open_material(
         .open_path(path.to_string_lossy().as_ref(), None::<&str>)
         .map_err(|e| e.to_string())
 }
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn export_material(
     app: tauri::AppHandle,
@@ -130,6 +140,7 @@ pub fn export_material(
     access(&state, |s| s.export_material(&id, &path))?;
     Ok(true)
 }
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn save_recording(
     state: State<'_, AppState>,
@@ -155,6 +166,7 @@ pub fn save_recording(
     };
     access(&state, |s| s.save_recording(target, &name, bytes))
 }
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn choose_backup_directory(
     app: tauri::AppHandle,
@@ -190,6 +202,7 @@ pub fn run_backup(state: State<'_, AppState>) -> Result<BackupInfo, String> {
         Ok(info)
     })
 }
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn pick_restore_backup(app: tauri::AppHandle) -> Result<Option<BackupInfo>, String> {
     let Some(folder) = app
@@ -205,6 +218,7 @@ pub fn pick_restore_backup(app: tauri::AppHandle) -> Result<Option<BackupInfo>, 
         .map(Some)
         .map_err(|e| e.to_string())
 }
+#[cfg(desktop)]
 #[tauri::command(async)]
 pub fn apply_restore_backup(
     state: State<'_, AppState>,

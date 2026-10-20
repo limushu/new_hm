@@ -36,7 +36,7 @@ pub(crate) fn set_taskbar_icon(window: &tauri::WebviewWindow) -> Result<TaskbarI
     if icon.is_null() {
         return Err(std::io::Error::last_os_error().to_string());
     }
-    // SAFETY: hwnd belongs to this app and the copied icon remains owned by DesktopState.
+    // SAFETY: hwnd belongs to this app and the copied icon remains owned by HostState.
     unsafe { SendMessageW(hwnd, WM_SETICON, ICON_BIG as usize, icon as isize) };
     Ok(TaskbarIcon(icon as isize))
 }

@@ -154,9 +154,9 @@ impl Store {
             .setting("materials_directory")?
             .unwrap_or_else(|| "materials".into());
         if name != "materials"
-            && !name
+            && name
                 .strip_prefix("materials-restore-")
-                .is_some_and(|id| Uuid::parse_str(id).is_ok())
+                .is_none_or(|id| Uuid::parse_str(id).is_err())
         {
             return Err(Error::Validation("材料存储目录无效".into()));
         }

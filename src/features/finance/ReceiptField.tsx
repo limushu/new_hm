@@ -1,8 +1,10 @@
 import { useRef, useState } from 'react';
 import { Upload, Paperclip, X, FileText } from 'lucide-react';
 import Select from '../../components/Select';
-import { command, desktopRuntime } from '../../services/repository';
+import { command, nativeRuntime } from '../../services/repository';
 import type { Workspace } from '../../domain/types';
+import { useSubsystems } from '../../platform/SubsystemProvider';
+import { supports } from '../../platform/subsystems';
 export interface PendingReceipt {
   id: string;
   path: string;
@@ -23,13 +25,15 @@ export default function ReceiptField({
   pending: PendingReceipt | null;
   onPending: (file: PendingReceipt | null) => void;
 }) {
+  const { manifest } = useSubsystems();
+  const filePicker = supports(manifest, 'file-picker');
   const file = useRef<HTMLInputElement>(null);
   const [select, setSelect] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const stored = data.materials.find((m) => m.id === value);
   async function choose() {
-    if (!desktopRuntime) {
+    if (!nativeRuntime) {
       file.current?.click();
       return;
     }
@@ -77,7 +81,7 @@ export default function ReceiptField({
         <button
           type="button"
           className="receipt-upload"
-          disabled={busy}
+          disabled={busy || !filePicker}
           onClick={() => void choose()}
         >
           <Upload />
@@ -88,7 +92,7 @@ export default function ReceiptField({
       )}
       <div className="receipt-options">
         {(pending || stored) && (
-          <button type="button" disabled={busy} onClick={() => void choose()}>
+          <button type="button" disabled={busy || !filePicker} onClick={() => void choose()}>
             更换文件
           </button>
         )}

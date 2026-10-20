@@ -1,9 +1,8 @@
-import { jsonHeader as ascii } from '../../services/headers';
 import { useEffect, useRef, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import { saveNativeRecording } from '../../platform/recording';
 import Dialog from '../../components/Dialog';
 import type { MaterialTarget, SaveAction } from '../../domain/types';
-import { desktopRuntime } from '../../services/repository';
+import { nativeRuntime } from '../../services/repository';
 export default function Recorder({
   target,
   save,
@@ -86,10 +85,8 @@ export default function Recorder({
           ? async () => {
               if (!name.trim().toLowerCase().endsWith('.webm'))
                 throw new Error('请保留 .webm 扩展名');
-              if (desktopRuntime) {
-                await invoke('save_recording', new Uint8Array(await blob.arrayBuffer()), {
-                  headers: { 'x-hm-target': ascii(target), 'x-hm-name': ascii(name.trim()) },
-                });
+              if (nativeRuntime) {
+                await saveNativeRecording(target, name.trim(), blob);
                 await save('load_workspace', {});
               } else {
                 const { registerPreviewFiles } = await import('../../services/preview');

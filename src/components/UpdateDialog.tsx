@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { listen } from '@tauri-apps/api/event';
+import { watchUpdateProgress } from '../platform/updates';
 import type { Commands } from '../domain/types';
-import { command, desktopRuntime } from '../services/repository';
+import { command, nativeRuntime } from '../services/repository';
 import Dialog from './Dialog';
 
 export default function UpdateDialog({
@@ -13,10 +13,10 @@ export default function UpdateDialog({
 }) {
   const [progress, setProgress] = useState('');
   useEffect(() => {
-    if (!desktopRuntime) return;
+    if (!nativeRuntime) return;
     let canceled = false;
     let stop: (() => void) | undefined;
-    void listen<{ downloaded: number; total: number | null }>('update-progress', ({ payload }) => {
+    void watchUpdateProgress((payload) => {
       if (!canceled)
         setProgress(
           payload.total

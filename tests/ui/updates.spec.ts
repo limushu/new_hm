@@ -1,19 +1,26 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function backgroundEvents(page: Page) {
-  await page.addInitScript(() => {
+async function backgroundEvents(page: Page, holdManifest = false) {
+  await page.addInitScript((holdManifest) => {
     const callbacks = new Map<number, (event: unknown) => void>();
     const listeners = new Map<number, { event: string; handler: number }>();
     let id = 0;
+    let available: { version: string; notes: string } | null = null;
+    let releaseManifest: () => void = () => {};
+    const manifestReady = new Promise<void>((resolve) => {
+      releaseManifest = resolve;
+    });
     Object.assign(window, {
       isTauri: true,
+      releaseTestManifest: () => releaseManifest(),
       emitTestUpdate: () => {
+        available = { version: '1.2.0', notes: '隔离后台测试' };
         for (const [eventId, value] of listeners)
           if (value.event === 'update-available')
             callbacks.get(value.handler)?.({
               event: 'update-available',
               id: eventId,
-              payload: { version: '1.2.0', notes: '隔离后台测试' },
+              payload: available,
             });
       },
       emitTestProgress: () => {
@@ -34,6 +41,8 @@ async function backgroundEvents(page: Page) {
           return id;
         },
         invoke: async (name: string, args: { event: string; handler: number }) => {
+          if (name === 'subsystem_manifest' && holdManifest) await manifestReady;
+          if (name === 'get_update_status') return available;
           if (name === 'plugin:event|listen') {
             listeners.set(++id, args);
             return id;
@@ -50,8 +59,23 @@ async function backgroundEvents(page: Page) {
         },
       },
     });
-  });
+  }, holdManifest);
 }
+
+test('能力查询期间发现新版，订阅完成后从原生快照恢复提示', async ({ page }) => {
+  await backgroundEvents(page, true);
+  await page.goto('/?preview=1');
+  await expect(page.locator('.calendar-page')).toBeVisible();
+  await page.evaluate(() => {
+    const runtime = window as unknown as {
+      emitTestUpdate: () => void;
+      releaseTestManifest: () => void;
+    };
+    runtime.emitTestUpdate();
+    runtime.releaseTestManifest();
+  });
+  await expect(page.getByRole('button', { name: '更新案笺到 1.2.0', exact: true })).toBeVisible();
+});
 
 test('设置页已打开时收到后台更新事件，侧栏和安装入口即时同步', async ({ page }) => {
   await backgroundEvents(page);
