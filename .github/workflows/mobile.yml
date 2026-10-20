@@ -16,7 +16,9 @@ jobs:
         with:
           targets: aarch64-linux-android
       - uses: android-actions/setup-android@v3
-      - run: sdkmanager 'ndk;27.2.12479018'
+        with:
+          packages: 'ndk;27.2.12479018'
+          log-accepted-android-sdk-licenses: 'false'
       - name: Configure NDK compiler
         shell: bash
         run: |
