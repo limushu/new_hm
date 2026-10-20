@@ -22,6 +22,7 @@
     "android:dev": "tauri android dev",
     "ios:init": "tauri ios init",
     "ios:dev": "tauri ios dev",
+    "ios:verify": "node scripts/verify-ios-simulator.mjs",
     "artifacts:debug": "node scripts/collect-artifacts.mjs debug",
     "artifacts:release": "node scripts/collect-release.mjs",
     "artifacts:mirror": "node scripts/prepare-update-mirror.mjs",
