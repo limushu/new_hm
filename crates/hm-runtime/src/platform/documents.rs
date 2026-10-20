@@ -14,7 +14,7 @@ pub trait Document: Send {
 /// Blocking operations run on the host's worker pool, never its UI thread.
 pub trait DocumentDriver: Send + Sync {
     /// None means user cancellation, not failure.
-    fn pick(&self, multiple: bool) -> DriverResult<Option<Vec<Box<dyn Document>>>>;
+    fn pick(&self, title: &str, multiple: bool) -> DriverResult<Option<Vec<Box<dyn Document>>>>;
     /// None means the destination picker was cancelled.
-    fn export(&self, name: &str, source: &mut dyn Read) -> DriverResult<Option<u64>>;
+    fn export(&self, title: &str, name: &str, source: &mut dyn Read) -> DriverResult<Option<u64>>;
 }

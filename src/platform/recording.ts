@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { nativeInvoke as invoke } from './ipc';
 import type { MaterialTarget } from '../domain/types';
 import { jsonHeader } from '../services/headers';
 import { nativeRuntime } from '../services/repository';

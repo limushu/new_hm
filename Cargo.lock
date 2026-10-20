@@ -1571,6 +1571,7 @@ version = "1.4.3"
 dependencies = [
  "hm-core",
  "hm-runtime",
+ "serde",
  "tempfile",
 ]
 
@@ -1594,6 +1595,7 @@ name = "hm-runtime"
 version = "1.4.3"
 dependencies = [
  "serde",
+ "serde_json",
 ]
 
 [[package]]

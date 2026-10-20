@@ -22,10 +22,10 @@ impl RecordingService {
     }
     pub fn start(&mut self) -> DriverResult<()> {
         if self.session.is_some() || self.artifact.is_some() {
-            return Err(DriverError::invalid_state("请先保存或放弃上一段录音"));
+            return Err(DriverError::invalid_state("recording_pending"));
         }
         if !self.driver.support().capture {
-            return Err(DriverError::unsupported("原生录音"));
+            return Err(DriverError::unsupported("audio_capture"));
         }
         self.session = Some(self.driver.start()?);
         Ok(())
@@ -39,14 +39,14 @@ impl RecordingService {
     }
     pub fn pause(&mut self) -> DriverResult<()> {
         if !self.driver.support().pause {
-            return Err(DriverError::unsupported("暂停录音"));
+            return Err(DriverError::unsupported("audio_pause"));
         }
         let session = self
             .session
             .as_mut()
-            .ok_or_else(|| DriverError::invalid_state("没有进行中的录音"))?;
+            .ok_or_else(|| DriverError::invalid_state("recording_not_started"))?;
         if session.state() != RecordingState::Recording {
-            return Err(DriverError::invalid_state("当前录音不能暂停"));
+            return Err(DriverError::invalid_state("recording_cannot_pause"));
         }
         session.pause()
     }
@@ -54,9 +54,9 @@ impl RecordingService {
         let session = self
             .session
             .as_mut()
-            .ok_or_else(|| DriverError::invalid_state("没有进行中的录音"))?;
+            .ok_or_else(|| DriverError::invalid_state("recording_not_started"))?;
         if session.state() != RecordingState::Paused {
-            return Err(DriverError::invalid_state("当前录音不能继续"));
+            return Err(DriverError::invalid_state("recording_cannot_resume"));
         }
         session.resume()
     }
@@ -64,7 +64,7 @@ impl RecordingService {
         let session = self
             .session
             .as_mut()
-            .ok_or_else(|| DriverError::invalid_state("没有进行中的录音"))?;
+            .ok_or_else(|| DriverError::invalid_state("recording_not_started"))?;
         let artifact = session.finish()?;
         let name = artifact.name().to_owned();
         self.artifact = Some(artifact);
@@ -77,13 +77,16 @@ impl RecordingService {
         store: &Store,
         target: &MaterialTarget,
         name: &str,
-    ) -> Result<String, String> {
-        let artifact = self.artifact.as_mut().ok_or("请先结束录音")?;
+    ) -> DriverResult<String> {
+        let artifact = self
+            .artifact
+            .as_mut()
+            .ok_or_else(|| DriverError::invalid_state("recording_not_finished"))?;
         let id = {
-            let mut reader = artifact.open().map_err(|e| e.to_string())?;
+            let mut reader = artifact.open()?;
             store
                 .import_reader(target, name, &mut reader)
-                .map_err(|e| e.to_string())?
+                .map_err(crate::errors::core_error)?
         };
         self.artifact = None;
         Ok(id)

@@ -9,9 +9,12 @@ pub struct RecordingState(pub Mutex<RecordingService>);
 fn capture<T>(
     state: &RecordingState,
     action: impl FnOnce(&mut RecordingService) -> Result<T, DriverError>,
-) -> Result<T, String> {
-    let mut service = state.0.lock().map_err(|_| "录音服务不可用")?;
-    action(&mut service).map_err(|e| e.to_string())
+) -> Result<T, DriverError> {
+    let mut service = state
+        .0
+        .lock()
+        .map_err(|_| DriverError::invalid_state("recording_unavailable"))?;
+    action(&mut service)
 }
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -22,7 +25,7 @@ pub struct CaptureBackends {
 #[tauri::command]
 pub fn native_recording_support(
     state: State<'_, RecordingState>,
-) -> Result<CaptureBackends, String> {
+) -> Result<CaptureBackends, DriverError> {
     capture(&state, |service| {
         Ok(CaptureBackends {
             native: service.support(),
@@ -31,29 +34,29 @@ pub fn native_recording_support(
     })
 }
 #[tauri::command(async)]
-pub fn start_native_recording(state: State<'_, RecordingState>) -> Result<(), String> {
+pub fn start_native_recording(state: State<'_, RecordingState>) -> Result<(), DriverError> {
     capture(&state, |service| service.start())
 }
 #[tauri::command(async)]
-pub fn pause_native_recording(state: State<'_, RecordingState>) -> Result<(), String> {
+pub fn pause_native_recording(state: State<'_, RecordingState>) -> Result<(), DriverError> {
     capture(&state, |service| service.pause())
 }
 #[tauri::command(async)]
-pub fn resume_native_recording(state: State<'_, RecordingState>) -> Result<(), String> {
+pub fn resume_native_recording(state: State<'_, RecordingState>) -> Result<(), DriverError> {
     capture(&state, |service| service.resume())
 }
 #[tauri::command(async)]
-pub fn finish_native_recording(state: State<'_, RecordingState>) -> Result<String, String> {
+pub fn finish_native_recording(state: State<'_, RecordingState>) -> Result<String, DriverError> {
     capture(&state, |service| service.finish())
 }
 #[tauri::command(async)]
-pub fn cancel_native_recording(state: State<'_, RecordingState>) -> Result<(), String> {
+pub fn cancel_native_recording(state: State<'_, RecordingState>) -> Result<(), DriverError> {
     capture(&state, |service| service.cancel())
 }
 #[tauri::command]
 pub fn native_recording_state(
     state: State<'_, RecordingState>,
-) -> Result<Option<CaptureState>, String> {
+) -> Result<Option<CaptureState>, DriverError> {
     capture(&state, |service| Ok(service.state()))
 }
 #[tauri::command(async)]
@@ -62,8 +65,14 @@ pub fn archive_native_recording(
     state: State<'_, AppState>,
     target: MaterialTarget,
     name: String,
-) -> Result<String, String> {
-    let mut service = recording.0.lock().map_err(|_| "录音服务不可用")?;
-    let store = state.0.lock().map_err(|_| "数据库暂时不可用")?;
+) -> Result<String, DriverError> {
+    let mut service = recording
+        .0
+        .lock()
+        .map_err(|_| DriverError::invalid_state("recording_unavailable"))?;
+    let store = state
+        .0
+        .lock()
+        .map_err(|_| DriverError::invalid_state("storage_unavailable"))?;
     service.archive(&store, &target, &name)
 }

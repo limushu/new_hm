@@ -1,4 +1,4 @@
-import { invoke } from '@tauri-apps/api/core';
+import { nativeInvoke as invoke } from './ipc';
 import { nativeRuntime, previewMode } from '../services/repository';
 
 export async function syncWindowTheme(theme: 'dark' | 'light' | 'system') {

@@ -1,3 +1,4 @@
+import { errorMessage } from '../../services/errors';
 import Select from '../../components/Select';
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import {
@@ -162,9 +163,19 @@ export default function Materials({
     const parentId = at.parentId;
     at = materials.find((m) => m.id === parentId);
   }
-  function report(result: { imported: number; errors: string[] }) {
+  function report(result: {
+    imported: number;
+    errors: (string | { name: string; error: unknown })[];
+  }) {
     if (result.imported) setNotice(`已添加 ${result.imported} 份材料`);
-    if (result.errors.length) setError(result.errors.join('\n'));
+    if (result.errors.length)
+      setError(
+        result.errors
+          .map((issue) =>
+            typeof issue === 'string' ? issue : `${issue.name}：${errorMessage(issue.error)}`,
+          )
+          .join('\n'),
+      );
   }
   useEffect(() => {
     if (!nativeRuntime || !nativeDrop) return;

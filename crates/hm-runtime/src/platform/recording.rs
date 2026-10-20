@@ -40,6 +40,6 @@ impl RecordingDriver for UnavailableRecording {
         }
     }
     fn start(&self) -> DriverResult<Box<dyn RecordingSession>> {
-        Err(DriverError::unsupported("原生录音"))
+        Err(DriverError::unsupported("audio_capture"))
     }
 }

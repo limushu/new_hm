@@ -1,3 +1,9 @@
+export interface OperationError {
+  code: string;
+  kind?: string;
+  resource?: string;
+  detail?: string;
+}
 import type { RuntimeManifest } from '../platform/subsystems';
 export type CaseType = 'civil' | 'other';
 export type ProgramKind = string;
@@ -334,7 +340,7 @@ export interface Reminder {
 }
 export interface ImportReport {
   imported: number;
-  errors: string[];
+  errors: (string | { name: string; error: OperationError })[];
 }
 export interface Commands {
   create_material_folder: { args: { target: MaterialTarget; name: string }; result: string };

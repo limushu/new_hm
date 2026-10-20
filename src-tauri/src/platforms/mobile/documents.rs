@@ -3,10 +3,10 @@ use std::io::Read;
 
 pub struct UnavailableDocuments;
 impl DocumentDriver for UnavailableDocuments {
-    fn pick(&self, _: bool) -> DriverResult<Option<Vec<Box<dyn Document>>>> {
-        Err(DriverError::unsupported("文档选择"))
+    fn pick(&self, _: &str, _: bool) -> DriverResult<Option<Vec<Box<dyn Document>>>> {
+        Err(DriverError::unsupported("document_pick"))
     }
-    fn export(&self, _: &str, _: &mut dyn Read) -> DriverResult<Option<u64>> {
-        Err(DriverError::unsupported("文档导出"))
+    fn export(&self, _: &str, _: &str, _: &mut dyn Read) -> DriverResult<Option<u64>> {
+        Err(DriverError::unsupported("document_export"))
     }
 }

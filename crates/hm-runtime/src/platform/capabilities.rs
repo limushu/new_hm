@@ -1,8 +1,9 @@
+use super::{DriverError, DriverResult};
 use crate::{Availability, Capability, RuntimeManifest};
 
 impl RuntimeManifest {
     /// The native boundary enforces the same capabilities advertised to the UI.
-    pub fn require(&self, capability: Capability) -> Result<(), String> {
+    pub fn require(&self, capability: Capability) -> DriverResult<()> {
         if self
             .subsystems
             .iter()
@@ -10,7 +11,7 @@ impl RuntimeManifest {
         {
             Ok(())
         } else {
-            Err(format!("当前平台尚不支持此能力：{capability:?}"))
+            Err(DriverError::unsupported(&format!("{capability:?}")))
         }
     }
 }
