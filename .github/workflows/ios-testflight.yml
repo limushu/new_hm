@@ -1,0 +1,64 @@
+name: iOS signed archive and TestFlight
+on:
+  workflow_dispatch:
+    inputs:
+      upload:
+        description: 'Upload the verified signed IPA to App Store Connect for TestFlight processing'
+        required: true
+        type: boolean
+        default: false
+      build_number:
+        description: 'Optional Apple build number; defaults to workflow run number and attempt'
+        required: false
+        type: string
+permissions:
+  contents: read
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+jobs:
+  archive:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 45
+    environment: ios-testflight
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ios-device
+      - name: Ensure Xcode project tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          command -v pod >/dev/null || brew install cocoapods
+      - run: npm ci
+      - run: npx vitest run scripts/ios-release-config.test.mjs
+      - name: Archive, verify and optionally upload
+        env:
+          APPLE_DEVELOPMENT_TEAM: ${{ vars.APPLE_TEAM_ID }}
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          IOS_CERTIFICATE: ${{ secrets.IOS_CERTIFICATE }}
+          IOS_CERTIFICATE_PASSWORD: ${{ secrets.IOS_CERTIFICATE_PASSWORD }}
+          IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
+          IOS_BUILD_NUMBER: ${{ inputs.build_number }}
+          IOS_UPLOAD_TO_TESTFLIGHT: ${{ inputs.upload }}
+          IOS_SOURCE_SHA: ${{ github.sha }}
+        run: node scripts/build-ios-testflight.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-testflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ios/testflight/
+          if-no-files-found: warn
+          retention-days: 7

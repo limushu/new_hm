@@ -2,16 +2,18 @@
 
 更新于 2026-10-20。移动入口和平台依赖已拆分，当前仍为开发阶段，没有可分发的 APK、IPA 或 TestFlight 版本。
 
+完整模拟器应用与签名流程正在接入，操作见[iOS 构建与 TestFlight](ios-testflight.md)。构建产物、模拟器检查、签名与上传状态分别记录，不混为真机验收。
+
 ## 当前可验证范围
 
-| 项目 | 当前结果 |
-| --- | --- |
-| 共享案件/SQLite/备份业务 | Linux 核心测试；沙盒路径写入案件并重开校验 |
-| Android 原生 Rust 库 | NDK r27c / API 24 / aarch64-linux-android 的 cargo check 和严格 Clippy 已通过 |
-| iOS 平台依赖边界 | 依赖树检查不包含桌面托盘、自启动、单实例和更新组件 |
-| iOS 原生 Rust 库 | macOS CI 检查已配置；远端结果另行记录 |
-| 手机界面 | 浏览器手机尺寸与模拟移动能力回归，不代替原生设备验收 |
-| 安装包/系统权限/真机 | 尚未验证 |
+| 项目                     | 当前结果                                                                      |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| 共享案件/SQLite/备份业务 | Linux 核心测试；沙盒路径写入案件并重开校验                                    |
+| Android 原生 Rust 库     | NDK r27c / API 24 / aarch64-linux-android 的 cargo check 和严格 Clippy 已通过 |
+| iOS 平台依赖边界         | 依赖树检查不包含桌面托盘、自启动、单实例和更新组件                            |
+| iOS 原生 Rust 库         | macOS CI 检查已配置；远端结果另行记录                                         |
+| 手机界面                 | 浏览器手机尺寸与模拟移动能力回归，不代替原生设备验收                          |
+| 安装包/系统权限/真机     | 尚未验证                                                                      |
 
 移动端使用 app_local_data_dir 私有持久目录，不访问可执行文件目录或 .portable 标记。启动、原生 Resumed 和 WebView 恢复可见时触发前台维护；重叠请求合并，按日期幂等检查备份，不创建后台轮询线程。应用被挂起或终止后不承诺继续执行。
 
@@ -62,3 +64,5 @@ cargo check --locked -p hm-app --lib --target aarch64-apple-ios-sim
 Android min SDK 暂设 24，iOS minimumSystemVersion 暂设 15.0；这只是构建基线，不是覆盖这些系统版本的实机兼容承诺。品牌名统一为案笺，安装身份 com.limushu.hm 保持不变。
 
 架构与后续顺序见[跨平台架构](design/cross-platform-architecture.md)和[子系统设计](design/subsystems.md)。
+
+Rust 的分层目录、实际调用链和未完成边界见 [Rust 模块边界](design/rust-module-layout.md)。

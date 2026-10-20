@@ -13,7 +13,8 @@
     "resources": null,
     "icon": ["icons/icon.png"],
     "iOS": {
-      "minimumSystemVersion": "15.0"
+      "minimumSystemVersion": "15.0",
+      "developmentTeam": "UN356US9WL"
     }
   },
   "plugins": {
