@@ -1,0 +1,7 @@
+{
+  "identifier": "desktop-host",
+  "description": "桌面主窗口主题设置",
+  "windows": ["main"],
+  "platforms": ["windows", "macOS", "linux"],
+  "permissions": ["core:window:allow-set-theme"]
+}

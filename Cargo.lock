@@ -1548,7 +1548,9 @@ name = "hm-app"
 version = "1.4.3"
 dependencies = [
  "chrono",
+ "hm-application",
  "hm-core",
+ "hm-runtime",
  "serde",
  "serde_json",
  "tauri",
@@ -1559,7 +1561,18 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
  "tauri-plugin-updater",
+ "tempfile",
  "windows-sys 0.61.2",
+]
+
+[[package]]
+name = "hm-application"
+version = "1.4.3"
+dependencies = [
+ "hm-core",
+ "hm-runtime",
+ "serde",
+ "tempfile",
 ]
 
 [[package]]
@@ -1575,6 +1588,14 @@ dependencies = [
  "thiserror 2.0.21",
  "url",
  "uuid",
+]
+
+[[package]]
+name = "hm-runtime"
+version = "1.4.3"
+dependencies = [
+ "serde",
+ "serde_json",
 ]
 
 [[package]]

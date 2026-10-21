@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { getCurrentWindow } from '@tauri-apps/api/window';
-import { command, desktopRuntime, previewMode } from '../services/repository';
+import { syncWindowTheme } from '../platform/host';
+import { command } from '../services/repository';
+import { useSubsystems } from '../platform/SubsystemProvider';
+import { supports } from '../platform/subsystems';
 
 export type Theme = 'dark' | 'light' | 'system';
 const valid = (value: unknown): value is Theme =>
@@ -24,10 +26,6 @@ function apply(value: Theme) {
   document
     .querySelector('meta[name="theme-color"]')
     ?.setAttribute('content', resolved === 'light' ? '#f7f7f5' : '#191919');
-  if (desktopRuntime && !previewMode)
-    void getCurrentWindow()
-      .setTheme(value === 'system' ? null : value)
-      .catch(() => {});
 }
 apply(cachedTheme());
 const Context = createContext<{ theme: Theme; setTheme: (theme: Theme) => Promise<void> }>({
@@ -36,6 +34,8 @@ const Context = createContext<{ theme: Theme; setTheme: (theme: Theme) => Promis
 });
 export const useTheme = () => useContext(Context);
 export default function ThemeProvider({ children }: { children: ReactNode }) {
+  const { manifest } = useSubsystems();
+  const windowTheme = supports(manifest, 'window-theme');
   const [theme, setValue] = useState<Theme>(cachedTheme);
   useEffect(() => {
     let canceled = false;
@@ -57,13 +57,14 @@ export default function ThemeProvider({ children }: { children: ReactNode }) {
   }, []);
   useEffect(() => {
     apply(theme);
+    if (windowTheme) void syncWindowTheme(theme).catch(() => {});
     const media = matchMedia('(prefers-color-scheme: light)');
     const change = () => {
       if (theme === 'system') apply(theme);
     };
     media.addEventListener('change', change);
     return () => media.removeEventListener('change', change);
-  }, [theme]);
+  }, [theme, windowTheme]);
   return (
     <Context.Provider
       value={{

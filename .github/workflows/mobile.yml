@@ -1,0 +1,93 @@
+name: Mobile application checks
+on:
+  push:
+    branches: ['**']
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'crates/**'
+      - 'Cargo.*'
+      - 'package*.json'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'scripts/verify-ios-simulator.mjs'
+      - 'scripts/check-mobile-boundaries.mjs'
+      - '.github/workflows/mobile.yml'
+  pull_request:
+    paths:
+      - 'src/**'
+      - 'src-tauri/**'
+      - 'crates/**'
+      - 'Cargo.*'
+      - 'package*.json'
+      - 'index.html'
+      - 'vite.config.ts'
+      - 'scripts/verify-ios-simulator.mjs'
+      - 'scripts/check-mobile-boundaries.mjs'
+      - '.github/workflows/mobile.yml'
+permissions:
+  contents: read
+concurrency:
+  group: mobile-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: true
+jobs:
+  android-rust:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'ndk;27.2.12479018'
+          log-accepted-android-sdk-licenses: 'false'
+      - name: Configure NDK compiler
+        shell: bash
+        run: |
+          ndk_bin="${ANDROID_HOME:?}/ndk/27.2.12479018/toolchains/llvm/prebuilt/linux-x86_64/bin"
+          printf '%s\n' \
+            "CC_aarch64_linux_android=$ndk_bin/aarch64-linux-android24-clang" \
+            "AR_aarch64_linux_android=$ndk_bin/llvm-ar" \
+            "CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER=$ndk_bin/aarch64-linux-android24-clang" >> "$GITHUB_ENV"
+      - run: npm ci
+      - run: npm run build
+      - run: npm run check:mobile-boundaries
+      - run: cargo check --locked -p hm-app --lib --target aarch64-linux-android
+  ios-app:
+    runs-on: macos-15
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-ios-sim,x86_64-apple-ios
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ios-simulator-${{ runner.arch }}
+      - name: Ensure Xcode project tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: |
+          command -v xcodegen >/dev/null || brew install xcodegen
+          command -v pod >/dev/null || brew install cocoapods
+      - run: npm ci
+      - name: Build and launch iOS simulator application
+        env:
+          IOS_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: npm run ios:verify
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-simulator-${{ github.run_id }}-${{ github.run_attempt }}
+          path: artifacts/ios/simulator/
+          if-no-files-found: warn
+          retention-days: 14

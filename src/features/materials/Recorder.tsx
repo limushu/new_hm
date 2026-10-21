@@ -1,9 +1,12 @@
-import { jsonHeader as ascii } from '../../services/headers';
 import { useEffect, useRef, useState } from 'react';
-import { invoke } from '@tauri-apps/api/core';
+import {
+  startRecording,
+  type RecordingCapture,
+  type RecordingProduct,
+} from '../../platform/recording';
 import Dialog from '../../components/Dialog';
 import type { MaterialTarget, SaveAction } from '../../domain/types';
-import { desktopRuntime } from '../../services/repository';
+import { nativeRuntime } from '../../services/repository';
 export default function Recorder({
   target,
   save,
@@ -17,20 +20,21 @@ export default function Recorder({
     `录音 ${new Date().toLocaleString('sv-SE').replaceAll(':', '-')}.webm`,
   );
   const [status, setStatus] = useState<'idle' | 'recording' | 'paused' | 'stopped'>('idle');
-  const [blob, setBlob] = useState<Blob | null>(null);
+  const [product, setProduct] = useState<RecordingProduct | null>(null);
+  const blob = product?.blob;
+  const [canPause, setCanPause] = useState(true);
   const [error, setError] = useState('');
   const [seconds, setSeconds] = useState(0);
-  const recorder = useRef<MediaRecorder | null>(null);
-  const stream = useRef<MediaStream | null>(null);
-  const chunks = useRef<Blob[]>([]);
+  const capture = useRef<RecordingCapture | null>(null);
   const busy = useRef(false);
-  useEffect(
-    () => () => {
-      if (recorder.current?.state !== 'inactive') recorder.current?.stop();
-      stream.current?.getTracks().forEach((track) => track.stop());
-    },
-    [],
-  );
+  const mounted = useRef(true);
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      void capture.current?.dispose().catch(() => {});
+    };
+  }, []);
   useEffect(() => {
     if (status !== 'recording') return;
     const timer = setInterval(() => setSeconds((s) => s + 1), 1000);
@@ -41,31 +45,40 @@ export default function Recorder({
     busy.current = true;
     setError('');
     try {
-      if (!navigator.mediaDevices?.getUserMedia) throw new Error('当前设备不支持录音');
-      stream.current = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const type = ['audio/webm;codecs=opus', 'audio/webm'].find((t) =>
-        MediaRecorder.isTypeSupported(t),
-      );
-      if (!type) throw new Error('当前平台暂不支持此录音格式');
-      const value = new MediaRecorder(stream.current, { mimeType: type });
-      recorder.current = value;
-      chunks.current = [];
-      value.ondataavailable = (event) => {
-        if (event.data.size) chunks.current.push(event.data);
-      };
-      value.onerror = () => {
-        setError('录音中断，已录制的部分仍可结束并保存。');
-      };
-      value.onstop = () => {
-        setBlob(new Blob(chunks.current, { type: 'audio/webm' }));
-        setStatus('stopped');
-        stream.current?.getTracks().forEach((track) => track.stop());
-      };
-      value.start(1000);
+      const value = await startRecording((message) => {
+        if (mounted.current) setError(message);
+      });
+      if (!mounted.current) {
+        await value.dispose();
+        return;
+      }
+      capture.current = value;
+      setCanPause(value.canPause);
       setStatus('recording');
     } catch (reason) {
-      stream.current?.getTracks().forEach((track) => track.stop());
-      setError(`无法开始录音：${String(reason)}`);
+      if (mounted.current) setError(`无法开始录音：${String(reason)}`);
+    } finally {
+      busy.current = false;
+    }
+  }
+  async function control(action: 'pause' | 'resume' | 'finish') {
+    if (busy.current || !capture.current) return;
+    busy.current = true;
+    setError('');
+    try {
+      if (action === 'finish') {
+        const result = await capture.current.finish();
+        if (!mounted.current) return;
+        setProduct(result);
+        const extension = result.name.match(/\.[^.]+$/)?.[0] ?? '';
+        setName((current) => current.replace(/\.[^.]+$/, '') + extension);
+        setStatus('stopped');
+      } else {
+        await capture.current[action]();
+        if (mounted.current) setStatus(action === 'pause' ? 'paused' : 'recording');
+      }
+    } catch (error) {
+      if (mounted.current) setError(String(error));
     } finally {
       busy.current = false;
     }
@@ -82,16 +95,15 @@ export default function Recorder({
       title="案件录音"
       onClose={close}
       onSubmit={
-        blob
+        product
           ? async () => {
-              if (!name.trim().toLowerCase().endsWith('.webm'))
-                throw new Error('请保留 .webm 扩展名');
-              if (desktopRuntime) {
-                await invoke('save_recording', new Uint8Array(await blob.arrayBuffer()), {
-                  headers: { 'x-hm-target': ascii(target), 'x-hm-name': ascii(name.trim()) },
-                });
+              const extension = product.name.match(/\.[^.]+$/)?.[0] ?? '';
+              if (extension && !name.trim().toLowerCase().endsWith(extension.toLowerCase()))
+                throw new Error(`请保留 ${extension} 扩展名`);
+              if (nativeRuntime) {
+                await product.archive(target, name.trim());
                 await save('load_workspace', {});
-              } else {
+              } else if (blob) {
                 const { registerPreviewFiles } = await import('../../services/preview');
                 await save('import_material_paths', {
                   target,
@@ -126,21 +138,15 @@ export default function Recorder({
         )}
         {(status === 'recording' || status === 'paused') && (
           <>
-            <button
-              type="button"
-              onClick={() => {
-                if (status === 'recording') {
-                  recorder.current?.pause();
-                  setStatus('paused');
-                } else {
-                  recorder.current?.resume();
-                  setStatus('recording');
-                }
-              }}
-            >
-              {status === 'recording' ? '暂停' : '继续'}
-            </button>
-            <button type="button" onClick={() => recorder.current?.stop()}>
+            {canPause && (
+              <button
+                type="button"
+                onClick={() => void control(status === 'recording' ? 'pause' : 'resume')}
+              >
+                {status === 'recording' ? '暂停' : '继续'}
+              </button>
+            )}
+            <button type="button" onClick={() => void control('finish')}>
               结束录音
             </button>
           </>

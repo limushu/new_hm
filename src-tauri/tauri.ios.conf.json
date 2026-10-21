@@ -1,1 +1,23 @@
-{ "app": { "windows": [{ "label": "main", "title": "律师工作台" }] } }
+{
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "案笺"
+      }
+    ]
+  },
+  "bundle": {
+    "targets": [],
+    "createUpdaterArtifacts": false,
+    "resources": null,
+    "icon": ["icons/icon.png"],
+    "iOS": {
+      "minimumSystemVersion": "15.0",
+      "developmentTeam": "UN356US9WL"
+    }
+  },
+  "plugins": {
+    "updater": null
+  }
+}

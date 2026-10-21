@@ -1,12 +1,16 @@
 # 应用架构
 
+跨平台演进方案见[跨平台架构](design/cross-platform-architecture.md)：包含当前移动端缺口、共享业务与平台能力边界、iOS/Android 实施顺序及验收门槛；方案尚未作为移动端原生能力交付。
+
+2026-10-20 开始实现[子系统边界与运行时](design/subsystems.md)：hm-runtime 提供宿主能力契约与周期任务生命周期，Tauri 装配宿主、更新和维护服务。已继续隔离移动启动、桌面依赖与命令，Android Rust 目标检查通过；完整原生应用与 iOS/设备结果见[移动端开发](mobile-development.md)。
+
 更新于 2026-10-18，版本 1.4.0。Windows x64 首发，其他平台需单独构建验收。
 
 ## 层次
 
 Tauri 2 提供窗口和系统服务；React/TypeScript 展示数据及交互；独立 Rust hm-core 校验业务、管理 SQLite 与材料文件。界面通过类型化 IPC 调用 Rust，不直接执行 SQL。开发预览仅在开发构建且显式 preview=1 时启用，生产构建不含内存业务适配器。
 
-src/features 按 cases、calendar、materials、contacts、finance、settings 划分；components 放共用弹窗、搜索、通知与回收站。src-tauri 的 commands.rs 处理业务命令，files.rs 负责原生文件入口，desktop.rs 负责托盘、通知、自启动和升级。
+src/features 按 cases、calendar、materials、contacts、finance、settings 划分；components 放共用弹窗、搜索、通知与回收站。src-tauri 的 commands.rs 处理业务命令，files.rs 负责原生文件入口；subsystems/ 分别管理宿主、更新和桌面维护，替代原 desktop.rs。
 
 ## 数据与文件
 

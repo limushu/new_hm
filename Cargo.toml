@@ -1,6 +1,6 @@
 [workspace]
-members = ["crates/hm-core", "src-tauri"]
-default-members = ["crates/hm-core"]
+members = ["crates/hm-core", "crates/hm-runtime", "crates/hm-application", "src-tauri"]
+default-members = ["crates/hm-core", "crates/hm-runtime", "crates/hm-application"]
 resolver = "2"
 
 [workspace.package]

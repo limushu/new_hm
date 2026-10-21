@@ -1,3 +1,10 @@
+export interface OperationError {
+  code: string;
+  kind?: string;
+  resource?: string;
+  detail?: string;
+}
+import type { RuntimeManifest } from '../platform/subsystems';
 export type CaseType = 'civil' | 'other';
 export type ProgramKind = string;
 export interface WorkflowTemplate {
@@ -113,6 +120,8 @@ export interface CaseInput {
 }
 export type ProceedingInput = Pick<Proceeding, 'id' | 'stage' | 'caseNumber' | 'court' | 'judge'>;
 export interface Commands {
+  subsystem_manifest: { args: Record<string, never>; result: RuntimeManifest };
+  resume_runtime: { args: Record<string, never>; result: void };
   get_update_status: {
     args: Record<string, never>;
     result: { version: string; notes: string | null } | null;
@@ -331,7 +340,7 @@ export interface Reminder {
 }
 export interface ImportReport {
   imported: number;
-  errors: string[];
+  errors: (string | { name: string; error: OperationError })[];
 }
 export interface Commands {
   create_material_folder: { args: { target: MaterialTarget; name: string }; result: string };

@@ -29,14 +29,14 @@ pub(crate) fn set_taskbar_icon(window: &tauri::WebviewWindow) -> Result<TaskbarI
     let icon = unsafe {
         let small = SendMessageW(hwnd, WM_GETICON, ICON_SMALL as usize, 0) as HICON;
         if small.is_null() {
-            return Err("窗口小图标尚未设置".into());
+            return Err("Window small icon is not set".into());
         }
         CopyIcon(small)
     };
     if icon.is_null() {
         return Err(std::io::Error::last_os_error().to_string());
     }
-    // SAFETY: hwnd belongs to this app and the copied icon remains owned by DesktopState.
+    // SAFETY: hwnd belongs to this app and the copied icon remains owned by HostState.
     unsafe { SendMessageW(hwnd, WM_SETICON, ICON_BIG as usize, icon as isize) };
     Ok(TaskbarIcon(icon as isize))
 }
@@ -47,7 +47,9 @@ pub(crate) fn refresh_shell_icons(app: &tauri::AppHandle) -> Result<(), String> 
     // Shell extraction requires COM; never change the UI thread's apartment.
     let initialized = unsafe { CoInitializeEx(ptr::null(), COINIT_APARTMENTTHREADED as u32) };
     if initialized < 0 {
-        return Err(format!("Shell 图标初始化失败：{initialized:#x}"));
+        return Err(format!(
+            "Shell icon initialization failed：{initialized:#x}"
+        ));
     }
     struct Apartment;
     impl Drop for Apartment {
@@ -135,7 +137,7 @@ fn refresh_shell_icon(path: &Path) -> Result<(), String> {
         unsafe { SHGetFileInfoW(path.as_ptr(), 0, &mut location, size, SHGFI_ICONLOCATION) };
     let indexed = unsafe { SHGetFileInfoW(path.as_ptr(), 0, &mut image, size, SHGFI_SYSICONINDEX) };
     if located == 0 || indexed == 0 {
-        return Err(format!("无法读取 Shell 图标缓存项 {display} (location={located}, image={indexed}, size={size})"));
+        return Err(format!("Cannot read Shell icon cache entry {display} (location={located}, image={indexed}, size={size})"));
     }
     if location.szDisplayName[0] != 0 && location.szDisplayName.contains(&0) {
         // SAFETY: use the OLD icon's actual location/index and system-list index,

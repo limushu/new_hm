@@ -1,3 +1,4 @@
+import { errorMessage } from '../../services/errors';
 import Select from '../../components/Select';
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import {
@@ -13,7 +14,7 @@ import {
   Upload,
   Link2,
 } from 'lucide-react';
-import { getCurrentWebview } from '@tauri-apps/api/webview';
+import { watchMaterialDrop } from '../../platform/documents';
 import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
 import type {
@@ -26,8 +27,10 @@ import type {
 import { matchesScope, resourceLinks, scopeName as workScopeName } from '../../domain/workspace';
 import ResourceAssociation from '../cases/ResourceAssociation';
 import { proceedingName } from '../../domain/proceedings';
-import { command, desktopRuntime } from '../../services/repository';
+import { command, nativeRuntime } from '../../services/repository';
 import Recorder from './Recorder';
+import { useSubsystems } from '../../platform/SubsystemProvider';
+import { supports } from '../../platform/subsystems';
 import './materials.css';
 const Preview = lazy(() => import('./Preview'));
 export function materialIcon(item: Material) {
@@ -68,6 +71,12 @@ export default function Materials({
   workScope?: WorkScope;
   onScopeChange?: (scope: WorkScope) => void;
 }) {
+  const { manifest } = useSubsystems();
+  const nativeDrop = supports(manifest, 'native-drop');
+  const filePicker = supports(manifest, 'file-picker');
+  const recordingAvailable = supports(manifest, 'record-audio');
+  const fileExport = supports(manifest, 'file-export');
+  const externalOpen = supports(manifest, 'external-open');
   const focused = data.materials.find(
     (m) => m.id === focusId && m.caseId === caseId && !m.deletedAt,
   );
@@ -154,30 +163,42 @@ export default function Materials({
     const parentId = at.parentId;
     at = materials.find((m) => m.id === parentId);
   }
-  function report(result: { imported: number; errors: string[] }) {
+  function report(result: {
+    imported: number;
+    errors: (string | { name: string; error: unknown })[];
+  }) {
     if (result.imported) setNotice(`已添加 ${result.imported} 份材料`);
-    if (result.errors.length) setError(result.errors.join('\n'));
+    if (result.errors.length)
+      setError(
+        result.errors
+          .map((issue) =>
+            typeof issue === 'string' ? issue : `${issue.name}：${errorMessage(issue.error)}`,
+          )
+          .join('\n'),
+      );
   }
   useEffect(() => {
-    if (!desktopRuntime) return;
+    if (!nativeRuntime || !nativeDrop) return;
     let canceled = false;
     let stop: (() => void) | undefined;
-    void getCurrentWebview()
-      .onDragDropEvent((event) => {
-        if (event.payload.type === 'over') setDrop(true);
-        if (event.payload.type === 'leave') setDrop(false);
-        if (event.payload.type === 'drop') {
-          setDrop(false);
-          const selected = { ...target.current };
-          const paths = event.payload.paths;
-          void run(async () =>
-            report(await save('import_material_paths', { target: selected, paths })),
-          );
-        }
-      })
+    void watchMaterialDrop((event) => {
+      if (event.type === 'over') setDrop(true);
+      if (event.type === 'leave') setDrop(false);
+      if (event.type === 'drop') {
+        setDrop(false);
+        const selected = { ...target.current };
+        const paths = event.paths;
+        void run(async () =>
+          report(await save('import_material_paths', { target: selected, paths })),
+        );
+      }
+    })
       .then((unlisten) => {
         if (canceled) unlisten();
         else stop = unlisten;
+      })
+      .catch((reason) => {
+        if (!canceled) setError(String(reason));
       });
     return () => {
       canceled = true;
@@ -185,7 +206,7 @@ export default function Materials({
     };
     // The refs keep a native drop bound to the currently visible folder.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseId, recordId]);
+  }, [caseId, recordId, nativeDrop]);
   useEffect(() => {
     if (!menu) return;
     const close = (event: PointerEvent) => {
@@ -210,7 +231,7 @@ export default function Materials({
     setEdit({ kind, item });
   }
   async function add() {
-    if (!desktopRuntime) {
+    if (!nativeRuntime) {
       fileInput.current?.click();
       return;
     }
@@ -241,7 +262,8 @@ export default function Materials({
       ].includes(ext ?? '')
     )
       setPreview(item);
-    else await run(() => command('open_material', { id: item.id }));
+    else if (externalOpen) await run(() => command('open_material', { id: item.id }));
+    else setError('当前设备暂不支持打开此文件格式。');
   }
   function pathOf(item: Material) {
     const names = [item.name];
@@ -271,14 +293,14 @@ export default function Materials({
       className={`materials-panel ${drop ? 'is-file-drop' : ''}`}
       aria-label="案件材料"
       onDragOver={(event) => {
-        if (!desktopRuntime) {
+        if (!nativeRuntime) {
           event.preventDefault();
           setDrop(true);
         }
       }}
       onDragLeave={() => setDrop(false)}
       onDrop={(event) => {
-        if (desktopRuntime) return;
+        if (nativeRuntime) return;
         event.preventDefault();
         setDrop(false);
         const files = Array.from(event.dataTransfer.files);
@@ -381,7 +403,11 @@ export default function Materials({
             文件夹
           </button>
         )}
-        <button type="button" disabled={busy} onClick={() => setRecording(true)}>
+        <button
+          type="button"
+          disabled={busy || !recordingAvailable}
+          onClick={() => setRecording(true)}
+        >
           <Mic />
           录音
         </button>
@@ -389,7 +415,7 @@ export default function Materials({
           type="button"
           className="primary-action"
           title={`添加到 ${scopeName}${current ? ' / ' + pathOf(current) : ''}`}
-          disabled={busy}
+          disabled={busy || !filePicker}
           onClick={() => void add()}
         >
           <Upload />
@@ -590,7 +616,7 @@ export default function Materials({
               工作关联
             </button>
           )}
-          {menu.item.kind === 'file' && (
+          {menu.item.kind === 'file' && fileExport && (
             <button
               type="button"
               role="menuitem"
@@ -722,7 +748,7 @@ export default function Materials({
           )}
         </Dialog>
       )}
-      {recording && (
+      {recording && recordingAvailable && (
         <Recorder target={target.current} save={save} onClose={() => setRecording(false)} />
       )}
       {preview && (

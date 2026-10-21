@@ -439,6 +439,34 @@ export async function previewCommand<K extends keyof Commands>(
     case 'set_setting':
       settings[a.key as string] = a.value as string;
       break;
+    case 'subsystem_manifest':
+      // Explicit in-memory desktop simulation, never a native support claim.
+      result = {
+        version: 1,
+        subsystems: [
+          {
+            id: 'host',
+            state: 'ready',
+            capabilities: ['tray', 'autostart', 'window-theme'],
+          },
+          { id: 'updates', state: 'ready', capabilities: ['signed-updates'] },
+          {
+            id: 'maintenance',
+            state: 'ready',
+            capabilities: ['background-maintenance', 'system-notifications'],
+          },
+          {
+            id: 'documents',
+            state: 'ready',
+            capabilities: ['native-drop', 'file-picker', 'file-export', 'external-open'],
+          },
+          { id: 'recording', state: 'ready', capabilities: ['record-audio'] },
+          { id: 'backup', state: 'ready', capabilities: ['local-backup', 'backup-transfer'] },
+        ],
+      };
+      break;
+    case 'resume_runtime':
+      break;
     case 'background_status':
       result = {};
       break;

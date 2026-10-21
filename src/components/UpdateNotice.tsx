@@ -1,39 +1,48 @@
 import { useEffect, useState } from 'react';
 import { ArrowDownToLine } from 'lucide-react';
-import { listen } from '@tauri-apps/api/event';
+import { watchUpdates } from '../platform/updates';
 import { createPortal } from 'react-dom';
-import { command, desktopRuntime } from '../services/repository';
+import { command, nativeRuntime } from '../services/repository';
 import type { Commands } from '../domain/types';
 import UpdateDialog from './UpdateDialog';
+import { useSubsystems } from '../platform/SubsystemProvider';
+import { supports } from '../platform/subsystems';
 type Info = Commands['get_update_status']['result'];
 export default function UpdateNotice() {
+  const { manifest } = useSubsystems();
+  const enabled = supports(manifest, 'signed-updates');
   const [update, setUpdate] = useState<Info>(null);
   const [selected, setSelected] = useState<Info>(null);
   useEffect(() => {
+    if (!enabled) return;
     let canceled = false;
     let eventSeen = false;
     let stop: (() => void) | undefined;
-    if (desktopRuntime)
-      void listen<Info>('update-available', (e) => {
-        eventSeen = true;
-        if (!canceled) setUpdate(e.payload);
-      })
-        .then((unlisten) => {
+    void (async () => {
+      if (nativeRuntime) {
+        try {
+          const unlisten = await watchUpdates((info) => {
+            eventSeen = true;
+            if (!canceled) setUpdate(info);
+          });
           if (canceled) unlisten();
           else stop = unlisten;
-        })
-        .catch(() => {});
-    void command('get_update_status', {})
-      .then((info) => {
-        if (!canceled && !eventSeen) setUpdate(info);
-      })
-      .catch(() => {});
+        } catch {
+          // A snapshot can still recover a previously discovered update.
+        }
+      }
+      if (canceled) return;
+      // Subscribe first, then reconcile. Events discovered before capability
+      // negotiation are persisted by the native updater and recovered here.
+      const info = await command('get_update_status', {});
+      if (!canceled && !eventSeen) setUpdate(info);
+    })().catch(() => {});
     return () => {
       canceled = true;
       stop?.();
     };
-  }, []);
-  if (!update && !selected) return null;
+  }, [enabled]);
+  if (!enabled || (!update && !selected)) return null;
   return (
     <div className="update-notice-slot">
       {update &&

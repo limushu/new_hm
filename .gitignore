@@ -5,6 +5,7 @@ target/
 .local/
 *.log
 src-tauri/gen/schemas/
+src-tauri/gen/apple/
 .DS_Store
 test-results/
 playwright-report/

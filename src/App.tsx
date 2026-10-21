@@ -9,7 +9,7 @@ import Notifications from './components/Notifications';
 import Trash from './components/Trash';
 import { useCallback, useEffect, useState } from 'react';
 import { CalendarDays, Folder, Settings, Trash2, Users, Search, Bell } from 'lucide-react';
-import { command, desktopRuntime, previewMode } from './services/repository';
+import { command, nativeRuntime, previewMode } from './services/repository';
 import { emptyWorkspace } from './domain/types';
 import type { CaseFile, Commands, Contact, SaveAction, Workspace } from './domain/types';
 import CasePage from './features/cases/CasePage';
@@ -174,7 +174,7 @@ export default function App() {
             <i />
             {previewMode
               ? '界面预览 · 不保存'
-              : desktopRuntime
+              : nativeRuntime
                 ? storage?.portable
                   ? '绿色版 · 本地保存'
                   : '本地工作空间'

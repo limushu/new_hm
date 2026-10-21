@@ -9,6 +9,15 @@ pub struct StorageLocation {
 }
 
 impl StorageLocation {
+    /// Mobile workspaces always use their private persistent application directory.
+    /// No executable path or portable marker is consulted.
+    pub fn sandbox(directory: &Path) -> Self {
+        Self {
+            portable: false,
+            data_directory: directory.to_path_buf(),
+        }
+    }
+
     pub fn portable_directory(executable: &Path, supported: bool) -> Option<PathBuf> {
         if !supported {
             return None;
