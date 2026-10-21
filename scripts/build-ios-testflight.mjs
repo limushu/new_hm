@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { releaseSettings } from './ios-release-config.mjs';
+import { releaseSettings, configureAppleEnvironment } from './ios-release-config.mjs';
 
 if (process.platform !== 'darwin') throw new Error('iOS distribution requires macOS and Xcode');
 const root = resolve(import.meta.dirname, '..');
@@ -51,9 +51,7 @@ function findIpas(directory) {
 try {
   const keyPath = join(temporary, `AuthKey_${settings.keyId}.p8`);
   writeFileSync(keyPath, process.env.APPLE_API_PRIVATE_KEY, { mode: 0o600 });
-  delete process.env.APPLE_API_PRIVATE_KEY;
-  process.env.APPLE_API_KEY_PATH = keyPath;
-  process.env.API_PRIVATE_KEYS_DIR = temporary;
+  configureAppleEnvironment(process.env, settings, keyPath, temporary);
   const configPath = join(temporary, 'ios-release.json');
   writeFileSync(
     configPath,

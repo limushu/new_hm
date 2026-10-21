@@ -47,3 +47,14 @@ export function releaseSettings(env, projectTeam) {
     upload: env.IOS_UPLOAD_TO_TESTFLIGHT === 'true',
   };
 }
+
+// Tauri gives even an empty environment value precedence over project config.
+// Pass the validated values to every child process, then remove the raw key.
+export function configureAppleEnvironment(env, settings, keyPath, keyDirectory) {
+  env.APPLE_DEVELOPMENT_TEAM = settings.team;
+  env.APPLE_API_KEY = settings.keyId;
+  env.APPLE_API_ISSUER = settings.issuer;
+  env.APPLE_API_KEY_PATH = keyPath;
+  env.API_PRIVATE_KEYS_DIR = keyDirectory;
+  delete env.APPLE_API_PRIVATE_KEY;
+}
