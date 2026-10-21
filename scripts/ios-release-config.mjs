@@ -61,3 +61,16 @@ export function configureAppleEnvironment(env, settings, keyPath, keyDirectory) 
     if (!env[name]) delete env[name];
   }
 }
+
+// App Store Connect has required Xcode/iOS SDK 26+ since April 28, 2026.
+export function checkSubmissionToolchain(xcode, sdk) {
+  const xcodeMajor = Number(/^Xcode (\d+)/m.exec(xcode)?.[1]);
+  const sdkMajor = Number(/^(\d+)(?:\.|$)/.exec(sdk.trim())?.[1]);
+  if (
+    !Number.isFinite(xcodeMajor) ||
+    !Number.isFinite(sdkMajor) ||
+    xcodeMajor < 26 ||
+    sdkMajor < 26
+  )
+    throw new Error('App Store submissions require Xcode 26+ and the iOS 26+ SDK');
+}

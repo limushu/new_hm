@@ -1,7 +1,11 @@
 import { generateKeyPairSync } from 'node:crypto';
 import assert from 'node:assert/strict';
 import { test } from 'vitest';
-import { releaseSettings, configureAppleEnvironment } from './ios-release-config.mjs';
+import {
+  releaseSettings,
+  configureAppleEnvironment,
+  checkSubmissionToolchain,
+} from './ios-release-config.mjs';
 
 const { privateKey } = generateKeyPairSync('ec', { namedCurve: 'prime256v1' });
 const env = {
@@ -92,4 +96,15 @@ test('an explicitly supplied manual-signing set remains available to Tauri', () 
   assert.equal(child.IOS_CERTIFICATE, 'certificate-fixture');
   assert.equal(child.IOS_CERTIFICATE_PASSWORD, 'password-fixture');
   assert.equal(child.IOS_MOBILE_PROVISION, 'profile-fixture');
+});
+
+test('submission rejects obsolete or unrecognized Xcode and iOS SDK versions before building', () => {
+  assert.throws(
+    () => checkSubmissionToolchain('Xcode 16.4\nBuild version 16F6', '18.5'),
+    /Xcode 26/,
+  );
+  assert.throws(() => checkSubmissionToolchain('Xcode 26.2', '18.5'), /iOS 26/);
+  assert.throws(() => checkSubmissionToolchain('unknown', '26.2'), /Xcode 26/);
+  assert.doesNotThrow(() => checkSubmissionToolchain('Xcode 26.2\nBuild version 17C1', '26.2'));
+  assert.doesNotThrow(() => checkSubmissionToolchain('Xcode 27.0', '27.0'));
 });

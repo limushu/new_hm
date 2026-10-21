@@ -9,7 +9,11 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { releaseSettings, configureAppleEnvironment } from './ios-release-config.mjs';
+import {
+  releaseSettings,
+  configureAppleEnvironment,
+  checkSubmissionToolchain,
+} from './ios-release-config.mjs';
 
 if (process.platform !== 'darwin') throw new Error('iOS distribution requires macOS and Xcode');
 const root = resolve(import.meta.dirname, '..');
@@ -61,6 +65,8 @@ try {
     { mode: 0o600 },
   );
   report.xcode = run('xcodebuild', ['-version'], true);
+  report.sdk = run('xcrun', ['--sdk', 'iphoneos', '--show-sdk-version'], true);
+  checkSubmissionToolchain(report.xcode, report.sdk);
   run('npx', ['tauri', 'ios', 'init', '--ci', '--skip-targets-install', '--config', configPath]);
   run('npx', [
     'tauri',

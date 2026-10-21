@@ -45,6 +45,10 @@ Actions 产物名为 ios-simulator-运行编号-尝试编号，可下载查看�
 
 当前环境没有绑定这些 Apple 凭据，尚未执行 Apple 签名请求。Team ID 可分享用于确认配置，其他值直接填入 GitHub。
 
+## 构建工具链
+
+Apple 自 2026 年 4 月 28 日起要求 App Store Connect 上传使用 Xcode 26+ 和 iOS 26+ SDK，见 [官方要求](https://developer.apple.com/news/upcoming-requirements/)。签名工作流选择 runner 上最新的稳定 Xcode，归档脚本在构建前验证 Xcode 和 SDK 版本，避免使用 macOS runner 默认的旧版本。失败任务也保留 Rust 编译缓存，便于修复 Apple 配置后重试。
+
 ## 签名与上传
 
 [签名工作流](../.github/workflows/ios-testflight.yml)只支持手动触发且只运行 main 分支。它需先合并到主分支，才会在 Actions 显示手动入口；草稿 PR 检查不会读取发布凭据。
