@@ -1,8 +1,16 @@
 import { currentStage, proceedingName } from '../../domain/proceedings';
 import Dialog from '../../components/Dialog';
 import { statusPalette } from '../../domain/statusPalette';
-import { useId, useRef, useState } from 'react';
-import { ArrowRightCircle, Folder, Plus, Search, MoreHorizontal, Trash2 } from 'lucide-react';
+import { useId, useRef, useState, useMemo } from 'react';
+import {
+  ArrowRightCircle,
+  Folder,
+  Plus,
+  Search,
+  MoreHorizontal,
+  Trash2,
+  GripVertical,
+} from 'lucide-react';
 import type { CaseFile, CaseStatus, SaveAction, Workspace } from '../../domain/types';
 import { useBoardDrag } from './useBoardDrag';
 import './case-board.css';
@@ -48,17 +56,39 @@ export default function CaseBoard({
   const [removed, setRemoved] = useState<CaseFile | null>(null);
   const [deleting, setDeleting] = useState<CaseFile | null>(null);
   const [trashBusy, setTrashBusy] = useState(false);
-  const activeCases = data.cases.filter((item) => !item.deletedAt);
+  const activeCases = useMemo(() => data.cases.filter((item) => !item.deletedAt), [data.cases]);
+  const summaries = useMemo(() => {
+    const byCase = new Map(
+      activeCases.map((item) => [
+        item.id,
+        {
+          tags: [] as string[],
+          numbers: [] as string[],
+          next: null as Workspace['tasks'][number] | null,
+        },
+      ]),
+    );
+    for (const tag of data.caseTags) byCase.get(tag.caseId)?.tags.push(tag.tag);
+    for (const program of data.proceedings)
+      byCase.get(program.caseId)?.numbers.push(program.caseNumber.toLocaleLowerCase());
+    for (const task of data.tasks) {
+      const summary = byCase.get(task.caseId);
+      if (
+        summary &&
+        !task.completed &&
+        task.dueDate &&
+        (!summary.next || task.dueDate < summary.next.dueDate!)
+      )
+        summary.next = task;
+    }
+    const programs = new Map(data.proceedings.map((p) => [p.id, p]));
+    return { byCase, programs };
+  }, [activeCases, data.caseTags, data.proceedings, data.tasks]);
   const queryText = query.trim().toLocaleLowerCase();
   const matches = (item: CaseFile) =>
     item.title.toLocaleLowerCase().includes(queryText) ||
-    data.caseTags.some(
-      (t) => t.caseId === item.id && t.tag.includes(queryText.replace(/^#/, '')),
-    ) ||
-    data.proceedings.some(
-      (program) =>
-        program.caseId === item.id && program.caseNumber.toLocaleLowerCase().includes(queryText),
-    );
+    summaries.byCase.get(item.id)?.tags.some((tag) => tag.includes(queryText.replace(/^#/, ''))) ||
+    summaries.byCase.get(item.id)?.numbers.some((number) => number.includes(queryText));
   const statusOf = (item: CaseFile) => (pending?.id === item.id ? pending.statusId : item.statusId);
   async function trash(id: string) {
     const item = activeCases.find((c) => c.id === id);
@@ -113,10 +143,8 @@ export default function CaseBoard({
   const overName = data.statuses.find((status) => status.id === drag?.over)?.name;
 
   function content(item: CaseFile) {
-    const program = data.proceedings.find((program) => program.id === item.currentProceedingId);
-    const next = data.tasks
-      .filter((task) => task.caseId === item.id && !task.completed && task.dueDate)
-      .sort((left, right) => left.dueDate!.localeCompare(right.dueDate!))[0];
+    const program = summaries.programs.get(item.currentProceedingId ?? '');
+    const { next, tags } = summaries.byCase.get(item.id)!;
     return (
       <>
         <span className="case-card-title">
@@ -127,14 +155,11 @@ export default function CaseBoard({
           {program ? '关注 ' + proceedingName(program, data.proceedings) : '案件档案'}
           {program ? ` · ${currentStage(data, program)}` : ' · 未指定关注流程'}
         </span>
-        {data.caseTags.some((t) => t.caseId === item.id) && (
+        {tags.length > 0 && (
           <span className="case-card-tags">
-            {data.caseTags
-              .filter((t) => t.caseId === item.id)
-              .slice(0, 2)
-              .map((t) => (
-                <span key={t.tag}>#{t.tag}</span>
-              ))}
+            {tags.slice(0, 2).map((t) => (
+              <span key={t}>#{t}</span>
+            ))}
           </span>
         )}
         {next && (
@@ -263,6 +288,19 @@ export default function CaseBoard({
                         }}
                       >
                         {content(item)}
+                      </button>
+                      <button
+                        className="card-drag-handle"
+                        aria-label={`拖动案件「${item.title}」`}
+                        onPointerDown={(event) => pointerDown(event, item.id, true)}
+                        onKeyDown={(event) => {
+                          if (event.key === ' ' && !drag && !event.repeat) {
+                            event.preventDefault();
+                            lift(item.id, statusOf(item));
+                          }
+                        }}
+                      >
+                        <GripVertical />
                       </button>
                       <button
                         type="button"

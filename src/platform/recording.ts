@@ -10,6 +10,7 @@ export interface RecordingProduct {
 }
 export interface RecordingCapture {
   canPause: boolean;
+  state?(): Promise<'recording' | 'paused' | 'interrupted' | 'finished' | null>;
   pause(): Promise<void>;
   resume(): Promise<void>;
   finish(): Promise<RecordingProduct>;
@@ -36,6 +37,7 @@ export async function startRecording(
       let archived = false;
       return {
         canPause: backends.native.pause,
+        state: () => invoke('native_recording_state'),
         pause: () => invoke('pause_native_recording'),
         resume: () => invoke('resume_native_recording'),
         async finish() {

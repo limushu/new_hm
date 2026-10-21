@@ -64,6 +64,17 @@ button {
   background: none;
   color: inherit;
   cursor: pointer;
+  touch-action: manipulation;
+}
+/* Small editable text causes iOS to zoom the visual viewport on focus. The
+ * zoom can remain after editing a status, changing the size/feel of every tap.
+ * Keep user pinch zoom available; only prevent this automatic form zoom. */
+@media (hover: none) and (pointer: coarse) {
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.page-title-input),
+  textarea,
+  select {
+    font-size: max(16px, 1em) !important;
+  }
 }
 button:disabled {
   cursor: wait;

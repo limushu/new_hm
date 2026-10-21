@@ -40,6 +40,34 @@ export default function Recorder({
     const timer = setInterval(() => setSeconds((s) => s + 1), 1000);
     return () => clearInterval(timer);
   }, [status]);
+  useEffect(() => {
+    if (status !== 'recording' && status !== 'paused') return;
+    let canceled = false;
+    let checking = false;
+    const check = async () => {
+      if (checking || busy.current || !capture.current?.state) return;
+      checking = true;
+      try {
+        const state = await capture.current.state();
+        if (!canceled && (state === 'paused' || state === 'interrupted')) {
+          setStatus('paused');
+          if (status === 'recording')
+            setError('录音已暂停，请返回应用后继续，或结束并保存已有录音。');
+        }
+      } catch (reason) {
+        if (!canceled) setError(String(reason));
+      } finally {
+        checking = false;
+      }
+    };
+    const timer = setInterval(() => void check(), 1000);
+    document.addEventListener('visibilitychange', check);
+    return () => {
+      canceled = true;
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', check);
+    };
+  }, [status]);
   async function start() {
     if (busy.current) return;
     busy.current = true;
@@ -152,8 +180,31 @@ export default function Recorder({
           </>
         )}
       </div>
+      {status !== 'idle' && (
+        <button
+          type="button"
+          onClick={async () => {
+            if (busy.current) return;
+            busy.current = true;
+            try {
+              await capture.current?.dispose();
+              capture.current = null;
+              onClose();
+            } catch (reason) {
+              setError(String(reason));
+            } finally {
+              busy.current = false;
+            }
+          }}
+        >
+          放弃录音
+        </button>
+      )}
       {blob && <AudioClip blob={blob} />}
-      <p className="field-hint">仅在点击开始后使用麦克风。结束后保存到当前案件材料中。</p>
+      <p className="field-hint">
+        仅在点击开始后使用麦克风。结束后保存到当前案件材料中。iPhone
+        锁屏、切到后台或来电时会暂停录音。
+      </p>
       {error && (
         <p role="alert" className="error-message">
           {error}
@@ -169,5 +220,5 @@ function AudioClip({ blob }: { blob: Blob }) {
     setUrl(url);
     return () => URL.revokeObjectURL(url);
   }, [blob]);
-  return <audio controls src={url} />;
+  return <audio controls src={url || undefined} />;
 }

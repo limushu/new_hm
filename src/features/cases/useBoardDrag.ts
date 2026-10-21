@@ -150,6 +150,10 @@ export function useBoardDrag(
     window.addEventListener('keydown', key);
     return () => {
       cancelAnimationFrame(animation);
+      gesture.current = null;
+      current.current = null;
+      suppressClickUntil.current = 0;
+      setDrag(null);
       document.body.classList.remove('dragging-case');
       window.removeEventListener('pointermove', move);
       window.removeEventListener('pointerup', end);
@@ -161,9 +165,15 @@ export function useBoardDrag(
 
   return {
     drag,
-    pointerDown(event: ReactPointerEvent<HTMLButtonElement>, id: string) {
+    pointerDown(event: ReactPointerEvent<HTMLButtonElement>, id: string, touchHandle = false) {
       if (event.button !== 0 || options.current.disabled || current.current) return;
-      const rect = event.currentTarget.getBoundingClientRect();
+      // A swipe on a touch card scrolls the board. Only its explicit handle
+      // starts a drag, so horizontal navigation is not captured as a move.
+      if (event.pointerType === 'touch' && !touchHandle) return;
+      const card =
+        event.currentTarget.closest('.case-card-shell')?.querySelector('.case-card') ??
+        event.currentTarget;
+      const rect = card.getBoundingClientRect();
       gesture.current = {
         id,
         pointerId: event.pointerId,

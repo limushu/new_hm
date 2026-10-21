@@ -1,4 +1,5 @@
 import Dialog from '../../components/Dialog';
+import RetainedView from '../../components/RetainedView';
 import Select from '../../components/Select';
 import CaseOverview from './CaseOverview';
 import CaseParties from './CaseParties';
@@ -364,7 +365,7 @@ export default function CasePage({
             </div>
           ) : (
             <>
-              {tab === 'overview' && (
+              <RetainedView active={tab === 'overview'}>
                 <div className="case-overview-content">
                   <CaseOverview
                     item={item}
@@ -434,8 +435,8 @@ export default function CasePage({
                   </section>
                   <Records caseId={item.id} data={data} save={save} />
                 </div>
-              )}
-              {tab === 'info' && (
+              </RetainedView>
+              <RetainedView active={tab === 'info'}>
                 <div className="program-detail">
                   {programs.length > 1 && (
                     <div className="work-navigation">
@@ -663,8 +664,8 @@ export default function CasePage({
                     </Stages>
                   )}
                 </div>
-              )}
-              {tab === 'materials' && (
+              </RetainedView>
+              <RetainedView active={tab === 'materials'}>
                 <>
                   {materialScope.proceedingId && (
                     <ScopeFilter
@@ -684,8 +685,8 @@ export default function CasePage({
                     onScopeChange={setMaterialScope}
                   />
                 </>
-              )}
-              {tab === 'finance' && (
+              </RetainedView>
+              <RetainedView active={tab === 'finance'}>
                 <>
                   <ScopeFilter
                     data={data}
@@ -695,7 +696,7 @@ export default function CasePage({
                   />
                   <Finance caseId={item.id} data={data} save={save} scope={financeScope} />
                 </>
-              )}
+              </RetainedView>
             </>
           )}
         </div>

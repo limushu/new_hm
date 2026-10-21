@@ -11,5 +11,7 @@ test-results/
 playwright-report/
 *.tsbuildinfo
 artifacts/
+crates/tauri-plugin-*/.tauri/
+crates/tauri-plugin-*/ios/.build/
 
 public/pdfjs/

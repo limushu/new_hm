@@ -53,7 +53,7 @@ pub fn finish_native_recording(state: State<'_, RecordingState>) -> Result<Strin
 pub fn cancel_native_recording(state: State<'_, RecordingState>) -> Result<(), DriverError> {
     capture(&state, |service| service.cancel())
 }
-#[tauri::command]
+#[tauri::command(async)]
 pub fn native_recording_state(
     state: State<'_, RecordingState>,
 ) -> Result<Option<CaptureState>, DriverError> {

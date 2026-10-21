@@ -1,4 +1,5 @@
 import BrandMark from './components/BrandMark';
+import RetainedView from './components/RetainedView';
 import Welcome from './components/Welcome';
 import { WELCOME_EDITION } from './domain/welcome';
 import UpdateNotice from './components/UpdateNotice';
@@ -7,7 +8,7 @@ import SettingsPage from './features/settings/Settings';
 import GlobalSearch from './components/GlobalSearch';
 import Notifications from './components/Notifications';
 import Trash from './components/Trash';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Folder, Settings, Trash2, Users, Search, Bell } from 'lucide-react';
 import { command, nativeRuntime, previewMode } from './services/repository';
 import { emptyWorkspace } from './domain/types';
@@ -21,6 +22,14 @@ import { dateKey } from './domain/calendar';
 export default function App() {
   const [data, setData] = useState<Workspace>(emptyWorkspace);
   const [page, setPage] = useState('today');
+  const [compact, setCompact] = useState(() => matchMedia('(max-width: 760px)').matches);
+  useEffect(() => {
+    const query = matchMedia('(max-width: 760px)');
+    const update = () => setCompact(query.matches);
+    query.addEventListener('change', update);
+    update();
+    return () => query.removeEventListener('change', update);
+  }, []);
   const [calendarDate, setCalendarDate] = useState(() => dateKey(new Date()));
   const [calendarView, setCalendarView] = useState<'week' | 'day' | 'month'>(() =>
     matchMedia('(max-width: 760px)').matches ? 'day' : 'week',
@@ -68,11 +77,14 @@ export default function App() {
       canceled = true;
     };
   }, []);
-  const save: SaveAction = async <K extends keyof Commands>(name: K, args: Commands[K]['args']) => {
-    const result = await command(name, args);
-    await refresh();
-    return result;
-  };
+  const save: SaveAction = useCallback(
+    async <K extends keyof Commands>(name: K, args: Commands[K]['args']) => {
+      const result = await command(name, args);
+      await refresh();
+      return result;
+    },
+    [refresh],
+  );
   function create(statusId = 'not_started') {
     setInitialTab('overview');
     setFocusMaterialId(undefined);
@@ -94,7 +106,7 @@ export default function App() {
     setDraft(item);
     setOpened(item.id);
   }
-  const activeCases = data.cases.filter((c) => !c.deletedAt);
+  const activeCases = useMemo(() => data.cases.filter((c) => !c.deletedAt), [data.cases]);
   const openItem = opened
     ? data.cases.find((c) => c.id === opened && !c.deletedAt) ||
       (draft?.id === opened ? draft : null)
@@ -159,7 +171,9 @@ export default function App() {
             设置
           </button>
         </nav>
-        {page === 'today' && <MiniCalendar selected={calendarDate} onSelect={setCalendarDate} />}
+        {!compact && page === 'today' && (
+          <MiniCalendar selected={calendarDate} onSelect={setCalendarDate} />
+        )}
         <div className="sidebar-caption">最近案件</div>
         <div className="recent-cases">
           {activeCases.slice(0, 5).map((c) => (
@@ -212,7 +226,7 @@ export default function App() {
             </button>
           </div>
         )}
-        {page === 'today' && (
+        <RetainedView active={page === 'today'}>
           <Calendar
             data={data}
             openCase={navigateCase}
@@ -225,8 +239,8 @@ export default function App() {
             view={calendarView}
             onViewChange={setCalendarView}
           />
-        )}
-        {page === 'cases' && (
+        </RetainedView>
+        <RetainedView active={page === 'cases'}>
           <CaseBoard
             data={data}
             query={query}
@@ -247,10 +261,16 @@ export default function App() {
               }));
             }}
           />
-        )}
-        {page === 'contacts' && <Contacts data={data} save={save} onCase={navigateCase} />}
-        {page === 'trash' && <Trash data={data} save={save} />}
-        {page === 'settings' && <SettingsPage save={save} storage={storage} />}
+        </RetainedView>
+        <RetainedView active={page === 'contacts'}>
+          <Contacts data={data} save={save} onCase={navigateCase} />
+        </RetainedView>
+        <RetainedView active={page === 'trash'}>
+          <Trash data={data} save={save} />
+        </RetainedView>
+        <RetainedView active={page === 'settings'}>
+          <SettingsPage save={save} storage={storage} />
+        </RetainedView>
       </main>
       {welcome && <Welcome onDone={() => setWelcome(false)} />}
       {openItem && (

@@ -1,4 +1,4 @@
-import { useCallback, useId, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { statusPalette } from '../../domain/statusPalette';
 import type { CaseStatus } from '../../domain/types';
@@ -17,6 +17,7 @@ export default function CaseStatusPicker({
   onChoose: (status: CaseStatus, create: boolean) => Promise<boolean>;
 }) {
   const [query, setQuery] = useState('');
+  const input = useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const { busy, error, run } = useAction();
@@ -36,6 +37,7 @@ export default function CaseStatusPicker({
   function choose(index: number) {
     if (!options[index] && !(create && index === options.length)) return;
     const status = options[index] ?? { id: crypto.randomUUID(), name, color: '#768b9a' };
+    if (matchMedia('(pointer: coarse)').matches) input.current?.blur();
     void run(async () => {
       if (await onChoose(status, !options[index])) {
         setOpen(false);
@@ -48,6 +50,7 @@ export default function CaseStatusPicker({
       <div className="case-status-input" style={statusPalette(selected)}>
         <i className="status-dot" aria-hidden="true" />
         <input
+          ref={input}
           role="combobox"
           aria-label="案件状态"
           aria-autocomplete="list"

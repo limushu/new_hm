@@ -171,7 +171,7 @@
   flex-direction: column;
   gap: 10px;
   color: var(--text);
-  touch-action: pan-y;
+  touch-action: auto;
   transition:
     border-color 120ms,
     box-shadow 120ms;
@@ -335,5 +335,27 @@
   .case-column,
   .case-card {
     transition: none;
+  }
+}
+
+.card-drag-handle {
+  position: absolute;
+  right: 5px;
+  bottom: 5px;
+  display: none;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+  touch-action: none;
+  cursor: grab;
+}
+@media (pointer: coarse) {
+  .card-drag-handle {
+    display: flex;
+  }
+  .case-card {
+    padding-right: 38px;
   }
 }

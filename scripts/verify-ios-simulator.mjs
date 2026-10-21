@@ -94,6 +94,9 @@ try {
   if (bundle !== 'com.limushu.hm') throw new Error(`Unexpected bundle identifier: ${bundle}`);
   report.bundle = bundle;
   report.version = plist(join(app, 'Info.plist'), 'CFBundleShortVersionString');
+  if (!plist(join(app, 'Info.plist'), 'NSMicrophoneUsageDescription').trim())
+    throw new Error('Missing microphone permission description');
+  report.checks.push('microphone-permission-description');
   run('ditto', [
     '-c',
     '-k',

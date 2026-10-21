@@ -19,12 +19,14 @@ it('原生驱动归档失败可重试，刷新失败重试不会重复归档，�
     if (name === 'native_recording_support')
       return { native: { capture: true, pause: true }, webviewFallback: true };
     if (name === 'finish_native_recording') return '录音.m4a';
+    if (name === 'native_recording_state') return 'paused';
     if (name === 'archive_native_recording' && ++archiveAttempts === 1)
       throw new Error('归档暂时失败');
   });
   const capture = await startRecording(vi.fn());
   await capture.pause();
   await capture.resume();
+  expect(await capture.state?.()).toBe('paused');
   const product = await capture.finish();
   expect(product.name).toBe('录音.m4a');
   expect(product.blob).toBeUndefined();

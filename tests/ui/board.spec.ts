@@ -56,18 +56,18 @@ test('拖出看板或按 Escape 取消时保留原状态', async ({ page }) => {
   await expect(column(page, 'in_progress').locator('[data-case-id="demo"]')).toBeVisible();
 });
 
-test('触屏可横向拖动案件到另一个状态', async ({ page }) => {
+test('触屏通过独立手柄拖动案件到另一个状态', async ({ page }) => {
   const session = await page.context().newCDPSession(page);
   await session.send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 1 });
-  const source = (await card(page).boundingBox())!;
+  const source = (await card(page).locator('..').locator('.card-drag-handle').boundingBox())!;
   const destination = (await column(page, 'not_started').boundingBox())!;
   const touch = async (type: 'touchStart' | 'touchMove' | 'touchEnd', x = 0, y = 0) =>
     session.send('Input.dispatchTouchEvent', {
       type,
       touchPoints: type === 'touchEnd' ? [] : [{ x, y, id: 1 }],
     });
-  await touch('touchStart', source.x + 45, source.y + 25);
-  await touch('touchMove', source.x + 25, source.y + 25);
+  await touch('touchStart', source.x + 16, source.y + 16);
+  await touch('touchMove', source.x - 10, source.y + 16);
   await touch('touchMove', destination.x + 100, source.y + 25);
   await expect(column(page, 'not_started')).toHaveClass(/is-drop-target/);
   await touch('touchEnd');

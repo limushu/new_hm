@@ -98,6 +98,8 @@ try {
   if (plist('CFBundleVersion') !== settings.buildNumber)
     throw new Error('Exported IPA build number does not match the requested build');
   report.version = plist('CFBundleShortVersionString');
+  if (!plist('NSMicrophoneUsageDescription').trim())
+    throw new Error('IPA is missing its microphone permission description');
   const entitlements = spawnSync('codesign', ['-d', '--entitlements', ':-', app], {
     encoding: 'utf8',
   });
