@@ -171,6 +171,8 @@ try {
   run('python3', ['-c', databaseCheck, container, 'reopen', edition], { capture: true });
   run('xcrun', ['simctl', 'io', device, 'screenshot', join(output, 'reopened-workspace.png')]);
   report.checks.push('restart-private-workspace-retained');
+  run('node', [join(root, 'scripts/test-ios-recording.mjs'), device]);
+  report.checks.push('native-recording-scene-authorization-and-m4a');
   report.status = 'passed';
 } catch (error) {
   report.status = 'failed';

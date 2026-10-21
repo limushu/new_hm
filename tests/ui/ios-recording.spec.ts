@@ -75,6 +75,9 @@ test('iOS 原生录音授权失败可重试，中断后继续并按 M4A 归档',
   await page.getByRole('button', { name: '录音', exact: true }).click();
   await page.getByRole('button', { name: '开始录音', exact: true }).click();
   await expect(page.getByRole('alert')).toContainText('麦克风权限未开启');
+  const startButton = page.getByRole('button', { name: '开始录音', exact: true });
+  await startButton.hover();
+  await expect(startButton).toHaveCSS('background-color', 'rgb(57, 119, 183)');
   await page.getByRole('button', { name: '开始录音', exact: true }).click();
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible();
   await page.evaluate(() => (window as unknown as { interruptAudio(): void }).interruptAudio());

@@ -17,13 +17,14 @@ export default function Recorder({
   onClose: () => void;
 }) {
   const [name, setName] = useState(
-    `录音 ${new Date().toLocaleString('sv-SE').replaceAll(':', '-')}.webm`,
+    `录音 ${new Date().toLocaleString('sv-SE').replaceAll(':', '-')}`,
   );
   const [status, setStatus] = useState<'idle' | 'recording' | 'paused' | 'stopped'>('idle');
   const [product, setProduct] = useState<RecordingProduct | null>(null);
   const blob = product?.blob;
   const [canPause, setCanPause] = useState(true);
   const [error, setError] = useState('');
+  const [starting, setStarting] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const capture = useRef<RecordingCapture | null>(null);
   const busy = useRef(false);
@@ -71,6 +72,7 @@ export default function Recorder({
   async function start() {
     if (busy.current) return;
     busy.current = true;
+    setStarting(true);
     setError('');
     try {
       const value = await startRecording((message) => {
@@ -87,6 +89,7 @@ export default function Recorder({
       if (mounted.current) setError(`无法开始录音：${String(reason)}`);
     } finally {
       busy.current = false;
+      if (mounted.current) setStarting(false);
     }
   }
   async function control(action: 'pause' | 'resume' | 'finish') {
@@ -120,6 +123,7 @@ export default function Recorder({
   };
   return (
     <Dialog
+      className="recording-dialog"
       title="案件录音"
       onClose={close}
       onSubmit={
@@ -160,8 +164,13 @@ export default function Recorder({
       </p>
       <div className="feature-toolbar">
         {status === 'idle' && (
-          <button type="button" className="primary-action" onClick={() => void start()}>
-            开始录音
+          <button
+            type="button"
+            className="primary-action"
+            disabled={starting}
+            onClick={() => void start()}
+          >
+            {starting ? '正在启动…' : '开始录音'}
           </button>
         )}
         {(status === 'recording' || status === 'paused') && (

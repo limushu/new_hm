@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { CaseFile, CaseStatus, SaveAction, Workspace } from '../../domain/types';
 import { useBoardDrag } from './useBoardDrag';
+import MobileCaseList from './MobileCaseList';
 import './case-board.css';
 
 interface Props {
@@ -24,6 +25,7 @@ interface Props {
   onCreate: (statusId: string) => void;
   onOpen: (id: string) => void;
   onMove: (id: string, statusId: string) => Promise<void>;
+  compact: boolean;
 }
 
 export default function CaseBoard({
@@ -35,6 +37,7 @@ export default function CaseBoard({
   onOpen,
   onMove,
   save,
+  compact,
 }: Props) {
   const [exampleId] = useState(() => crypto.randomUUID());
   const [exampleBusy, setExampleBusy] = useState(false);
@@ -138,6 +141,7 @@ export default function CaseBoard({
     data.statuses,
     !!pending || trashBusy,
     (id, statusId) => void move(id, statusId),
+    !compact,
   );
   const dragItem = drag ? activeCases.find((item) => item.id === drag.id) : null;
   const overName = data.statuses.find((status) => status.id === drag?.over)?.name;
@@ -171,50 +175,55 @@ export default function CaseBoard({
     );
   }
 
+  const onboarding = !loading && !data.cases.length && (
+    <p className="onboarding-note">
+      直接新建案件开始，也可以先
+      <button
+        disabled={exampleBusy}
+        onClick={async () => {
+          if (exampleBusy) return;
+          setExampleBusy(true);
+          try {
+            await save('seed_example', { id: exampleId });
+          } catch (error) {
+            setError(String(error));
+          } finally {
+            setExampleBusy(false);
+          }
+        }}
+      >
+        添加虚构示例案件
+      </button>
+      熟悉功能。
+    </p>
+  );
   return (
     <div className="cases-page">
-      <h1>
-        <Folder />
-        案件
-      </h1>
-      {!loading && !data.cases.length && (
-        <p className="onboarding-note">
-          直接新建案件开始，也可以先
-          <button
-            disabled={exampleBusy}
-            onClick={async () => {
-              if (exampleBusy) return;
-              setExampleBusy(true);
-              try {
-                await save('seed_example', { id: exampleId });
-              } catch (error) {
-                setError(String(error));
-              } finally {
-                setExampleBusy(false);
-              }
-            }}
-          >
-            添加虚构示例案件
-          </button>
-          熟悉功能。
-        </p>
+      {!compact && (
+        <h1>
+          <Folder />
+          案件
+        </h1>
       )}
-      <div className="board-toolbar">
-        <span className="view-pill">
-          <ArrowRightCircle />
-          按状态
-        </span>
-        <label className="board-search">
-          <Search />
-          <input
-            aria-label="搜索案件"
-            placeholder="搜索案件名称、案号"
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
-          />
-        </label>
-        <span className="case-count">{activeCases.length} 个案件</span>
-      </div>
+      {!compact && onboarding}
+      {!compact && (
+        <div className="board-toolbar">
+          <span className="view-pill">
+            <ArrowRightCircle />
+            按状态
+          </span>
+          <label className="board-search">
+            <Search />
+            <input
+              aria-label="搜索案件"
+              placeholder="搜索案件名称、案号"
+              value={query}
+              onChange={(event) => onQueryChange(event.target.value)}
+            />
+          </label>
+          <span className="case-count">{activeCases.length} 个案件</span>
+        </div>
+      )}
       <p className="board-sr-only" id={instructionId}>
         拖动到其他状态列更改状态。键盘可按空格拿起，左右方向键选列，回车放下，Escape
         取消。删除请使用卡片右上角的按钮。
@@ -231,6 +240,25 @@ export default function CaseBoard({
       )}
       {loading ? (
         <p className="empty-text">正在打开本地工作空间…</p>
+      ) : compact ? (
+        <MobileCaseList
+          onboarding={onboarding}
+          cases={activeCases
+            .filter(matches)
+            .map((item) =>
+              pending?.id === item.id ? { ...item, statusId: pending.statusId } : item,
+            )}
+          statuses={data.statuses}
+          query={query}
+          onQueryChange={onQueryChange}
+          onCreate={onCreate}
+          onOpen={onOpen}
+          onMove={move}
+          onDelete={setDeleting}
+          onEditStatus={editStatus}
+          content={content}
+          busy={!!pending || trashBusy}
+        />
       ) : (
         <div className={`case-board ${drag ? 'has-drag' : ''}`} ref={board}>
           {data.statuses.map((status, index) => {

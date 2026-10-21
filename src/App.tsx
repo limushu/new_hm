@@ -242,6 +242,7 @@ export default function App() {
         </RetainedView>
         <RetainedView active={page === 'cases'}>
           <CaseBoard
+            compact={compact}
             data={data}
             query={query}
             loading={loading}

@@ -356,3 +356,14 @@
     display: none;
   }
 }
+
+.recording-dialog .feature-toolbar {
+  justify-content: center;
+  margin: 4px 0 12px;
+}
+.recording-dialog .feature-toolbar button {
+  min-height: 44px;
+  min-width: 112px;
+  padding: 10px 16px;
+  justify-content: center;
+}

@@ -31,6 +31,7 @@ export function useBoardDrag(
   statuses: CaseStatus[],
   disabled: boolean,
   onDrop: (id: string, statusId: string) => void,
+  enabled = true,
 ) {
   const [drag, setDrag] = useState<BoardDrag | null>(null);
   const current = useRef<BoardDrag | null>(null);
@@ -44,6 +45,7 @@ export function useBoardDrag(
   };
 
   useEffect(() => {
+    if (!enabled) return;
     let animation = 0;
     let pointer = { x: 0, y: 0 };
     function target(x: number, y: number) {
@@ -161,7 +163,7 @@ export function useBoardDrag(
       window.removeEventListener('blur', reset);
       window.removeEventListener('keydown', key);
     };
-  }, [board]);
+  }, [board, enabled]);
 
   return {
     drag,

@@ -4,12 +4,12 @@ test('手机案件 Tab 再次进入保留材料搜索与视图，主导航保留
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '案件', exact: true }).click();
-  const board = await page.locator('.case-board').elementHandle();
+  const board = await page.locator('.mobile-case-list').elementHandle();
   await page.getByRole('button', { name: '今天', exact: true }).click();
   await page.getByRole('button', { name: '案件', exact: true }).click();
-  expect(await board!.evaluate((node) => node === document.querySelector('.case-board'))).toBe(
-    true,
-  );
+  expect(
+    await board!.evaluate((node) => node === document.querySelector('.mobile-case-list')),
+  ).toBe(true);
   await page.locator('.case-card').first().click();
   await page.getByRole('tab', { name: '材料', exact: true }).click();
   const materialSearch = page.locator('.material-search input');
@@ -51,7 +51,7 @@ test('手机卡片滑动交给原生滚动，只有手柄捕获拖动', async ({
       );
     });
   await expect(page.locator('.case-drag-preview')).toHaveCount(0);
-  await expect(page.locator('.case-card').first()).toHaveCSS('touch-action', 'auto');
+  await expect(page.locator('.case-card').first()).toHaveCSS('touch-action', 'manipulation');
 });
 
 test.describe('触摸编辑后的案件导航', () => {

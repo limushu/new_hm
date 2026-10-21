@@ -76,22 +76,17 @@ test('触屏通过独立手柄拖动案件到另一个状态', async ({ page }) 
   await session.detach();
 });
 
-test('键盘可移动案件，窄屏选列时自动横向滚动', async ({ page }) => {
+test('手机通过案件操作更改状态，不需要横向拖动看板', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await card(page).focus();
-  await page.keyboard.press('Space');
-  await page.keyboard.press('ArrowRight');
-  await expect(column(page, 'closed')).toHaveClass(/is-drop-target/);
+  await page.locator('.mobile-case-more').first().focus();
   await page.keyboard.press('Enter');
-  await expect(column(page, 'closed').locator('[data-case-id="demo"]')).toBeVisible();
-  await expect(card(page)).toBeFocused();
-  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
-  await page.keyboard.press('Space');
-  await page.keyboard.press('ArrowLeft');
-  await page.keyboard.press('ArrowLeft');
-  await page.keyboard.press('Enter');
-  await expect(column(page, 'not_started').locator('[data-case-id="demo"]')).toBeVisible();
+  await page.getByRole('button', { name: '已结案', exact: true }).click();
+  await expect(page.locator('.mobile-case-item .board-status-pill')).toHaveText('已结案');
   await expect(page.getByRole('region', { name: '案件详情' })).toHaveCount(0);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+  await page.locator('.mobile-case-more').first().click();
+  await page.getByRole('button', { name: '未开始', exact: true }).click();
+  await expect(page.locator('.mobile-case-item .board-status-pill')).toHaveText('未开始');
 });
 
 test('保存失败回到原列，保留案件内容并允许重新拖动', async ({ page }) => {

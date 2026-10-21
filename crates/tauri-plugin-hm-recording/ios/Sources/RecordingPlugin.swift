@@ -2,6 +2,7 @@ import AVFoundation
 import Foundation
 import Tauri
 import UIKit
+import WebKit
 
 private struct StartOptions: Decodable { let path: String }
 
@@ -13,6 +14,34 @@ final class RecordingPlugin: Plugin, AVAudioRecorderDelegate {
   private var finished = false
   private var authorizing = false
   private var observers: [NSObjectProtocol] = []
+  private weak var webview: WKWebView?
+  // Internal injection points also let the native tests reproduce authorization
+  // transitions without displaying a permission dialog to the CI runner.
+  var requestPermission: (@escaping (Bool) -> Void) -> Void = {
+    AVAudioSession.sharedInstance().requestRecordPermission($0)
+  }
+  lazy var foreground = CaptureForeground { [weak self] in self?.visibility() ?? .background }
+
+  override func load(webview: WKWebView) { self.webview = webview }
+
+  private func visibility() -> CaptureVisibility {
+    let application: CaptureVisibility
+    switch UIApplication.shared.applicationState {
+    case .active: application = .active
+    case .inactive: application = .inactive
+    default: application = .background
+    }
+    let scene = webview?.window?.windowScene ?? UIApplication.shared.connectedScenes
+      .compactMap { $0 as? UIWindowScene }.first { $0.windows.contains(where: { $0.isKeyWindow }) }
+    let sceneState: CaptureVisibility?
+    switch scene?.activationState {
+    case .foregroundActive?: sceneState = .active
+    case .foregroundInactive?: sceneState = .inactive
+    case .background?, .unattached?: sceneState = .background
+    default: sceneState = nil
+    }
+    return captureVisibility(scene: sceneState, application: application)
+  }
 
   override init() {
     super.init()
@@ -36,15 +65,19 @@ final class RecordingPlugin: Plugin, AVAudioRecorderDelegate {
   }
 
   private func begin(_ invoke: Invoke, path: String, granted: Bool) {
-    authorizing = false
     guard granted else {
+      authorizing = false
       invoke.resolve(["error": "microphone_permission_denied"])
       return
     }
-    guard UIApplication.shared.applicationState == .active else {
-      invoke.resolve(["error": "recording_requires_foreground"])
-      return
+    foreground.whenActive { active in
+      self.authorizing = false
+      guard active else { invoke.resolve(["error": "recording_requires_foreground"]); return }
+      self.capture(invoke, path: path)
     }
+  }
+
+  private func capture(_ invoke: Invoke, path: String) {
     do {
       let session = AVAudioSession.sharedInstance()
       try session.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth])
@@ -80,7 +113,7 @@ final class RecordingPlugin: Plugin, AVAudioRecorderDelegate {
         return
       }
       self.authorizing = true
-      AVAudioSession.sharedInstance().requestRecordPermission { granted in
+      self.requestPermission { granted in
         DispatchQueue.main.async { self.begin(invoke, path: options.path, granted: granted) }
       }
     }
@@ -99,9 +132,8 @@ final class RecordingPlugin: Plugin, AVAudioRecorderDelegate {
   @objc func resume(_ invoke: Invoke) {
     DispatchQueue.main.async {
       guard let recorder = self.recorder else { invoke.resolve(["error": "recording_not_started"]); return }
-      guard UIApplication.shared.applicationState == .active else {
-        invoke.resolve(["error": "recording_requires_foreground"]); return
-      }
+      self.foreground.whenActive { active in
+        guard active else { invoke.resolve(["error": "recording_requires_foreground"]); return }
       do {
         try AVAudioSession.sharedInstance().setActive(true)
         guard recorder.record() else {
@@ -111,6 +143,7 @@ final class RecordingPlugin: Plugin, AVAudioRecorderDelegate {
         self.captureState = "recording"
         invoke.resolve(["state": self.captureState])
       } catch { invoke.resolve(["error": "recording_cannot_resume"]) }
+      }
     }
   }
 

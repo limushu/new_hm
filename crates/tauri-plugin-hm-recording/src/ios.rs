@@ -130,7 +130,17 @@ impl RecordingSession for IosSession {
 impl Drop for IosSession {
     fn drop(&mut self) {
         if self.live {
-            let _ = self.bridge.call("cancel", serde_json::json!({}));
+            // App teardown may drop state on the UI thread. Do not synchronously
+            // wait there for a Swift callback dispatched to that same thread.
+            let bridge = self.bridge.clone();
+            let directory = self.directory.take();
+            tauri::async_runtime::spawn(async move {
+                let _ = bridge
+                    .0
+                    .run_mobile_plugin_async::<Reply>("cancel", serde_json::json!({}))
+                    .await;
+                drop(directory);
+            });
         }
     }
 }

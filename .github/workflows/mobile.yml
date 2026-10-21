@@ -11,6 +11,8 @@ on:
       - 'index.html'
       - 'vite.config.ts'
       - 'scripts/verify-ios-simulator.mjs'
+      - 'scripts/test-ios-recording.mjs'
+      - 'tests/native/ios-recording/**'
       - 'scripts/check-mobile-boundaries.mjs'
       - '.github/workflows/mobile.yml'
   pull_request:
@@ -23,6 +25,8 @@ on:
       - 'index.html'
       - 'vite.config.ts'
       - 'scripts/verify-ios-simulator.mjs'
+      - 'scripts/test-ios-recording.mjs'
+      - 'tests/native/ios-recording/**'
       - 'scripts/check-mobile-boundaries.mjs'
       - '.github/workflows/mobile.yml'
 permissions:

@@ -107,6 +107,11 @@
 .feature-toolbar button:hover {
   background: var(--wash);
 }
+.feature-toolbar button.primary-action,
+.feature-toolbar button.primary-action:hover {
+  background: var(--primary);
+  color: var(--on-primary);
+}
 .feature-toolbar svg {
   width: 14px;
   height: 14px;
