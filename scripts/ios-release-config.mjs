@@ -57,4 +57,7 @@ export function configureAppleEnvironment(env, settings, keyPath, keyDirectory) 
   env.APPLE_API_KEY_PATH = keyPath;
   env.API_PRIVATE_KEYS_DIR = keyDirectory;
   delete env.APPLE_API_PRIVATE_KEY;
+  for (const name of ['IOS_CERTIFICATE', 'IOS_CERTIFICATE_PASSWORD', 'IOS_MOBILE_PROVISION']) {
+    if (!env[name]) delete env[name];
+  }
 }

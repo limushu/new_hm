@@ -69,3 +69,27 @@ test('empty workflow Team variable cannot override the validated project fallbac
   assert.equal(child.API_PRIVATE_KEYS_DIR, '/private');
   assert.ok(!Object.hasOwn(child, 'APPLE_API_PRIVATE_KEY'));
 });
+
+test('unset optional signing secrets are absent, not empty values that activate manual signing', () => {
+  const child = {
+    ...env,
+    IOS_CERTIFICATE: '',
+    IOS_CERTIFICATE_PASSWORD: '',
+    IOS_MOBILE_PROVISION: '',
+  };
+  configureAppleEnvironment(child, releaseSettings(child), '/private/key.p8', '/private');
+  for (const name of ['IOS_CERTIFICATE', 'IOS_CERTIFICATE_PASSWORD', 'IOS_MOBILE_PROVISION'])
+    assert.ok(!Object.hasOwn(child, name));
+});
+test('an explicitly supplied manual-signing set remains available to Tauri', () => {
+  const child = {
+    ...env,
+    IOS_CERTIFICATE: 'certificate-fixture',
+    IOS_CERTIFICATE_PASSWORD: 'password-fixture',
+    IOS_MOBILE_PROVISION: 'profile-fixture',
+  };
+  configureAppleEnvironment(child, releaseSettings(child), '/private/key.p8', '/private');
+  assert.equal(child.IOS_CERTIFICATE, 'certificate-fixture');
+  assert.equal(child.IOS_CERTIFICATE_PASSWORD, 'password-fixture');
+  assert.equal(child.IOS_MOBILE_PROVISION, 'profile-fixture');
+});
