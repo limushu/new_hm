@@ -31,10 +31,12 @@ try {
       '--filter-platform',
       process.arch === 'arm64' ? 'aarch64-apple-ios-sim' : 'x86_64-apple-ios',
     ],
-    { cwd: root, encoding: 'utf8' },
+    { cwd: root, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 },
   );
-  if (metadata.status !== 0)
-    throw new Error(`Cannot locate resolved Tauri SDK: ${metadata.stderr}`);
+  if (metadata.error || metadata.status !== 0)
+    throw new Error(
+      `Cannot locate resolved Tauri SDK: ${metadata.error?.message ?? metadata.stderr}`,
+    );
   const tauri = JSON.parse(metadata.stdout).packages.find((item) => item.name === 'tauri');
   if (!tauri) throw new Error('Resolved Tauri SDK is missing');
   const tauriPackage = join(temporary, 'Tauri');
