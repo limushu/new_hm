@@ -1,6 +1,6 @@
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
+import { cpSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 
 // Runs the production Swift driver inside a scene-based iOS XCTest host. This
@@ -18,10 +18,31 @@ function run(binary, args) {
     throw new Error(`${binary} native recording test failed: ${result.status}`);
 }
 try {
+  // The plugin builder prunes Tests from its .tauri API copy. Xcode's resolver
+  // validates that declared target, so use Cargo's complete resolved SDK.
+  const metadata = spawnSync(
+    'cargo',
+    [
+      'metadata',
+      '--locked',
+      '--offline',
+      '--format-version',
+      '1',
+      '--filter-platform',
+      process.arch === 'arm64' ? 'aarch64-apple-ios-sim' : 'x86_64-apple-ios',
+    ],
+    { cwd: root, encoding: 'utf8' },
+  );
+  if (metadata.status !== 0)
+    throw new Error(`Cannot locate resolved Tauri SDK: ${metadata.stderr}`);
+  const tauri = JSON.parse(metadata.stdout).packages.find((item) => item.name === 'tauri');
+  if (!tauri) throw new Error('Resolved Tauri SDK is missing');
+  const tauriPackage = join(temporary, 'Tauri');
+  cpSync(join(dirname(tauri.manifest_path), 'mobile/ios-api'), tauriPackage, { recursive: true });
   const spec = {
     name: 'RecordingDriverRegression',
     options: { deploymentTarget: { iOS: '15.0' } },
-    packages: { Tauri: { path: join(root, 'crates/tauri-plugin-hm-recording/.tauri/tauri-api') } },
+    packages: { Tauri: { path: tauriPackage } },
     settings: { base: { SWIFT_VERSION: '5.0', CODE_SIGNING_ALLOWED: 'NO' } },
     targets: {
       RecordingHost: {
