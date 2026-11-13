@@ -13,6 +13,12 @@
 
 ## 安装包调整与验证
 
+当前候选包为 **1.4.3（11.1）**，源码提交 `2cb9387736aec6508cfb3913b0ad676a258361a5`。2026-11-13 09:19 UTC，[签名构建任务](https://github.com/limushu/new_hm/actions/runs/43399395501)确认 `UPLOAD SUCCEEDED with no errors`。上传成功不等于 Apple 已处理完构建、TestFlight 已可安装或 App Review 已提交。
+
+[应用检查](https://github.com/limushu/new_hm/actions/runs/43399272086)和[移动端检查](https://github.com/limushu/new_hm/actions/runs/43399272031)均通过。iOS 模拟器验证了由内嵌 SQLite 创建的工作区在系统 SQLite 下启动、备份及重开后保留虚构案件和材料字节；录音与系统文件驱动的 10 项原生测试全部通过。正式 IPA 根目录隐私清单、系统 SQLite 链接、签名及项目列出的 required-reason API 检查通过，正式包未检出这些尚未解释的 API 候选项。这些结果不代替新版本在用户真机上的升级验收或 Apple 审核。
+
+2026-11-13 已用不携带登录凭据的请求确认上述公开隐私政策与支持文档 URL 均返回 HTTP 200。
+
 10.1 是可用于分发签名的 1.4.3 构建，已上传 App Store Connect，但真实 IPA 审计显示包内没有 PrivacyInfo.xcprivacy，并同时声明 iPhone 与 iPad（UIDeviceFamily 1、2）。因此本次隐私政策入口与清单需要新构建，不能只修改商店文字。
 
 新增的 [iOS 隐私清单](../../src-tauri/PrivacyInfo.xcprivacy)声明无跟踪、无向开发者收集的数据，以及访问本机/用户选择文件元数据的用途。文件元数据用于归档、预览和本地存储，不用于指纹识别。
@@ -42,7 +48,7 @@ Info.ios.plist 增加不使用非豁免加密的声明：当前应用无自定�
 ## 提交前仍需完成
 
 1. 确认大陆区备案适用性；需要备案时取得并在 App Store Connect 填写真实 App 备案号。
-2. 用包含隐私入口、清单与系统 SQLite 的新构建验证 10.1 工作区升级，确认案件、材料、录音和备份可读取。
+2. 在 TestFlight 等待 11.1 处理完成并可供测试后，保留现有应用数据直接更新，真机核对原有案件、材料、录音和备份可读取，并确认设置中的隐私政策可以打开。模拟器工作区兼容性检查已通过，真机升级结果尚未确认。
 3. 准备真实 iPhone 和 iPad 界面截图，按 [Apple 截图规格](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)上传。浏览器开发预览图不标记为已经完成原生截图验收。
 4. App Store Connect 填写版本、类别、年龄分级、内容权利、App 隐私、公开支持/隐私 URL，以及审核联系人电话和邮箱；审核联系资料由用户在 Apple 后台填写，无需公开在仓库。
 5. 核对“App 未收集数据”的申报与最终 SDK/服务一致；核对支持链接和隐私文档可以公开访问。

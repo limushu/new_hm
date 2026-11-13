@@ -2,7 +2,7 @@
   "status": "draft",
   "bundleId": "com.limushu.hm",
   "version": "1.4.3",
-  "buildNumber": null,
+  "buildNumber": "11.1",
   "locale": "zh-Hans",
   "name": "案笺",
   "subtitle": "案件、日程与材料的本地工作台",
