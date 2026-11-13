@@ -192,6 +192,10 @@ try {
     devices.push(device);
     run('xcrun', ['simctl', 'boot', device]);
     run('xcrun', ['simctl', 'bootstatus', device, '-b']);
+    // Keep a real Simulator display attached so WebKit's compositor paints
+    // frames as well as exposing its accessibility tree on headless CI hosts.
+    run('open', ['-a', 'Simulator', '--args', '-CurrentDeviceUDID', device]);
+    await delay(3000);
     run('xcrun', ['simctl', 'ui', device, 'appearance', 'light']);
     run('xcrun', [
       'simctl',
