@@ -25,7 +25,10 @@ for (const [file, content] of Object.entries({
   writeFileSync(join(output, 'text', file), content + '\n');
 cpSync(join(root, 'docs/app-store/metadata.zh-CN.json'), join(output, 'metadata.zh-CN.json'));
 cpSync(join(root, 'docs/app-store/submission-guide.zh-CN.md'), join(output, 'READ-ME.zh-CN.md'));
-cpSync(join(root, 'docs/app-store/README.md'), join(output, 'reference/release-readiness.md'));
+writeFileSync(
+  join(output, 'reference/release-readiness-url.txt'),
+  'https://github.com/limushu/new_hm/blob/main/docs/app-store/README.md\n',
+);
 cpSync(
   join(root, 'src-tauri/icons/ios/AppIcon-512@2x.png'),
   join(output, 'reference/app-icon-1024.png'),
@@ -34,7 +37,9 @@ cpSync(join(root, 'docs/privacy-policy.md'), join(output, 'policy/privacy-policy
 cpSync(join(root, 'docs/app-store/support.md'), join(output, 'policy/support.md'));
 cpSync(join(root, 'docs/app-store/site'), join(output, 'policy/site'), { recursive: true });
 const links = {
-  'READ-ME.zh-CN.md': { '(README.md)': '(reference/release-readiness.md)' },
+  'READ-ME.zh-CN.md': {
+    '(README.md)': '(https://github.com/limushu/new_hm/blob/main/docs/app-store/README.md)',
+  },
   'policy/privacy-policy.md': {},
   'policy/support.md': { '(../privacy-policy.md)': '(privacy-policy.md)' },
 };

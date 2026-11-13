@@ -12,7 +12,7 @@
 
 执行 `npm run appstore:prepare` 从同一份政策源更新文档和静态页面，`node scripts/prepare-app-store.mjs --check` 检查一致性。
 
-在 Actions 手动运行 [App Store screenshots](../../.github/workflows/app-store-screenshots.yml)，指定已通过移动检查且产品源码未变化的模拟器构建任务。它在新的 iPhone 16 Pro Max 与 iPad Pro 13-inch 模拟器上安装真实应用，使用虚构工作区，通过原生界面操作截取各四张 PNG，并与商店文案一起打包到 `app-store-materials-*` Artifact。脚本验证原图尺寸，结果仍需人工检查画面。无需个人 Mac 或 iPad，不会修改用户设备或提交商店审核。
+在 Actions 手动运行 [App Store screenshots](../../.github/workflows/app-store-screenshots.yml)，指定已通过移动检查且产品源码未变化的模拟器构建任务。它在新的 iPhone 16 Pro、iPhone 16 Pro Max 与 iPad Pro 13-inch 模拟器上安装真实应用，使用虚构工作区，通过原生界面操作截取各四张 PNG，并与商店文案一起打包到 `app-store-materials-*` Artifact。脚本验证原图尺寸并导出不含 Alpha 通道的 RGB PNG，结果仍需人工检查画面。无需个人 Mac 或 iPad，不会修改用户设备或提交商店审核。
 
 ## 安装包调整与验证
 

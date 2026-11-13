@@ -91,6 +91,11 @@ try {
   const families = [
     {
       name: 'iphone',
+      model: types.find((item) => item.name === 'iPhone 16 Pro'),
+      size: [1206, 2622],
+    },
+    {
+      name: 'iphone-large',
       model: types.find((item) => item.name === 'iPhone 16 Pro Max'),
       size: [1320, 2868],
     },
@@ -101,7 +106,12 @@ try {
     },
   ];
   if (families.some((item) => !item.model))
-    throw new Error('Required 6.9-inch iPhone / 13-inch iPad simulator unavailable');
+    throw new Error(
+      'Required medium/large Dynamic Island iPhone or 13-inch iPad simulator unavailable',
+    );
+
+  const exportPng = join(temporary, 'export-store-png');
+  run('xcrun', ['swiftc', join(root, 'scripts/export-store-png.swift'), '-o', exportPng]);
 
   const spec = {
     name: 'AppStoreScreenshots',
@@ -281,7 +291,7 @@ try {
             throw new Error(`Unexpected screenshot dimensions: ${size}`);
           const destination = join(output, 'screenshots', family.name, `${name}.png`);
           mkdirSync(dirname(destination), { recursive: true });
-          cpSync(path, destination);
+          run(exportPng, [path, destination]);
           shots.push({ file: `${name}.png`, width: size[0], height: size[1] });
         }
       }
@@ -300,6 +310,10 @@ try {
     run('xcrun', ['simctl', 'shutdown', device]);
   }
   run('node', [join(root, 'scripts/package-app-store.mjs'), output]);
+  run(exportPng, [
+    join(root, 'src-tauri/icons/ios/AppIcon-512@2x.png'),
+    join(output, 'reference/app-icon-1024.png'),
+  ]);
   report.status = 'captured-needs-visual-review';
 } catch (error) {
   report.status = 'failed';
