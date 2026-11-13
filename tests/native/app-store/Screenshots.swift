@@ -7,7 +7,9 @@ final class StoreScreenshots: XCTestCase {
   override func setUpWithError() throws {
     continueAfterFailure = false
     XCUIDevice.shared.orientation = .portrait
-    app.launch()
+    // simctl already started this external app. Activating its existing process
+    // avoids XCTest's relaunch handshake for an app outside the test project.
+    app.activate()
     XCTAssertTrue(app.buttons["案件"].firstMatch.waitForExistence(timeout: 30))
   }
 

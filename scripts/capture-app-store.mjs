@@ -234,6 +234,11 @@ try {
     run('xcrun', ['simctl', 'terminate', device, bundle]);
     for (const suffix of ['', '-wal', '-shm']) rmSync(database + suffix, { force: true });
     cpSync(fixture, dirname(database), { recursive: true });
+    run('xcrun', ['simctl', 'launch', device, bundle]);
+    await delay(4000);
+    const ready = join(output, 'diagnostics', family.name, 'before-ui-test.png');
+    mkdirSync(dirname(ready), { recursive: true });
+    run('xcrun', ['simctl', 'io', device, 'screenshot', ready]);
     const result = join(temporary, `${family.name}.xcresult`);
     const argumentsForBuild = [
       '-project',
@@ -269,6 +274,24 @@ try {
         ['xcresulttool', 'export', 'attachments', '--path', result, '--output-path', exported],
         { optional: true },
       );
+      const systemLog = run(
+        'xcrun',
+        [
+          'simctl',
+          'spawn',
+          device,
+          'log',
+          'show',
+          '--last',
+          '3m',
+          '--style',
+          'compact',
+          '--predicate',
+          'process == "案笺"',
+        ],
+        { capture: true, optional: true },
+      );
+      if (systemLog) writeFileSync(join(exported, 'app-system.log'), systemLog);
     }
     const exported = join(output, 'diagnostics', family.name);
     const manifest = JSON.parse(readFileSync(join(exported, 'manifest.json'), 'utf8'));
