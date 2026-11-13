@@ -60,7 +60,13 @@ try {
   writeFileSync(
     configPath,
     JSON.stringify({
-      bundle: { iOS: { developmentTeam: settings.team, bundleVersion: settings.buildNumber } },
+      bundle: {
+        iOS: {
+          developmentTeam: settings.team,
+          bundleVersion: settings.buildNumber,
+          template: join(root, 'src-tauri/ios-project.yml'),
+        },
+      },
     }),
     { mode: 0o600 },
   );

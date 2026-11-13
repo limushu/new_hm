@@ -85,8 +85,24 @@ try {
   report.xcode = run('xcodebuild', ['-version'], { capture: true });
   report.arch = process.arch;
   const target = process.arch === 'arm64' ? 'aarch64-sim' : 'x86_64';
-  run('npx', ['tauri', 'ios', 'init', '--ci', '--skip-targets-install']);
-  run('npx', ['tauri', 'ios', 'build', '--debug', '--ci', '--no-sign', '--target', target]);
+  // The CLI reads custom templates relative to its working directory. Resolve
+  // explicitly so generation works independently of nested xcodebuild commands.
+  const config = JSON.stringify({
+    bundle: { iOS: { template: join(root, 'src-tauri/ios-project.yml') } },
+  });
+  run('npx', ['tauri', 'ios', 'init', '--ci', '--skip-targets-install', '--config', config]);
+  run('npx', [
+    'tauri',
+    'ios',
+    'build',
+    '--debug',
+    '--ci',
+    '--no-sign',
+    '--target',
+    target,
+    '--config',
+    config,
+  ]);
 
   const candidates = find(
     join(root, 'src-tauri/gen/apple'),
