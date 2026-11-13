@@ -67,6 +67,15 @@ test('iOS 文件入口处理取消和读取错误，导入当前文件夹并支�
   await panel.getByRole('button', { name: '系统导入.m4a的操作' }).tap();
   await page.getByRole('menuitem', { name: '导出副本', exact: true }).tap();
   await expect(panel.locator('.material-row')).toContainText('系统导入.m4a');
+  await expect
+    .poll(() =>
+      page.evaluate(() =>
+        (window as unknown as { documentCalls: Array<{ name: string }> }).documentCalls.map(
+          (call) => call.name,
+        ),
+      ),
+    )
+    .toEqual(['pick_materials', 'pick_materials', 'pick_materials', 'export_material']);
   const calls = await page.evaluate(
     () =>
       (
@@ -75,12 +84,6 @@ test('iOS 文件入口处理取消和读取错误，导入当前文件夹并支�
         }
       ).documentCalls,
   );
-  expect(calls.map((call) => call.name)).toEqual([
-    'pick_materials',
-    'pick_materials',
-    'pick_materials',
-    'export_material',
-  ]);
   const target = calls[2].args.target as { caseId: string; parentId: string };
   expect(target.caseId).toBeTruthy();
   expect(target.parentId).toBeTruthy();

@@ -35,6 +35,9 @@ test.describe('触摸材料操作', () => {
     await page.getByLabel('文件夹名称').fill('手机归档');
     await page.getByRole('button', { name: '保存', exact: true }).tap();
     await panel.getByRole('button', { name: `${image.name}的操作` }).tap();
+    const menu = await page.getByRole('menu').boundingBox();
+    expect(menu!.y).toBeGreaterThanOrEqual(8);
+    expect(menu!.y + menu!.height).toBeLessThanOrEqual(844 - 8);
     await page.getByRole('menuitem', { name: '移动到…', exact: true }).tap();
     await page.getByRole('combobox', { name: '目标文件夹' }).click();
     await page.getByRole('option', { name: '手机归档', exact: true }).click();

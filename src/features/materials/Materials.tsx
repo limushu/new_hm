@@ -1,6 +1,6 @@
 import { errorMessage } from '../../services/errors';
 import Select from '../../components/Select';
-import { useEffect, useRef, useState, lazy, Suspense } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense } from 'react';
 import {
   Folder,
   FileText,
@@ -123,6 +123,7 @@ export default function Materials({
   const [drop, setDrop] = useState(false);
   const { busy, error, setError, run } = useAction();
   const fileInput = useRef<HTMLInputElement>(null);
+  const menuElement = useRef<HTMLDivElement>(null);
   const target = useRef<MaterialTarget>({ caseId, proceedingId: null, parentId: null, recordId });
   target.current = {
     caseId,
@@ -221,6 +222,20 @@ export default function Materials({
   useEffect(() => {
     if (!dragEnabled) setDrop(false);
   }, [dragEnabled]);
+  useLayoutEffect(() => {
+    if (!menu) return;
+    const fit = () => {
+      const element = menuElement.current;
+      if (!element) return;
+      const { width, height } = element.getBoundingClientRect();
+      const x = Math.max(8, Math.min(menu.x, innerWidth - width - 8));
+      const y = Math.max(8, Math.min(menu.y, innerHeight - height - 8));
+      if (x !== menu.x || y !== menu.y) setMenu({ ...menu, x, y });
+    };
+    fit();
+    window.addEventListener('resize', fit);
+    return () => window.removeEventListener('resize', fit);
+  }, [menu]);
   useEffect(() => {
     if (!menu) return;
     const close = (event: PointerEvent) => {
@@ -615,6 +630,7 @@ export default function Materials({
       {menu && (
         <div
           className={`material-menu ${tapToOpen ? 'material-touch-menu' : ''}`}
+          ref={menuElement}
           role="menu"
           style={{ left: Math.max(8, menu.x), top: Math.max(8, menu.y) }}
         >
