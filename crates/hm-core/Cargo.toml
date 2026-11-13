@@ -5,7 +5,7 @@ edition.workspace = true
 publish = false
 
 [dependencies]
-rusqlite = { version = "0.38", features = ["backup", "bundled"] }
+rusqlite = { version = "0.38", features = ["backup"] }
 serde = { version = "1", features = ["derive"] }
 uuid = { version = "1", features = ["v4"] }
 chrono = { version = "0.4", default-features = false, features = ["std"] }
@@ -14,6 +14,11 @@ serde_json = "1"
 tempfile = "3"
 sha2 = "0.10"
 url = "2"
+
+# Use Apple's SQLite on iOS. Its internal filesystem probes stay within the
+# system framework instead of being statically bundled into our executable.
+[target.'cfg(not(target_os = "ios"))'.dependencies]
+rusqlite = { version = "0.38", features = ["bundled"] }
 
 [dev-dependencies]
 tempfile = "3"

@@ -7,6 +7,7 @@ import { command, nativeRuntime } from '../../services/repository';
 import Dialog from '../../components/Dialog';
 import UpdateDialog from '../../components/UpdateDialog';
 import Welcome from '../../components/Welcome';
+import PrivacyPolicy from './PrivacyPolicy';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
 import { useTheme } from '../../components/ThemeProvider';
@@ -37,6 +38,7 @@ export default function Settings({
   const [updateDialog, setUpdateDialog] = useState(false);
   const [checked, setChecked] = useState(false);
   const [welcome, setWelcome] = useState(false);
+  const [privacy, setPrivacy] = useState(false);
   const [endpoint, setEndpoint] = useState('');
   const { busy, error, run } = useAction();
   const { theme, setTheme } = useTheme();
@@ -355,6 +357,16 @@ export default function Settings({
           </>
         )}
       </section>
+      <section className="settings-section">
+        <h2>隐私</h2>
+        <p className="feature-description">
+          无需登录。案件、材料和录音由你管理，应用不向开发者上传这些内容。
+        </p>
+        <button type="button" className="privacy-entry" onClick={() => setPrivacy(true)}>
+          隐私政策
+        </button>
+      </section>
+      {privacy && <PrivacyPolicy onClose={() => setPrivacy(false)} />}
       {restore && (
         <Dialog
           title="恢复工作区备份"

@@ -1,0 +1,20 @@
+.privacy-policy {
+  max-height: 58dvh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  color: var(--text);
+  font-size: var(--text-base);
+  line-height: 1.8;
+  overflow-wrap: anywhere;
+  padding-right: 8px;
+}
+.privacy-policy p {
+  margin: 0 0 14px;
+}
+.privacy-policy h3 {
+  font-size: var(--text-body);
+  margin: 24px 0 8px;
+}
+.privacy-entry {
+  min-height: 44px;
+}

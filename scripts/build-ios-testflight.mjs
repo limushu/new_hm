@@ -87,6 +87,8 @@ try {
   const apps = readdirSync(join(unpacked, 'Payload')).filter((name) => name.endsWith('.app'));
   if (apps.length !== 1) throw new Error('IPA must contain exactly one application');
   const app = join(unpacked, 'Payload', apps[0]);
+  run('python3', [join(root, 'scripts/verify-ios-privacy.py'), app]);
+  report.privacyManifest = 'verified-at-bundle-root';
   run('codesign', ['--verify', '--deep', '--strict', app]);
   const signing = spawnSync('codesign', ['-d', '--verbose=4', app], { encoding: 'utf8' });
   if (signing.status !== 0 || !signing.stderr.includes(`TeamIdentifier=${settings.team}`))

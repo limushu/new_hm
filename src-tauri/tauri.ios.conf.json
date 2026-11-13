@@ -10,7 +10,7 @@
   "bundle": {
     "targets": [],
     "createUpdaterArtifacts": false,
-    "resources": null,
+    "resources": ["PrivacyInfo.xcprivacy"],
     "icon": ["icons/icon.png"],
     "iOS": {
       "minimumSystemVersion": "15.0",
