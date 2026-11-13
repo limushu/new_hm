@@ -14,6 +14,8 @@
 
 在 Actions 手动运行 [App Store screenshots](../../.github/workflows/app-store-screenshots.yml)，指定已通过移动检查且产品源码未变化的模拟器构建任务。它在新的 iPhone 16 Pro、iPhone 16 Pro Max 与 iPad Pro 13-inch 模拟器上安装真实应用，使用虚构工作区，通过原生界面操作截取各四张 PNG，并与商店文案一起打包到 `app-store-materials-*` Artifact。脚本验证原图尺寸并导出不含 Alpha 通道的 RGB PNG，结果仍需人工检查画面。无需个人 Mac 或 iPad，不会修改用户设备或提交商店审核。
 
+2026-11-13，[截图任务](https://github.com/limushu/new_hm/actions/runs/43408250791)已通过，产出[完整原始素材包](https://github.com/limushu/new_hm/actions/runs/43408250791/artifacts/14029043998)（保留至 2026-12-13）。12 张截图已逐张检查画面，并核对尺寸、RGB 格式和无 Alpha 通道：iPhone 中等显示屏 1206 × 2622、大显示屏 1320 × 2868、13 英寸 iPad 2064 × 2752，各四张。全部使用虚构示例工作区；画面来自实际应用在系统模拟器上的运行，不代表 iPad 真机验收或 Apple 已批准这些素材。下载原始素材包后，上传 `screenshots/` 内对应分组的 PNG，`diagnostics/` 为排查资料，不上传商店。
+
 ## 安装包调整与验证
 
 当前候选包为 **1.4.3（11.1）**，源码提交 `2cb9387736aec6508cfb3913b0ad676a258361a5`。2026-11-13 09:19 UTC，[签名构建任务](https://github.com/limushu/new_hm/actions/runs/43399395501)确认 `UPLOAD SUCCEEDED with no errors`。上传成功不等于 Apple 已处理完构建、TestFlight 已可安装或 App Review 已提交。
@@ -52,7 +54,7 @@ Info.ios.plist 增加不使用非豁免加密的声明：当前应用无自定�
 
 1. 确认大陆区备案适用性；需要备案时取得并在 App Store Connect 填写真实 App 备案号。
 2. 在 TestFlight 等待 11.1 处理完成并可供测试后，保留现有应用数据直接更新，真机核对原有案件、材料、录音和备份可读取，并确认设置中的隐私政策可以打开。模拟器工作区兼容性检查已通过，真机升级结果尚未确认。
-3. 准备真实 iPhone 和 iPad 界面截图，按 [Apple 截图规格](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)上传。浏览器开发预览图不标记为已经完成原生截图验收。
+3. 上传已检查的 iPhone 与 iPad 原生截图，按 [Apple 截图规格](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)放入对应设备分组。必需的中等显示屏 iPhone 与 13 英寸 iPad 素材均已备齐。
 4. App Store Connect 填写版本、类别、年龄分级、内容权利、App 隐私、公开支持/隐私 URL，以及审核联系人电话和邮箱；审核联系资料由用户在 Apple 后台填写，无需公开在仓库。
 5. 核对“App 未收集数据”的申报与最终 SDK/服务一致；核对支持链接和隐私文档可以公开访问。
 6. 用户审阅资料与最终构建后提交 App Review，发布方式保持手动。审核通过与正式对外发布分别确认。
