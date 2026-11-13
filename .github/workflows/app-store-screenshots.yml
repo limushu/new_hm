@@ -1,0 +1,44 @@
+name: App Store screenshots
+on:
+  workflow_dispatch:
+    inputs:
+      simulator_run_id:
+        description: Successful Mobile application checks run containing the verified simulator app
+        required: true
+        default: '43399272031'
+permissions:
+  contents: read
+  actions: read
+jobs:
+  capture:
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - name: Ensure Xcode project tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: command -v xcodegen >/dev/null || brew install xcodegen
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.simulator_run_id }}
+          pattern: ios-simulator-*
+          merge-multiple: true
+          path: artifacts/app-store/source
+      - name: Capture native iPhone and iPad screens
+        run: node scripts/capture-app-store.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: app-store-materials-${{ github.run_id }}
+          path: artifacts/app-store/materials/
+          if-no-files-found: warn
+          retention-days: 30
