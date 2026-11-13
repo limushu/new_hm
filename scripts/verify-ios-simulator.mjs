@@ -1,6 +1,7 @@
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, readdirSync, writeFileSync } from 'node:fs';
-import { resolve, join } from 'node:path';
+import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import { resolve, join, dirname } from 'node:path';
+import { tmpdir } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
 
 if (process.platform !== 'darwin') {
@@ -67,12 +68,19 @@ if sys.argv[2] == 'prepare':
     db.commit()
 else:
     assert settings.get('onboarding_done') == sys.argv[3], 'Onboarding setting did not survive restart'
+    material_id = sys.argv[4]
+    assert material_id, 'Missing bundled-SQLite upgrade fixture'
+    item = db.execute('SELECT case_id,storage_name FROM materials WHERE id=?', (material_id,)).fetchone()
+    assert item, 'Archived material did not survive upgrade'
+    assert (path.parent / 'materials' / item[0] / material_id / item[1]).read_bytes() == b'bundled-to-system-sqlite-fixture'
+    assert db.execute("SELECT title FROM cases WHERE id=?", (item[0],)).fetchone()[0] == 'SQLite upgrade fixture (fictional)'
 print(json.dumps({'schema': 7, 'integrity': 'ok', 'privateDatabase': str(path.relative_to(root)), 'backupDate': settings['last_backup_date']}))
 db.close()
 `;
 
 let device;
 let bundle;
+let upgradeFixture;
 try {
   report.xcode = run('xcodebuild', ['-version'], { capture: true });
   report.arch = process.arch;
@@ -168,9 +176,47 @@ try {
   await delay(4000);
   run('xcrun', ['simctl', 'io', device, 'screenshot', join(output, 'first-launch.png')]);
   run('xcrun', ['simctl', 'terminate', device, bundle]);
+  // Only replace the empty workspace in this freshly created CI simulator.
+  // The host target keeps bundled SQLite; the iOS app now uses system SQLite.
+  upgradeFixture = mkdtempSync(join(tmpdir(), 'hm-ios-upgrade-'));
+  report.upgradeFixture = JSON.parse(
+    run(
+      'cargo',
+      [
+        'run',
+        '--locked',
+        '-p',
+        'hm-core',
+        '--example',
+        'ios_upgrade_fixture',
+        '--',
+        upgradeFixture,
+        edition,
+      ],
+      { capture: true },
+    ),
+  );
+  const database = resolve(container, report.database.privateDatabase);
+  if (!database.startsWith(resolve(container) + '/'))
+    throw new Error('Unexpected fixture destination');
+  for (const suffix of ['', '-wal', '-shm']) rmSync(database + suffix, { force: true });
+  cpSync(upgradeFixture, dirname(database), { recursive: true });
   run('xcrun', ['simctl', 'launch', device, bundle]);
-  await delay(4000);
-  run('python3', ['-c', databaseCheck, container, 'reopen', edition], { capture: true });
+  let retained;
+  for (let attempt = 0; attempt < 30; attempt++) {
+    await delay(2000);
+    retained = run(
+      'python3',
+      ['-c', databaseCheck, container, 'reopen', edition, report.upgradeFixture.materialId],
+      {
+        capture: true,
+        optional: true,
+      },
+    );
+    if (retained) break;
+  }
+  if (!retained) throw new Error('Bundled-to-system SQLite workspace upgrade failed');
+  report.checks.push('bundled-to-system-sqlite-workspace-and-material-retained');
   run('xcrun', ['simctl', 'io', device, 'screenshot', join(output, 'reopened-workspace.png')]);
   report.checks.push('restart-private-workspace-retained');
   run('node', [join(root, 'scripts/test-ios-recording.mjs'), device]);
@@ -182,6 +228,7 @@ try {
   report.error = String(error);
   throw error;
 } finally {
+  if (upgradeFixture) rmSync(upgradeFixture, { recursive: true, force: true });
   writeFileSync(join(output, 'verification.json'), JSON.stringify(report, null, 2) + '\n');
   if (device) {
     if (bundle) run('xcrun', ['simctl', 'terminate', device, bundle], { optional: true });
