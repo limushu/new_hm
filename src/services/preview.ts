@@ -458,7 +458,13 @@ export async function previewCommand<K extends keyof Commands>(
           {
             id: 'documents',
             state: 'ready',
-            capabilities: ['native-drop', 'file-picker', 'file-export', 'external-open'],
+            capabilities: [
+              'native-drop',
+              'file-picker',
+              'local-file-picker',
+              'file-export',
+              'external-open',
+            ],
           },
           { id: 'recording', state: 'ready', capabilities: ['record-audio'] },
           { id: 'backup', state: 'ready', capabilities: ['local-backup', 'backup-transfer'] },

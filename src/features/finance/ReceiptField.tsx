@@ -26,7 +26,7 @@ export default function ReceiptField({
   onPending: (file: PendingReceipt | null) => void;
 }) {
   const { manifest } = useSubsystems();
-  const filePicker = supports(manifest, 'file-picker');
+  const filePicker = supports(manifest, 'local-file-picker');
   const file = useRef<HTMLInputElement>(null);
   const [select, setSelect] = useState(false);
   const [error, setError] = useState('');

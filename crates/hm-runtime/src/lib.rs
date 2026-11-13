@@ -14,6 +14,7 @@ pub enum Capability {
     BackgroundMaintenance,
     ForegroundMaintenance,
     FilePicker,
+    LocalFilePicker,
     FileExport,
     ExternalOpen,
     RecordAudio,
@@ -90,6 +91,7 @@ impl RuntimeManifest {
                     capabilities: vec![
                         Capability::NativeDrop,
                         Capability::FilePicker,
+                        Capability::LocalFilePicker,
                         Capability::FileExport,
                         Capability::ExternalOpen,
                     ],

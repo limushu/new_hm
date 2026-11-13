@@ -33,6 +33,7 @@ import { useSubsystems } from '../../platform/SubsystemProvider';
 import { supports } from '../../platform/subsystems';
 import './materials.css';
 const Preview = lazy(() => import('./Preview'));
+const touchLayoutQuery = '(max-width: 760px), (pointer: coarse)';
 export function materialIcon(item: Material) {
   const ext = item.name.split('.').pop()?.toLowerCase();
   return item.kind === 'folder' ? (
@@ -73,6 +74,15 @@ export default function Materials({
 }) {
   const { manifest } = useSubsystems();
   const nativeDrop = supports(manifest, 'native-drop');
+  const [touchLayout, setTouchLayout] = useState(() => matchMedia(touchLayoutQuery).matches);
+  useEffect(() => {
+    const media = matchMedia(touchLayoutQuery);
+    const update = () => setTouchLayout(media.matches);
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  const tapToOpen = touchLayout || (nativeRuntime && !nativeDrop);
+  const dragEnabled = nativeDrop && !tapToOpen;
   const filePicker = supports(manifest, 'file-picker');
   const recordingAvailable = supports(manifest, 'record-audio');
   const fileExport = supports(manifest, 'file-export');
@@ -178,10 +188,11 @@ export default function Materials({
       );
   }
   useEffect(() => {
-    if (!nativeRuntime || !nativeDrop) return;
+    if (!nativeRuntime || !dragEnabled) return;
     let canceled = false;
     let stop: (() => void) | undefined;
     void watchMaterialDrop((event) => {
+      if (canceled) return;
       if (event.type === 'over') setDrop(true);
       if (event.type === 'leave') setDrop(false);
       if (event.type === 'drop') {
@@ -206,7 +217,10 @@ export default function Materials({
     };
     // The refs keep a native drop bound to the currently visible folder.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [caseId, recordId, nativeDrop]);
+  }, [caseId, recordId, dragEnabled]);
+  useEffect(() => {
+    if (!dragEnabled) setDrop(false);
+  }, [dragEnabled]);
   useEffect(() => {
     if (!menu) return;
     const close = (event: PointerEvent) => {
@@ -290,30 +304,35 @@ export default function Materials({
   }
   return (
     <section
-      className={`materials-panel ${drop ? 'is-file-drop' : ''}`}
+      className={`materials-panel ${tapToOpen ? 'materials-touch' : ''} ${drop ? 'is-file-drop' : ''}`}
       aria-label="案件材料"
-      onDragOver={(event) => {
-        if (!nativeRuntime) {
-          event.preventDefault();
-          setDrop(true);
-        }
-      }}
-      onDragLeave={() => setDrop(false)}
-      onDrop={(event) => {
-        if (nativeRuntime) return;
-        event.preventDefault();
-        setDrop(false);
-        const files = Array.from(event.dataTransfer.files);
-        void run(async () => {
-          const { registerPreviewFiles } = await import('../../services/preview');
-          report(
-            await save('import_material_paths', {
-              target: target.current,
-              paths: registerPreviewFiles(files),
-            }),
-          );
-        });
-      }}
+      onDragOver={
+        dragEnabled && !nativeRuntime
+          ? (event) => {
+              event.preventDefault();
+              setDrop(true);
+            }
+          : undefined
+      }
+      onDragLeave={dragEnabled ? () => setDrop(false) : undefined}
+      onDrop={
+        dragEnabled && !nativeRuntime
+          ? (event) => {
+              event.preventDefault();
+              setDrop(false);
+              const files = Array.from(event.dataTransfer.files);
+              void run(async () => {
+                const { registerPreviewFiles } = await import('../../services/preview');
+                report(
+                  await save('import_material_paths', {
+                    target: target.current,
+                    paths: registerPreviewFiles(files),
+                  }),
+                );
+              });
+            }
+          : undefined
+      }
     >
       {!recordId && !workScope && (
         <nav className="material-scopes" aria-label="按流程查看材料">
@@ -414,7 +433,11 @@ export default function Materials({
         <button
           type="button"
           className="primary-action"
-          title={`添加到 ${scopeName}${current ? ' / ' + pathOf(current) : ''}`}
+          title={
+            filePicker
+              ? `添加到 ${scopeName}${current ? ' / ' + pathOf(current) : ''}`
+              : '当前设备暂不支持添加文件'
+          }
           disabled={busy || !filePicker}
           onClick={() => void add()}
         >
@@ -422,6 +445,9 @@ export default function Materials({
           添加材料
         </button>
       </div>
+      {manifest && !filePicker && (
+        <p className="feature-description">当前设备暂不支持添加文件，已有材料仍可查看和整理。</p>
+      )}
       <input
         hidden
         ref={fileInput}
@@ -512,10 +538,10 @@ export default function Materials({
               aria-label={item.name}
               title={query ? pathOf(item) : item.name}
               onClick={() => {
-                if (item.kind === 'folder') void open(item);
+                if (tapToOpen || item.kind === 'folder') void open(item);
               }}
               onDoubleClick={() => {
-                if (item.kind !== 'folder') void open(item);
+                if (!tapToOpen && item.kind !== 'folder') void open(item);
               }}
               onKeyDown={(event) => {
                 if (event.key === 'Enter' && item.kind !== 'folder') {
@@ -564,7 +590,15 @@ export default function Materials({
         {!rows.length && (
           <div className="materials-empty">
             <Folder />
-            <p>{query ? '没有匹配的材料' : '拖入文件，或添加材料'}</p>
+            <p>
+              {query
+                ? '没有匹配的材料'
+                : dragEnabled
+                  ? '拖入文件，或添加材料'
+                  : filePicker
+                    ? '点击“添加材料”，选择要归档的文件'
+                    : '暂无材料'}
+            </p>
           </div>
         )}
       </div>
@@ -580,7 +614,7 @@ export default function Materials({
       )}
       {menu && (
         <div
-          className="material-menu"
+          className={`material-menu ${tapToOpen ? 'material-touch-menu' : ''}`}
           role="menu"
           style={{ left: Math.max(8, menu.x), top: Math.max(8, menu.y) }}
         >

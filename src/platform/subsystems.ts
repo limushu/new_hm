@@ -7,6 +7,7 @@ export type Capability =
   | 'background-maintenance'
   | 'foreground-maintenance'
   | 'file-picker'
+  | 'local-file-picker'
   | 'file-export'
   | 'external-open'
   | 'record-audio'

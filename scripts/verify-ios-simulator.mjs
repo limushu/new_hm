@@ -173,6 +173,7 @@ try {
   report.checks.push('restart-private-workspace-retained');
   run('node', [join(root, 'scripts/test-ios-recording.mjs'), device]);
   report.checks.push('native-recording-scene-authorization-and-m4a');
+  report.checks.push('native-document-picker-staging-and-export-callbacks');
   report.status = 'passed';
 } catch (error) {
   report.status = 'failed';

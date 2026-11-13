@@ -367,3 +367,41 @@
   padding: 10px 16px;
   justify-content: center;
 }
+.materials-touch .material-toolbar {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.materials-touch .material-search {
+  flex-basis: 100%;
+}
+.materials-touch .material-toolbar button,
+.materials-touch .material-scopes button,
+.materials-touch .material-name,
+.materials-touch .material-menu-trigger {
+  min-height: 44px;
+}
+.materials-touch .material-toolbar button {
+  padding: 10px;
+  justify-content: center;
+}
+.materials-touch .material-toolbar .primary-action {
+  flex-grow: 1;
+}
+.materials-touch .material-list-heading,
+.materials-touch .material-row {
+  grid-template-columns: minmax(0, 1fr) 58px 44px;
+  gap: 8px;
+}
+.materials-touch .material-list-heading > span:nth-child(3),
+.materials-touch .material-row > time {
+  display: none;
+}
+.materials-touch .material-name > svg {
+  flex-shrink: 0;
+}
+.materials-touch .material-menu-trigger {
+  width: 44px;
+}
+.material-touch-menu button {
+  min-height: 44px;
+}

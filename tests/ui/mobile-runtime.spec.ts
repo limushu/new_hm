@@ -122,6 +122,8 @@ test('恢复前台触发维护，手机材料页保留业务操作但禁用上�
   await page.getByRole('tab', { name: '材料', exact: true }).click();
   await expect(page.getByRole('button', { name: '录音', exact: true })).toBeDisabled();
   await expect(page.getByRole('button', { name: '添加材料', exact: true })).toBeDisabled();
+  await expect(page.locator('.materials-panel')).not.toContainText('拖入');
+  await expect(page.locator('.materials-panel')).toContainText('当前设备暂不支持添加文件');
   await page.getByRole('button', { name: '文件夹', exact: true }).click();
   await page.getByLabel('文件夹名称').fill('手机新建文件夹');
   await page.getByRole('button', { name: '保存', exact: true }).click();

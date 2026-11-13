@@ -34,6 +34,18 @@ pub fn setup(app: &mut tauri::App) {
         #[allow(unused_mut)]
         let mut manifest = RuntimeManifest::mobile();
         #[cfg(target_os = "ios")]
+        if let Some(documents) = manifest
+            .subsystems
+            .iter_mut()
+            .find(|s| s.id == hm_runtime::SubsystemId::Documents)
+        {
+            documents.state = hm_runtime::Availability::Ready;
+            documents.capabilities = vec![
+                hm_runtime::Capability::FilePicker,
+                hm_runtime::Capability::FileExport,
+            ];
+        }
+        #[cfg(target_os = "ios")]
         if let Some(recording) = manifest
             .subsystems
             .iter_mut()
@@ -49,6 +61,9 @@ pub fn setup(app: &mut tauri::App) {
         host: Box::new(mobile::SandboxPlatform),
         external_open: Box::new(mobile::SandboxPlatform),
         local_filesystem: Box::new(mobile::SandboxPlatform),
+        #[cfg(target_os = "ios")]
+        documents: tauri_plugin_hm_documents::driver(app.handle()),
+        #[cfg(not(target_os = "ios"))]
         documents: Box::new(mobile::documents::UnavailableDocuments),
         manifest,
     };

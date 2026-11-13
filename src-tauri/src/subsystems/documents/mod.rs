@@ -14,6 +14,7 @@ pub fn pick_receipt_file(
     platform: State<'_, NativeDrivers>,
     dialog_title: String,
 ) -> Result<Option<String>, DriverError> {
+    platform.manifest().require(Capability::LocalFilePicker)?;
     Ok(platform
         .local_filesystem
         .pick_files(&dialog_title, false)?
@@ -28,7 +29,7 @@ pub fn save_ledger_with_receipt(
     source_path: PathBuf,
     receipt_id: String,
 ) -> Result<(), DriverError> {
-    platform.manifest().require(Capability::FilePicker)?;
+    platform.manifest().require(Capability::LocalFilePicker)?;
     Ok(access(&state, |s| {
         s.save_ledger_with_receipt(input, &source_path, &receipt_id)
     })?)
@@ -41,6 +42,7 @@ pub fn pick_materials(
     target: MaterialTarget,
     dialog_title: String,
 ) -> Result<ImportReport, DriverError> {
+    platform.manifest().require(Capability::FilePicker)?;
     let Some(documents) = platform.documents.pick(&dialog_title, true)? else {
         return Ok(ImportReport {
             imported: 0,
@@ -146,6 +148,7 @@ pub fn export_material(
     id: String,
     dialog_title: String,
 ) -> Result<bool, DriverError> {
+    platform.manifest().require(Capability::FileExport)?;
     let item = access(&state, |s| s.material(&id))?;
     let path = access(&state, |s| s.material_path(&id))?;
     let mut source = std::fs::File::open(path)?;

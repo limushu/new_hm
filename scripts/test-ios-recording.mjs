@@ -71,7 +71,9 @@ try {
         platform: 'iOS',
         sources: [
           join(root, 'crates/tauri-plugin-hm-recording/ios/Sources'),
+          join(root, 'crates/tauri-plugin-hm-documents/ios/Sources'),
           join(root, 'tests/native/ios-recording/RecordingTests.swift'),
+          join(root, 'tests/native/ios-recording/DocumentsTests.swift'),
         ],
         dependencies: [{ target: 'RecordingHost' }, { package: 'Tauri' }],
         settings: {
