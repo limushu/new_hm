@@ -88,7 +88,7 @@ export default function Records({
     </section>
   );
 }
-function RecordForm({
+export function RecordForm({
   value,
   save,
   onClose,

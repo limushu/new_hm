@@ -60,6 +60,7 @@ test('新建只有案件档案，身份按流程独立、概览使用关注流�
   await page.screenshot({ path: '.local/representation-overview.png' });
   await page.setViewportSize({ width: 390, height: 844 });
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);
+  await page.getByText('工作与案件资料', { exact: true }).click();
   await parties(page).getByRole('button', { name: '编辑客户甲', exact: true }).click();
   await expect(page.getByRole('combobox', { name: '本流程身份' })).toHaveValue('原告');
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(390);

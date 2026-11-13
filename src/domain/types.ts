@@ -343,6 +343,11 @@ export interface ImportReport {
   errors: (string | { name: string; error: OperationError })[];
 }
 export interface Commands {
+  create_text_document: {
+    args: { target: MaterialTarget; name: string; body: string };
+    result: string;
+  };
+  read_text_document: { args: { id: string }; result: string };
   create_material_folder: { args: { target: MaterialTarget; name: string }; result: string };
   rename_material: { args: { id: string; name: string }; result: null };
   update_material_notes: { args: { id: string; notes: string }; result: null };

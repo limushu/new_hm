@@ -350,6 +350,52 @@ impl Store {
         }
         result
     }
+    pub fn create_text_document(
+        &self,
+        target: MaterialTarget,
+        name: &str,
+        body: &str,
+    ) -> Result<String> {
+        self.target(&target)?;
+        let extension = std::path::Path::new(name)
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or_default();
+        if !["md", "txt"]
+            .iter()
+            .any(|value| extension.eq_ignore_ascii_case(value))
+        {
+            return Err(Error::Validation("document_format_invalid".into()));
+        }
+        if body.trim().is_empty() || body.len() > 2 * 1024 * 1024 {
+            return Err(Error::Validation("document_content_invalid".into()));
+        }
+        self.import_reader(&target, name, &mut std::io::Cursor::new(body.as_bytes()))
+    }
+
+    pub fn read_text_document(&self, id: &str) -> Result<String> {
+        let path = self.material_path(id)?;
+        let extension = path
+            .extension()
+            .and_then(|value| value.to_str())
+            .unwrap_or_default();
+        if !["md", "txt"]
+            .iter()
+            .any(|value| extension.eq_ignore_ascii_case(value))
+        {
+            return Err(Error::Validation("document_format_invalid".into()));
+        }
+        use std::io::Read;
+        let mut bytes = Vec::new();
+        std::fs::File::open(path)?
+            .take(2 * 1024 * 1024 + 1)
+            .read_to_end(&mut bytes)?;
+        if bytes.len() > 2 * 1024 * 1024 {
+            return Err(Error::Validation("document_content_invalid".into()));
+        }
+        String::from_utf8(bytes).map_err(|_| Error::Validation("document_encoding_invalid".into()))
+    }
+
     pub fn save_recording(
         &self,
         target: MaterialTarget,

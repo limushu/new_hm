@@ -11,6 +11,7 @@ export default function Preview({ item, onClose }: { item: Material; onClose: ()
   const canvas = useRef<HTMLCanvasElement>(null);
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
+  const [text, setText] = useState<string | null>(null);
   const [pdf, setPdf] = useState<PDFDocumentProxy | null>(null);
   const [page, setPage] = useState(1);
   const [zoom, setZoom] = useState(1);
@@ -19,7 +20,22 @@ export default function Preview({ item, onClose }: { item: Material; onClose: ()
   useEffect(() => {
     dialog.current?.showModal();
     let canceled = false;
+    setText(null);
+    setUrl('');
     let loading: PDFDocumentLoadingTask | undefined;
+    setError('');
+    if (extension === 'md' || extension === 'txt') {
+      void command('read_text_document', { id: item.id })
+        .then((value) => {
+          if (!canceled) setText(value);
+        })
+        .catch((reason) => {
+          if (!canceled) setError(String(reason));
+        });
+      return () => {
+        canceled = true;
+      };
+    }
     void command('material_preview', { id: item.id })
       .then(async (path) => {
         const source = materialSource(path);
@@ -151,6 +167,8 @@ export default function Preview({ item, onClose }: { item: Material; onClose: ()
           <p role="alert" className="error-message">
             {error}
           </p>
+        ) : text !== null ? (
+          <pre className="text-document-preview">{text}</pre>
         ) : !url ? (
           <p className="quiet-empty">正在打开…</p>
         ) : extension === 'pdf' ? (

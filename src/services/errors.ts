@@ -9,7 +9,8 @@ export function isOperationError(value: unknown): value is OperationError {
 }
 export function errorMessage(value: unknown): string {
   if (isOperationError(value)) {
-    if (value.code === 'legacy_error' && typeof value.detail === 'string') return value.detail;
+    if (value.code === 'legacy_error' && typeof value.detail === 'string')
+      return operationMessages[value.detail] ?? value.detail;
     if (value.code === 'capability_unsupported') {
       const label = value.resource && capabilityNames[value.resource];
       return typeof label === 'string'
@@ -29,7 +30,7 @@ export function errorMessage(value: unknown): string {
     );
   }
   if (value instanceof Error) return value.message;
-  if (typeof value === 'string') return value;
+  if (typeof value === 'string') return operationMessages[value] ?? value;
   return '操作未完成，请重试';
 }
 export function localizedError(value: unknown): Error {

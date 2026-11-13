@@ -664,6 +664,24 @@ export async function previewCommand<K extends keyof Commands>(
       else data.workRecords.unshift({ ...input, createdAt: new Date().toISOString() });
       break;
     }
+    case 'create_text_document': {
+      const body = a.body as string;
+      const name = a.name as string;
+      if (!/\.(md|txt)$/i.test(name) || !body.trim()) throw new Error('请填写有效的文档名称和内容');
+      const paths = registerPreviewFiles([
+        new File([body], name, { type: 'text/plain;charset=utf-8' }),
+      ]);
+      const existing = new Set(data.materials.map((m) => m.id));
+      await previewCommand('import_material_paths', { target: a.target as MaterialTarget, paths });
+      result = data.materials.find((m) => !existing.has(m.id))!.id;
+      break;
+    }
+    case 'read_text_document': {
+      const file = previewFiles.get(a.id as string);
+      if (!file) throw new Error('预览文件不存在');
+      result = await (await fetch(file.url)).text();
+      break;
+    }
     case 'create_material_folder': {
       const target = a.target as MaterialTarget;
       const id = crypto.randomUUID();

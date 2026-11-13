@@ -1545,7 +1545,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hm-app"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "chrono",
  "hm-application",
@@ -1569,7 +1569,7 @@ dependencies = [
 
 [[package]]
 name = "hm-application"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "hm-core",
  "hm-runtime",
@@ -1579,7 +1579,7 @@ dependencies = [
 
 [[package]]
 name = "hm-core"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "chrono",
  "rusqlite",
@@ -1594,7 +1594,7 @@ dependencies = [
 
 [[package]]
 name = "hm-runtime"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "serde",
  "serde_json",
@@ -4192,7 +4192,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-hm-documents"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "hm-runtime",
  "serde",
@@ -4204,7 +4204,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-hm-recording"
-version = "1.4.3"
+version = "1.4.4"
 dependencies = [
  "hm-runtime",
  "serde",

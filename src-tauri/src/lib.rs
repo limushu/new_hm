@@ -236,6 +236,8 @@ pub fn run() {
             subsystems::documents::open_material,
             subsystems::documents::export_material,
             subsystems::documents::save_recording,
+            subsystems::documents::create_text_document,
+            subsystems::documents::read_text_document,
             subsystems::documents::choose_backup_directory,
             subsystems::documents::run_backup,
             subsystems::documents::pick_restore_backup,

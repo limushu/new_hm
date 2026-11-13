@@ -275,6 +275,8 @@ export default function Materials({
     const ext = item.name.split('.').pop()?.toLowerCase();
     if (
       [
+        'md',
+        'txt',
         'pdf',
         'png',
         'jpg',

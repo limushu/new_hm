@@ -10,6 +10,21 @@ use hm_runtime::Capability;
 use std::path::PathBuf;
 use tauri::{Manager, State};
 #[tauri::command(async)]
+pub fn create_text_document(
+    state: State<'_, AppState>,
+    target: MaterialTarget,
+    name: String,
+    body: String,
+) -> Result<String, DriverError> {
+    Ok(access(&state, |s| {
+        s.create_text_document(target, &name, &body)
+    })?)
+}
+#[tauri::command(async)]
+pub fn read_text_document(state: State<'_, AppState>, id: String) -> Result<String, DriverError> {
+    Ok(access(&state, |s| s.read_text_document(&id))?)
+}
+#[tauri::command(async)]
 pub fn pick_receipt_file(
     platform: State<'_, NativeDrivers>,
     dialog_title: String,
