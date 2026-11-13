@@ -21,6 +21,8 @@
 
 [包检查脚本](../../scripts/verify-ios-privacy.py)在模拟器构建和签名 IPA 解包后检查清单位于 app bundle 根目录、内容与源码一致、链接系统 SQLite，并拒绝尚未解释的特定 required-reason API 导入。它是项目检查，不代替 Apple 的完整扫描或隐私审核。用途声明依据 [Apple required-reason API 文档](https://developer.apple.com/documentation/bundleresources/app-privacy-configuration/nsprivacyaccessedapitypes/nsprivacyaccessedapitype)。
 
+调试模拟器会保留未优化的依赖函数，API 导入候选项记录在报告中；正式 IPA 则必须通过候选项审核门槛。两者均验证根目录清单和系统 SQLite 链接，不将调试符号数量作为正式包隐私行为的结论。
+
 [iOS 工程模板](../../src-tauri/ios-project.yml)基于锁定的 Tauri CLI 2.12.3 上游模板，仅增加系统 `libsqlite3.tbd` 链接和根目录隐私资源。升级 CLI 时应同步复核模板；上游 MIT 许可随文件保留。模拟器在首次启动后导入由主机内嵌 SQLite 创建的虚构工作区，再用新应用启动、备份和重开检查案件与材料字节，覆盖链接方式改变后的数据兼容性。
 
 Info.ios.plist 增加不使用非豁免加密的声明：当前应用无自定义加密通信、VPN、端到端加密服务或加密数据库；系统和文件提供器的安全服务由系统实现。后续引入加密能力须重新评估。

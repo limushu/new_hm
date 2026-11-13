@@ -75,7 +75,10 @@ if bundle:
         symbols.update(found_symbols)
         libraries.update(found_libraries)
     blocked = symbols & {"_statfs", "_fstatfs", "_statvfs", "_fstatvfs", "_mach_absolute_time", "_OBJC_CLASS_$_NSUserDefaults"}
-    if blocked:
+    report["requiredReasonApiCandidates"] = sorted(blocked)
+    # Unoptimized simulator binaries retain unused dependency functions. Keep
+    # those candidates visible, and enforce their audit on the release IPA.
+    if blocked and "--debug" not in sys.argv:
         raise SystemExit(f"Review undeclared required-reason API imports: {sorted(blocked)}")
     if not any(name.endswith("/libsqlite3.dylib") for name in libraries):
         raise SystemExit("iOS must link Apple's system SQLite; check for leaked bundled features")

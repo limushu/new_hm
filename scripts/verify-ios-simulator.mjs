@@ -114,7 +114,7 @@ try {
   if (candidates.length !== 1)
     throw new Error(`Expected one simulator app, found ${candidates.length}`);
   const app = candidates[0];
-  run('python3', [join(root, 'scripts/verify-ios-privacy.py'), app]);
+  run('python3', [join(root, 'scripts/verify-ios-privacy.py'), app, '--debug']);
   report.checks.push('privacy-manifest-at-bundle-root');
   bundle = plist(join(app, 'Info.plist'), 'CFBundleIdentifier');
   if (bundle !== 'com.limushu.hm') throw new Error(`Unexpected bundle identifier: ${bundle}`);
