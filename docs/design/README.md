@@ -1,5 +1,7 @@
 # 设计入口
 
+下一版提案：[以案件脉络为中心的详情设计](case-detail-timeline-concept.md)及[三屏高保真图](current/case-detail-timeline-concept.png)，围绕案件时间轴、录音/创建/查找、相关人物与机构组织。当前为设计评审稿，尚未实现，不替代当前版本的实际界面说明。
+
 1.4.0 采用[案件工作空间](case-workspace.md)：概况看全案，办理承载实际阶段工作，材料与费用查看同一份记录，流程关系仅按需展开。依据[律师工作流调研](../research/lawyer-workflow-review-2026-10-18.md)形成，经用户确认进入实现，不再用多处路径图代替工作关联。
 
 [浅色办理](current/workspace-light-1.4.0.png)、[深色办理](current/workspace-dark-1.4.0.png)、[手机宽度](current/workspace-mobile-1.4.0.png)使用实际浏览器渲染和虚构工作记录。下方为历史版本，冲突处以 1.4 工作空间及当前字体映射为准。
