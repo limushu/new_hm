@@ -10,7 +10,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         return Err("fixture destination must be empty".into());
     }
     let mut store = Store::open(&root.join("workspace.sqlite3"))?;
-    let case_id = store.seed_example("8e3b7b52-843e-4c6b-a893-1e774b441a09")?;
     for (id, title, status) in [
         (
             "4f6ce94c-d942-420d-86c1-602e8c6d15a9",
@@ -31,6 +30,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             tags: None,
         })?;
     }
+    let case_id = store.seed_example("8e3b7b52-843e-4c6b-a893-1e774b441a09")?;
     store.add_task(AddTask {
         case_id: case_id.clone(),
         title: "整理示例证据目录".into(),

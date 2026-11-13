@@ -57,7 +57,7 @@ final class StoreScreenshots: XCTestCase {
     XCTAssertTrue(app.staticTexts["工作阶段"].firstMatch.waitForExistence(timeout: 10))
     capture("03-workflow")
     tap("材料")
-    XCTAssertTrue(app.staticTexts["材料归档说明.txt"].firstMatch.waitForExistence(timeout: 10))
+    XCTAssertTrue(app.buttons["材料归档说明.txt"].firstMatch.waitForExistence(timeout: 10))
     capture("04-materials")
   }
 }
