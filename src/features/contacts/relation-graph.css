@@ -125,7 +125,8 @@
 .kind-judge {
   --node-color: var(--green-text);
 }
-.kind-person {
+.kind-person,
+.kind-party {
   --node-color: var(--text);
 }
 .kind-organization {
