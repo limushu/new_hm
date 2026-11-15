@@ -6,12 +6,12 @@ use rusqlite::params;
 
 impl Store {
     pub fn resource_metadata(&self) -> Result<Vec<ResourceMetadata>> {
-        let values = self.connection.prepare("SELECT case_id,resource_kind,resource_id,importance,tags_json FROM resource_metadata ORDER BY case_id,resource_kind,resource_id")?
-            .query_map([], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,String>(3)?,r.get::<_,String>(4)?)))?
+        let values = self.connection.prepare("SELECT case_id,resource_kind,resource_id,importance,tags_json,properties_json FROM resource_metadata ORDER BY case_id,resource_kind,resource_id")?
+            .query_map([], |r| Ok((r.get::<_,String>(0)?,r.get::<_,String>(1)?,r.get::<_,String>(2)?,r.get::<_,String>(3)?,r.get::<_,String>(4)?,r.get::<_,String>(5)?)))?
             .collect::<rusqlite::Result<Vec<_>>>()?;
         values
             .into_iter()
-            .map(|(case_id, kind, id, importance, tags)| {
+            .map(|(case_id, kind, id, importance, tags, properties)| {
                 Ok(ResourceMetadata {
                     case_id,
                     resource: ResourceRef { kind, id },
@@ -21,6 +21,7 @@ impl Store {
                         Importance::Normal
                     },
                     tags: serde_json::from_str(&tags)?,
+                    properties: serde_json::from_str(&properties)?,
                 })
             })
             .collect()

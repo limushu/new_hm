@@ -161,7 +161,11 @@
 }
 .case-card {
   border: 1px solid var(--card-border, var(--line));
-  background: var(--card-bg, var(--surface));
+  background: linear-gradient(
+    125deg,
+    color-mix(in srgb, var(--status-dot, var(--primary)) 8%, var(--card-bg, var(--surface))),
+    var(--card-bg, var(--surface)) 85%
+  );
   border-radius: 12px;
   padding: 13px 12px 12px;
   text-align: left;

@@ -95,7 +95,7 @@ test.describe('触摸编辑后的案件导航', () => {
       () => (window as unknown as { workspaceReads: number }).workspaceReads,
     );
     for (let round = 0; round < 3; round++) {
-      for (const name of ['脉络', '材料', '费用', '关系']) {
+      for (const name of ['脉络', '材料', '费用', '人员']) {
         const tab = page.getByRole('tab', { name, exact: true });
         await tab.tap();
         await expect(tab).toHaveAttribute('aria-selected', 'true');

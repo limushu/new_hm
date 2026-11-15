@@ -85,8 +85,24 @@ export default function CaseBoard({
         summary.next = task;
     }
     const programs = new Map(data.proceedings.map((p) => [p.id, p]));
-    return { byCase, programs };
-  }, [activeCases, data.caseTags, data.proceedings, data.tasks]);
+    const nodes = new Map<string, string>([
+      ...data.proceedings.map((p) => [`proceeding:${p.id}`, p.name] as const),
+      ...data.caseEvents.map((e) => [`milestone:${e.id}`, e.title] as const),
+    ]);
+    const focused = new Map(
+      data.resourceRelations
+        .filter((r) => r.source.kind === 'case' && r.kind === 'focus')
+        .map((r) => [r.caseId, nodes.get(`${r.target.kind}:${r.target.id}`)]),
+    );
+    return { byCase, programs, focused };
+  }, [
+    activeCases,
+    data.caseTags,
+    data.proceedings,
+    data.tasks,
+    data.caseEvents,
+    data.resourceRelations,
+  ]);
   const queryText = query.trim().toLocaleLowerCase();
   const matches = (item: CaseFile) =>
     item.title.toLocaleLowerCase().includes(queryText) ||
@@ -156,8 +172,14 @@ export default function CaseBoard({
           <span>{item.title}</span>
         </span>
         <span className="case-card-meta">
-          {program ? '关注 ' + proceedingName(program, data.proceedings) : '案件档案'}
-          {program ? ` · ${currentStage(data, program)}` : ' · 未指定关注流程'}
+          {summaries.focused.get(item.id) ? (
+            `关注 ${summaries.focused.get(item.id)}`
+          ) : (
+            <>
+              {program ? '关注 ' + proceedingName(program, data.proceedings) : '案件档案'}
+              {program ? ` · ${currentStage(data, program)}` : ' · 未指定关注流程'}
+            </>
+          )}
         </span>
         {tags.length > 0 && (
           <span className="case-card-tags">

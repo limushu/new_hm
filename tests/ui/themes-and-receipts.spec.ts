@@ -45,7 +45,7 @@ test('四个主标签同字号同字重，键盘切换，滚动时入口仍可�
   );
   await expect(page.locator('.proceeding-path')).toHaveCount(0);
   await page.keyboard.press('ArrowLeft');
-  await expect(page.getByRole('tab', { name: '关系', exact: true })).toBeFocused();
+  await expect(page.getByRole('tab', { name: '人员', exact: true })).toBeFocused();
   await page.getByRole('tab', { name: '脉络', exact: true }).click();
   await page.locator('.case-page').evaluate((e) => (e.scrollTop = e.scrollHeight));
   await expect(page.getByRole('tab', { name: '材料', exact: true })).toBeInViewport();

@@ -104,6 +104,19 @@ function ProgressDetails({ resource, data, save, onClose, onOpen }: ResourceDeta
   );
 }
 
+function ProgressEditor({ resource, data, save, onClose }: ResourceDetailsProps) {
+  const value = data.caseEvents.find((e) => e.id === resource.id);
+  return value && value.kind !== 'stage_change' ? (
+    <MilestoneEditor
+      properties={<></>}
+      nodeMode
+      value={value}
+      data={data}
+      save={save}
+      onClose={onClose}
+    />
+  ) : null;
+}
 function LedgerDetails({ resource, data, save, onClose }: ResourceDetailsProps) {
   const value = data.ledgerEntries.find((t) => t.id === resource.id);
   return value ? (
@@ -134,7 +147,7 @@ export const casePresentations = new CasePresentations()
   .register('material', MaterialDetails)
   .register('record', RecordDetails)
   .register('task', TaskDetails)
-  .register('milestone', ProgressDetails)
+  .register('milestone', ProgressEditor)
   .register('proceeding', ProgressDetails)
   .register('ledger', LedgerDetails)
   .register('event', CalendarDetails);

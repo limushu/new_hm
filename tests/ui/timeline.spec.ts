@@ -85,12 +85,12 @@ test('重叠时间块并排展示，全天与待办不放入小时网格', async
   await expect(page.locator('.time-all-day')).toHaveText('全天准备');
 });
 
-test('手机默认日视图，切周视图仅在时间表内部横向滚动', async ({ page }) => {
+test('手机默认清单，切周视图仅在时间表内部横向滚动', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.reload();
   await expect(page.getByRole('combobox', { name: '日历视图' })).toHaveAttribute(
     'data-value',
-    'day',
+    'agenda',
   );
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
   await selectOption(page, page.getByRole('combobox', { name: '日历视图' }), 'week');

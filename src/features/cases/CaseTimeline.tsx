@@ -1,4 +1,4 @@
-import { casePresentations } from './resourcePresentations';
+import ObjectInspector from './ObjectInspector';
 import { materialIcon } from '../materials/Materials';
 import { useMemo, useState } from 'react';
 import {
@@ -21,7 +21,12 @@ import { dateKey } from '../../domain/calendar';
 import { money } from '../../domain/money';
 import { caseSystem } from '../../case-system/modules';
 import { filterTimeline, isPlanned, timelineDateLabels } from '../../case-system/timeline';
-import { resourceKey, type TimelineEntry, type TimelineFilter } from '../../case-system/contracts';
+import {
+  resourceKey,
+  type TimelineEntry,
+  type TimelineFilter,
+  type ResourceRef,
+} from '../../case-system/contracts';
 import ResourceSettings from './ResourceSettings';
 const icons = {
   progress: Flag,
@@ -47,7 +52,7 @@ export default function CaseTimeline({
   const [filter, setFilter] = useState<TimelineFilter>({});
   const [filterOpen, setFilterOpen] = useState(false);
   const [limit, setLimit] = useState(8);
-  const [opened, setOpened] = useState<TimelineEntry | null>(null);
+  const [opened, setOpened] = useState<ResourceRef | null>(null);
   const [settings, setSettings] = useState<TimelineEntry | null>(null);
   const entries = useMemo(() => caseSystem.timeline(data, caseId), [data, caseId]);
   const today = dateKey(new Date());
@@ -62,7 +67,7 @@ export default function CaseTimeline({
     data.materials.filter((m) => m.caseId === caseId && !m.deletedAt).map((m) => [m.id, m]),
   );
   function open(entry: TimelineEntry) {
-    setOpened(entry);
+    if (entry) setOpened(entry.resource);
   }
   function files(entry: TimelineEntry) {
     return entry.related
@@ -72,7 +77,6 @@ export default function CaseTimeline({
         return m?.kind === 'file' ? [m] : [];
       });
   }
-  const Details = opened ? casePresentations.get(opened.resource.kind) : undefined;
   function row(entry: TimelineEntry) {
     const Icon = icons[entry.type as keyof typeof icons] ?? Files;
     const cash =
@@ -252,25 +256,16 @@ export default function CaseTimeline({
           onClose={() => setSettings(null)}
         />
       )}
-      {opened &&
-        (Details ? (
-          <Details
-            key={resourceKey(opened.resource)}
-            resource={opened.resource}
-            onOpen={(ref) => {
-              const e = entries.find((row) => resourceKey(row.resource) === resourceKey(ref));
-              if (e) setOpened(e);
-            }}
-            data={data}
-            save={save}
-            onClose={() => setOpened(null)}
-          />
-        ) : (
-          <Dialog title="条目详情" onClose={() => setOpened(null)}>
-            <p>{opened.title}</p>
-            <p className="field-hint">{opened.body}</p>
-          </Dialog>
-        ))}
+      {opened && (
+        <ObjectInspector
+          key={resourceKey(opened)}
+          caseId={caseId}
+          resource={opened}
+          data={data}
+          save={save}
+          onClose={() => setOpened(null)}
+        />
+      )}
     </section>
   );
 }

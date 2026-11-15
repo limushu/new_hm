@@ -25,7 +25,8 @@ export default function CreationProperties({
       })),
   ];
   return (
-    <section className="creation-properties" aria-label="对象公共属性">
+    <details className="creation-properties" aria-label="对象公共属性">
+      <summary>属性与关联（可选）</summary>
       <label className="resource-important">
         <input
           type="checkbox"
@@ -68,6 +69,6 @@ export default function CreationProperties({
           ))}
         </Select>
       </label>
-    </section>
+    </details>
   );
 }

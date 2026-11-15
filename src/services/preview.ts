@@ -1,3 +1,4 @@
+import { validateProperty } from '../case-system/properties';
 import { resourceIndex } from '../case-system/resources';
 import {
   resourceKey,
@@ -694,7 +695,11 @@ export async function previewCommand<K extends keyof Commands>(
           (m) => m.caseId === input.caseId && resourceKey(m.resource) === resourceKey(resource),
         );
         if (index < 0) data.resourceMetadata.push(item);
-        else data.resourceMetadata[index] = item;
+        else
+          data.resourceMetadata[index] = {
+            ...item,
+            properties: data.resourceMetadata[index].properties ?? [],
+          };
         for (const node of input.nodes)
           if (
             !data.resourceRelations.some(
@@ -716,6 +721,72 @@ export async function previewCommand<K extends keyof Commands>(
       }
       break;
     }
+    case 'save_object_property': {
+      const input = a.input as Commands['save_object_property']['args']['input'];
+      if (!resourceIndex(data, input.caseId, true).has(resourceKey(input.resource)))
+        throw new Error('对象不存在或不属于本案');
+      const property = {
+        ...input.property,
+        name: input.property.name.trim(),
+        options: input.property.options.map((o) => o.trim()),
+      };
+      validateProperty(property);
+      let metadata = data.resourceMetadata.find(
+        (m) => m.caseId === input.caseId && resourceKey(m.resource) === resourceKey(input.resource),
+      );
+      const properties = metadata?.properties ?? [];
+      if (
+        properties.some(
+          (p) => p.id !== property.id && p.name.toLowerCase() === property.name.toLowerCase(),
+        )
+      )
+        throw new Error('此对象已有同名属性');
+      const existing = properties.findIndex((p) => p.id === property.id);
+      if (existing < 0 && properties.length >= 50) throw new Error('每个对象最多添加50个属性');
+      if (!metadata) {
+        metadata = {
+          caseId: input.caseId,
+          resource: input.resource,
+          importance: 'normal',
+          tags: [],
+          properties: [],
+        };
+        data.resourceMetadata.push(metadata);
+      }
+      if (existing >= 0) {
+        if (properties[existing].kind === 'relation' && property.kind !== 'relation')
+          data.resourceRelations = data.resourceRelations.filter(
+            (r) =>
+              !(
+                r.caseId === input.caseId &&
+                resourceKey(r.source) === resourceKey(input.resource) &&
+                r.kind === `property.${property.id}`
+              ),
+          );
+        properties[existing] = property;
+      } else properties.push(property);
+      metadata.properties = properties;
+      break;
+    }
+    case 'delete_object_property': {
+      const input = a as Commands['delete_object_property']['args'];
+      if (!resourceIndex(data, input.caseId, true).has(resourceKey(input.resource)))
+        throw new Error('对象不存在或不属于本案');
+      const metadata = data.resourceMetadata.find(
+        (m) => m.caseId === input.caseId && resourceKey(m.resource) === resourceKey(input.resource),
+      );
+      if (metadata)
+        metadata.properties = (metadata.properties ?? []).filter((p) => p.id !== input.id);
+      data.resourceRelations = data.resourceRelations.filter(
+        (r) =>
+          !(
+            r.caseId === input.caseId &&
+            resourceKey(r.source) === resourceKey(input.resource) &&
+            r.kind === `property.${input.id}`
+          ),
+      );
+      break;
+    }
     case 'save_resource_metadata': {
       const input = a.input as ResourceMetadata;
       if (!resourceIndex(data, input.caseId, true).has(resourceKey(input.resource)))
@@ -735,7 +806,11 @@ export async function previewCommand<K extends keyof Commands>(
         (m) => m.caseId === input.caseId && resourceKey(m.resource) === resourceKey(input.resource),
       );
       if (index < 0) data.resourceMetadata.push(item);
-      else data.resourceMetadata[index] = item;
+      else
+        data.resourceMetadata[index] = {
+          ...item,
+          properties: data.resourceMetadata[index].properties ?? [],
+        };
       break;
     }
     case 'save_resource_relation': {

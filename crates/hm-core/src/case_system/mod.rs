@@ -1,5 +1,6 @@
 //! Shared resource identities and annotations. Resource bodies remain in their owning modules.
 mod metadata;
+mod properties;
 mod relations;
 mod resources;
 
@@ -27,6 +28,39 @@ pub struct ResourceMetadata {
     pub resource: ResourceRef,
     pub importance: Importance,
     pub tags: Vec<String>,
+    #[serde(default)]
+    pub properties: Vec<ObjectProperty>,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum PropertyKind {
+    Text,
+    Number,
+    Select,
+    MultiSelect,
+    Date,
+    Checkbox,
+    Relation,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ObjectProperty {
+    pub id: String,
+    pub name: String,
+    pub kind: PropertyKind,
+    #[serde(default)]
+    pub options: Vec<String>,
+    #[serde(default)]
+    pub value: serde_json::Value,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ObjectPropertyInput {
+    pub case_id: String,
+    pub resource: ResourceRef,
+    pub property: ObjectProperty,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

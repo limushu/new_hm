@@ -25,7 +25,7 @@
   gap: 6px;
   min-height: 44px;
   padding: 10px 16px;
-  background: var(--blue-strong);
+  background: var(--primary);
   color: var(--on-primary);
   border-radius: 13px;
   font-size: 15px;
@@ -110,11 +110,15 @@
   gap: 14px;
 }
 .mobile-case-item {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 16px;
+  background: linear-gradient(
+    120deg,
+    color-mix(in srgb, var(--status-dot) 11%, var(--surface)),
+    color-mix(in srgb, var(--status-dot) 3%, var(--surface)) 75%
+  );
+  border: 1px solid color-mix(in srgb, var(--status-dot) 22%, var(--line));
+  border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 2px 8px var(--wash);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--status-dot) 75%, var(--surface));
 }
 .mobile-case-item-top {
   display: flex;
@@ -158,6 +162,12 @@
   padding-left: 0;
   font-size: 14px;
   line-height: 1.5;
+}
+.mobile-case-item .case-card > time {
+  border-top: 1px solid color-mix(in srgb, var(--status-dot) 15%, var(--line));
+  padding-top: 10px;
+  margin-top: 3px;
+  width: 100%;
 }
 .mobile-case-item .case-card-tags {
   padding-left: 0;

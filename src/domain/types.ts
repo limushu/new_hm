@@ -415,6 +415,20 @@ export interface Commands {
 
 export interface Commands {
   save_resource_metadata: { args: { input: ResourceMetadata }; result: null };
+  save_object_property: {
+    args: {
+      input: {
+        caseId: string;
+        resource: import('../case-system/contracts').ResourceRef;
+        property: import('../case-system/contracts').ObjectProperty;
+      };
+    };
+    result: null;
+  };
+  delete_object_property: {
+    args: { caseId: string; resource: import('../case-system/contracts').ResourceRef; id: string };
+    result: null;
+  };
   save_resource_relation: { args: { input: ResourceRelation }; result: null };
   delete_resource_relation: { args: { caseId: string; id: string }; result: null };
 }

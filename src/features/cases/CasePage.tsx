@@ -326,7 +326,7 @@ export default function CasePage({
             {[
               { id: 'overview', label: '脉络', Icon: LayoutDashboard },
               { id: 'materials', label: '材料', Icon: Files },
-              { id: 'relations', label: '关系', Icon: Network },
+              { id: 'relations', label: '人员', Icon: Network },
               { id: 'finance', label: '费用', Icon: Wallet },
             ].map(({ id, label, Icon }, index) => (
               <button

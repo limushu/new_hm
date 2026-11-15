@@ -58,7 +58,7 @@ path = databases[0]
 db = sqlite3.connect(path, timeout=5)
 assert db.execute('PRAGMA integrity_check').fetchone()[0] == 'ok'
 assert not list(db.execute('PRAGMA foreign_key_check'))
-assert db.execute('PRAGMA user_version').fetchone()[0] == 8
+assert db.execute('PRAGMA user_version').fetchone()[0] == 9
 settings = dict(db.execute('SELECT key,value FROM settings'))
 assert settings.get('last_backup_date'), 'Foreground maintenance has not completed its first backup'
 if sys.argv[2] == 'prepare':
@@ -74,7 +74,7 @@ else:
     assert item, 'Archived material did not survive upgrade'
     assert (path.parent / 'materials' / item[0] / material_id / item[1]).read_bytes() == b'bundled-to-system-sqlite-fixture'
     assert db.execute("SELECT title FROM cases WHERE id=?", (item[0],)).fetchone()[0] == 'SQLite upgrade fixture (fictional)'
-print(json.dumps({'schema': 8, 'integrity': 'ok', 'privateDatabase': str(path.relative_to(root)), 'backupDate': settings['last_backup_date']}))
+print(json.dumps({'schema': 9, 'integrity': 'ok', 'privateDatabase': str(path.relative_to(root)), 'backupDate': settings['last_backup_date']}))
 db.close()
 `;
 

@@ -73,6 +73,7 @@ export class CaseSystem {
         title: r.title,
         importance: meta?.importance ?? 'normal',
         tags: meta?.tags ?? [],
+        properties: meta?.properties ?? [],
         businessTime: entry ? { value: entry.date, role: entry.dateRole } : null,
         relations: links.get(id) ?? [],
       };

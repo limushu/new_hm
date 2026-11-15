@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import ObjectInspector from '../cases/ObjectInspector';
 import DateField from '../../components/DateField';
 import Select from '../../components/Select';
 import { cents, money } from '../../domain/money';
@@ -13,7 +14,7 @@ import { proceedingName } from '../../domain/proceedings';
 import { dateKey } from '../../domain/calendar';
 import { command } from '../../services/repository';
 import { useAction } from '../../components/useAction';
-import FinanceChart from './FinanceChart';
+import FinanceChart, { FeeProgress } from './FinanceChart';
 import './finance-chart.css';
 import ReceiptField, { type PendingReceipt } from './ReceiptField';
 import './receipts.css';
@@ -35,6 +36,7 @@ export default function Finance({
     notes: '',
   };
   const [edit, setEdit] = useState<LedgerEntry | null>(null);
+  const [objectId, setObjectId] = useState<string | null>(null);
   const [fee, setFee] = useState<string | null>(null);
   const [remove, setRemove] = useState<LedgerEntry | null>(null);
   const [filter, setFilter] = useState('all');
@@ -101,6 +103,19 @@ export default function Finance({
           </div>
         ))}
       </div>
+      <section className="finance-analysis" aria-label="收支分类分析">
+        <FinanceChart
+          paidTotal={allFees}
+          agreementKnown={agreementKnown}
+          showAgreement={false}
+          rows={rows}
+          agreed={scope.proceedingId ? 0 : agreementKnown ? detail.agreedFeeCents : 0}
+          onCategory={(kind, name) => {
+            setFilter(kind);
+            setCategory(name);
+          }}
+        />
+      </section>
       <div className="feature-toolbar">
         <Select
           aria-label="筛选收支"
@@ -160,6 +175,14 @@ export default function Finance({
               添加凭据
             </button>
           )}
+          <button
+            type="button"
+            className="receipt-link"
+            aria-label={`费用对象 ${row.notes || row.category}`}
+            onClick={() => setObjectId(row.id)}
+          >
+            属性与关联
+          </button>
         </div>
       ))}
       {!rows.length && <p className="quiet-empty">暂无收支，先记录一笔收入或支出。</p>}
@@ -182,22 +205,15 @@ export default function Finance({
         </div>
 
         <FeePlans caseId={caseId} data={data} save={save} scope={scope} />
+        {!scope.proceedingId && (
+          <FeeProgress
+            agreed={detail.agreedFeeCents}
+            paid={allFees}
+            agreementKnown={agreementKnown}
+          />
+        )}
       </details>
 
-      <details className="finance-analysis">
-        <summary>查看收支分类分析</summary>
-        <FinanceChart
-          paidTotal={allFees}
-          agreementKnown={agreementKnown}
-          showAgreement={!scope.proceedingId}
-          rows={rows}
-          agreed={scope.proceedingId ? 0 : agreementKnown ? detail.agreedFeeCents : 0}
-          onCategory={(kind, name) => {
-            setFilter(kind);
-            setCategory(name);
-          }}
-        />
-      </details>
       {edit && (
         <EntryForm
           value={edit}
@@ -208,6 +224,15 @@ export default function Finance({
           onDelete={
             data.ledgerEntries.some((r) => r.id === edit.id) ? () => setRemove(edit) : undefined
           }
+        />
+      )}
+      {objectId && (
+        <ObjectInspector
+          caseId={caseId}
+          resource={{ kind: 'ledger', id: objectId }}
+          data={data}
+          save={save}
+          onClose={() => setObjectId(null)}
         />
       )}
       {fee !== null && (

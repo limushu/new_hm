@@ -15,6 +15,22 @@ impl Default for CaseSystem {
 }
 
 impl CaseSystem {
+    pub fn save_property(
+        &self,
+        store: &Store,
+        input: hm_core::case_system::ObjectPropertyInput,
+    ) -> Result<()> {
+        store.save_object_property(input, self.resolver.as_ref())
+    }
+    pub fn delete_property(
+        &self,
+        store: &Store,
+        case_id: &str,
+        resource: &hm_core::case_system::ResourceRef,
+        id: &str,
+    ) -> Result<()> {
+        store.delete_object_property(case_id, resource, id, self.resolver.as_ref())
+    }
     pub fn apply_properties(
         &self,
         store: &Store,

@@ -22,9 +22,14 @@ test('侧页建案、待办、工作记录与可恢复删除', async ({ page }) 
   await page.getByRole('textbox', { name: '待办内容' }).fill('核对证据目录');
   await page.getByRole('button', { name: '保存待办', exact: true }).click();
   await expect(page.locator('.work-task-row')).toContainText('核对证据目录');
-  await page.getByRole('checkbox', { name: /核对证据目录/ }).click();
+  await page
+    .locator('.case-workspace-details')
+    .getByRole('checkbox', { name: /核对证据目录/ })
+    .click();
   await page.getByText(/已完成 ·/).click();
-  await expect(page.getByRole('checkbox', { name: /核对证据目录/ })).toBeChecked();
+  await expect(
+    page.locator('.case-workspace-details').getByRole('checkbox', { name: /核对证据目录/ }),
+  ).toBeChecked();
   await page.getByRole('button', { name: '记录', exact: true }).click();
   await page.getByRole('textbox', { name: '工作记录内容' }).fill('已与当事人核对现有证据。');
   await page.getByRole('button', { name: '保存记录', exact: true }).click();
@@ -40,7 +45,9 @@ test('侧页建案、待办、工作记录与可恢复删除', async ({ page }) 
   await page.locator('.case-card').filter({ hasText: '浏览器流程验证案件' }).click();
   await openCaseArchive(page);
   await page.getByText(/已完成 ·/).click();
-  await expect(page.getByRole('checkbox', { name: /核对证据目录/ })).toBeChecked();
+  await expect(
+    page.locator('.case-workspace-details').getByRole('checkbox', { name: /核对证据目录/ }),
+  ).toBeChecked();
   await expect(page.locator('.work-record')).toContainText('已与当事人核对现有证据。');
 });
 

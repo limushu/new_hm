@@ -9,6 +9,22 @@ export interface ResourceMetadata {
   resource: ResourceRef;
   importance: Importance;
   tags: string[];
+  properties?: ObjectProperty[];
+}
+export type PropertyKind =
+  | 'text'
+  | 'number'
+  | 'select'
+  | 'multi_select'
+  | 'date'
+  | 'checkbox'
+  | 'relation';
+export interface ObjectProperty {
+  id: string;
+  name: string;
+  kind: PropertyKind;
+  options: string[];
+  value: string | number | boolean | string[] | null;
 }
 export interface ResourceRelation {
   id: string;

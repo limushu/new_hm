@@ -3,6 +3,9 @@ import Dialog from '../../components/Dialog';
 import Select from '../../components/Select';
 import { useAction } from '../../components/useAction';
 import type { SaveAction, Workspace } from '../../domain/types';
+import CaseQuickActions from './CaseQuickActions';
+import ObjectProperties from './ObjectProperties';
+import ObjectInspector from './ObjectInspector';
 import { caseSystem } from '../../case-system/modules';
 import {
   resourceKey,
@@ -28,67 +31,113 @@ export function ResourceRelations({
   save,
   source,
   actorsOnly = false,
+  onOpen,
+  propertyKind,
+  propertyLabel,
 }: {
   caseId: string;
   data: Workspace;
   save: SaveAction;
   source?: ResourceRef;
   actorsOnly?: boolean;
+  onOpen?: (ref: ResourceRef) => void;
+  propertyKind?: string;
+  propertyLabel?: string;
 }) {
   const resources = useMemo(() => caseSystem.resources(data, caseId, true), [data, caseId]);
   const [draft, setDraft] = useState<ResourceRelation | null>(null);
+  const [creating, setCreating] = useState(false);
+  const [query, setQuery] = useState('');
+  const [opened, setOpened] = useState<ResourceRef | null>(null);
   const { error, run, busy } = useAction();
   const choices = [...resources.values()].filter(
     (r) => !actorsOnly || ['contact', 'party'].includes(r.reference.kind),
   );
-  const rows = data.resourceRelations.filter(
-    (r) =>
-      r.caseId === caseId &&
-      (!source || sameResource(r.source, source) || sameResource(r.target, source)) &&
-      (!actorsOnly ||
-        (['contact', 'party'].includes(r.source.kind) &&
-          ['contact', 'party'].includes(r.target.kind))) &&
-      resources.has(resourceKey(r.source)) &&
-      resources.has(resourceKey(r.target)),
-  );
+  const rows = caseSystem
+    .relations(data, caseId)
+    .filter(
+      (r) =>
+        r.caseId === caseId &&
+        (!source || sameResource(r.source, source) || sameResource(r.target, source)) &&
+        (!actorsOnly ||
+          (['contact', 'party'].includes(r.source.kind) &&
+            ['contact', 'party'].includes(r.target.kind))) &&
+        (!propertyKind || r.kind === propertyKind) &&
+        resources.has(resourceKey(r.source)) &&
+        resources.has(resourceKey(r.target)),
+    );
   return (
     <section
       className="resource-relations"
       aria-label={actorsOnly ? '本案人物与机构关系' : '条目关联'}
     >
       <div className="section-title">
-        <h3>{actorsOnly ? '人物与机构关系' : '关联对象'}</h3>
-        <button
-          type="button"
-          onClick={() =>
-            setDraft({
-              id: crypto.randomUUID(),
-              caseId,
-              source: source ?? choices[0]?.reference ?? { kind: '', id: '' },
-              target: { kind: '', id: '' },
-              kind: actorsOnly ? 'related' : 'attachment',
-              label: '',
-            })
-          }
-        >
-          添加关联
-        </button>
+        <h3>{propertyLabel || (actorsOnly ? '人物与机构关系' : '关联对象')}</h3>
+        <span className="resource-relation-actions">
+          {source && (
+            <button type="button" onClick={() => setCreating(true)}>
+              新建并关联
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={() =>
+              setDraft({
+                id: crypto.randomUUID(),
+                caseId,
+                source: source ?? choices[0]?.reference ?? { kind: '', id: '' },
+                target: { kind: '', id: '' },
+                kind: propertyKind || 'related',
+                label: propertyLabel || '',
+              })
+            }
+          >
+            添加关联
+          </button>
+        </span>
       </div>
       {rows.map((r) => (
         <div className="resource-relation-row" key={r.id}>
-          <span>
-            {resources.get(resourceKey(r.source))?.title}{' '}
-            <small>{r.label || relationLabels[r.kind] || r.kind} →</small>{' '}
-            {resources.get(resourceKey(r.target))?.title}
-          </span>
-          <button
-            type="button"
-            disabled={busy}
-            aria-label={`移除关联${r.id}`}
-            onClick={() => void run(() => save('delete_resource_relation', { caseId, id: r.id }))}
-          >
-            移除
-          </button>
+          {source ? (
+            <button
+              type="button"
+              className="resource-related-object"
+              onClick={() => {
+                const target = sameResource(r.source, source) ? r.target : r.source;
+                if (onOpen) onOpen(target);
+                else setOpened(target);
+              }}
+            >
+              <strong>
+                {
+                  resources.get(resourceKey(sameResource(r.source, source) ? r.target : r.source))
+                    ?.title
+                }
+              </strong>
+              <small>
+                {r.label || relationLabels[r.kind] || '关联'}
+                {!sameResource(r.source, source) ? ' · 关联到此对象' : ''}
+              </small>
+            </button>
+          ) : (
+            <span>
+              {resources.get(resourceKey(r.source))?.title}{' '}
+              <small>{r.label || relationLabels[r.kind] || r.kind} →</small>{' '}
+              {resources.get(resourceKey(r.target))?.title}
+            </span>
+          )}
+          {r.id.startsWith('legacy:') ? (
+            <small className="field-hint">原有归档</small>
+          ) : (
+            <button
+              type="button"
+              disabled={busy}
+              aria-label={`移除关联${r.id}`}
+              onClick={() => void run(() => save('delete_resource_relation', { caseId, id: r.id }))}
+            >
+              移除
+            </button>
+          )}
         </div>
       ))}
       {!rows.length && (
@@ -113,41 +162,57 @@ export function ResourceRelations({
             await save('save_resource_relation', { input: draft });
           }}
         >
+          {!source && (
+            <label>
+              从
+              <Select
+                aria-label="关联起点"
+                value={resourceKey(draft.source)}
+                disabled={!!source}
+                onValueChange={(v) => {
+                  const r = resources.get(v);
+                  if (r) setDraft({ ...draft, source: r.reference });
+                }}
+              >
+                <option value="">选择对象</option>
+                {choices.map((r) => (
+                  <option key={resourceKey(r.reference)} value={resourceKey(r.reference)}>
+                    {r.title}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          )}
+          {!propertyKind && (
+            <details className="object-relation-advanced">
+              <summary>关系类型（可选）</summary>
+              <label>
+                关系类型
+                <Select
+                  aria-label="关系类型"
+                  value={draft.kind}
+                  onValueChange={(kind) => setDraft({ ...draft, kind })}
+                >
+                  {Object.entries(relationLabels).map(([value, label]) => (
+                    <option key={value} value={value}>
+                      {label}
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            </details>
+          )}
           <label>
-            从
-            <Select
-              aria-label="关联起点"
-              value={resourceKey(draft.source)}
-              disabled={!!source}
-              onValueChange={(v) => {
-                const r = resources.get(v);
-                if (r) setDraft({ ...draft, source: r.reference });
-              }}
-            >
-              <option value="">选择对象</option>
-              {choices.map((r) => (
-                <option key={resourceKey(r.reference)} value={resourceKey(r.reference)}>
-                  {r.title}
-                </option>
-              ))}
-            </Select>
+            搜索已有对象
+            <input
+              aria-label="搜索已有对象"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="搜索人物、材料、节点…"
+            />
           </label>
           <label>
-            关系类型
-            <Select
-              aria-label="关系类型"
-              value={draft.kind}
-              onValueChange={(kind) => setDraft({ ...draft, kind })}
-            >
-              {Object.entries(relationLabels).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </label>
-          <label>
-            到
+            {source ? '选择已有对象' : '到'}
             <Select
               aria-label="关联目标"
               value={resourceKey(draft.target)}
@@ -158,7 +223,11 @@ export function ResourceRelations({
             >
               <option value="">选择对象</option>
               {choices
-                .filter((r) => !sameResource(r.reference, draft.source))
+                .filter(
+                  (r) =>
+                    !sameResource(r.reference, draft.source) &&
+                    (!query || r.title.toLocaleLowerCase().includes(query.toLocaleLowerCase())),
+                )
                 .map((r) => (
                   <option key={resourceKey(r.reference)} value={resourceKey(r.reference)}>
                     {r.title}
@@ -167,7 +236,7 @@ export function ResourceRelations({
             </Select>
           </label>
           <label>
-            具体关系或说明
+            关系含义（可选）
             <input
               aria-label="关联说明"
               maxLength={120}
@@ -177,6 +246,27 @@ export function ResourceRelations({
             />
           </label>
         </Dialog>
+      )}
+      {creating && source && (
+        <CaseQuickActions
+          caseId={caseId}
+          data={data}
+          save={save}
+          onMaterials={() => {}}
+          relatedFrom={source}
+          relationKind={propertyKind}
+          relationLabel={propertyLabel}
+          onClose={() => setCreating(false)}
+        />
+      )}
+      {opened && (
+        <ObjectInspector
+          caseId={caseId}
+          resource={opened}
+          data={data}
+          save={save}
+          onClose={() => setOpened(null)}
+        />
       )}
     </section>
   );
@@ -195,6 +285,9 @@ export default function ResourceSettings({
 }) {
   const [important, setImportant] = useState(entry.importance === 'important');
   const [tags, setTags] = useState(entry.tags.join('，'));
+  const [propertyRelation, setPropertyRelation] = useState<{ kind: string; label: string } | null>(
+    null,
+  );
   return (
     <Dialog
       title="条目设置"
@@ -233,6 +326,25 @@ export default function ResourceSettings({
         />
       </label>
       <ResourceRelations caseId={entry.caseId} source={entry.resource} data={data} save={save} />
+      <ObjectProperties
+        caseId={entry.caseId}
+        resource={entry.resource}
+        data={data}
+        save={save}
+        onLink={(kind, label) => setPropertyRelation({ kind, label })}
+      />
+      {propertyRelation && (
+        <Dialog title={propertyRelation.label} onClose={() => setPropertyRelation(null)}>
+          <ResourceRelations
+            caseId={entry.caseId}
+            source={entry.resource}
+            data={data}
+            save={save}
+            propertyKind={propertyRelation.kind}
+            propertyLabel={propertyRelation.label}
+          />
+        </Dialog>
+      )}
     </Dialog>
   );
 }

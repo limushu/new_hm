@@ -6,10 +6,11 @@ test('关键节点可独立创建，公共属性随对象保存，本地存量�
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
   await expect(page.getByRole('tab', { name: '办理', exact: true })).toHaveCount(0);
-  await expect(page.getByRole('tab', { name: '关系', exact: true })).toBeVisible();
+  await expect(page.getByRole('tab', { name: '人员', exact: true })).toBeVisible();
   await page.getByRole('button', { name: '创建', exact: true }).click();
   await page.getByRole('button', { name: /关键节点/ }).click();
   await page.getByLabel('节点名称', { exact: true }).fill('一审·主诉');
+  await page.locator('.creation-properties > summary').click();
   await page.getByRole('checkbox', { name: '重要', exact: true }).check();
   await page.getByLabel('创建对象标签', { exact: true }).fill('审理节点');
   await page.getByRole('button', { name: '保存节点', exact: true }).click();
@@ -18,6 +19,7 @@ test('关键节点可独立创建，公共属性随对象保存，本地存量�
   await expect(node).toContainText('#审理节点');
   await page.getByRole('button', { name: '创建', exact: true }).click();
   await page.getByRole('button', { name: /导入本地材料/ }).click();
+  await page.locator('.creation-properties > summary').click();
   await page.getByRole('checkbox', { name: '重要', exact: true }).check();
   await page.getByLabel('创建对象标签', { exact: true }).fill('证据');
   await selectOption(page, page.getByLabel('创建对象关联节点', { exact: true }), {

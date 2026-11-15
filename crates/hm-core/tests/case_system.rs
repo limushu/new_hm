@@ -31,8 +31,122 @@ fn meta(case_id: &str, resource: ResourceRef) -> ResourceMetadata {
         case_id: case_id.into(),
         resource,
         importance: Importance::Important,
+        properties: vec![],
         tags: vec![" evidence ".into(), "Evidence".into(), "urgent".into()],
     }
+}
+
+#[test]
+fn custom_properties_keep_types_and_survive_restart() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("workspace.sqlite3");
+    let mut store = Store::open(&path).unwrap();
+    let case_id = case(&mut store, "Custom fields");
+    let resource = task(&store, &case_id);
+    let field = ObjectProperty {
+        id: Uuid::new_v4().to_string(),
+        name: "Outcome".into(),
+        kind: PropertyKind::Select,
+        options: vec!["Pending".into(), "Partial".into()],
+        value: serde_json::json!("Partial"),
+    };
+    store
+        .save_object_property(
+            ObjectPropertyInput {
+                case_id: case_id.clone(),
+                resource: resource.clone(),
+                property: field.clone(),
+            },
+            &BuiltinResources,
+        )
+        .unwrap();
+    // Ordinary metadata writes must preserve the independent typed fields.
+    store
+        .save_resource_metadata(meta(&case_id, resource.clone()), &BuiltinResources)
+        .unwrap();
+    let mut invalid = field.clone();
+    invalid.value = serde_json::json!("Foreign option");
+    assert!(store
+        .save_object_property(
+            ObjectPropertyInput {
+                case_id: case_id.clone(),
+                resource: resource.clone(),
+                property: invalid
+            },
+            &BuiltinResources
+        )
+        .is_err());
+    drop(store);
+    let store = Store::open(&path).unwrap();
+    let saved = &store.workspace().unwrap().resource_metadata[0];
+    assert_eq!(saved.properties.len(), 1);
+    assert_eq!(saved.properties[0].value, serde_json::json!("Partial"));
+    assert_eq!(saved.importance, Importance::Important);
+    store
+        .delete_object_property(&case_id, &resource, &field.id, &BuiltinResources)
+        .unwrap();
+    assert!(store.resource_metadata().unwrap()[0].properties.is_empty());
+    assert!(!store.resource_metadata().unwrap()[0].tags.is_empty());
+}
+
+#[test]
+fn custom_properties_reject_foreign_objects_and_relation_fields_reuse_edges() {
+    let mut store = Store::memory().unwrap();
+    let case_id = case(&mut store, "One");
+    let other = case(&mut store, "Other");
+    let source = task(&store, &case_id);
+    let target = task(&store, &case_id);
+    let foreign = task(&store, &other);
+    let field = ObjectProperty {
+        id: Uuid::new_v4().to_string(),
+        name: "Supporting objects".into(),
+        kind: PropertyKind::Relation,
+        options: vec![],
+        value: serde_json::Value::Null,
+    };
+    assert!(store
+        .save_object_property(
+            ObjectPropertyInput {
+                case_id: case_id.clone(),
+                resource: foreign,
+                property: field.clone()
+            },
+            &BuiltinResources
+        )
+        .is_err());
+    store
+        .save_object_property(
+            ObjectPropertyInput {
+                case_id: case_id.clone(),
+                resource: source.clone(),
+                property: field.clone(),
+            },
+            &BuiltinResources,
+        )
+        .unwrap();
+    store
+        .save_resource_relation(
+            ResourceRelation {
+                id: Uuid::new_v4().to_string(),
+                case_id: case_id.clone(),
+                source: source.clone(),
+                target: target.clone(),
+                kind: format!("property.{}", field.id),
+                label: field.name.clone(),
+            },
+            &BuiltinResources,
+        )
+        .unwrap();
+    store
+        .delete_object_property(&case_id, &source, &field.id, &BuiltinResources)
+        .unwrap();
+    assert!(store.resource_relations().unwrap().is_empty());
+    assert!(store
+        .workspace()
+        .unwrap()
+        .tasks
+        .iter()
+        .any(|t| t.id == target.id));
 }
 
 #[test]
@@ -226,6 +340,22 @@ fn backup_restore_preserves_annotations_and_relations_without_duplicating_resour
     store
         .save_resource_relation(relation.clone(), &BuiltinResources)
         .unwrap();
+    store
+        .save_object_property(
+            ObjectPropertyInput {
+                case_id: id.clone(),
+                resource: relation.source.clone(),
+                property: ObjectProperty {
+                    id: Uuid::new_v4().to_string(),
+                    name: "Backup note".into(),
+                    kind: PropertyKind::Text,
+                    options: vec![],
+                    value: serde_json::json!("Preserve this value"),
+                },
+            },
+            &BuiltinResources,
+        )
+        .unwrap();
     let backup = store
         .create_backup(&root.path().join("backups"), true)
         .unwrap();
@@ -235,8 +365,48 @@ fn backup_restore_preserves_annotations_and_relations_without_duplicating_resour
         .unwrap();
     let workspace = store.workspace().unwrap();
     assert_eq!(workspace.resource_metadata.len(), 1);
+    assert_eq!(
+        workspace.resource_metadata[0].properties[0].value,
+        serde_json::json!("Preserve this value")
+    );
     assert_eq!(workspace.resource_relations[0].id, relation.id);
     assert_eq!(workspace.tasks.len(), 2);
+}
+
+#[test]
+fn upgrading_v8_preserves_objects_and_keeps_a_pre_upgrade_copy() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("workspace.sqlite3");
+    let mut store = Store::open(&path).unwrap();
+    let id = case(&mut store, "Version eight");
+    let resource = task(&store, &id);
+    store
+        .save_resource_metadata(meta(&id, resource.clone()), &BuiltinResources)
+        .unwrap();
+    drop(store);
+    let old = rusqlite::Connection::open(&path).unwrap();
+    old.execute_batch(
+        "ALTER TABLE resource_metadata DROP COLUMN properties_json; PRAGMA user_version=8;",
+    )
+    .unwrap();
+    drop(old);
+    let store = Store::open(&path).unwrap();
+    let data = store.workspace().unwrap();
+    assert_eq!(data.tasks[0].id, resource.id);
+    assert_eq!(data.resource_metadata[0].tags, vec!["evidence", "urgent"]);
+    assert!(data.resource_metadata[0].properties.is_empty());
+    let snapshot = std::fs::read_dir(root.path().join("migration-backups"))
+        .unwrap()
+        .next()
+        .unwrap()
+        .unwrap()
+        .path();
+    let copy = rusqlite::Connection::open(snapshot).unwrap();
+    assert_eq!(
+        copy.query_row("PRAGMA user_version", [], |r| r.get::<_, i64>(0))
+            .unwrap(),
+        8
+    );
 }
 
 #[test]

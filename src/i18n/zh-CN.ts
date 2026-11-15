@@ -1,5 +1,9 @@
 /** Human-facing native-operation text. Backend codes remain language independent. */
 export const operationMessages: Record<string, string> = {
+  object_property_invalid: '请检查属性名称、类型和选项',
+  object_property_value_invalid: '属性值与所选类型不符，请检查后重试',
+  object_property_exists: '此对象已有同名属性，请使用其他名称',
+  object_property_limit: '每个对象最多添加50个自定义属性',
   resource_relation_exists: '这两个对象之间已存在相同类型的关联，可编辑或移除原关联',
   resource_module_conflict: '案件模块注册冲突，请检查模块配置',
   resource_tags_invalid: '最多设置20个标签，每个标签不超过40字',

@@ -1,4 +1,10 @@
-import type { Importance, ResourceRef, ResourceRelation, DateRole } from './contracts';
+import type {
+  Importance,
+  ResourceRef,
+  ResourceRelation,
+  DateRole,
+  ObjectProperty,
+} from './contracts';
 /** Common case-context identity. Bodies and type-specific rules belong to their modules. */
 export interface CaseObject {
   id: string;
@@ -8,6 +14,7 @@ export interface CaseObject {
   title: string;
   importance: Importance;
   tags: string[];
+  properties: ObjectProperty[];
   relations: ResourceRelation[];
   businessTime: { value: string | null; role: DateRole } | null;
 }

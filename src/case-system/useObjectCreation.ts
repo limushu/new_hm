@@ -11,6 +11,7 @@ export function useObjectCreation(
   data: Workspace,
   properties: CreationProperties,
   save: SaveAction,
+  onCreated?: (resources: ResourceRef[]) => Promise<void>,
 ) {
   const baseline = useRef(
     new Set(data.materials.filter((m) => m.caseId === caseId).map((m) => m.id)),
@@ -32,7 +33,7 @@ export function useObjectCreation(
     if (!pending.current) {
       const result = await save(name, args),
         a = args as Record<string, unknown>,
-        input = a.input as { id?: string; task?: { id: string } } | undefined;
+        input = a.input as { id?: string; contactId?: string; task?: { id: string } } | undefined;
       const kinds: Record<string, string> = {
         save_case_event: 'milestone',
         save_work_record: 'record',
@@ -41,10 +42,13 @@ export function useObjectCreation(
         save_work_ledger: 'ledger',
         save_ledger: 'ledger',
         save_contact: 'contact',
+        save_contact_link: 'contact',
+        save_calendar_event: 'event',
+        save_work_event: 'event',
       };
       let resources: ResourceRef[] = [];
       if (kinds[name]) {
-        const id = input?.task?.id ?? input?.id;
+        const id = name === 'save_contact_link' ? input?.contactId : (input?.task?.id ?? input?.id);
         if (id) resources = [{ kind: kinds[name], id }];
       } else if (name === 'create_text_document')
         resources = [{ kind: 'material', id: result as string }];
@@ -71,12 +75,15 @@ export function useObjectCreation(
             tags: properties.tags.map((t) => t.trim()).filter(Boolean),
           },
         });
+      await onCreated?.(pending.current.resources);
     } catch (reason) {
       throw new Error(
         `对象正文已保存，公共属性未保存：${String(reason)}。可重试保存属性，不会重复创建正文。`,
       );
     }
     const result = pending.current.result;
+    for (const ref of pending.current.resources)
+      if (ref.kind === 'material') baseline.current.add(ref.id);
     pending.current = null;
     return result;
   }

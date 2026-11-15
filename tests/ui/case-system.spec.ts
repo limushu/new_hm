@@ -18,10 +18,12 @@ test('人物和部门关系可在本案建立，并进入关系图', async ({ pa
   }
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('tab', { name: '关系', exact: true }).click();
+  await page.getByRole('tab', { name: '人员', exact: true }).click();
+  await page.getByText('编辑人物与机构之间的关系', { exact: true }).click();
   await page.getByRole('button', { name: '添加关联', exact: true }).click();
   await selectOption(page, page.getByLabel('关联起点', { exact: true }), { label: '示例客户' });
   await selectOption(page, page.getByLabel('关联目标', { exact: true }), { label: '示例公司部门' });
+  await page.getByText('关系类型（可选）', { exact: true }).click();
   await selectOption(page, page.getByLabel('关系类型', { exact: true }), 'affiliated_with');
   await page.getByLabel('关联说明', { exact: true }).fill('任职于');
   await page.getByRole('button', { name: '保存关联', exact: true }).click();
@@ -66,6 +68,7 @@ test('收支在时间轴和账目共用原始记录，重要程度与标签可�
     .getByRole('button', { name: /出庭交通费（虚构）/ })
     .first()
     .click();
+  await page.getByRole('button', { name: '编辑内容', exact: true }).click();
   await expect(page.getByLabel('收支金额', { exact: true })).toHaveValue('123.45');
   await page.getByLabel('收支金额', { exact: true }).fill('150');
   await page
@@ -73,6 +76,11 @@ test('收支在时间轴和账目共用原始记录，重要程度与标签可�
     .getByRole('button', { name: '保存', exact: true })
     .click();
   await expect(entry).toContainText('支出 ¥ 150.00');
+  await page
+    .getByRole('dialog', { name: '对象详情', exact: true })
+    .getByRole('button', { name: '关闭', exact: true })
+    .last()
+    .click();
   await page.getByRole('tab', { name: '费用', exact: true }).click();
   await expect(page.locator('.ledger-row')).toHaveCount(1);
   await expect(page.locator('.ledger-row')).toContainText('150.00');

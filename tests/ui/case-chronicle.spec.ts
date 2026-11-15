@@ -66,7 +66,7 @@ test('关键事件保留发生日期，未来节点标为计划，相关人可�
     page.locator('.chronicle-plans').getByRole('button').filter({ hasText: '虚构后续沟通计划' }),
   ).toContainText('计划');
   await page.locator('.chronicle-plans > summary').click();
-  await page.getByRole('tab', { name: '关系', exact: true }).click();
+  await page.getByRole('tab', { name: '人员', exact: true }).click();
   await expect(page.getByRole('region', { name: '本案关系', exact: true })).toBeVisible();
   await page.getByRole('tab', { name: '脉络', exact: true }).click();
   for (const width of [320, 390, 430, 760]) {

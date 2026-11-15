@@ -12,7 +12,11 @@ export async function openCaseArchive(page: Page) {
 export async function openFinanceDetails(page: Page) {
   for (const selector of ['.finance-fee-plans', '.finance-analysis']) {
     const panel = page.locator(selector);
-    if ((await panel.count()) && !(await panel.evaluate((e: HTMLDetailsElement) => e.open)))
+    if (
+      (await panel.count()) &&
+      (await panel.evaluate((e) => e.tagName === 'DETAILS')) &&
+      !(await panel.evaluate((e: HTMLDetailsElement) => e.open))
+    )
       await panel.locator(':scope > summary').click();
   }
 }

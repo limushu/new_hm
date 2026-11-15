@@ -1,6 +1,6 @@
 import DateField from '../../components/DateField';
 import Select from '../../components/Select';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CalendarDays, Clock3, MapPin, Trash2, X } from 'lucide-react';
 import type { CalendarEvent, CaseFile, SaveAction, Workspace, WorkScope } from '../../domain/types';
 import WorkScopeField from '../cases/WorkScopeField';
@@ -17,6 +17,7 @@ interface Props {
   onSaved: (date: string) => void;
   data?: Workspace;
   initialScope?: WorkScope;
+  properties?: ReactNode;
 }
 
 export default function EventEditor({
@@ -28,6 +29,7 @@ export default function EventEditor({
   onSaved,
   data,
   initialScope = caseScope,
+  properties,
 }: Props) {
   const [scope, setScope] = useState<WorkScope>(
     data ? (resourceLinks(data, 'event', event.id)[0] ?? initialScope) : initialScope,
@@ -219,7 +221,8 @@ export default function EventEditor({
             cases={cases}
             onChange={(caseId) => update({ caseId })}
           />
-          {data && value.caseId && (
+          {properties}
+          {!properties && data && value.caseId && (
             <WorkScopeField caseId={value.caseId} data={data} value={scope} onChange={setScope} />
           )}
           <label className="event-property">

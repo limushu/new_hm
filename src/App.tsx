@@ -31,8 +31,8 @@ export default function App() {
     return () => query.removeEventListener('change', update);
   }, []);
   const [calendarDate, setCalendarDate] = useState(() => dateKey(new Date()));
-  const [calendarView, setCalendarView] = useState<'week' | 'day' | 'month'>(() =>
-    matchMedia('(max-width: 760px)').matches ? 'day' : 'week',
+  const [calendarView, setCalendarView] = useState<'week' | 'day' | 'month' | 'agenda'>(() =>
+    matchMedia('(max-width: 760px)').matches ? 'agenda' : 'week',
   );
   const [query, setQuery] = useState('');
   const [opened, setOpened] = useState<string | null>(null);

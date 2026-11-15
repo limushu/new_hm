@@ -25,6 +25,7 @@ import EventEditor from './EventEditor';
 import TimeGrid from './TimeGrid';
 import { slotEvent } from './timeline';
 import './calendar.css';
+import { useAction } from '../../components/useAction';
 
 interface Props {
   data: Workspace;
@@ -35,8 +36,8 @@ interface Props {
   loading: boolean;
   selected: string;
   onSelect: (date: string) => void;
-  view: 'week' | 'day' | 'month';
-  onViewChange: (view: 'week' | 'day' | 'month') => void;
+  view: 'week' | 'day' | 'month' | 'agenda';
+  onViewChange: (view: 'week' | 'day' | 'month' | 'agenda') => void;
 }
 
 export default function Calendar({
@@ -60,6 +61,7 @@ export default function Calendar({
   const [filter, setFilter] = useState<'all' | 'events' | 'tasks'>('all');
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [focusToday, setFocusToday] = useState(0);
+  const taskAction = useAction();
   const agenda = useRef<HTMLElement>(null);
   const activeCases = data.cases.filter((item) => !item.deletedAt);
   const active = new Set(activeCases.map((item) => item.id));
@@ -67,7 +69,9 @@ export default function Calendar({
   const events = filter === 'tasks' ? [] : visibleEvents(data);
   const datedTasks = filter === 'events' ? [] : tasks.filter((task) => task.dueDate);
   const dayEvents = eventsOn(events, selected);
-  const dayTasks = datedTasks.filter((task) => task.dueDate === selected);
+  const dayTasks = datedTasks.filter(
+    (task) => task.dueDate === selected || (view === 'agenda' && task.dueDate! < selected),
+  );
   const undated = tasks.filter((task) => !task.dueDate);
   const today = dateKey(new Date());
   const caseTitle = (id: string | null) => activeCases.find((item) => item.id === id)?.title;
@@ -104,7 +108,13 @@ export default function Calendar({
         <div className="calendar-heading">
           <span className="calendar-eyebrow">日历</span>
           <h1>
-            {month.getFullYear()}年 <span>{month.getMonth() + 1}月</span>
+            {view === 'agenda' ? (
+              displayDate(selected)
+            ) : (
+              <>
+                {month.getFullYear()}年 <span>{month.getMonth() + 1}月</span>
+              </>
+            )}
           </h1>
         </div>
         <div className="calendar-navigation">
@@ -175,11 +185,28 @@ export default function Calendar({
           value={view}
           onValueChange={(value) => onViewChange(value as typeof view)}
         >
+          <option value="agenda">清单</option>
           <option value="day">日视图</option>
           <option value="week">周视图</option>
           <option value="month">月视图</option>
         </Select>
       </div>
+      {view === 'agenda' && (
+        <nav className="agenda-week-strip" aria-label="本周日期">
+          {weekDates(selected).map((date) => (
+            <button
+              type="button"
+              key={date}
+              aria-label={`选择 ${date}`}
+              aria-pressed={selected === date}
+              onClick={() => select(date)}
+            >
+              <small>{['日', '一', '二', '三', '四', '五', '六'][parseDate(date).getDay()]}</small>
+              <strong>{parseDate(date).getDate()}</strong>
+            </button>
+          ))}
+        </nav>
+      )}
       {view === 'month' && (
         <>
           <div className="weekdays">
@@ -280,7 +307,7 @@ export default function Calendar({
           </div>
         </>
       )}
-      {view !== 'month' && (
+      {(view === 'week' || view === 'day') && (
         <TimeGrid
           focusToday={focusToday}
           dates={view === 'day' ? [selected] : weekDates(selected)}
@@ -295,7 +322,12 @@ export default function Calendar({
           onTask={setEditingTask}
         />
       )}
-      <section hidden={view !== 'month'} ref={agenda} className="day-agenda" aria-label="当天安排">
+      <section
+        hidden={view !== 'month' && view !== 'agenda'}
+        ref={agenda}
+        className="day-agenda"
+        aria-label="当天安排"
+      >
         <header>
           <div>
             <h2>
@@ -361,7 +393,19 @@ export default function Calendar({
         ))}
         {dayTasks.map((task) => (
           <div className="agenda-task" key={task.id}>
-            <span className="agenda-time">待办</span>
+            {view === 'agenda' ? (
+              <input
+                type="checkbox"
+                aria-label={`完成${task.title}`}
+                checked={false}
+                disabled={taskAction.busy}
+                onChange={() =>
+                  void taskAction.run(() => save('toggle_task', { id: task.id, completed: true }))
+                }
+              />
+            ) : (
+              <span className="agenda-time">待办</span>
+            )}
             <button className="agenda-task-main" onClick={() => setEditingTask(task)}>
               <Square />
               <span>{task.title}</span>
@@ -385,6 +429,11 @@ export default function Calendar({
           </p>
         )}
       </section>
+      {taskAction.error && (
+        <p role="alert" className="error-message">
+          {taskAction.error}
+        </p>
+      )}
       {filter !== 'events' && (
         <details className="undated-tasks">
           <summary>

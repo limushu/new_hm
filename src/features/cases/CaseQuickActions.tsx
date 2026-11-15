@@ -1,4 +1,9 @@
 import type { ReactNode } from 'react';
+import CasePersonEditor from './CasePersonEditor';
+import EventEditor from '../calendar/EventEditor';
+import { emptyEvent } from '../calendar/schedule';
+import type { ResourceRef } from '../../case-system/contracts';
+import { Users, CalendarDays } from 'lucide-react';
 import CreationProperties from './CreationProperties';
 import ImportMaterials from '../materials/ImportMaterials';
 import { defaultCreationProperties } from '../../case-system/objects';
@@ -106,15 +111,40 @@ export default function CaseQuickActions({
   data,
   save,
   onMaterials,
+  relatedFrom,
+  relationKind = 'related',
+  relationLabel = '',
+  onClose,
 }: {
   caseId: string;
   data: Workspace;
   save: SaveAction;
   onMaterials: () => void;
+  relatedFrom?: ResourceRef;
+  relationKind?: string;
+  relationLabel?: string;
+  onClose?: () => void;
 }) {
   const { manifest } = useSubsystems();
   const [objectProperties, setObjectProperties] = useState(defaultCreationProperties);
-  const creation = useObjectCreation(caseId, data, objectProperties, save);
+  const [relationIds] = useState(() => new Map<string, string>());
+  const creation = useObjectCreation(caseId, data, objectProperties, save, async (refs) => {
+    if (!relatedFrom) return;
+    for (const target of refs) {
+      const key = `${target.kind}:${target.id}`;
+      if (!relationIds.has(key)) relationIds.set(key, crypto.randomUUID());
+      await save('save_resource_relation', {
+        input: {
+          id: relationIds.get(key)!,
+          caseId,
+          source: relatedFrom,
+          target,
+          kind: relationKind,
+          label: relationLabel,
+        },
+      });
+    }
+  });
   const fields = (
     <CreationProperties
       caseId={caseId}
@@ -134,8 +164,14 @@ export default function CaseQuickActions({
     | 'ledger'
     | 'import'
     | 'node'
+    | 'person'
+    | 'schedule'
     | null
-  >(null);
+  >(relatedFrom ? 'create' : null);
+  function closePanel() {
+    setPanel(null);
+    onClose?.();
+  }
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Material | null>(null);
   const [draftId, setDraftId] = useState('');
@@ -168,42 +204,53 @@ export default function CaseQuickActions({
   }
   return (
     <>
-      <nav className="case-quick-actions" aria-label="案件快捷操作">
-        <button
-          aria-label="快速录音"
-          disabled={!supports(manifest, 'record-audio')}
-          onClick={() => create('recording')}
-        >
-          <Mic />
-          <span>录音</span>
-        </button>
-        <button onClick={() => setPanel('create')}>
-          <Plus />
-          <span>创建</span>
-        </button>
-        <button
-          aria-label="查找案件材料"
-          onClick={() => {
-            setQuery('');
-            setLimit(20);
-            setPanel('search');
-          }}
-        >
-          <Search />
-          <span>查找</span>
-        </button>
-      </nav>
+      {!relatedFrom && (
+        <nav className="case-quick-actions" aria-label="案件快捷操作">
+          <button
+            aria-label="快速录音"
+            disabled={!supports(manifest, 'record-audio')}
+            onClick={() => create('recording')}
+          >
+            <Mic />
+            <span>录音</span>
+          </button>
+          <button onClick={() => setPanel('create')}>
+            <Plus />
+            <span>创建</span>
+          </button>
+          <button
+            aria-label="查找案件材料"
+            onClick={() => {
+              setQuery('');
+              setLimit(20);
+              setPanel('search');
+            }}
+          >
+            <Search />
+            <span>查找</span>
+          </button>
+        </nav>
+      )}
       {panel === 'recording' && (
-        <Recorder
-          target={target}
-          save={creation.save}
-          properties={fields}
-          onClose={() => setPanel(null)}
-        />
+        <Recorder target={target} save={creation.save} properties={fields} onClose={closePanel} />
       )}
       {panel === 'create' && (
-        <Dialog title="创建到当前案件" onClose={() => setPanel(null)}>
+        <Dialog title={relatedFrom ? '新建并关联' : '创建到当前案件'} onClose={closePanel}>
           <div className="case-create-options">
+            <button onClick={() => create('person')}>
+              <Users />
+              <span>
+                <strong>人物或机构</strong>
+                <small>律师、法官、当事人、法院或其他机构</small>
+              </span>
+            </button>
+            <button onClick={() => create('schedule')}>
+              <CalendarDays />
+              <span>
+                <strong>新建日程</strong>
+                <small>安排开庭、会面等具体时间</small>
+              </span>
+            </button>
             <button onClick={() => create('node')}>
               <Flag />
               <span>
@@ -256,6 +303,27 @@ export default function CaseQuickActions({
           </div>
         </Dialog>
       )}
+      {panel === 'person' && (
+        <CasePersonEditor
+          caseId={caseId}
+          data={data}
+          save={creation.save}
+          properties={fields}
+          onClose={closePanel}
+        />
+      )}
+      {panel === 'schedule' && (
+        <EventEditor
+          properties={fields}
+          existing={false}
+          event={{ ...emptyEvent(dateKey(new Date())), id: draftId, caseId }}
+          data={data}
+          cases={data.cases}
+          save={creation.save}
+          onClose={closePanel}
+          onSaved={closePanel}
+        />
+      )}
       {panel === 'ledger' && (
         <EntryForm
           value={{
@@ -273,7 +341,7 @@ export default function CaseQuickActions({
           data={data}
           save={creation.save}
           properties={fields}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
         />
       )}
       {panel === 'node' && (
@@ -283,7 +351,7 @@ export default function CaseQuickActions({
           data={data}
           save={creation.save}
           properties={fields}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
         />
       )}
       {panel === 'import' && (
@@ -292,7 +360,7 @@ export default function CaseQuickActions({
           target={target}
           save={creation.save}
           properties={fields}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
         />
       )}
       {panel === 'document' && (
@@ -300,7 +368,7 @@ export default function CaseQuickActions({
           target={target}
           save={creation.save}
           properties={fields}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
         />
       )}
       {panel === 'record' && (
@@ -310,7 +378,7 @@ export default function CaseQuickActions({
           scope={caseScope}
           save={creation.save}
           properties={fields}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
         />
       )}
       {panel === 'event' && (
@@ -326,7 +394,7 @@ export default function CaseQuickActions({
           data={data}
           save={creation.save}
           properties={fields}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
         />
       )}
       {panel === 'task' && (
@@ -335,7 +403,7 @@ export default function CaseQuickActions({
           data={data}
           save={creation.save}
           properties={fields}
-          onClose={() => setPanel(null)}
+          onClose={closePanel}
         />
       )}
       {panel === 'search' && (

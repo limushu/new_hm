@@ -4,7 +4,9 @@ import type { ResourceRef } from '../../case-system/contracts';
 import type { ReactNode } from 'react';
 import { ResourceRelations } from './ResourceSettings';
 import { lazy, Suspense, useMemo, useState } from 'react';
-import { Building2, Network, UserRound, ArrowUpRight } from 'lucide-react';
+import { Building2, Network, UserRound, ArrowUpRight, Plus } from 'lucide-react';
+import ContactPicker from '../contacts/ContactPicker';
+import CasePersonEditor from './CasePersonEditor';
 import Dialog from '../../components/Dialog';
 import type { SaveAction, Workspace, Contact } from '../../domain/types';
 import { proceedingName } from '../../domain/proceedings';
@@ -37,6 +39,10 @@ export default function CasePeople({
     : null;
   const [selected, setSelected] = useState<Contact | null>(null);
   const [graph, setGraph] = useState(false);
+  const [adding, setAdding] = useState<'choose' | 'person' | 'organization' | null>(null);
+  const [chosen, setChosen] = useState<Contact | null>(null);
+  const [role, setRole] = useState('');
+  const [linkId, setLinkId] = useState(() => crypto.randomUUID());
   const programs = data.proceedings.filter((p) => p.caseId === caseId);
   const item = data.cases.find((c) => c.id === caseId);
   const links = data.contactLinks.filter((l) => l.caseId === caseId);
@@ -53,6 +59,12 @@ export default function CasePeople({
   );
   const institutions = people.filter((c) => c.kind === 'court' || c.kind === 'organization');
   const persons = people.filter((c) => c.kind !== 'court' && c.kind !== 'organization');
+  const judges = persons.filter((c) => c.kind === 'judge');
+  const lawyers = persons.filter(
+    (c) =>
+      c.kind !== 'judge' && links.some((l) => l.contactId === c.id && /律师|代理人/.test(l.role)),
+  );
+  const otherPersons = persons.filter((c) => !judges.includes(c) && !lawyers.includes(c));
   const unlinkedRoles = programs.flatMap((p) =>
     [
       { name: p.court, role: '办理法院', institution: true },
@@ -127,20 +139,21 @@ export default function CasePeople({
   return (
     <>
       <Shell title="相关人及机构" className="case-people-dialog" onClose={onClose}>
-        {inline && (
-          <Suspense fallback={<p>正在打开本案关系网…</p>}>
-            <RelationGraph
-              data={scoped}
-              focusId={`case:${caseId}`}
-              initialGlobal
-              onCase={onCase}
-              onContact={(id) => {
-                const c = data.contacts.find((c) => c.id === id);
-                if (c) setSelected(c);
-              }}
-            />
-          </Suspense>
-        )}
+        <div className="section-title">
+          <h3>人员与机构</h3>
+          <button
+            type="button"
+            onClick={() => {
+              setChosen(null);
+              setRole('');
+              setLinkId(crypto.randomUUID());
+              setAdding('choose');
+            }}
+          >
+            <Plus />
+            添加人员或机构
+          </button>
+        </div>
         <div className="case-people-heading">
           <p>
             {
@@ -159,41 +172,22 @@ export default function CasePeople({
             }{' '}
             家机构
           </p>
-          <button onClick={() => setGraph(true)}>
-            <Network />
-            查看关系图
-          </button>
         </div>
-        {(institutions.length > 0 || unlinkedRoles.some((r) => r.institution)) && (
+        {!!lawyers.length && (
           <section className="case-person-group">
-            <h3>法院与机构</h3>
-            {institutions.map(row)}
-            {unlinkedRoles
-              .filter((r) => r.institution)
-              .map((r) => (
-                <div className="case-person-row" key={r.id}>
-                  <span className="case-person-avatar court">
-                    <Building2 />
-                  </span>
-                  <span>
-                    <strong>{r.name}</strong>
-                    <small>
-                      {r.role} · {r.program}
-                    </small>
-                  </span>
-                </div>
-              ))}
+            <h3>律师</h3>
+            {lawyers.map(row)}
           </section>
         )}
-        <section className="case-person-group">
-          <h3>相关人物</h3>
-          {persons.map(row)}
-          {unlinkedRoles
-            .filter((r) => !r.institution)
-            .map((r) => (
+        {(institutions.length > 0 || judges.length > 0 || unlinkedRoles.length > 0) && (
+          <section className="case-person-group">
+            <h3>法院与承办人</h3>
+            {institutions.map(row)}
+            {judges.map(row)}
+            {unlinkedRoles.map((r) => (
               <div className="case-person-row" key={r.id}>
-                <span className="case-person-avatar">
-                  <UserRound />
+                <span className="case-person-avatar court">
+                  {r.institution ? <Building2 /> : <UserRound />}
                 </span>
                 <span>
                   <strong>{r.name}</strong>
@@ -203,6 +197,11 @@ export default function CasePeople({
                 </span>
               </div>
             ))}
+          </section>
+        )}
+        <section className="case-person-group">
+          <h3>当事人与其他人员</h3>
+          {otherPersons.map(row)}
           {parties
             .filter((p) => !p.contactId)
             .map((p) => (
@@ -230,11 +229,20 @@ export default function CasePeople({
                 </button>
               </div>
             ))}
-          {!persons.length && !parties.length && !unlinkedRoles.some((r) => !r.institution) && (
-            <p className="quiet-empty">尚未关联相关人物</p>
-          )}
+          {!otherPersons.length &&
+            !parties.length &&
+            !unlinkedRoles.some((r) => !r.institution) && (
+              <p className="quiet-empty">尚未关联相关人物</p>
+            )}
         </section>
-        <ResourceRelations caseId={caseId} data={data} save={save} actorsOnly />
+        <button type="button" className="case-people-graph-link" onClick={() => setGraph(true)}>
+          <Network />
+          查看关系图
+        </button>
+        <details className="case-people-maintain">
+          <summary>编辑人物与机构之间的关系</summary>
+          <ResourceRelations caseId={caseId} data={data} save={save} actorsOnly />
+        </details>
         <details className="case-people-maintain">
           <summary>维护当事人与关联对象</summary>
           <CaseParties
@@ -247,6 +255,65 @@ export default function CasePeople({
           <CaseContacts caseId={caseId} data={data} save={save} onCase={onCase} />
         </details>
       </Shell>
+      {adding === 'choose' && (
+        <Dialog
+          title="添加人员或机构"
+          submitLabel="添加到本案"
+          onClose={() => setAdding(null)}
+          onSubmit={async () => {
+            if (!chosen) throw new Error('请选择联系人，或新建人物和机构');
+            const existing = links.find(
+              (l) =>
+                l.contactId === chosen.id &&
+                l.proceedingId === null &&
+                l.role === (role.trim() || '相关人'),
+            );
+            if (!existing)
+              await save('save_contact_link', {
+                input: {
+                  id: linkId,
+                  caseId,
+                  contactId: chosen.id,
+                  proceedingId: null,
+                  role: role.trim() || '相关人',
+                },
+              });
+          }}
+        >
+          <ContactPicker
+            label="选择已有联系人"
+            contacts={data.contacts}
+            value={chosen?.id ?? null}
+            onSelect={setChosen}
+          />
+          <label>
+            本案身份（可选）
+            <input
+              aria-label="本案身份"
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              placeholder="例如：我方代理律师、原告、承办法官"
+            />
+          </label>
+          <div className="feature-toolbar">
+            <button type="button" onClick={() => setAdding('person')}>
+              新建人物
+            </button>
+            <button type="button" onClick={() => setAdding('organization')}>
+              新建机构
+            </button>
+          </div>
+        </Dialog>
+      )}
+      {(adding === 'person' || adding === 'organization') && (
+        <CasePersonEditor
+          caseId={caseId}
+          kind={adding === 'person' ? 'person' : 'organization'}
+          data={data}
+          save={save}
+          onClose={() => setAdding(null)}
+        />
+      )}
       {objectSettings && (
         <ResourceSettings
           entry={objectSettings}

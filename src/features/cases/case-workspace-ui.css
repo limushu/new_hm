@@ -323,3 +323,295 @@
   font-size: var(--text-heading);
   font-weight: 500;
 }
+
+/* Shared object pages: a short property list, readable content, then connections. */
+.object-inspector {
+  width: min(600px, calc(100% - 32px));
+}
+.object-inspector .object-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.object-heading h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.object-heading .important {
+  color: var(--primary);
+  fill: color-mix(in srgb, var(--primary) 20%, transparent);
+}
+.object-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.85;
+  margin: 18px 0;
+}
+.object-properties {
+  margin: 12px 0 18px;
+}
+.object-property-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.object-property-main {
+  display: grid;
+  grid-template-columns: minmax(100px, 0.8fr) minmax(0, 1.2fr);
+  align-items: center;
+  text-align: left;
+  min-height: 44px;
+  gap: 12px;
+  flex: 1;
+  min-width: 0;
+}
+.object-property-main > span {
+  overflow-wrap: anywhere;
+}
+.object-property-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 14px;
+}
+.object-property-name svg {
+  width: 16px;
+  height: 16px;
+  flex: none;
+}
+.object-properties .muted {
+  color: var(--muted);
+}
+.object-add-property,
+.object-edit-link,
+.object-back-link,
+.case-people-graph-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--primary);
+  min-height: 44px;
+  font-size: 14px;
+}
+.object-add-property svg,
+.object-edit-link svg,
+.object-back-link svg,
+.case-people-graph-link svg {
+  width: 17px;
+  height: 17px;
+}
+.object-property-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.object-property-options label {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+.object-property-options input {
+  width: 18px;
+}
+.object-delete-property {
+  color: var(--red-text);
+  min-height: 44px;
+}
+.object-attachment {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 0;
+  min-height: 44px;
+  text-align: left;
+  width: 100%;
+  border-bottom: 1px solid var(--line);
+}
+.object-contact-fields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  color: var(--muted);
+}
+.object-contact-fields a {
+  color: var(--primary);
+}
+.resource-relation-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.resource-related-object {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  min-height: 44px;
+  min-width: 0;
+  flex: 1;
+  text-align: left;
+}
+.resource-related-object strong {
+  font-weight: 500;
+  overflow-wrap: anywhere;
+}
+.resource-related-object small {
+  color: var(--muted);
+}
+.object-relation-advanced {
+  margin-bottom: 14px;
+}
+.object-relation-advanced summary {
+  cursor: pointer;
+  color: var(--muted);
+  min-height: 36px;
+}
+.case-focus-summary {
+  margin-bottom: 28px;
+}
+.case-focus-caption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 12px;
+}
+.case-focus-caption button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 36px;
+}
+.case-focus-caption svg {
+  width: 14px;
+  height: 14px;
+}
+.case-focus-main {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  text-align: left;
+  width: 100%;
+  padding: 5px 0 20px;
+  border-bottom: 1px solid var(--line);
+}
+.case-focus-main strong {
+  display: block;
+  font-size: 19px;
+  font-weight: 500;
+}
+.case-focus-main small {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+  margin-top: 6px;
+}
+.case-focus-main > svg {
+  width: 18px;
+  color: var(--muted);
+}
+.case-next-action {
+  margin-top: 20px;
+  padding: 16px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+}
+.case-next-action > div {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 10px;
+}
+.case-next-action input {
+  flex: none;
+  width: 19px;
+  height: 19px;
+  margin-top: 3px;
+  accent-color: var(--primary);
+}
+.case-next-action button {
+  text-align: left;
+  font-size: 15px;
+  line-height: 1.6;
+}
+.case-next-action > small {
+  display: block;
+  margin: 5px 0 0 29px;
+  color: var(--muted);
+}
+.workspace-dialog .case-create-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.case-create-options small {
+  display: none;
+}
+.case-create-options > button {
+  min-height: 58px;
+  padding: 13px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+.case-create-options > button svg {
+  color: var(--primary);
+}
+.case-redesigned .finance-visuals {
+  display: block;
+  margin: 20px 0;
+  padding: 20px 0;
+}
+.case-redesigned .finance-chart-body {
+  gap: 20px;
+}
+.case-redesigned .finance-donut,
+.case-redesigned .finance-donut > svg {
+  width: 126px;
+  height: 126px;
+}
+.case-redesigned .finance-composition header {
+  margin-bottom: 14px;
+}
+.case-redesigned .case-person-group {
+  margin: 20px 0;
+}
+.case-redesigned .case-person-group > h3 {
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 5px;
+}
+@media (max-width: 760px) {
+  .object-inspector {
+    margin: auto 0 0;
+    width: 100%;
+    max-width: none;
+    max-height: 90dvh;
+    border-radius: 22px 22px 0 0;
+  }
+  .case-redesigned .case-body .case-tabs {
+    margin-bottom: 22px;
+  }
+  .resource-relations .section-title {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .resource-relation-actions {
+    gap: 16px;
+  }
+}
+
+.creation-properties > summary {
+  min-height: 36px;
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 13px;
+  margin-bottom: 12px;
+}

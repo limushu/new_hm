@@ -1,5 +1,5 @@
 import Select from '../../components/Select';
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import type { Contact, SaveAction, Workspace } from '../../domain/types';
@@ -12,6 +12,7 @@ export default function ContactForm({
   onSaved,
   initialCourtId,
   allowedKinds,
+  properties,
 }: {
   value: Contact;
   data: Workspace;
@@ -20,6 +21,7 @@ export default function ContactForm({
   onSaved?: (contact: Contact) => Promise<void>;
   initialCourtId?: string | null;
   allowedKinds?: Contact['kind'][];
+  properties?: ReactNode;
 }) {
   const [input, setInput] = useState(value);
   const [reuseError, setReuseError] = useState('');
@@ -93,6 +95,7 @@ export default function ContactForm({
           {reuseError}
         </p>
       )}
+      {properties}
       <div className="form-columns">
         <label>
           类型

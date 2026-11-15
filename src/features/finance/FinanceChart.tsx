@@ -18,7 +18,7 @@ export default function FinanceChart({
   paidTotal?: number;
   showAgreement?: boolean;
 }) {
-  const [kind, setKind] = useState<'income' | 'expense'>('income');
+  const [kind, setKind] = useState<'income' | 'expense'>('expense');
   const [chosen, setChosen] = useState<string | null>(null);
   const [hover, setHover] = useState<string | null>(null);
   const amounts = new Map<string, number>();
@@ -138,28 +138,40 @@ export default function FinanceChart({
           </div>
         </div>
       </section>
-      {showAgreement && (
-        <section className="fee-progress">
-          <h4>整案律师费收款</h4>
-          <strong>
-            ¥ {money(paid)} <small>/ {money(agreed)}</small>
-          </strong>
-          <progress
-            max={Math.max(agreed, 1)}
-            value={Math.min(paid, agreed)}
-            aria-label="已收律师费占约定金额"
-          />
-          <p>
-            {!agreementKnown
-              ? '尚未设置约定律师费'
-              : agreed === 0 && paid === 0
-                ? '已明确约定免费'
-                : paid > agreed
-                  ? `已收超出约定 ¥ ${money(paid - agreed)}`
-                  : `待收 ¥ ${money(Math.max(0, agreed - paid))}`}
-          </p>
-        </section>
-      )}
+      {showAgreement && <FeeProgress agreed={agreed} paid={paid} agreementKnown={agreementKnown} />}
     </div>
+  );
+}
+
+export function FeeProgress({
+  agreed,
+  paid,
+  agreementKnown,
+}: {
+  agreed: number;
+  paid: number;
+  agreementKnown: boolean;
+}) {
+  return (
+    <section className="fee-progress">
+      <h4>整案律师费收款</h4>
+      <strong>
+        ¥ {money(paid)} <small>/ {money(agreed)}</small>
+      </strong>
+      <progress
+        max={Math.max(agreed, 1)}
+        value={Math.min(paid, agreed)}
+        aria-label="已收律师费占约定金额"
+      />
+      <p>
+        {!agreementKnown
+          ? '尚未设置约定律师费'
+          : agreed === 0 && paid === 0
+            ? '已明确约定免费'
+            : paid > agreed
+              ? `已收超出约定 ¥ ${money(paid - agreed)}`
+              : `待收 ¥ ${money(Math.max(0, agreed - paid))}`}
+      </p>
+    </section>
   );
 }

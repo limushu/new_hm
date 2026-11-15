@@ -121,6 +121,7 @@ test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async
 test('收支图按整数分统计、分类筛选同步合计，超收明确显示', async ({ page }) => {
   await page.getByRole('tab', { name: '费用', exact: true }).click();
   await openFinanceDetails(page);
+  await page.locator('.chart-kind').getByRole('button', { name: '收入', exact: true }).click();
   await expect(page.getByRole('img', { name: '收入分类，总额 0.00 元' })).toBeVisible();
   await page.getByRole('button', { name: '修改约定', exact: true }).click();
   await page.getByRole('textbox', { name: '约定律师费', exact: true }).fill('1000');

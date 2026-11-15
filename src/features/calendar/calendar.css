@@ -718,3 +718,69 @@ button.calendar-primary:hover {
     opacity: 1;
   }
 }
+.agenda-week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  margin: 6px 0 22px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.agenda-week-strip button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 9px 0;
+  border-radius: 10px;
+  min-height: 62px;
+}
+.agenda-week-strip small {
+  font-size: 12px;
+  color: var(--muted);
+}
+.agenda-week-strip strong {
+  font-size: 17px;
+  font-weight: 500;
+}
+.agenda-week-strip button[aria-pressed='true'] {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+.agenda-week-strip button[aria-pressed='true'] small {
+  color: var(--on-primary);
+}
+.calendar-view-agenda .day-agenda {
+  display: block;
+}
+.calendar-view-agenda .day-agenda > header {
+  margin-bottom: 20px;
+}
+.calendar-view-agenda .calendar-header h1 {
+  font-size: 24px;
+}
+.calendar-view-agenda .calendar-eyebrow {
+  display: none;
+}
+.calendar-view-agenda .agenda-task > input {
+  accent-color: var(--primary);
+  width: 19px;
+  height: 19px;
+  margin: 0;
+}
+.calendar-view-agenda .agenda-task {
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+}
+.calendar-view-agenda .agenda-task-main {
+  gap: 0;
+}
+.calendar-view-agenda .agenda-task-main > svg {
+  display: none;
+}
+.calendar-view-agenda .day-agenda {
+  margin-top: 0;
+}
+.calendar-view-agenda .calendar-actions .calendar-search,
+.calendar-view-agenda .calendar-actions .calendar-new-case {
+  display: none;
+}
