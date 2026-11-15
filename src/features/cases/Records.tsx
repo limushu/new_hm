@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Plus, Paperclip, NotebookPen } from 'lucide-react';
 import Dialog from '../../components/Dialog';
@@ -92,12 +93,14 @@ export function RecordForm({
   value,
   save,
   onClose,
+  properties,
   data,
   scope,
 }: {
   value: RecordInput;
   save: SaveAction;
   onClose: () => void;
+  properties?: ReactNode;
   data: Workspace;
   scope: WorkScope;
 }) {
@@ -112,6 +115,7 @@ export function RecordForm({
         await save('save_work_record', { input: { ...value, body }, ...context });
       }}
     >
+      {properties}
       <label>
         记录内容
         <textarea
@@ -125,7 +129,9 @@ export function RecordForm({
           onChange={(e) => setBody(e.target.value)}
         />
       </label>
-      <WorkScopeField caseId={value.caseId} data={data} value={context} onChange={setContext} />
+      {!properties && (
+        <WorkScopeField caseId={value.caseId} data={data} value={context} onChange={setContext} />
+      )}
     </Dialog>
   );
 }

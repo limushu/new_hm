@@ -672,6 +672,50 @@ export async function previewCommand<K extends keyof Commands>(
       else data.workRecords.unshift({ ...input, createdAt: new Date().toISOString() });
       break;
     }
+    case 'apply_object_properties': {
+      const input = a.input as Commands['apply_object_properties']['args']['input'];
+      const resources = resourceIndex(data, input.caseId, true);
+      if (input.resources.length > 500 || input.nodes.length > 30 || input.tags.length > 20)
+        throw new Error('公共属性超过限制');
+      const tags = input.tags.map((t) => t.trim()).filter(Boolean);
+      if (tags.some((t) => [...t].length > 40 || /[\u0000-\u001f]/.test(t)))
+        throw new Error('标签无效');
+      for (const ref of [...input.resources, ...input.nodes])
+        if (!resources.has(resourceKey(ref))) throw new Error('关联对象不存在或不属于本案');
+      for (const node of input.nodes)
+        if (input.resources.some((ref) => resourceKey(ref) === resourceKey(node)))
+          throw new Error('关联节点无效');
+      const unique = tags.filter(
+        (tag, i) => tags.findIndex((t) => t.toLowerCase() === tag.toLowerCase()) === i,
+      );
+      for (const resource of input.resources) {
+        const item = { caseId: input.caseId, resource, importance: input.importance, tags: unique };
+        const index = data.resourceMetadata.findIndex(
+          (m) => m.caseId === input.caseId && resourceKey(m.resource) === resourceKey(resource),
+        );
+        if (index < 0) data.resourceMetadata.push(item);
+        else data.resourceMetadata[index] = item;
+        for (const node of input.nodes)
+          if (
+            !data.resourceRelations.some(
+              (r) =>
+                r.caseId === input.caseId &&
+                resourceKey(r.source) === resourceKey(resource) &&
+                resourceKey(r.target) === resourceKey(node) &&
+                r.kind === 'in_node',
+            )
+          )
+            data.resourceRelations.push({
+              id: crypto.randomUUID(),
+              caseId: input.caseId,
+              source: resource,
+              target: node,
+              kind: 'in_node',
+              label: '',
+            });
+      }
+      break;
+    }
     case 'save_resource_metadata': {
       const input = a.input as ResourceMetadata;
       if (!resourceIndex(data, input.caseId, true).has(resourceKey(input.resource)))

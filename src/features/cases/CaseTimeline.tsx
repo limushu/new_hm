@@ -25,6 +25,7 @@ import { resourceKey, type TimelineEntry, type TimelineFilter } from '../../case
 import ResourceSettings from './ResourceSettings';
 const icons = {
   progress: Flag,
+  node: Flag,
   record: NotebookPen,
   material: Files,
   document: Files,
@@ -256,6 +257,10 @@ export default function CaseTimeline({
           <Details
             key={resourceKey(opened.resource)}
             resource={opened.resource}
+            onOpen={(ref) => {
+              const e = entries.find((row) => resourceKey(row.resource) === resourceKey(ref));
+              if (e) setOpened(e);
+            }}
             data={data}
             save={save}
             onClose={() => setOpened(null)}

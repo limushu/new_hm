@@ -1,3 +1,4 @@
+import { openFinanceDetails } from './fields';
 import { expect, test } from '@playwright/test';
 import { selectOption } from './fields';
 test.beforeEach(async ({ page }) => {
@@ -36,7 +37,7 @@ test('四个主标签同字号同字重，键盘切换，滚动时入口仍可�
     })),
   );
   expect(new Set(fonts.map((f) => JSON.stringify(f))).size).toBe(1);
-  await page.getByRole('tab', { name: '概况', exact: true }).focus();
+  await page.getByRole('tab', { name: '脉络', exact: true }).focus();
   await page.keyboard.press('End');
   await expect(page.getByRole('tab', { name: '费用', exact: true })).toHaveAttribute(
     'aria-selected',
@@ -44,8 +45,8 @@ test('四个主标签同字号同字重，键盘切换，滚动时入口仍可�
   );
   await expect(page.locator('.proceeding-path')).toHaveCount(0);
   await page.keyboard.press('ArrowLeft');
-  await expect(page.getByRole('tab', { name: '办理', exact: true })).toBeFocused();
-  await page.getByRole('tab', { name: '概况', exact: true }).click();
+  await expect(page.getByRole('tab', { name: '关系', exact: true })).toBeFocused();
+  await page.getByRole('tab', { name: '脉络', exact: true }).click();
   await page.locator('.case-page').evaluate((e) => (e.scrollTop = e.scrollHeight));
   await expect(page.getByRole('tab', { name: '材料', exact: true })).toBeInViewport();
   await page.setViewportSize({ width: 390, height: 844 });
@@ -55,6 +56,7 @@ test('记账直接上传凭据，取消不导入，保存后材料与金额一�
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').click();
   await page.getByRole('tab', { name: '费用', exact: true }).click();
+  await openFinanceDetails(page);
   const file = {
     name: '报销凭据.txt',
     mimeType: 'text/plain',
@@ -67,6 +69,7 @@ test('记账直接上传凭据，取消不导入，保存后材料与金额一�
   await page.getByRole('tab', { name: '材料', exact: true }).click();
   await expect(page.locator('.material-row')).toHaveCount(0);
   await page.getByRole('tab', { name: '费用', exact: true }).click();
+  await openFinanceDetails(page);
   await page.getByRole('button', { name: '记一笔', exact: true }).click();
   await selectOption(page, page.getByLabel('收支类型'), 'expense');
   await page.getByLabel('收支金额').fill('128.50');

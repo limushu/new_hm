@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import DateField from '../../components/DateField';
 import Select from '../../components/Select';
 import { cents, money } from '../../domain/money';
@@ -65,22 +66,6 @@ export default function Finance({
   const received = total((r) => r.kind === 'expense' && r.reimbursement === 'received');
   return (
     <section className="feature-section">
-      <div className="fee-summary">
-        <span>
-          整案约定律师费{' '}
-          <strong>{agreementKnown ? `¥ ${money(detail.agreedFeeCents)}` : '未填写'}</strong>
-        </span>
-        <span>整案已收律师费 ¥ {money(allFees)}</span>
-        {agreementKnown && (
-          <span>整案未收 ¥ {money(Math.max(0, detail.agreedFeeCents - allFees))}</span>
-        )}
-        <button
-          onClick={() => setFee(agreementKnown ? (detail.agreedFeeCents / 100).toFixed(2) : '')}
-        >
-          修改约定
-        </button>
-      </div>
-      <FeePlans caseId={caseId} data={data} save={save} scope={scope} />
       <header>
         <h3>实际收支</h3>
         <button
@@ -131,17 +116,7 @@ export default function Finance({
           <option value="pending">待报销</option>
         </Select>
       </div>
-      <FinanceChart
-        paidTotal={allFees}
-        agreementKnown={agreementKnown}
-        showAgreement={!scope.proceedingId}
-        rows={rows}
-        agreed={scope.proceedingId ? 0 : agreementKnown ? detail.agreedFeeCents : 0}
-        onCategory={(kind, name) => {
-          setFilter(kind);
-          setCategory(name);
-        }}
-      />
+
       {category && (
         <button className="inline-link" onClick={() => setCategory(null)}>
           正在查看：{category} · 清除分类筛选
@@ -188,6 +163,41 @@ export default function Finance({
         </div>
       ))}
       {!rows.length && <p className="quiet-empty">暂无收支，先记录一笔收入或支出。</p>}
+      <details className="finance-fee-plans">
+        <summary>收费约定与收费节点</summary>
+        <div className="fee-summary">
+          <span>
+            整案约定律师费{' '}
+            <strong>{agreementKnown ? `¥ ${money(detail.agreedFeeCents)}` : '未填写'}</strong>
+          </span>
+          <span>整案已收律师费 ¥ {money(allFees)}</span>
+          {agreementKnown && (
+            <span>整案未收 ¥ {money(Math.max(0, detail.agreedFeeCents - allFees))}</span>
+          )}
+          <button
+            onClick={() => setFee(agreementKnown ? (detail.agreedFeeCents / 100).toFixed(2) : '')}
+          >
+            修改约定
+          </button>
+        </div>
+
+        <FeePlans caseId={caseId} data={data} save={save} scope={scope} />
+      </details>
+
+      <details className="finance-analysis">
+        <summary>查看收支分类分析</summary>
+        <FinanceChart
+          paidTotal={allFees}
+          agreementKnown={agreementKnown}
+          showAgreement={!scope.proceedingId}
+          rows={rows}
+          agreed={scope.proceedingId ? 0 : agreementKnown ? detail.agreedFeeCents : 0}
+          onCategory={(kind, name) => {
+            setFilter(kind);
+            setCategory(name);
+          }}
+        />
+      </details>
       {edit && (
         <EntryForm
           value={edit}
@@ -245,6 +255,7 @@ export function EntryForm({
   data,
   save,
   onClose,
+  properties,
   onDelete,
   initialScope = caseScope,
 }: {
@@ -252,6 +263,7 @@ export function EntryForm({
   data: Workspace;
   save: SaveAction;
   onClose: () => void;
+  properties?: ReactNode;
   onDelete?: () => void;
   initialScope?: WorkScope;
 }) {
@@ -279,6 +291,7 @@ export function EntryForm({
         });
       }}
     >
+      {properties}
       <div className="form-columns">
         <label>
           类型
@@ -337,7 +350,9 @@ export function EntryForm({
           />
         </label>
       </div>
-      <WorkScopeField caseId={input.caseId} data={data} value={scope} onChange={setScope} />
+      {!properties && (
+        <WorkScopeField caseId={input.caseId} data={data} value={scope} onChange={setScope} />
+      )}
       {input.kind === 'expense' && (
         <label>
           当事人报销

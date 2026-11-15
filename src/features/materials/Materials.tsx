@@ -1,3 +1,5 @@
+import ResourceSettings from '../cases/ResourceSettings';
+import { caseSystem } from '../../case-system/modules';
 import { errorMessage } from '../../services/errors';
 import Select from '../../components/Select';
 import { useEffect, useLayoutEffect, useRef, useState, lazy, Suspense } from 'react';
@@ -119,6 +121,12 @@ export default function Materials({
   const [moveScope, setMoveScope] = useState('shared');
   const [moveFolder, setMoveFolder] = useState('');
   const [recording, setRecording] = useState(false);
+  const [objectId, setObjectId] = useState<string | null>(null);
+  const objectSettings = objectId
+    ? caseSystem
+        .objects(data, caseId)
+        .find((o) => o.resource.kind === 'material' && o.resource.id === objectId)
+    : null;
   const [notice, setNotice] = useState('');
   const [drop, setDrop] = useState(false);
   const { busy, error, setError, run } = useAction();
@@ -629,6 +637,14 @@ export default function Materials({
           onClose={() => setAssociation(null)}
         />
       )}
+      {objectSettings && (
+        <ResourceSettings
+          entry={objectSettings}
+          data={data}
+          save={save}
+          onClose={() => setObjectId(null)}
+        />
+      )}
       {menu && (
         <div
           className={`material-menu ${tapToOpen ? 'material-touch-menu' : ''}`}
@@ -645,6 +661,16 @@ export default function Materials({
             }}
           >
             {menu.item.kind === 'folder' ? '打开文件夹' : '打开'}
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={() => {
+              setObjectId(menu.item.id);
+              setMenu(null);
+            }}
+          >
+            对象属性
           </button>
           <button type="button" role="menuitem" onClick={() => showEdit('rename', menu.item)}>
             重命名

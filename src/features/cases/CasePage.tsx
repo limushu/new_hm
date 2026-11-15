@@ -26,6 +26,7 @@ import { ScopeFilter } from './WorkScopeField';
 import { caseScope, resourceLinks } from '../../domain/workspace';
 import './work-area.css';
 import './case-chronicle.css';
+import './case-workspace-ui.css';
 import Materials from '../materials/Materials';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -36,11 +37,11 @@ import {
   ChevronsRight,
   Expand,
   Plus,
-  Trash2,
   X,
   LayoutDashboard,
   Files,
-  Workflow,
+  Network,
+  Ellipsis,
   Wallet,
 } from 'lucide-react';
 import type { CaseFile, CaseInput, SaveAction, Workspace, WorkScope } from '../../domain/types';
@@ -84,13 +85,7 @@ export default function CasePage({
   const [stageSelection, setStageSelection] = useState<Record<string, string | null>>({});
   const [expanded, setExpanded] = useState(false);
   const [peopleOpen, setPeopleOpen] = useState(false);
-  const [compact, setCompact] = useState(() => matchMedia('(max-width: 760px)').matches);
-  useEffect(() => {
-    const media = matchMedia('(max-width: 760px)');
-    const update = () => setCompact(media.matches);
-    media.addEventListener('change', update);
-    return () => media.removeEventListener('change', update);
-  }, []);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [localError, setLocalError] = useState('');
   const [programForm, setProgramForm] = useState(false);
@@ -246,6 +241,7 @@ export default function CasePage({
         ref={section}
         className={`case-page case-redesigned ${expanded ? 'expanded' : ''}`}
         aria-label="案件详情"
+        data-tab={tab}
       >
         <div className="case-toolbar">
           <button className="icon-button" title="返回看板" onClick={onClose}>
@@ -258,12 +254,11 @@ export default function CasePage({
           </button>
           {saved && (
             <button
-              className="case-delete-action"
-              disabled={saving}
-              onClick={() => setRemove(true)}
+              className="icon-button case-more-action"
+              aria-label="案件管理"
+              onClick={() => setMoreOpen(true)}
             >
-              <Trash2 />
-              删除案件
+              <Ellipsis />
             </button>
           )}
         </div>
@@ -329,9 +324,9 @@ export default function CasePage({
           )}
           <nav className="case-tabs" aria-label="案件功能" role="tablist">
             {[
-              { id: 'overview', label: '概况', Icon: LayoutDashboard },
+              { id: 'overview', label: '脉络', Icon: LayoutDashboard },
               { id: 'materials', label: '材料', Icon: Files },
-              { id: 'info', label: '办理', Icon: Workflow },
+              { id: 'relations', label: '关系', Icon: Network },
               { id: 'finance', label: '费用', Icon: Wallet },
             ].map(({ id, label, Icon }, index) => (
               <button
@@ -342,7 +337,7 @@ export default function CasePage({
                 className={tab === id ? 'active' : ''}
                 onClick={() => setTab(id)}
                 onKeyDown={(e) => {
-                  const ids = ['overview', 'materials', 'info', 'finance'];
+                  const ids = ['overview', 'materials', 'relations', 'finance'];
                   const next =
                     e.key === 'ArrowRight'
                       ? (index + 1) % 4
@@ -379,14 +374,8 @@ export default function CasePage({
             <>
               <RetainedView active={tab === 'overview'}>
                 <div className="case-overview-content">
-                  <CaseChronicle
-                    item={item}
-                    data={data}
-                    save={save}
-                    onProgram={viewProgram}
-                    onPeople={() => setPeopleOpen(true)}
-                  />
-                  <details className="case-workspace-details" open={!compact}>
+                  <CaseChronicle item={item} data={data} save={save} />
+                  <details className="case-workspace-details">
                     <summary>工作与案件资料</summary>
                     <CaseOverview
                       item={item}
@@ -687,6 +676,16 @@ export default function CasePage({
                   )}
                 </div>
               </RetainedView>
+              <RetainedView active={tab === 'relations'}>
+                <CasePeople
+                  caseId={item.id}
+                  data={data}
+                  save={save}
+                  onCase={onCase}
+                  onClose={() => setTab('overview')}
+                  inline
+                />
+              </RetainedView>
               <RetainedView active={tab === 'materials'}>
                 <>
                   {materialScope.proceedingId && (
@@ -732,6 +731,28 @@ export default function CasePage({
               setTab('materials');
             }}
           />
+        )}
+        {moreOpen && (
+          <Dialog title="案件管理" onClose={() => setMoreOpen(false)}>
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false);
+                setTab('info');
+              }}
+            >
+              历史流程资料
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setMoreOpen(false);
+                setRemove(true);
+              }}
+            >
+              删除案件
+            </button>
+          </Dialog>
         )}
         {peopleOpen && (
           <CasePeople

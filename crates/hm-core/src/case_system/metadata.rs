@@ -44,3 +44,39 @@ impl Store {
         Ok(())
     }
 }
+
+impl Store {
+    /// Atomically annotate a creation result and its node references. The resource bodies
+    /// are already durable; callers may retry this idempotently without importing again.
+    pub fn apply_object_properties(
+        &self,
+        input: super::ApplyObjectProperties,
+        resolver: &dyn ResourceResolver,
+    ) -> Result<()> {
+        if input.resources.len() > 500 || input.nodes.len() > 30 {
+            return Err(super::invalid("resource_reference_invalid"));
+        }
+        let tags = serde_json::to_string(&normalized_resource_tags(&input.tags)?)?;
+        let importance = match input.importance {
+            Importance::Normal => "normal",
+            Importance::Important => "important",
+        };
+        let tx = self.connection.unchecked_transaction()?;
+        self.active_case(&input.case_id)?;
+        for node in &input.nodes {
+            self.validate_case_resource(&input.case_id, node, resolver)?;
+        }
+        for resource in &input.resources {
+            self.validate_case_resource(&input.case_id, resource, resolver)?;
+            tx.execute("INSERT INTO resource_metadata(case_id,resource_kind,resource_id,importance,tags_json) VALUES(?1,?2,?3,?4,?5) ON CONFLICT(case_id,resource_kind,resource_id) DO UPDATE SET importance=excluded.importance,tags_json=excluded.tags_json",params![input.case_id,resource.kind,resource.id,importance,tags])?;
+            for node in &input.nodes {
+                if node == resource {
+                    return Err(super::invalid("resource_relation_invalid"));
+                }
+                tx.execute("INSERT OR IGNORE INTO resource_relations(id,case_id,source_kind,source_id,target_kind,target_id,kind,label) VALUES(?1,?2,?3,?4,?5,?6,'in_node','')",params![uuid::Uuid::new_v4().to_string(),input.case_id,resource.kind,resource.id,node.kind,node.id])?;
+            }
+        }
+        tx.commit()?;
+        Ok(())
+    }
+}

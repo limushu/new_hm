@@ -1,3 +1,5 @@
+import { caseSystem } from '../../case-system/modules';
+import { resourceKey } from '../../case-system/contracts';
 import { lazy, Suspense, useState } from 'react';
 import Dialog from '../../components/Dialog';
 import { CasePresentations, type ResourceDetailsProps } from '../../case-system/presentation';
@@ -51,10 +53,57 @@ function TaskDetails({ resource, data, save, onClose }: ResourceDetailsProps) {
   const task = data.tasks.find((t) => t.id === resource.id);
   return task ? <WorkTaskEditor task={task} data={data} save={save} onClose={onClose} /> : null;
 }
-function ProgressDetails({ resource, data, save, onClose }: ResourceDetailsProps) {
-  const value = data.caseEvents.find((t) => t.id === resource.id);
-  return value ? <MilestoneEditor value={value} data={data} save={save} onClose={onClose} /> : null;
+function ProgressDetails({ resource, data, save, onClose, onOpen }: ResourceDetailsProps) {
+  const [edit, setEdit] = useState(false);
+  const value = data.caseEvents.find((e) => e.id === resource.id),
+    legacy = data.proceedings.find((p) => p.id === resource.id);
+  const caseId = value?.caseId ?? legacy?.caseId;
+  if (!caseId) return null;
+  const objects = caseSystem.objects(data, caseId),
+    current = objects.find((o) => resourceKey(o.resource) === resourceKey(resource));
+  const related = [
+    ...new Set(
+      current?.relations
+        .flatMap((r) => [r.source, r.target].map(resourceKey))
+        .filter((key) => key !== resourceKey(resource)) ?? [],
+    ),
+  ].flatMap((key) => {
+    const item = objects.find((o) => resourceKey(o.resource) === key);
+    return item ? [item] : [];
+  });
+  return (
+    <>
+      <Dialog title="节点详情" onClose={onClose}>
+        <h3>{value?.title ?? legacy?.name}</h3>
+        <p className="field-hint">{value?.notes ?? legacy?.caseNumber}</p>
+        {value?.kind !== 'stage_change' && value && (
+          <button onClick={() => setEdit(true)}>编辑节点</button>
+        )}
+        <div className="case-node-relations">
+          {related.map((o) => (
+            <button key={o.id} onClick={() => onOpen?.(o.resource)}>
+              <span>{o.title}</span>
+              <small>{o.importance === 'important' ? '重要' : ''}</small>
+            </button>
+          ))}
+        </div>
+        {!related.length && (
+          <p className="field-hint">可在其他对象创建时选择此节点，或从条目设置添加关联。</p>
+        )}
+      </Dialog>
+      {edit && value && (
+        <MilestoneEditor
+          nodeMode
+          value={value}
+          data={data}
+          save={save}
+          onClose={() => setEdit(false)}
+        />
+      )}
+    </>
+  );
 }
+
 function LedgerDetails({ resource, data, save, onClose }: ResourceDetailsProps) {
   const value = data.ledgerEntries.find((t) => t.id === resource.id);
   return value ? (
@@ -86,5 +135,6 @@ export const casePresentations = new CasePresentations()
   .register('record', RecordDetails)
   .register('task', TaskDetails)
   .register('milestone', ProgressDetails)
+  .register('proceeding', ProgressDetails)
   .register('ledger', LedgerDetails)
   .register('event', CalendarDetails);

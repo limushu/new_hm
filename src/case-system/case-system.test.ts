@@ -205,3 +205,32 @@ test('case relations include unlinked parties and institutions in the graph and 
   expect(workspaceGraph(data).edges.some((e) => e.label === 'Employed by')).toBe(false);
   expect(createCaseSystem().timeline(data, 'one')).toEqual([]);
 });
+
+test('non-temporal actors and files share object properties without inventing occurrence dates', () => {
+  const data = fixture();
+  data.caseParties = [
+    {
+      id: 'person',
+      caseId: 'one',
+      contactId: null,
+      name: 'Plaintiff',
+      side: 'client',
+      serviceType: '',
+    },
+  ];
+  data.resourceMetadata.push({
+    caseId: 'one',
+    resource: { kind: 'party', id: 'person' },
+    importance: 'important',
+    tags: ['key person'],
+  });
+  const objects = createCaseSystem().objects(data, 'one');
+  const actor = objects.find((o) => o.resource.kind === 'party')!;
+  expect(actor.importance).toBe('important');
+  expect(actor.tags).toEqual(['key person']);
+  expect(actor.businessTime).toBeNull();
+  expect(objects.find((o) => o.id === 'material:file')?.importance).toBe('normal');
+  expect(
+    objects.every((o) => o.id && o.caseId && o.type && o.resource && Array.isArray(o.tags)),
+  ).toBe(true);
+});

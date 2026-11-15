@@ -23,13 +23,28 @@ function draft(
 export const builtinCaseModules: readonly CaseModule[] = [
   {
     id: 'core.progress',
-    timelineTypes: [{ id: 'progress', label: '进展' }],
-    timeline: (data, id) =>
-      data.caseEvents
+    timelineTypes: [
+      { id: 'progress', label: '进展' },
+      { id: 'node', label: '关键节点' },
+    ],
+    timeline: (data, id) => [
+      ...data.caseEvents
         .filter((e) => e.caseId === id)
         .map((e) =>
-          draft('milestone', e.id, 'progress', e.title, e.notes, e.eventDate, 'occurred'),
+          draft(
+            'milestone',
+            e.id,
+            e.kind === 'stage_change' ? 'progress' : 'node',
+            e.title,
+            e.notes,
+            e.eventDate,
+            'occurred',
+          ),
         ),
+      ...data.proceedings
+        .filter((p) => p.caseId === id)
+        .map((p) => draft('proceeding', p.id, 'node', p.name, p.caseNumber, null, 'occurred')),
+    ],
   },
   {
     id: 'core.records',

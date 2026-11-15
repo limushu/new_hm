@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
   startRecording,
@@ -11,10 +12,12 @@ export default function Recorder({
   target,
   save,
   onClose,
+  properties,
 }: {
   target: MaterialTarget;
   save: SaveAction;
   onClose: () => void;
+  properties?: ReactNode;
 }) {
   const [name, setName] = useState(
     `录音 ${new Date().toLocaleString('sv-SE').replaceAll(':', '-')}`,
@@ -147,6 +150,7 @@ export default function Recorder({
       }
       submitLabel="保存录音"
     >
+      {properties}
       <label>
         录音名称
         <input

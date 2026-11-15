@@ -6,6 +6,7 @@ export interface ResourceDetailsProps {
   data: Workspace;
   save: SaveAction;
   onClose: () => void;
+  onOpen?: (resource: ResourceRef) => void;
 }
 /** UI adapters register separately from resource storage and timeline projection. */
 export class CasePresentations {

@@ -1,3 +1,4 @@
+import { openCaseArchive, openLegacyCase, requestCaseDeletion } from './fields';
 import { selectOption, openFlowDetails } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 
@@ -6,6 +7,7 @@ async function createCase(page: Page, title: string) {
   await page.getByRole('textbox', { name: '案件名称', exact: true }).fill(title);
   await page.getByRole('textbox', { name: '案件名称', exact: true }).press('Enter');
   await expect(page.locator('.save-state')).toHaveText('已保存');
+  await openCaseArchive(page);
 }
 
 test.beforeEach(async ({ page }) => {
@@ -27,7 +29,7 @@ test('侧页建案、待办、工作记录与可恢复删除', async ({ page }) 
   await page.getByRole('textbox', { name: '工作记录内容' }).fill('已与当事人核对现有证据。');
   await page.getByRole('button', { name: '保存记录', exact: true }).click();
   await expect(page.locator('.work-record')).toContainText('已与当事人核对现有证据。');
-  await page.getByRole('button', { name: '删除案件', exact: true }).click();
+  await requestCaseDeletion(page);
   await page.getByRole('button', { name: '移入回收站', exact: true }).click();
   await expect(page.getByRole('region', { name: '案件详情' })).toHaveCount(0);
   await page.getByRole('button', { name: '回收站', exact: true }).click();
@@ -36,6 +38,7 @@ test('侧页建案、待办、工作记录与可恢复删除', async ({ page }) 
   await expect(page.locator('.trash-item')).toHaveCount(0);
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').filter({ hasText: '浏览器流程验证案件' }).click();
+  await openCaseArchive(page);
   await page.getByText(/已完成 ·/).click();
   await expect(page.getByRole('checkbox', { name: /核对证据目录/ })).toBeChecked();
   await expect(page.locator('.work-record')).toContainText('已与当事人核对现有证据。');
@@ -47,7 +50,7 @@ test('不同流程独立保存案号，新增流程不改变案件状态', async
   await page.getByRole('button', { name: '新增流程', exact: true }).click();
   await page.getByRole('button', { name: '新增', exact: true }).click();
   await openFlowDetails(page);
-  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openLegacyCase(page);
   await openFlowDetails(page);
   await page.getByRole('textbox', { name: '案号', exact: true }).fill('一审独立案号');
   await page.getByRole('textbox', { name: '案号', exact: true }).press('Tab');
@@ -87,6 +90,7 @@ test('空白草稿关闭不留下案件，快速回车不重复创建', async ({
 test('手机宽度保持可读布局，案件侧页占满可用宽度', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await page.locator('.case-card').first().click();
+  await openCaseArchive(page);
   await expect(page.getByRole('textbox', { name: '案件名称', exact: true })).toBeVisible();
   const geometry = await page.locator('.case-page').boundingBox();
   expect(geometry?.width).toBe(390);

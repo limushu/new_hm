@@ -276,3 +276,51 @@ fn changing_a_legacy_resources_case_detaches_only_the_old_case_annotations() {
         .save_resource_metadata(meta(&two, a), &BuiltinResources)
         .is_ok());
 }
+
+#[test]
+fn object_properties_apply_atomically_and_node_links_are_retry_safe() {
+    let mut s = Store::memory().unwrap();
+    let id = case(&mut s, "Objects");
+    let other = case(&mut s, "Other");
+    let node = ResourceRef {
+        kind: "milestone".into(),
+        id: Uuid::new_v4().to_string(),
+    };
+    s.save_case_event(CaseEvent {
+        id: node.id.clone(),
+        case_id: id.clone(),
+        proceeding_id: None,
+        kind: "milestone".into(),
+        title: "First instance".into(),
+        event_date: String::new(),
+        notes: String::new(),
+    })
+    .unwrap();
+    let one = task(&s, &id);
+    let foreign = task(&s, &other);
+    let input = ApplyObjectProperties {
+        case_id: id.clone(),
+        resources: vec![one.clone()],
+        importance: Importance::Important,
+        tags: vec![" evidence ".into()],
+        nodes: vec![node],
+    };
+    s.apply_object_properties(input.clone(), &BuiltinResources)
+        .unwrap();
+    s.apply_object_properties(input.clone(), &BuiltinResources)
+        .unwrap();
+    assert_eq!(s.resource_relations().unwrap().len(), 1);
+    let mut bad = input;
+    bad.resources.push(foreign);
+    bad.tags = vec!["must roll back".into()];
+    assert!(s.apply_object_properties(bad, &BuiltinResources).is_err());
+    assert_eq!(s.resource_metadata().unwrap()[0].tags, vec!["evidence"]);
+    assert!(s
+        .case_events()
+        .unwrap()
+        .iter()
+        .find(|e| e.id == s.resource_relations().unwrap()[0].target.id)
+        .unwrap()
+        .event_date
+        .is_empty());
+}

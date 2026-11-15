@@ -418,3 +418,18 @@ export interface Commands {
   save_resource_relation: { args: { input: ResourceRelation }; result: null };
   delete_resource_relation: { args: { caseId: string; id: string }; result: null };
 }
+
+export interface Commands {
+  apply_object_properties: {
+    args: {
+      input: {
+        caseId: string;
+        resources: import('../case-system/contracts').ResourceRef[];
+        importance: import('../case-system/contracts').Importance;
+        tags: string[];
+        nodes: import('../case-system/contracts').ResourceRef[];
+      };
+    };
+    result: null;
+  };
+}

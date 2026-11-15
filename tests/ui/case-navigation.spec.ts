@@ -1,3 +1,4 @@
+import { openFinanceDetails, openLegacyCase } from './fields';
 import { expect, test } from '@playwright/test';
 
 test('手机案件 Tab 再次进入保留材料搜索与视图，主导航保留看板', async ({ page }) => {
@@ -16,6 +17,7 @@ test('手机案件 Tab 再次进入保留材料搜索与视图，主导航保留
   const search = await materialSearch.elementHandle();
   await materialSearch.fill('保留的检索条件');
   await page.getByRole('tab', { name: '费用', exact: true }).click();
+  await openFinanceDetails(page);
   await page.getByRole('tab', { name: '材料', exact: true }).click();
   await expect(materialSearch).toHaveValue('保留的检索条件');
   expect(
@@ -83,7 +85,7 @@ test.describe('触摸编辑后的案件导航', () => {
     await page.getByRole('option').filter({ hasText: '#已结案' }).tap();
     await expect(status).toHaveAttribute('data-value', 'closed');
     await expect(status).not.toBeFocused();
-    await page.getByRole('tab', { name: '办理', exact: true }).tap();
+    await openLegacyCase(page);
     await page.getByRole('button', { name: '调整阶段状态', exact: true }).tap();
     await page.getByRole('combobox', { name: '阶段状态', exact: true }).tap();
     await page.getByRole('option', { name: '已完成', exact: true }).tap();
@@ -93,11 +95,12 @@ test.describe('触摸编辑后的案件导航', () => {
       () => (window as unknown as { workspaceReads: number }).workspaceReads,
     );
     for (let round = 0; round < 3; round++) {
-      for (const name of ['概况', '材料', '费用', '办理']) {
+      for (const name of ['脉络', '材料', '费用', '关系']) {
         const tab = page.getByRole('tab', { name, exact: true });
         await tab.tap();
         await expect(tab).toHaveAttribute('aria-selected', 'true');
       }
+      await openLegacyCase(page);
       for (const name of ['立案', '举证', '全部阶段', '庭前准备']) {
         const chip = page.locator('.stage-strip').getByRole('button', { name, exact: true });
         await chip.tap();

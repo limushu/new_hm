@@ -75,3 +75,13 @@ pub fn normalized_resource_tags(values: &[String]) -> crate::Result<Vec<String>>
     }
     Ok(result)
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ApplyObjectProperties {
+    pub case_id: String,
+    pub resources: Vec<ResourceRef>,
+    pub importance: Importance,
+    pub tags: Vec<String>,
+    pub nodes: Vec<ResourceRef>,
+}

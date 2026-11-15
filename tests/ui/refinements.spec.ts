@@ -1,3 +1,4 @@
+import { openCaseArchive, openLegacyCase } from './fields';
 import { expect, test } from '@playwright/test';
 import { selectOption, openFlowDetails } from './fields';
 
@@ -52,7 +53,8 @@ test('从详情编辑、取消和删除时不嵌套表单、不刷新页面，�
 test('有案件和法官关系的法院可直接删除，案件原记录保留', async ({ page }) => {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openCaseArchive(page);
+  await openLegacyCase(page);
   await openFlowDetails(page);
   await page.getByRole('combobox', { name: '办理法院', exact: true }).fill('可删除法院');
   await page.getByRole('button', { name: '新建「可删除法院」', exact: true }).click();
@@ -77,7 +79,8 @@ test('有案件和法官关系的法院可直接删除，案件原记录保留',
   await expect(page.locator('.contact-directory-row')).toHaveCount(1);
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openCaseArchive(page);
+  await openLegacyCase(page);
   await openFlowDetails(page);
   await expect(page.locator('.program-contacts')).toContainText('原记录：可删除法院');
 });
@@ -108,6 +111,7 @@ test('卡片删除先确认，可取消和撤销，键盘可操作且回收站�
 test('新增待办和日程共用日期编辑器，整块点击选日期、直接输入和校验', async ({ page }) => {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
+  await openCaseArchive(page);
   await page.getByRole('button', { name: '添加待办', exact: true }).click();
   await page.getByLabel('待办内容', { exact: true }).fill('准备开庭材料');
   const date = page.getByRole('textbox', { name: '截止日期', exact: true });

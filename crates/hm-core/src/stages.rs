@@ -226,7 +226,9 @@ impl Store {
             return Err(Error::Validation("阶段变更记录不能手动修改".into()));
         }
         self.validate_proceeding(&input.case_id, input.proceeding_id.as_deref())?;
-        checked_date(&input.event_date)?;
+        if !input.event_date.is_empty() {
+            checked_date(&input.event_date)?;
+        }
         let title = checked_text(&input.title, "事件名称", 200, true)?;
         let notes = checked_text(&input.notes, "事件说明", 20000, false)?;
         let owner: Option<String> = self

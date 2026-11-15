@@ -1,3 +1,4 @@
+import { openCaseArchive, openFinanceDetails, openLegacyCase } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 import { selectOption } from './fields';
 async function open(page: Page) {
@@ -5,7 +6,8 @@ async function open(page: Page) {
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openCaseArchive(page);
+  await openLegacyCase(page);
 }
 async function addFlow(page: Page, kind: string) {
   await page.getByRole('button', { name: '新增流程', exact: true }).click();
@@ -24,7 +26,7 @@ test('阶段选择只浏览，任务和日历编辑同一记录，工作清单�
   await page.getByLabel('等待事项', { exact: true }).fill('客户补充银行流水');
   await page.getByRole('button', { name: '保存待办', exact: true }).click();
   await expect(page.locator('.work-task-row:visible')).toContainText('客户补充银行流水');
-  await page.getByRole('tab', { name: '概况', exact: true }).click();
+  await page.getByRole('tab', { name: '脉络', exact: true }).click();
   await expect(
     page.locator('.work-task-row:visible').filter({ hasText: '提交补充证据' }),
   ).toHaveCount(1);
@@ -36,6 +38,7 @@ test('阶段选择只浏览，任务和日历编辑同一记录，工作清单�
   await page.getByRole('button', { name: '保存待办', exact: true }).click();
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
+  await openCaseArchive(page);
   await expect(
     page.locator('.work-task-row:visible').filter({ hasText: '提交补充证据' }),
   ).toContainText('2026-10-19');
@@ -77,8 +80,9 @@ test('并行工作引用同一材料，材料库显示可清除范围，其他�
   await expect(page.locator('.material-row:visible')).toContainText('一审 · 举证');
   await expect(page.locator('.material-row:visible')).toContainText('执行');
   await page.getByRole('tab', { name: '费用', exact: true }).click();
+  await openFinanceDetails(page);
   await expect(page.locator('.proceeding-path:visible')).toHaveCount(0);
-  await page.getByRole('tab', { name: '概况', exact: true }).click();
+  await page.getByRole('tab', { name: '脉络', exact: true }).click();
   await expect(page.locator('.proceeding-path:visible')).toHaveCount(0);
   await expect(page.locator('.work-overview-row')).toHaveCount(2);
 });
@@ -99,6 +103,7 @@ test('阶段支出就地上传凭据，收费节点按实际收款核销，范�
   await expect(page.locator('.work-scope-banner')).toContainText('一审 · 举证');
   await expect(page.locator('.ledger-row')).toHaveCount(1);
   await expect(page.locator('.finance-summary')).toContainText('120.00');
+  await openFinanceDetails(page);
   await page.getByRole('button', { name: '添加收费节点', exact: true }).click();
   await page.getByLabel('收费节点名称').fill('举证阶段约定款');
   await page.getByLabel('节点应收金额').fill('1000');
@@ -123,6 +128,7 @@ test('阶段支出就地上传凭据，收费节点按实际收款核销，范�
     .getByRole('button', { name: '删除', exact: true })
     .click();
   await page.getByRole('tab', { name: '费用', exact: true }).click();
+  await openFinanceDetails(page);
   await expect(page.locator('.work-scope-banner')).toContainText('一审');
   await expect(page.locator('.work-scope-banner')).not.toContainText('举证');
   await expect(page.locator('.ledger-row')).toHaveCount(2);

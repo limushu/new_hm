@@ -18,7 +18,7 @@ test('人物和部门关系可在本案建立，并进入关系图', async ({ pa
   }
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('button', { name: '相关人', exact: true }).click();
+  await page.getByRole('tab', { name: '关系', exact: true }).click();
   await page.getByRole('button', { name: '添加关联', exact: true }).click();
   await selectOption(page, page.getByLabel('关联起点', { exact: true }), { label: '示例客户' });
   await selectOption(page, page.getByLabel('关联目标', { exact: true }), { label: '示例公司部门' });

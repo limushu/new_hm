@@ -31,3 +31,12 @@ pub fn delete_resource_relation(
         store.delete_resource_relation(&case_id, &id)
     })
 }
+
+#[tauri::command(async)]
+pub fn apply_object_properties(
+    state: State<'_, AppState>,
+    system: State<'_, CaseSystem>,
+    input: hm_core::case_system::ApplyObjectProperties,
+) -> Result<(), String> {
+    access(&state, |store| system.apply_properties(store, input))
+}

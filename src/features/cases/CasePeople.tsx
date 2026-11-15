@@ -1,3 +1,7 @@
+import ResourceSettings from './ResourceSettings';
+import { caseSystem } from '../../case-system/modules';
+import type { ResourceRef } from '../../case-system/contracts';
+import type { ReactNode } from 'react';
 import { ResourceRelations } from './ResourceSettings';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Building2, Network, UserRound, ArrowUpRight } from 'lucide-react';
@@ -15,13 +19,22 @@ export default function CasePeople({
   save,
   onCase,
   onClose,
+  inline = false,
 }: {
   caseId: string;
   data: Workspace;
   save: SaveAction;
   onCase: (id: string) => void;
   onClose: () => void;
+  inline?: boolean;
 }) {
+  const Shell = inline ? InlinePeople : Dialog;
+  const [objectRef, setObjectRef] = useState<ResourceRef | null>(null);
+  const objectSettings = objectRef
+    ? caseSystem
+        .objects(data, caseId)
+        .find((o) => o.resource.kind === objectRef.kind && o.resource.id === objectRef.id)
+    : null;
   const [selected, setSelected] = useState<Contact | null>(null);
   const [graph, setGraph] = useState(false);
   const programs = data.proceedings.filter((p) => p.caseId === caseId);
@@ -53,15 +66,15 @@ export default function CasePeople({
       ...data,
       cases: data.cases.filter((c) => c.id === caseId),
       resourceRelations: data.resourceRelations.filter((r) => r.caseId === caseId),
-      proceedings: programs,
+      proceedings: inline ? [] : programs,
       caseParties: parties,
-      contactLinks: links,
+      contactLinks: inline ? links.map((l) => ({ ...l, proceedingId: null })) : links,
       contacts: people,
       contactRelations: data.contactRelations.filter(
         (r) => people.some((c) => c.id === r.courtId) && people.some((c) => c.id === r.judgeId),
       ),
     }),
-    [data, caseId],
+    [data, caseId, inline],
   );
   function row(c: Contact) {
     const roles = [
@@ -90,21 +103,44 @@ export default function CasePeople({
       ]),
     ];
     return (
-      <button className="case-person-row" key={c.id} onClick={() => setSelected(c)}>
-        <span className={`case-person-avatar ${c.kind}`}>
-          {c.kind === 'court' || c.kind === 'organization' ? <Building2 /> : c.name.slice(0, 1)}
-        </span>
-        <span>
-          <strong>{c.name}</strong>
-          <small>{roles.join(' / ') || (c.kind === 'judge' ? '法官' : '相关人')}</small>
-        </span>
-        <ArrowUpRight />
-      </button>
+      <div className="case-person-entry" key={c.id}>
+        <button className="case-person-row" onClick={() => setSelected(c)}>
+          <span className={`case-person-avatar ${c.kind}`}>
+            {c.kind === 'court' || c.kind === 'organization' ? <Building2 /> : c.name.slice(0, 1)}
+          </span>
+          <span>
+            <strong>{c.name}</strong>
+            <small>{roles.join(' / ') || (c.kind === 'judge' ? '法官' : '相关人')}</small>
+          </span>
+          <ArrowUpRight />
+        </button>
+        <button
+          className="icon-button"
+          aria-label={`设置对象 ${c.name}`}
+          onClick={() => setObjectRef({ kind: 'contact', id: c.id })}
+        >
+          ⋯
+        </button>
+      </div>
     );
   }
   return (
     <>
-      <Dialog title="相关人及机构" className="case-people-dialog" onClose={onClose}>
+      <Shell title="相关人及机构" className="case-people-dialog" onClose={onClose}>
+        {inline && (
+          <Suspense fallback={<p>正在打开本案关系网…</p>}>
+            <RelationGraph
+              data={scoped}
+              focusId={`case:${caseId}`}
+              initialGlobal
+              onCase={onCase}
+              onContact={(id) => {
+                const c = data.contacts.find((c) => c.id === id);
+                if (c) setSelected(c);
+              }}
+            />
+          </Suspense>
+        )}
         <div className="case-people-heading">
           <p>
             {
@@ -185,6 +221,13 @@ export default function CasePeople({
                     · 尚未关联联系对象
                   </small>
                 </span>
+                <button
+                  className="icon-button"
+                  aria-label={`设置对象 ${p.name}`}
+                  onClick={() => setObjectRef({ kind: 'party', id: p.id })}
+                >
+                  ⋯
+                </button>
               </div>
             ))}
           {!persons.length && !parties.length && !unlinkedRoles.some((r) => !r.institution) && (
@@ -203,7 +246,15 @@ export default function CasePeople({
           />
           <CaseContacts caseId={caseId} data={data} save={save} onCase={onCase} />
         </details>
-      </Dialog>
+      </Shell>
+      {objectSettings && (
+        <ResourceSettings
+          entry={objectSettings}
+          data={data}
+          save={save}
+          onClose={() => setObjectRef(null)}
+        />
+      )}
       {selected && (
         <ContactDetail
           contact={selected}
@@ -233,5 +284,20 @@ export default function CasePeople({
         </Dialog>
       )}
     </>
+  );
+}
+
+function InlinePeople({
+  children,
+}: {
+  children: ReactNode;
+  title: string;
+  className?: string;
+  onClose: () => void;
+}) {
+  return (
+    <section className="case-people-panel" aria-label="本案关系">
+      {children}
+    </section>
   );
 }

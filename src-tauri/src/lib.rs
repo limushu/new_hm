@@ -159,6 +159,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             ipc::case_system::save_resource_metadata,
+            ipc::case_system::apply_object_properties,
             ipc::case_system::save_resource_relation,
             ipc::case_system::delete_resource_relation,
             subsystems::subsystem_manifest,

@@ -1,4 +1,25 @@
 import type { Locator, Page } from '@playwright/test';
+export async function openLegacyCase(page: Page) {
+  await page.getByRole('button', { name: '案件管理', exact: true }).click();
+  await page.getByRole('button', { name: '历史流程资料', exact: true }).click();
+}
+export async function openCaseArchive(page: Page) {
+  await page.getByRole('tab', { name: '脉络', exact: true }).click();
+  const panel = page.locator('.case-workspace-details');
+  if (!(await panel.evaluate((e: HTMLDetailsElement) => e.open)))
+    await panel.locator(':scope > summary').click();
+}
+export async function openFinanceDetails(page: Page) {
+  for (const selector of ['.finance-fee-plans', '.finance-analysis']) {
+    const panel = page.locator(selector);
+    if ((await panel.count()) && !(await panel.evaluate((e: HTMLDetailsElement) => e.open)))
+      await panel.locator(':scope > summary').click();
+  }
+}
+export async function requestCaseDeletion(page: Page) {
+  await page.getByRole('button', { name: '案件管理', exact: true }).click();
+  await page.getByRole('button', { name: '删除案件', exact: true }).click();
+}
 export async function selectOption(
   page: Page,
   field: Locator,

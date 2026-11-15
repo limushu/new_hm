@@ -1,3 +1,4 @@
+import { openCaseArchive, openFinanceDetails, openLegacyCase } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 import { selectOption, openFlowDetails, changeStageState, showWorkHistory } from './fields';
 
@@ -16,6 +17,7 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
+  await openCaseArchive(page);
 });
 
 test('并行流程、明确前序与关注独立于浏览，办结不关闭整个案件', async ({ page }) => {
@@ -91,6 +93,7 @@ test('日历关联事件在案件出现，案件修改同一日程并同步回�
   await page.getByRole('button', { name: '保存日程', exact: true }).click();
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
+  await openCaseArchive(page);
   await page.locator('.case-schedule-row').filter({ hasText: '证据核对会议' }).click();
   await page.getByLabel('日程名称', { exact: true }).fill('证据核对会议（已调整）');
   await page.getByRole('button', { name: '保存日程', exact: true }).click();
@@ -104,7 +107,7 @@ test('日历关联事件在案件出现，案件修改同一日程并同步回�
 
 test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async ({ page }) => {
   await add(page, 'enforcement', '一审');
-  await page.getByRole('tab', { name: '概况', exact: true }).click();
+  await page.getByRole('tab', { name: '脉络', exact: true }).click();
   await page.locator('.overview-materials button').filter({ hasText: '执行' }).click();
   await expect(page.locator('.material-scopes button[aria-pressed="true"]')).toContainText('执行');
   await page.setViewportSize({ width: 390, height: 844 });
@@ -117,6 +120,7 @@ test('流程材料入口直达目标，窄屏节点滚动不撑开页面', async
 
 test('收支图按整数分统计、分类筛选同步合计，超收明确显示', async ({ page }) => {
   await page.getByRole('tab', { name: '费用', exact: true }).click();
+  await openFinanceDetails(page);
   await expect(page.getByRole('img', { name: '收入分类，总额 0.00 元' })).toBeVisible();
   await page.getByRole('button', { name: '修改约定', exact: true }).click();
   await page.getByRole('textbox', { name: '约定律师费', exact: true }).fill('1000');
@@ -141,7 +145,7 @@ test('收支图按整数分统计、分类筛选同步合计，超收明确显�
 });
 
 test('中间阶段完成后可重开，保留后续完成状态、当前阶段与历史', async ({ page }) => {
-  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openLegacyCase(page);
   await openFlowDetails(page);
   await changeStageState(page, '举证', 'current');
   await expect(page.locator('.stage-done')).toHaveCount(0);
@@ -175,7 +179,7 @@ test('中间阶段完成后可重开，保留后续完成状态、当前阶段�
 });
 
 test('当前阶段可直接删除，取消不变更；删除保留历史且不替用户选择下一步', async ({ page }) => {
-  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openLegacyCase(page);
   await openFlowDetails(page);
   const initialCount = await page.locator('.stage-chip').count();
   await changeStageState(page, '举证', 'current');
@@ -198,8 +202,8 @@ test('当前阶段可直接删除，取消不变更；删除保留历史且不�
   await page.getByText(/阶段变更记录 ·/).click();
   await expect(page.locator('.stage-history-list')).toContainText('设为当前阶段：举证');
   await expect(page.locator('.stage-history-list')).toContainText('删除阶段：举证');
-  await page.getByRole('tab', { name: '概况', exact: true }).click();
-  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await page.getByRole('tab', { name: '脉络', exact: true }).click();
+  await openLegacyCase(page);
   await openFlowDetails(page);
   await expect(page.getByRole('button', { name: '举证', exact: true })).toHaveCount(0);
   await changeStageState(page, '开庭', 'current');

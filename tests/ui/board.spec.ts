@@ -1,3 +1,4 @@
+import { openCaseArchive } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 
 const column = (page: Page, status: string) => page.locator(`[data-status-id="${status}"]`);
@@ -35,6 +36,7 @@ test('跨列拖动保存状态并更新数量，松手不会误打开案件', as
     'data-value',
     'closed',
   );
+  await openCaseArchive(page);
   await expect(page.getByRole('region', { name: '办理概况' })).toContainText('庭前准备');
 });
 

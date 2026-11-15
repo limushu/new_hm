@@ -1,3 +1,4 @@
+import { openCaseArchive, openLegacyCase } from './fields';
 import { selectOption, openFlowDetails } from './fields';
 import { expect, test, type Page } from '@playwright/test';
 async function addContact(page: Page, name: string, kind: string, court?: string) {
@@ -14,7 +15,8 @@ async function addContact(page: Page, name: string, kind: string, court?: string
 async function openInfo(page: Page) {
   await page.getByRole('button', { name: '案件', exact: true }).click();
   await page.locator('.case-card').first().click();
-  await page.getByRole('tab', { name: '办理', exact: true }).click();
+  await openCaseArchive(page);
+  await openLegacyCase(page);
   await openFlowDetails(page);
 }
 test.beforeEach(async ({ page }) => {

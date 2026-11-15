@@ -1,3 +1,8 @@
+import type { ReactNode } from 'react';
+import CreationProperties from './CreationProperties';
+import ImportMaterials from '../materials/ImportMaterials';
+import { defaultCreationProperties } from '../../case-system/objects';
+import { useObjectCreation } from '../../case-system/useObjectCreation';
 import { EntryForm } from '../finance/Finance';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Mic, Plus, Search, FileText, Flag, NotebookPen, ArrowUpRight } from 'lucide-react';
@@ -22,26 +27,31 @@ export function MilestoneEditor({
   data,
   save,
   onClose,
+  properties,
+  nodeMode = false,
 }: {
   value: CaseEvent;
   data: Workspace;
   save: SaveAction;
   onClose: () => void;
+  properties?: ReactNode;
+  nodeMode?: boolean;
 }) {
   const [input, setInput] = useState(value);
   return (
     <Dialog
-      title="关键事件"
-      submitLabel="保存事件"
+      title={nodeMode ? '关键节点' : '关键事件'}
+      submitLabel={nodeMode ? '保存节点' : '保存事件'}
       onClose={onClose}
       onSubmit={async () => {
         await save('save_case_event', { input });
       }}
     >
+      {properties}
       <label>
-        发生了什么
+        {nodeMode ? '节点名称' : '发生了什么'}
         <input
-          aria-label="事件名称"
+          aria-label={nodeMode ? '节点名称' : '事件名称'}
           required
           maxLength={200}
           value={input.title}
@@ -49,30 +59,32 @@ export function MilestoneEditor({
         />
       </label>
       <label>
-        发生日期
+        {nodeMode ? '节点日期（可选）' : '发生日期'}
         <DateField
           aria-label="事件日期"
           value={input.eventDate}
           onValueChange={(eventDate) => setInput({ ...input, eventDate })}
         />
       </label>
-      <label>
-        关联流程
-        <Select
-          aria-label="事件关联流程"
-          value={input.proceedingId ?? ''}
-          onValueChange={(v) => setInput({ ...input, proceedingId: v || null })}
-        >
-          <option value="">案件共用</option>
-          {data.proceedings
-            .filter((p) => p.caseId === input.caseId)
-            .map((p) => (
-              <option key={p.id} value={p.id}>
-                {proceedingName(p, data.proceedings)}
-              </option>
-            ))}
-        </Select>
-      </label>
+      {!properties && (
+        <label>
+          关联流程
+          <Select
+            aria-label="事件关联流程"
+            value={input.proceedingId ?? ''}
+            onValueChange={(v) => setInput({ ...input, proceedingId: v || null })}
+          >
+            <option value="">案件共用</option>
+            {data.proceedings
+              .filter((p) => p.caseId === input.caseId)
+              .map((p) => (
+                <option key={p.id} value={p.id}>
+                  {proceedingName(p, data.proceedings)}
+                </option>
+              ))}
+          </Select>
+        </label>
+      )}
       <label>
         说明与依据
         <textarea
@@ -101,14 +113,36 @@ export default function CaseQuickActions({
   onMaterials: () => void;
 }) {
   const { manifest } = useSubsystems();
+  const [objectProperties, setObjectProperties] = useState(defaultCreationProperties);
+  const creation = useObjectCreation(caseId, data, objectProperties, save);
+  const fields = (
+    <CreationProperties
+      caseId={caseId}
+      data={data}
+      value={objectProperties}
+      onChange={setObjectProperties}
+    />
+  );
   const [panel, setPanel] = useState<
-    'recording' | 'create' | 'document' | 'record' | 'event' | 'task' | 'search' | 'ledger' | null
+    | 'recording'
+    | 'create'
+    | 'document'
+    | 'record'
+    | 'event'
+    | 'task'
+    | 'search'
+    | 'ledger'
+    | 'import'
+    | 'node'
+    | null
   >(null);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Material | null>(null);
   const [draftId, setDraftId] = useState('');
   const target = { caseId, proceedingId: null, parentId: null, recordId: null };
   function create(kind: typeof panel) {
+    creation.reset();
+    setObjectProperties(defaultCreationProperties());
     setDraftId(crypto.randomUUID());
     setPanel(kind);
   }
@@ -138,7 +172,7 @@ export default function CaseQuickActions({
         <button
           aria-label="快速录音"
           disabled={!supports(manifest, 'record-audio')}
-          onClick={() => setPanel('recording')}
+          onClick={() => create('recording')}
         >
           <Mic />
           <span>录音</span>
@@ -160,11 +194,30 @@ export default function CaseQuickActions({
         </button>
       </nav>
       {panel === 'recording' && (
-        <Recorder target={target} save={save} onClose={() => setPanel(null)} />
+        <Recorder
+          target={target}
+          save={creation.save}
+          properties={fields}
+          onClose={() => setPanel(null)}
+        />
       )}
       {panel === 'create' && (
         <Dialog title="创建到当前案件" onClose={() => setPanel(null)}>
           <div className="case-create-options">
+            <button onClick={() => create('node')}>
+              <Flag />
+              <span>
+                <strong>关键节点</strong>
+                <small>例如一审、二审、立案或开庭，可自由命名</small>
+              </span>
+            </button>
+            <button onClick={() => create('import')}>
+              <FileText />
+              <span>
+                <strong>导入本地材料</strong>
+                <small>归档已有文件，并设置公共属性</small>
+              </span>
+            </button>
             <button onClick={() => create('ledger')}>
               <FileText />
               <span>
@@ -218,19 +271,45 @@ export default function CaseQuickActions({
             materialId: null,
           }}
           data={data}
-          save={save}
+          save={creation.save}
+          properties={fields}
+          onClose={() => setPanel(null)}
+        />
+      )}
+      {panel === 'node' && (
+        <MilestoneEditor
+          nodeMode
+          value={{ id: draftId, caseId, proceedingId: null, title: '', eventDate: '', notes: '' }}
+          data={data}
+          save={creation.save}
+          properties={fields}
+          onClose={() => setPanel(null)}
+        />
+      )}
+      {panel === 'import' && (
+        <ImportMaterials
+          onRetryProperties={creation.complete}
+          target={target}
+          save={creation.save}
+          properties={fields}
           onClose={() => setPanel(null)}
         />
       )}
       {panel === 'document' && (
-        <TextDocument target={target} save={save} onClose={() => setPanel(null)} />
+        <TextDocument
+          target={target}
+          save={creation.save}
+          properties={fields}
+          onClose={() => setPanel(null)}
+        />
       )}
       {panel === 'record' && (
         <RecordForm
           value={{ id: draftId, caseId, body: '' }}
           data={data}
           scope={caseScope}
-          save={save}
+          save={creation.save}
+          properties={fields}
           onClose={() => setPanel(null)}
         />
       )}
@@ -245,7 +324,8 @@ export default function CaseQuickActions({
             notes: '',
           }}
           data={data}
-          save={save}
+          save={creation.save}
+          properties={fields}
           onClose={() => setPanel(null)}
         />
       )}
@@ -253,7 +333,8 @@ export default function CaseQuickActions({
         <WorkTaskEditor
           task={{ id: draftId, caseId, title: '', completed: false, dueDate: null }}
           data={data}
-          save={save}
+          save={creation.save}
+          properties={fields}
           onClose={() => setPanel(null)}
         />
       )}

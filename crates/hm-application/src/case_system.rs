@@ -15,6 +15,14 @@ impl Default for CaseSystem {
 }
 
 impl CaseSystem {
+    pub fn apply_properties(
+        &self,
+        store: &Store,
+        input: hm_core::case_system::ApplyObjectProperties,
+    ) -> Result<()> {
+        store.apply_object_properties(input, self.resolver.as_ref())
+    }
+
     pub fn new(resolver: Box<dyn ResourceResolver>) -> Self {
         Self { resolver }
     }

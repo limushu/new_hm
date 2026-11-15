@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Plus, CheckSquare, ArrowUpRight, ListChecks } from 'lucide-react';
 import DateField from '../../components/DateField';
@@ -125,12 +126,14 @@ export function WorkTaskEditor({
   save,
   initialScope = caseScope,
   onClose,
+  properties,
 }: {
   task: Task;
   data: Workspace;
   save: SaveAction;
   initialScope?: WorkScope;
   onClose: () => void;
+  properties?: ReactNode;
 }) {
   const meta = data.taskWork.find((w) => w.taskId === task.id);
   const link = resourceLinks(data, 'task', task.id)[0];
@@ -149,6 +152,7 @@ export function WorkTaskEditor({
         });
       }}
     >
+      {properties}
       <label>
         待办内容
         <input

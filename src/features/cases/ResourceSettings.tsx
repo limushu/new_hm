@@ -14,6 +14,7 @@ import {
 
 const relationLabels: Record<string, string> = {
   related: '关联',
+  in_node: '属于节点',
   attachment: '附件',
   evidence: '依据',
   participant: '参与',
@@ -187,7 +188,7 @@ export default function ResourceSettings({
   save,
   onClose,
 }: {
-  entry: TimelineEntry;
+  entry: Pick<TimelineEntry, 'caseId' | 'resource' | 'title' | 'importance' | 'tags'>;
   data: Workspace;
   save: SaveAction;
   onClose: () => void;

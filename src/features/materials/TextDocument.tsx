@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import Dialog from '../../components/Dialog';
 import type { MaterialTarget, SaveAction } from '../../domain/types';
@@ -6,10 +7,12 @@ export default function TextDocument({
   target,
   save,
   onClose,
+  properties,
 }: {
   target: MaterialTarget;
   save: SaveAction;
   onClose: () => void;
+  properties?: ReactNode;
 }) {
   const [name, setName] = useState(`文档 ${new Date().toLocaleDateString('sv-SE')}`);
   const [body, setBody] = useState('');
@@ -38,6 +41,7 @@ export default function TextDocument({
         }}
       >
         <p className="field-hint">保存到本案材料中，可继续查找、阅读和导出。</p>
+        {properties}
         <label>
           文档名称
           <input
