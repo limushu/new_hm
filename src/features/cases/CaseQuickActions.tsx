@@ -1,3 +1,4 @@
+import { EntryForm } from '../finance/Finance';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Mic, Plus, Search, FileText, Flag, NotebookPen, ArrowUpRight } from 'lucide-react';
 import Dialog from '../../components/Dialog';
@@ -101,7 +102,7 @@ export default function CaseQuickActions({
 }) {
   const { manifest } = useSubsystems();
   const [panel, setPanel] = useState<
-    'recording' | 'create' | 'document' | 'record' | 'event' | 'task' | 'search' | null
+    'recording' | 'create' | 'document' | 'record' | 'event' | 'task' | 'search' | 'ledger' | null
   >(null);
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Material | null>(null);
@@ -164,6 +165,13 @@ export default function CaseQuickActions({
       {panel === 'create' && (
         <Dialog title="创建到当前案件" onClose={() => setPanel(null)}>
           <div className="case-create-options">
+            <button onClick={() => create('ledger')}>
+              <FileText />
+              <span>
+                <strong>记一笔收支</strong>
+                <small>关联本案账目与凭据</small>
+              </span>
+            </button>
             <button onClick={() => create('event')}>
               <Flag />
               <span>
@@ -194,6 +202,25 @@ export default function CaseQuickActions({
             </button>
           </div>
         </Dialog>
+      )}
+      {panel === 'ledger' && (
+        <EntryForm
+          value={{
+            id: draftId,
+            caseId,
+            proceedingId: null,
+            kind: 'expense',
+            amountCents: 0,
+            entryDate: dateKey(new Date()),
+            category: '',
+            notes: '',
+            reimbursement: 'none',
+            materialId: null,
+          }}
+          data={data}
+          save={save}
+          onClose={() => setPanel(null)}
+        />
       )}
       {panel === 'document' && (
         <TextDocument target={target} save={save} onClose={() => setPanel(null)} />

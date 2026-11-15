@@ -19,6 +19,7 @@ const kinds: { id: RelationNode['kind']; label: string }[] = [
   { id: 'case', label: '案件' },
   { id: 'program', label: '办理流程' },
   { id: 'person', label: '个人' },
+  { id: 'party', label: '当事人' },
   { id: 'organization', label: '机构' },
   { id: 'court', label: '法院' },
   { id: 'judge', label: '法官' },
@@ -148,6 +149,9 @@ export default function RelationGraph({
     else if (node.kind === 'program') {
       const flow = data.proceedings.find((p) => p.id === node.entityId);
       if (flow) onCase(flow.caseId);
+    } else if (node.kind === 'party') {
+      const party = data.caseParties.find((p) => p.id === node.entityId);
+      if (party) onCase(party.caseId);
     } else onContact?.(node.entityId);
   }
   return (
@@ -441,7 +445,7 @@ export default function RelationGraph({
                 打开
                 {selected.kind === 'case'
                   ? '案件'
-                  : selected.kind === 'program'
+                  : selected.kind === 'program' || selected.kind === 'party'
                     ? '所属案件'
                     : '对象详情'}
                 <ArrowUpRight />

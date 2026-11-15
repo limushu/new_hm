@@ -1,5 +1,12 @@
 /** Human-facing native-operation text. Backend codes remain language independent. */
 export const operationMessages: Record<string, string> = {
+  resource_relation_exists: '这两个对象之间已存在相同类型的关联，可编辑或移除原关联',
+  resource_module_conflict: '案件模块注册冲突，请检查模块配置',
+  resource_tags_invalid: '最多设置20个标签，每个标签不超过40字',
+  resource_kind_unsupported: '此类条目尚未接入当前模块',
+  resource_reference_invalid: '关联对象不存在、已删除或不属于本案',
+  resource_relation_invalid: '请检查关联类型与说明，条目不能关联自身',
+
   capability_unsupported: '当前平台暂不支持此操作',
   permission_denied: '没有访问权限，请检查系统授权后重试',
   operation_interrupted: '操作已中断，请重试',

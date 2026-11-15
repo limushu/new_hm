@@ -44,30 +44,28 @@ test('手机案件首屏显示脉络，快捷入口保存文档并按原文安�
 
 test('关键事件保留发生日期，未来节点标为计划，相关人可直接进入', async ({ page }) => {
   await open(page);
-  await page
-    .locator('.chronicle-heading')
-    .getByRole('button', { name: '关键事件', exact: true })
-    .click();
+  await page.getByRole('button', { name: '创建', exact: true }).click();
+  await page.getByRole('button', { name: /关键事件/ }).click();
   await page.getByLabel('事件名称', { exact: true }).fill('虚构借款交付');
   await page.getByLabel('事件日期', { exact: true }).fill('2024-06-02');
   await page.getByRole('button', { name: '保存事件', exact: true }).click();
   const entry = page.locator('.chronicle-entry').filter({ hasText: '虚构借款交付' });
   await expect(entry).toContainText('2024-06-02');
   await expect(entry).toContainText('发生日期');
-  await page
-    .locator('.chronicle-heading')
-    .getByRole('button', { name: '关键事件', exact: true })
-    .click();
+  await page.getByRole('button', { name: '创建', exact: true }).click();
+  await page.getByRole('button', { name: /关键事件/ }).click();
   await page.getByLabel('事件名称', { exact: true }).fill('虚构后续沟通计划');
   await page.getByLabel('事件日期', { exact: true }).fill('2099-06-02');
   await page.getByRole('button', { name: '保存事件', exact: true }).click();
   await expect(
     page.locator('.chronicle-entry').filter({ hasText: '虚构后续沟通计划' }),
   ).toHaveCount(0);
-  await page.getByText('后续计划 · 1', { exact: true }).click();
+  await page.locator('.chronicle-plans > summary').click();
   await expect(page.locator('.chronicle-plans')).toContainText('2099-06-02');
-  await expect(page.locator('.chronicle-plans').getByRole('button')).toContainText('计划');
-  await page.getByText('后续计划 · 1', { exact: true }).click();
+  await expect(
+    page.locator('.chronicle-plans').getByRole('button').filter({ hasText: '虚构后续沟通计划' }),
+  ).toContainText('计划');
+  await page.locator('.chronicle-plans > summary').click();
   await page.getByRole('button', { name: '相关人', exact: true }).click();
   await expect(page.getByRole('dialog', { name: '相关人及机构', exact: true })).toBeVisible();
   await page

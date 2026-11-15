@@ -1,3 +1,4 @@
+import { ResourceRelations } from './ResourceSettings';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Building2, Network, UserRound, ArrowUpRight } from 'lucide-react';
 import Dialog from '../../components/Dialog';
@@ -28,7 +29,14 @@ export default function CasePeople({
   const links = data.contactLinks.filter((l) => l.caseId === caseId);
   const parties = data.caseParties.filter((p) => p.caseId === caseId);
   const people = data.contacts.filter(
-    (c) => links.some((l) => l.contactId === c.id) || parties.some((p) => p.contactId === c.id),
+    (c) =>
+      links.some((l) => l.contactId === c.id) ||
+      parties.some((p) => p.contactId === c.id) ||
+      data.resourceRelations.some(
+        (r) =>
+          r.caseId === caseId &&
+          [r.source, r.target].some((x) => x.kind === 'contact' && x.id === c.id),
+      ),
   );
   const institutions = people.filter((c) => c.kind === 'court' || c.kind === 'organization');
   const persons = people.filter((c) => c.kind !== 'court' && c.kind !== 'organization');
@@ -44,6 +52,7 @@ export default function CasePeople({
     () => ({
       ...data,
       cases: data.cases.filter((c) => c.id === caseId),
+      resourceRelations: data.resourceRelations.filter((r) => r.caseId === caseId),
       proceedings: programs,
       caseParties: parties,
       contactLinks: links,
@@ -182,6 +191,7 @@ export default function CasePeople({
             <p className="quiet-empty">尚未关联相关人物</p>
           )}
         </section>
+        <ResourceRelations caseId={caseId} data={data} save={save} actorsOnly />
         <details className="case-people-maintain">
           <summary>维护当事人与关联对象</summary>
           <CaseParties

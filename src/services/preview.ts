@@ -1,3 +1,9 @@
+import { resourceIndex } from '../case-system/resources';
+import {
+  resourceKey,
+  type ResourceMetadata,
+  type ResourceRelation,
+} from '../case-system/contracts';
 // Explicit development-only, in-memory adapter. Never selected by an installed app.
 import type {
   Commands,
@@ -23,6 +29,8 @@ export function registerPreviewFiles(files: File[]) {
 const settings: Record<string, string> = { close_to_tray: 'true', notifications: 'true' };
 const now = new Date().toISOString();
 const data: Workspace = {
+  resourceMetadata: [],
+  resourceRelations: [],
   workLinks: [],
   taskWork: [],
   feePlans: [],
@@ -664,6 +672,62 @@ export async function previewCommand<K extends keyof Commands>(
       else data.workRecords.unshift({ ...input, createdAt: new Date().toISOString() });
       break;
     }
+    case 'save_resource_metadata': {
+      const input = a.input as ResourceMetadata;
+      if (!resourceIndex(data, input.caseId, true).has(resourceKey(input.resource)))
+        throw new Error('条目不存在或不属于本案');
+      if (!['normal', 'important'].includes(input.importance) || input.tags.length > 20)
+        throw new Error('标签或重要程度无效');
+      const tags = input.tags.map((t) => t.trim()).filter(Boolean);
+      if (tags.some((t) => t.length > 40 || /[\u0000-\u001f]/.test(t))) throw new Error('标签无效');
+      const item = {
+        ...input,
+        tags: tags.filter(
+          (tag, i) =>
+            tags.findIndex((t) => t.toLocaleLowerCase() === tag.toLocaleLowerCase()) === i,
+        ),
+      };
+      const index = data.resourceMetadata.findIndex(
+        (m) => m.caseId === input.caseId && resourceKey(m.resource) === resourceKey(input.resource),
+      );
+      if (index < 0) data.resourceMetadata.push(item);
+      else data.resourceMetadata[index] = item;
+      break;
+    }
+    case 'save_resource_relation': {
+      const input = a.input as ResourceRelation,
+        resources = resourceIndex(data, input.caseId, true);
+      if (
+        !resources.has(resourceKey(input.source)) ||
+        !resources.has(resourceKey(input.target)) ||
+        resourceKey(input.source) === resourceKey(input.target)
+      )
+        throw new Error('关联对象不存在或不属于本案');
+      if (!/^[a-z0-9._-]{1,80}$/.test(input.kind) || input.label.length > 120)
+        throw new Error('关联类型或说明无效');
+      const index = data.resourceRelations.findIndex((r) => r.id === input.id);
+      if (index >= 0 && data.resourceRelations[index].caseId !== input.caseId)
+        throw new Error('关联不属于本案');
+      if (
+        data.resourceRelations.some(
+          (r) =>
+            r.id !== input.id &&
+            r.caseId === input.caseId &&
+            r.kind === input.kind &&
+            resourceKey(r.source) === resourceKey(input.source) &&
+            resourceKey(r.target) === resourceKey(input.target),
+        )
+      )
+        throw new Error('关联已存在');
+      if (index < 0) data.resourceRelations.push(input);
+      else data.resourceRelations[index] = input;
+      break;
+    }
+    case 'delete_resource_relation':
+      data.resourceRelations = data.resourceRelations.filter(
+        (r) => r.caseId !== a.caseId || r.id !== a.id,
+      );
+      break;
     case 'create_text_document': {
       const body = a.body as string;
       const name = a.name as string;

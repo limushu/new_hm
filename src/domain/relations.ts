@@ -17,7 +17,12 @@ export function linkedCases(data: Workspace, contactId: string) {
     (c) =>
       !c.deletedAt &&
       (data.contactLinks.some((l) => l.caseId === c.id && l.contactId === contactId) ||
-        data.caseParties.some((p) => p.caseId === c.id && p.contactId === contactId)),
+        data.caseParties.some((p) => p.caseId === c.id && p.contactId === contactId) ||
+        data.resourceRelations.some(
+          (r) =>
+            r.caseId === c.id &&
+            [r.source, r.target].some((ref) => ref.kind === 'contact' && ref.id === contactId),
+        )),
   );
 }
 export function relatedContacts(data: Workspace, contact: Contact) {
@@ -29,7 +34,7 @@ export function relatedContacts(data: Workspace, contact: Contact) {
 export interface RelationNode {
   id: string;
   label: string;
-  kind: 'case' | 'program' | Contact['kind'];
+  kind: 'case' | 'program' | 'party' | Contact['kind'];
   entityId: string;
   meta: string;
 }
@@ -92,6 +97,39 @@ export function workspaceGraph(data: Workspace) {
         target: `contact:${party.contactId}`,
         label: r.role,
       });
+  }
+  const actorNode = (caseId: string, ref: { kind: string; id: string }) => {
+    if (ref.kind === 'contact' && data.contacts.some((c) => c.id === ref.id))
+      return `contact:${ref.id}`;
+    if (ref.kind === 'party') {
+      const party = data.caseParties.find((p) => p.id === ref.id && p.caseId === caseId);
+      return party ? (party.contactId ? `contact:${party.contactId}` : `party:${party.id}`) : null;
+    }
+    return null;
+  };
+  for (const party of data.caseParties.filter(
+    (p) => !p.contactId && active.some((c) => c.id === p.caseId),
+  )) {
+    nodes.push({
+      id: `party:${party.id}`,
+      entityId: party.id,
+      label: party.name || '姓名待补充',
+      kind: 'party',
+      meta: '本案当事人',
+    });
+    edges.push({
+      source: `case:${party.caseId}`,
+      target: `party:${party.id}`,
+      label: { client: '我方委托人', opponent: '对方当事人', other: '其他当事人' }[party.side],
+    });
+  }
+  for (const r of data.resourceRelations.filter((r) => active.some((c) => c.id === r.caseId))) {
+    const source = actorNode(r.caseId, r.source),
+      target = actorNode(r.caseId, r.target);
+    if (source && target && source !== target)
+      edges.push({ source, target, label: r.label || r.kind });
+    for (const node of [source, target])
+      if (node) edges.push({ source: `case:${r.caseId}`, target: node, label: '本案关联对象' });
   }
   return {
     nodes,

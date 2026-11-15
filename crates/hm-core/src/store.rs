@@ -51,13 +51,13 @@ impl Store {
         let mut connection = Connection::open(path)?;
         crate::backup::recover_on_open(&mut connection, directory)?;
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 0 && version < 7 {
+        if version > 0 && version < 8 {
             let safety = directory.join("migration-backups");
             std::fs::create_dir_all(&safety)?;
             connection.backup(
                 "main",
                 safety.join(format!(
-                    "before-v7-from-v{version}-{}.sqlite3",
+                    "before-v8-from-v{version}-{}.sqlite3",
                     Uuid::new_v4()
                 )),
                 None,
@@ -83,7 +83,7 @@ impl Store {
     }
     pub(crate) fn migrate(connection: &mut Connection) -> Result<()> {
         let version: i64 = connection.query_row("PRAGMA user_version", [], |r| r.get(0))?;
-        if version > 7 {
+        if version > 8 {
             return Err(Error::Validation(
                 "数据库来自较新版本，请使用新版软件打开".into(),
             ));
@@ -127,6 +127,11 @@ impl Store {
             })();
             connection.execute_batch("PRAGMA foreign_keys=ON;")?;
             result?;
+        }
+        if version < 8 {
+            let tx = connection.transaction()?;
+            tx.execute_batch(include_str!("../migrations/008_case_system.sql"))?;
+            tx.commit()?;
         }
         Ok(())
     }
@@ -196,6 +201,8 @@ impl Store {
             })?
             .collect::<rusqlite::Result<Vec<_>>>()?;
         Ok(Workspace {
+            resource_metadata: self.resource_metadata()?,
+            resource_relations: self.resource_relations()?,
             work_links: self.work_links()?,
             task_work: self.task_work()?,
             fee_plans: self.fee_plans()?,

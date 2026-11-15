@@ -1,14 +1,7 @@
-/* A quieter case workspace: ink, warm paper and a restrained sage accent. */
+/* Case views inherit the application palette; modules add no separate theme. */
 .case-redesigned {
-  --chronicle-accent: #a9beb2;
-  --chronicle-wash: #2a302b;
-}
-:root[data-theme='light'] .case-redesigned {
-  --chronicle-accent: #4b6558;
-  --chronicle-wash: #f0f3ee;
-  --surface: #fcfbf8;
-  --surface-soft: #f5f4ef;
-  --line: #e7e6df;
+  --chronicle-accent: var(--accent);
+  --chronicle-wash: var(--surface-soft);
 }
 .case-redesigned .case-body {
   padding-bottom: 44px;
@@ -40,6 +33,112 @@
 }
 .case-chronicle {
   min-width: 0;
+}
+.timeline-current-program {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  font-size: var(--text-heading);
+  text-align: left;
+}
+.timeline-current-program svg {
+  width: 16px;
+  height: 16px;
+  color: var(--muted);
+}
+.case-timeline .chronicle-heading {
+  margin-bottom: 24px;
+}
+.timeline-entry-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 8px;
+}
+.timeline-entry-settings {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--muted);
+}
+.timeline-entry-settings svg {
+  width: 18px;
+  height: 18px;
+}
+.timeline-entry-type {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin-top: 4px;
+}
+.timeline-money {
+  display: block;
+  margin-top: 8px;
+  font-size: var(--text-base);
+  font-variant-numeric: tabular-nums;
+}
+.timeline-tags,
+.timeline-filter-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.timeline-tags {
+  margin-top: 8px;
+}
+.timeline-filter-summary {
+  align-items: center;
+  margin-bottom: 20px;
+}
+.resource-important {
+  display: flex !important;
+  gap: 10px;
+  align-items: center;
+}
+.resource-important input {
+  width: auto;
+}
+.resource-relations {
+  margin-top: 24px;
+}
+.resource-relations .section-title {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.resource-relation-row {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.resource-relation-row span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.resource-relation-row small {
+  color: var(--muted);
+}
+.resource-relation-row button {
+  flex: none;
+  min-height: 44px;
+}
+.case-redesigned .chronicle-date time {
+  white-space: nowrap;
+}
+.case-redesigned .case-quick-actions > button:first-child {
+  background: transparent;
+  color: var(--text);
+}
+.case-redesigned .case-quick-actions > button:nth-child(2) {
+  background: var(--text);
+  color: var(--surface);
 }
 .chronicle-context {
   display: flex;
@@ -606,7 +705,7 @@
     padding: 14px 16px;
   }
   .chronicle-entry {
-    grid-template-columns: 68px 18px minmax(0, 1fr);
+    grid-template-columns: 78px 18px minmax(0, 1fr);
     column-gap: 9px;
     padding-bottom: 34px;
   }

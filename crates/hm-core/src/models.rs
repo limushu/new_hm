@@ -71,6 +71,10 @@ pub struct WorkRecord {
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Workspace {
+    #[serde(default)]
+    pub resource_metadata: Vec<crate::case_system::ResourceMetadata>,
+    #[serde(default)]
+    pub resource_relations: Vec<crate::case_system::ResourceRelation>,
     pub work_links: Vec<WorkLink>,
     pub task_work: Vec<TaskWork>,
     pub fee_plans: Vec<FeePlan>,

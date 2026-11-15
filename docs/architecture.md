@@ -1,5 +1,7 @@
 # 应用架构
 
+1.5.0 新增[案件系统与扩展接口](design/case-system.md)：原生统一资源引用、标签/重要程度及关联，前端通过模块注册投影时间轴与路由资源编辑器；原始业务实体和平台驱动继续沿用。
+
 跨平台演进方案见[跨平台架构](design/cross-platform-architecture.md)：包含当前移动端缺口、共享业务与平台能力边界、iOS/Android 实施顺序及验收门槛；方案尚未作为移动端原生能力交付。
 
 2026-10-20 开始实现[子系统边界与运行时](design/subsystems.md)：hm-runtime 提供宿主能力契约与周期任务生命周期，Tauri 装配宿主、更新和维护服务。已继续隔离移动启动、桌面依赖与命令，Android Rust 目标检查通过；完整原生应用与 iOS/设备结果见[移动端开发](mobile-development.md)。
@@ -18,7 +20,7 @@ src/features 按 cases、calendar、materials、contacts、finance、settings �
 
 阶段排序不是强制线性流程：完成、跳过和重开由用户指定，切换当前阶段不自动完成原阶段。任意中间阶段可重开而保留其他阶段状态；状态变更与历史在同一事务写入，重复保存不刷历史。案件概览所有功能分区单列纵排，窗口宽度不改变功能阅读顺序。
 
-SQLite 外键、WAL、FULL 同步、5 秒 busy timeout，user_version 当前为 7。迁移在事务内执行；旧版本 1–6 在迁移前用 SQLite 在线备份 API 保存数据库副本。更高版本拒绝打开。005_case_overview.sql 增加程序前序与生命周期、人工事项/阶段历史分类、持久标签候选和案件标签关系。
+SQLite 外键、WAL、FULL 同步、5 秒 busy timeout，user_version 当前为 8。迁移在事务内执行；旧版本 1–7 在迁移前用 SQLite 在线备份 API 保存数据库副本。更高版本拒绝打开。005_case_overview.sql 增加程序前序与生命周期、人工事项/阶段历史分类、持久标签候选和案件标签关系。008_case_system.sql 增加通用资源注释、关联与删除/转案清理。
 
 006_workflows_and_representation.sql 增加流程模板、实例名称和类别快照、案件级委托关系与按流程保存的身份；重建旧枚举约束后执行外键全量检查。可选联系人删除保留姓名和身份。更新图标的 Windows 专用 Shell 缓存同步在 windows_icon.rs 的独立 COM 线程中执行，只处理本安装资源，不改快捷方式或全局缓存。
 

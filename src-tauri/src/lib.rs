@@ -144,6 +144,7 @@ pub fn run() {
                 )?;
             }
             app.manage(AppState(Mutex::new(store)));
+            app.manage(hm_application::case_system::CaseSystem::default());
             app.manage(location.clone());
             #[cfg(target_os = "windows")]
             if location.portable {
@@ -157,6 +158,9 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            ipc::case_system::save_resource_metadata,
+            ipc::case_system::save_resource_relation,
+            ipc::case_system::delete_resource_relation,
             subsystems::subsystem_manifest,
             subsystems::recording::native_recording_support,
             subsystems::recording::start_native_recording,

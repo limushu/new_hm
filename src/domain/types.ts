@@ -1,3 +1,4 @@
+import type { ResourceMetadata, ResourceRelation } from '../case-system/contracts';
 export interface OperationError {
   code: string;
   kind?: string;
@@ -69,6 +70,8 @@ export interface WorkRecord {
   createdAt: string;
 }
 export interface Workspace {
+  resourceMetadata: ResourceMetadata[];
+  resourceRelations: ResourceRelation[];
   workLinks: WorkLink[];
   taskWork: TaskWork[];
   feePlans: FeePlan[];
@@ -171,6 +174,8 @@ export const programLabels: Record<ProgramKind, string> = {
   enforcement: '执行',
 };
 export const emptyWorkspace: Workspace = {
+  resourceMetadata: [],
+  resourceRelations: [],
   workLinks: [],
   taskWork: [],
   feePlans: [],
@@ -406,4 +411,10 @@ export interface Commands {
     result: { version: string; notes: string | null } | null;
   };
   install_update: { args: { confirmed: boolean }; result: null };
+}
+
+export interface Commands {
+  save_resource_metadata: { args: { input: ResourceMetadata }; result: null };
+  save_resource_relation: { args: { input: ResourceRelation }; result: null };
+  delete_resource_relation: { args: { caseId: string; id: string }; result: null };
 }

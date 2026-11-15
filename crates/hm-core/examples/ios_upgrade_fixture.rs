@@ -32,7 +32,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     store.set_setting("onboarding_done", &edition)?;
     println!(
         "{}",
-        serde_json::json!({"sourceSqlite": rusqlite::version(), "schema": 7, "materialId": material})
+        serde_json::json!({"sourceSqlite": rusqlite::version(), "schema": 8, "materialId": material})
     );
     Ok(())
 }
