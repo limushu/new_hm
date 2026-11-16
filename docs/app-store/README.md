@@ -4,7 +4,11 @@
 
 手机日历页将新建日程移到顶部日期标题旁，今天及前后切换移到下一行，保持统一按钮规格。清单、月、周、日视图沿用这一顺序，其他辅助操作仍保留。
 
-当前待签名上传与完整检查，完成后补录结果。此构建包含下方 25.1 的统一对象详情。
+2026-11-16，[签名构建与上传](https://github.com/limushu/new_hm/actions/runs/43843670189)成功，10:04:52 UTC 确认 `UPLOAD SUCCEEDED with no errors`。已下载产物，核对源码 `baa0d42ca600237277348619100617e0278a9358`、版本 1.7.7、构建 26.1、分发签名检查状态、权限说明与根目录隐私清单。IPA SHA-256：`35d7b1561bb3fe02a62f5ea9967f78ffc587cf91367dd7d829a846a91cb4cbdf`。上传状态为 `accepted-for-processing`；Apple 处理完成与 TestFlight 可安装状态尚未单独核实。
+
+[应用检查](https://github.com/limushu/new_hm/actions/runs/43842858790)通过 53 项单元测试、122 项 Chromium 界面测试、13 项 WebKit 触摸回归、Rust 测试与 Clippy、Windows 构建。[移动端检查](https://github.com/limushu/new_hm/actions/runs/43842858838)通过 Android 编译、iOS 模拟器启动/持久化验收与 18 项原生驱动测试。本机另通过五项日程回归，并核对四个手机宽度、深浅主题、四种日历视图共 32 组组合，主按钮保持 44px，位于日期标题第一行，今天与前后切换在下一行，未见页面横向溢出。
+
+此构建包含下方 25.1 的统一对象详情。自动化与浏览器预览不代替真实 iPhone 验收、审核视频或 App Review；本次未执行商店重新提交或对外发布。
 
 ## 前一交互候选：1.7.7（25.1）
 
