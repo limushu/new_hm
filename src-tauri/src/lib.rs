@@ -261,6 +261,7 @@ pub fn run() {
             subsystems::documents::read_text_document,
             subsystems::backup::choose_backup_directory,
             subsystems::backup::run_backup,
+            subsystems::sync::native_sync_provider,
             subsystems::backup::export_backup_archive,
             subsystems::backup::pick_backup_archive,
             subsystems::backup::restore_backup_archive,

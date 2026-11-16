@@ -4,6 +4,7 @@ pub use backup::{BackupDriver, FileBackupDriver, UnavailableBackup};
 mod error;
 mod recording;
 mod speech;
+mod sync;
 pub use documents::{Document, DocumentDriver};
 pub use error::{DriverError, DriverErrorKind, DriverResult};
 pub use recording::{
@@ -12,6 +13,9 @@ pub use recording::{
 pub use speech::{
     SpeechDriver, SpeechJob, SpeechPhase, SpeechSegment, SpeechSnapshot, SpeechSupport,
     UnavailableSpeech,
+};
+pub use sync::{
+    CloudIdentity, ReplicaIdentity, SyncDriver, SyncHead, SyncSession, UnavailableSync,
 };
 mod capabilities;
 mod ports;

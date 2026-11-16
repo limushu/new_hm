@@ -6,6 +6,8 @@
 
 Windows 初期交付为 **1.4.0，x64 安装版**。当前 iOS 功能候选 **1.7.7（28.1）** 增加[完整备份文件与 iCloud 云盘导出](docs/backup-subsystem.md)，统一[对象详情与内容展示](docs/object-details.md)，并包含[设备内录音转文字](docs/speech-transcription.md)，TestFlight 与审核准备状态见 [App Store 发布记录](docs/app-store/README.md)。macOS、Android 尚未做发布验收。
 
+账号与云同步正在单独准备，尚未在测试版开放。平台接入位置见[驱动地图](docs/design/platform-driver-map.md)，托管账号见[Supabase 准备说明](docs/managed-identity.md)。代码中的 CloudKit 驱动不代表生产容器、账号登录或多设备验收已完成。
+
 ## 使用与验收
 
 安装包、签名与更新清单位于本地 artifacts/windows/1.4.0/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。

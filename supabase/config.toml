@@ -1,0 +1,14 @@
+project_id = "anjian"
+
+[auth]
+site_url = "anjian://auth/callback"
+additional_redirect_urls = ["anjian://auth/callback"]
+jwt_expiry = 3600
+enable_signup = true
+enable_manual_linking = true
+
+# Configure provider client IDs/secrets in the hosted dashboard before enabling.
+# Never commit provider secrets or put service_role in an app binary.
+[functions.delete-account]
+# The handler verifies the bearer with Auth.getUser, including on asymmetric-key projects.
+verify_jwt = false

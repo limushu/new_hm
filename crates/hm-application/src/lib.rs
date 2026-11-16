@@ -3,6 +3,7 @@ pub mod backup;
 pub mod documents;
 pub mod recording;
 pub mod speech;
+pub mod sync;
 
 pub mod errors;
 

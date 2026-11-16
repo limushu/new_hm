@@ -26,6 +26,7 @@ tempfile = "3"
 tauri-plugin-hm-recording = { path = "../crates/tauri-plugin-hm-recording" }
 tauri-plugin-hm-documents = { path = "../crates/tauri-plugin-hm-documents" }
 tauri-plugin-hm-speech = { path = "../crates/tauri-plugin-hm-speech" }
+tauri-plugin-hm-cloudkit = { path = "../crates/tauri-plugin-hm-cloudkit" }
 
 [target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
 tauri = { version = "2", features = ["tray-icon"] }

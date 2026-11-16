@@ -426,6 +426,7 @@ export interface Commands {
   acknowledge_reminder: { args: { eventId: string; key: string }; result: null };
   choose_backup_directory: { args: Record<string, never>; result: string | null };
   run_backup: { args: Record<string, never>; result: BackupInfo };
+  native_sync_provider: { args: Record<string, never>; result: string | null };
   export_backup_archive: { args: Record<string, never>; result: BackupExport | null };
   pick_backup_archive: { args: Record<string, never>; result: BackupCandidate | null };
   restore_backup_archive: { args: { token: string; confirmed: boolean }; result: BackupSummary };

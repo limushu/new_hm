@@ -1089,6 +1089,9 @@ export async function previewCommand<K extends keyof Commands>(
       }
       break;
     }
+    case 'native_sync_provider':
+      result = null;
+      break;
     case 'choose_backup_directory':
     case 'export_backup_archive':
     case 'pick_backup_archive':

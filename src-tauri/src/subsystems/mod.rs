@@ -9,6 +9,7 @@ pub mod maintenance;
 pub mod mobile;
 pub mod recording;
 pub mod speech;
+pub mod sync;
 #[cfg(desktop)]
 pub mod updates;
 use hm_runtime::RuntimeManifest;
@@ -27,7 +28,8 @@ pub fn configure(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::W
     let builder = builder
         .plugin(tauri_plugin_hm_recording::init())
         .plugin(tauri_plugin_hm_documents::init())
-        .plugin(tauri_plugin_hm_speech::init());
+        .plugin(tauri_plugin_hm_speech::init())
+        .plugin(tauri_plugin_hm_cloudkit::init());
     #[cfg(desktop)]
     let builder = maintenance::configure(updates::configure(host::configure(builder)));
     builder

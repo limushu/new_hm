@@ -11,8 +11,8 @@
     "desktop:dev": "tauri dev",
     "desktop:build": "node scripts/build-desktop.mjs",
     "check": "tsc -b && cargo fmt --all -- --check",
-    "format": "prettier --write src tests scripts *.ts *.json index.html .github/workflows/*.yml src-tauri/*.json src-tauri/capabilities/*.json",
-    "format:check": "prettier --check src tests scripts *.ts *.json index.html .github/workflows/*.yml src-tauri/*.json src-tauri/capabilities/*.json",
+    "format": "prettier --write src tests scripts supabase *.ts *.json index.html .github/workflows/*.yml src-tauri/*.json src-tauri/capabilities/*.json",
+    "format:check": "prettier --check src tests scripts supabase *.ts *.json index.html .github/workflows/*.yml src-tauri/*.json src-tauri/capabilities/*.json",
     "check:mobile-boundaries": "node scripts/check-mobile-boundaries.mjs",
     "docs:check": "node scripts/check-doc-links.mjs",
     "test": "vitest run",
@@ -25,6 +25,7 @@
     "ios:dev": "tauri ios dev",
     "ios:verify": "node scripts/verify-ios-simulator.mjs",
     "appstore:prepare": "node scripts/prepare-app-store.mjs",
+    "identity:prepare": "node scripts/prepare-identity.mjs",
     "artifacts:debug": "node scripts/collect-artifacts.mjs debug",
     "artifacts:release": "node scripts/collect-release.mjs",
     "artifacts:mirror": "node scripts/prepare-update-mirror.mjs",
@@ -41,6 +42,7 @@
     "react-dom": "^19.3.1"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "^0.5.16",
     "@playwright/test": "^1.64.1",
     "@tauri-apps/cli": "^2.12.3",
     "@types/node": "^26.6.5",

@@ -1557,6 +1557,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-autostart",
  "tauri-plugin-dialog",
+ "tauri-plugin-hm-cloudkit",
  "tauri-plugin-hm-documents",
  "tauri-plugin-hm-recording",
  "tauri-plugin-hm-speech",
@@ -1575,6 +1576,8 @@ dependencies = [
  "hm-core",
  "hm-runtime",
  "serde",
+ "serde_json",
+ "sha2",
  "tempfile",
  "uuid",
 ]
@@ -4191,6 +4194,19 @@ dependencies = [
  "thiserror 2.0.21",
  "toml 1.1.8+spec-1.1.0",
  "url",
+]
+
+[[package]]
+name = "tauri-plugin-hm-cloudkit"
+version = "1.7.7"
+dependencies = [
+ "hm-runtime",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tauri",
+ "tauri-plugin",
+ "tempfile",
 ]
 
 [[package]]

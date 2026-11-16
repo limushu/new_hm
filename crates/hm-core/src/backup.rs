@@ -10,7 +10,9 @@ use std::{
 use uuid::Uuid;
 
 mod archive;
+mod sync;
 pub use archive::{BackupArchive, PreparedBackup};
+pub use sync::{SyncSnapshot, SyncSnapshotManifest};
 
 fn rename_staged(source: &Path, target: &Path) -> Result<()> {
     // Windows scanners may briefly hold a just-written file without delete sharing.
@@ -35,7 +37,7 @@ fn rename_staged(source: &Path, target: &Path) -> Result<()> {
     }
     unreachable!()
 }
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Manifest {
     application: String,
@@ -316,6 +318,20 @@ impl Store {
             "theme",
         ];
         let device_settings = self.settings()?;
+        let device_deliveries = if portable {
+            self.connection
+                .prepare("SELECT event_id,schedule_key,delivered_at FROM reminder_deliveries")?
+                .query_map([], |r| {
+                    Ok((
+                        r.get::<_, String>(0)?,
+                        r.get::<_, String>(1)?,
+                        r.get::<_, String>(2)?,
+                    ))
+                })?
+                .collect::<rusqlite::Result<Vec<_>>>()?
+        } else {
+            vec![]
+        };
         let stage = tempfile::Builder::new()
             .prefix(".hm-restore-")
             .tempdir_in(&directory)?;
@@ -357,6 +373,11 @@ impl Store {
             Store::migrate(&mut self.connection)?;
             self.connection.execute("INSERT INTO settings(key,value) VALUES('materials_directory',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[&generation_name])?;
             if portable {
+                self.connection
+                    .execute("DELETE FROM reminder_deliveries", [])?;
+                for (event, key, at) in &device_deliveries {
+                    self.connection.execute("INSERT OR IGNORE INTO reminder_deliveries(event_id,schedule_key,delivered_at) SELECT ?1,?2,?3 WHERE EXISTS(SELECT 1 FROM calendar_events WHERE id=?1)",rusqlite::params![event,key,at])?;
+                }
                 for key in device_keys {
                     self.connection
                         .execute("DELETE FROM settings WHERE key=?1", [key])?;
