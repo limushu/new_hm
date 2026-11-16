@@ -57,7 +57,8 @@ export default function DateField({
   function choose(date: string) {
     edit(date);
     close();
-    input.current?.focus();
+    if (matchMedia('(pointer: coarse)').matches) input.current?.blur();
+    else input.current?.focus({ preventScroll: true });
   }
   const start = new Date(month.getFullYear(), month.getMonth(), 1);
   start.setDate(1 - ((start.getDay() + 6) % 7));
@@ -154,7 +155,11 @@ export default function DateField({
                   aria-current={text === today ? 'date' : undefined}
                   className={`${date.getMonth() !== month.getMonth() ? 'outside-month' : ''} ${text === value ? 'selected' : ''}`}
                   disabled={!!min && text < min}
-                  onClick={() => choose(text)}
+                  onClick={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+                    choose(text);
+                  }}
                 >
                   {date.getDate()}
                 </button>
@@ -162,11 +167,26 @@ export default function DateField({
             })}
           </div>
           <footer>
-            <button type="button" disabled={!!min && today < min} onClick={() => choose(today)}>
+            <button
+              type="button"
+              disabled={!!min && today < min}
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                choose(today);
+              }}
+            >
               今天
             </button>
             {!required && (
-              <button type="button" onClick={() => choose('')}>
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  choose('');
+                }}
+              >
                 清除日期
               </button>
             )}

@@ -42,14 +42,24 @@ export default function ContactPicker({
   );
   const canCreate =
     !!onCreate && !!query.trim() && !rows.some((c) => c.name.trim() === query.trim());
+  function show() {
+    setOpen(true);
+    setQuery('');
+    setActive(0);
+  }
+  function finish() {
+    setOpen(false);
+    setQuery('');
+    if (matchMedia('(pointer: coarse)').matches) input.current?.blur();
+  }
   function choose(index: number) {
-    if (index < rows.length) {
+    if (rows[index]) {
+      finish();
       onSelect(rows[index]);
-      setOpen(false);
-      setQuery('');
     } else if (canCreate) {
-      onCreate?.(query.trim());
-      setOpen(false);
+      const name = query.trim();
+      finish();
+      onCreate?.(name);
     }
   }
   return (
@@ -67,10 +77,9 @@ export default function ContactPicker({
           value={open ? query : (selected?.name ?? '')}
           disabled={disabled}
           placeholder={placeholder}
-          onFocus={() => {
-            setOpen(true);
-            setQuery('');
-            setActive(0);
+          onFocus={show}
+          onClick={() => {
+            if (!open) show();
           }}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -122,7 +131,10 @@ export default function ContactPicker({
             type="button"
             aria-label={`展开${label}`}
             disabled={disabled}
-            onClick={() => input.current?.focus()}
+            onClick={() => {
+              input.current?.focus();
+              show();
+            }}
           >
             <ChevronDown />
           </button>
@@ -142,7 +154,11 @@ export default function ContactPicker({
                 className={index === active ? 'is-active' : ''}
                 onMouseDown={(e) => e.preventDefault()}
                 onMouseEnter={() => setActive(index)}
-                onClick={() => choose(index)}
+                onClick={(event) => {
+                  event.preventDefault();
+                  event.stopPropagation();
+                  choose(index);
+                }}
               >
                 <span>
                   {c.name}
@@ -160,9 +176,10 @@ export default function ContactPicker({
               type="button"
               className="picker-create"
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onCreate?.(query.trim());
-                setOpen(false);
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                choose(rows.length);
               }}
             >
               <Plus />

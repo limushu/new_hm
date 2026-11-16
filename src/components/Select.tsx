@@ -132,7 +132,12 @@ export default function Select({
               className={i === active ? 'is-active' : ''}
               onPointerMove={() => setActive(i)}
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => choose(i)}
+              onClick={(event) => {
+                // Do not let a surrounding label activate the trigger again.
+                event.preventDefault();
+                event.stopPropagation();
+                choose(i);
+              }}
             >
               <span>{o.children}</span>
               {i === selected && <Check />}

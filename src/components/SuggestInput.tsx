@@ -1,4 +1,4 @@
-import { useCallback, useId, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { usePopover } from './usePopover';
 
 /** Free text with optional suggestions. Entered values never require a catalog entry. */
@@ -17,15 +17,22 @@ export default function SuggestInput({
 }) {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  const input = useRef<HTMLInputElement>(null);
   const close = useCallback(() => setOpen(false), []);
   const id = useId();
   const rows = [...new Set(suggestions)].filter((s) =>
     s.toLowerCase().includes(value.toLowerCase()),
   );
   const { anchor, popup } = usePopover(open && rows.length > 0, close);
+  function choose(value: string) {
+    close();
+    if (matchMedia('(pointer: coarse)').matches) input.current?.blur();
+    onChange(value);
+  }
   return (
     <div ref={anchor} className="suggest-input">
       <input
+        ref={input}
         role="combobox"
         aria-label={label}
         aria-expanded={open && rows.length > 0}
@@ -41,6 +48,7 @@ export default function SuggestInput({
           setOpen(true);
         }}
         onFocus={() => setOpen(true)}
+        onClick={() => setOpen(true)}
         onKeyDown={(e) => {
           if (e.nativeEvent.isComposing) return;
           if (e.key === 'Escape' && open) {
@@ -57,8 +65,7 @@ export default function SuggestInput({
           }
           if (e.key === 'Enter' && open && rows.length) {
             e.preventDefault();
-            onChange(rows[active] ?? rows[0]);
-            close();
+            choose(rows[active] ?? rows[0]);
           }
         }}
       />
@@ -79,9 +86,10 @@ export default function SuggestInput({
               aria-selected={active === i}
               key={s}
               onMouseDown={(e) => e.preventDefault()}
-              onClick={() => {
-                onChange(s);
-                close();
+              onClick={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                choose(s);
               }}
             >
               {s}
