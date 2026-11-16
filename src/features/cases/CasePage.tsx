@@ -1,3 +1,4 @@
+import Button from '../../components/Button';
 import Dialog from '../../components/Dialog';
 import RetainedView from '../../components/RetainedView';
 import Select from '../../components/Select';
@@ -272,14 +273,14 @@ export default function CasePage({
           </div>
           {(title.trim() !== item.title || !saved) && (
             <div className="case-name-confirm">
-              <button
+              <Button
                 type="button"
-                className="primary-action"
+                variant="primary"
                 disabled={saving || !title.trim()}
                 onClick={() => void commit()}
               >
                 {saved ? '保存名称' : '创建案件'}
-              </button>
+              </Button>
               <button
                 type="button"
                 disabled={saving}

@@ -18,20 +18,6 @@
   color: var(--muted);
   font-size: 14px;
 }
-.mobile-create-case {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  min-height: 44px;
-  padding: 10px 16px;
-  background: var(--primary);
-  color: var(--on-primary);
-  border-radius: 13px;
-  font-size: 15px;
-  font-weight: 600;
-  white-space: nowrap;
-}
 .mobile-case-search {
   display: flex;
   align-items: center;

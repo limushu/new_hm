@@ -1,4 +1,5 @@
 import Select from '../../components/Select';
+import Button from '../../components/Button';
 import { useEffect, useRef, useState } from 'react';
 import {
   ChevronLeft,
@@ -118,7 +119,7 @@ export default function Calendar({
           </h1>
         </div>
         <div className="calendar-navigation">
-          <button
+          <Button
             className="calendar-today"
             onClick={() => {
               select(dateKey(new Date()));
@@ -126,43 +127,42 @@ export default function Calendar({
             }}
           >
             今天
-          </button>
-          <button
-            className="icon-button"
+          </Button>
+          <Button
+            variant="ghost"
+            icon={ChevronLeft}
             aria-label={view === 'month' ? '上个月' : view === 'week' ? '上一周' : '上一天'}
             onClick={() => changeMonth(-1)}
-          >
-            <ChevronLeft />
-          </button>
-          <button
-            className="icon-button"
+          />
+          <Button
+            variant="ghost"
+            icon={ChevronRight}
             aria-label={view === 'month' ? '下个月' : view === 'week' ? '下一周' : '下一天'}
             onClick={() => changeMonth(1)}
-          >
-            <ChevronRight />
-          </button>
+          />
         </div>
         <div className="calendar-actions">
-          <button className="calendar-search" onClick={findCases}>
-            <Search />
+          <Button variant="ghost" icon={Search} className="calendar-search" onClick={findCases}>
             <span>查找案件</span>
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="ghost"
+            icon={Folder}
             className="calendar-new-case"
             disabled={loading || !data.statuses.length}
             onClick={newCase}
           >
-            <Folder />
             <span>新建案件</span>
-          </button>
-          <button
+          </Button>
+          <Button
+            variant="primary"
+            icon={Plus}
             className="calendar-primary"
             disabled={loading || !data.statuses.length}
             onClick={() => create(selected)}
           >
-            <Plus />
             新建日程
-          </button>
+          </Button>
         </div>
       </header>
       <div className="calendar-toolbar">

@@ -1,3 +1,4 @@
+import Button from '../../components/Button';
 import type { ReactNode } from 'react';
 import { useEffect, useRef, useState } from 'react';
 import {
@@ -199,14 +200,9 @@ export default function Recorder({
       </p>
       <div className="feature-toolbar">
         {status === 'idle' && (
-          <button
-            type="button"
-            className="primary-action"
-            disabled={starting}
-            onClick={() => void start()}
-          >
+          <Button type="button" variant="primary" disabled={starting} onClick={() => void start()}>
             {starting ? '正在启动…' : '开始录音'}
-          </button>
+          </Button>
         )}
         {(status === 'recording' || status === 'paused') && (
           <>

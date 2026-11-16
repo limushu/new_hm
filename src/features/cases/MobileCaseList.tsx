@@ -1,6 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import { ChevronRight, MoreHorizontal, Plus, Search, Settings2, X } from 'lucide-react';
 import Dialog from '../../components/Dialog';
+import Button from '../../components/Button';
 import { statusPalette } from '../../domain/statusPalette';
 import type { CaseFile, CaseStatus } from '../../domain/types';
 import './mobile-cases.css';
@@ -47,13 +48,14 @@ export default function MobileCaseList({
             {cases.length} 个{query.trim() ? '匹配的' : ''}案件
           </p>
         </div>
-        <button
+        <Button
+          variant="primary"
+          icon={Plus}
           className="mobile-create-case"
           onClick={() => onCreate(selected ?? statuses[0]?.id ?? 'not_started')}
         >
-          <Plus />
-          新建
-        </button>
+          新建案件
+        </Button>
       </header>
       {onboarding}
       <label className="mobile-case-search">

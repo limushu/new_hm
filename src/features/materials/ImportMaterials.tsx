@@ -1,3 +1,4 @@
+import Button from '../../components/Button';
 import { useRef, useState, type ReactNode } from 'react';
 import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
@@ -54,14 +55,14 @@ export default function ImportMaterials({
         aria-label="选择本地材料"
         onChange={(e) => void pick(e.target.files)}
       />
-      <button
-        className="primary-action"
+      <Button
+        variant="primary"
         disabled={busy}
         type="button"
         onClick={() => (nativeRuntime ? void pick() : input.current?.click())}
       >
         {busy ? '正在归档…' : '选择本地文件'}
-      </button>
+      </Button>
       {notice && <p role="status">{notice}</p>}
       {error && error.includes('公共属性未保存') && onRetryProperties && (
         <button

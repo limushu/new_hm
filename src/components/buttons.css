@@ -1,0 +1,75 @@
+:root {
+  --button-height: 44px;
+  --button-radius: 8px;
+  --button-padding: 14px;
+  --button-gap: 8px;
+  --button-icon-size: 18px;
+}
+
+button.ui-button,
+button.primary-action,
+button.danger-button,
+.workspace-dialog footer > button,
+.event-editor footer > button,
+.feature-toolbar > button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  gap: var(--button-gap);
+  min-height: var(--button-height);
+  padding: 0 var(--button-padding);
+  border: 1px solid transparent;
+  border-radius: var(--button-radius);
+  box-shadow: none;
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+  line-height: 20px;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+button.ui-button > svg,
+button.primary-action > svg,
+.feature-toolbar > button > svg {
+  width: var(--button-icon-size);
+  height: var(--button-icon-size);
+}
+
+button.ui-button:has(> svg:only-child) {
+  width: var(--button-height);
+  padding: 0;
+}
+
+button.primary-action,
+button.ui-button--primary {
+  color: var(--on-primary);
+  background: var(--primary);
+}
+button.primary-action:hover,
+button.ui-button--primary:hover {
+  color: var(--on-primary);
+  background: var(--primary-hover);
+}
+button.ui-button--secondary {
+  color: var(--text);
+  background: transparent;
+  border-color: var(--line);
+}
+button.ui-button--ghost {
+  color: var(--muted);
+  background: transparent;
+}
+button.ui-button--secondary:hover,
+button.ui-button--ghost:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+button.ui-button--danger {
+  color: var(--on-primary);
+  background: var(--red-strong);
+}
+button.ui-button:disabled,
+button.primary-action:disabled {
+  cursor: not-allowed;
+}

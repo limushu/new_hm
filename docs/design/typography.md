@@ -1,5 +1,7 @@
 # 字体映射规范
 
+按钮的尺寸、图标、间距与命名规则见 [按钮规范](buttons.md)。
+
 ## 字体族
 
 应用 UI 统一使用 styles.css 中 --font-ui：-apple-system、BlinkMacSystemFont、Segoe UI、Microsoft YaHei UI、PingFang SC、Microsoft YaHei、system-ui、sans-serif，按平台可用字体依次回退。Windows 拉丁字符通常使用 Segoe UI，中文使用 Microsoft YaHei UI；macOS 中文使用 PingFang SC。统一原则是同一平台下相同内容角色一致，而非强制所有平台加载同一个外部字体。

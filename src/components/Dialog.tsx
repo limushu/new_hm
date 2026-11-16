@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
+import Button from './Button';
 export default function Dialog({
   title,
   children,
@@ -87,14 +88,13 @@ export default function Dialog({
           </p>
         )}
         <footer>
-          <button type="button" disabled={busy} onClick={onClose}>
+          <Button variant="ghost" disabled={busy} onClick={onClose}>
             {onSubmit ? '取消' : '关闭'}
-          </button>
+          </Button>
           {onSubmit && (
             <>
               {secondaryAction && (
-                <button
-                  type="button"
+                <Button
                   disabled={busy}
                   onClick={() => {
                     const form = dialog.current?.querySelector('form');
@@ -102,15 +102,11 @@ export default function Dialog({
                   }}
                 >
                   {secondaryAction.label}
-                </button>
+                </Button>
               )}
-              <button
-                className={danger ? 'danger-button' : 'primary-action'}
-                disabled={busy}
-                type="submit"
-              >
+              <Button variant={danger ? 'danger' : 'primary'} disabled={busy} type="submit">
                 {busy ? '处理中…' : submitLabel}
-              </button>
+              </Button>
             </>
           )}
         </footer>

@@ -2,6 +2,7 @@ import Select from '../../components/Select';
 import { useState } from 'react';
 import { Plus, Users, ArrowUpRight, Search, Network } from 'lucide-react';
 import Dialog from '../../components/Dialog';
+import Button from '../../components/Button';
 import RelationGraph from './RelationGraph';
 import DeleteContact from './DeleteContact';
 import type { Contact, SaveAction, Workspace } from '../../domain/types';
@@ -48,10 +49,9 @@ export default function Contacts({
           </h1>
         </div>
         <div className="contacts-actions">
-          <button className="primary-action" onClick={() => setEdit(emptyContact())}>
-            <Plus />
+          <Button variant="primary" icon={Plus} onClick={() => setEdit(emptyContact())}>
             新建对象
-          </button>
+          </Button>
         </div>
       </div>
       <p className="contacts-intro">集中管理案件中的人员与机构，查看他们之间的联系。</p>
@@ -73,10 +73,14 @@ export default function Contacts({
             </option>
           ))}
         </Select>
-        <button className="contacts-graph" onClick={() => setGraph(true)}>
-          <Network />
+        <Button
+          variant="ghost"
+          icon={Network}
+          className="contacts-graph"
+          onClick={() => setGraph(true)}
+        >
           关系图
-        </button>
+        </Button>
         <span>{rows.length} 个对象</span>
       </div>
       {graph && (

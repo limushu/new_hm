@@ -14,7 +14,7 @@ test('手机纵向案件列表支持搜索、状态筛选、创建和恢复删�
   await page.getByRole('textbox', { name: '搜索案件' }).fill('没有结果');
   await expect(page.getByRole('heading', { name: '没有匹配的案件' })).toBeVisible();
   await page.getByRole('button', { name: '清除案件搜索' }).tap();
-  await page.getByRole('button', { name: '新建', exact: true }).tap();
+  await page.getByRole('button', { name: '新建案件', exact: true }).tap();
   await page.getByLabel('案件名称', { exact: true }).fill('手机创建的合同纠纷');
   await page.getByLabel('案件名称', { exact: true }).press('Enter');
   await page.getByRole('button', { name: '返回看板', exact: true }).tap();

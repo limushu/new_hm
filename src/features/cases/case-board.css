@@ -222,26 +222,10 @@
   text-overflow: ellipsis;
   margin-top: -4px;
 }
-.new-case {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.new-case.ui-button {
   width: 100%;
-  padding: 11px 12px;
-  font-size: var(--text-base);
-  color: var(--muted);
   margin-top: 8px;
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  text-align: left;
-}
-.new-case:hover {
-  background: var(--wash);
-  color: var(--text);
-}
-.new-case svg {
-  width: 15px;
-  height: 15px;
+  justify-content: flex-start;
 }
 .column-empty {
   font-size: var(--text-xs);

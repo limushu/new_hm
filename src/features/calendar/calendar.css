@@ -37,50 +37,12 @@
   border-radius: 6px;
   margin-right: 5px;
 }
-.calendar-navigation .icon-button {
-  width: 25px;
-  height: 27px;
-}
 .calendar-actions {
   display: flex;
   align-items: center;
   gap: 9px;
   margin-left: auto;
   padding-top: 21px;
-}
-.calendar-actions button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  font-size: var(--text-sm);
-  padding: 7px 10px;
-  border-radius: 6px;
-  white-space: nowrap;
-}
-.calendar-actions svg {
-  width: 14px;
-  height: 14px;
-}
-.calendar-search,
-.calendar-new-case {
-  color: var(--muted);
-}
-.calendar-search:hover,
-.calendar-new-case:hover,
-.calendar-today:hover {
-  background: var(--hover);
-  color: var(--text);
-}
-button.calendar-primary {
-  background: var(--calendar-blue);
-  color: var(--on-primary);
-  border-radius: 6px;
-  padding: 7px 12px;
-  font-size: var(--text-sm);
-}
-button.calendar-primary:hover {
-  background: var(--calendar-blue-hover);
 }
 .calendar-toolbar {
   display: flex;
@@ -650,10 +612,6 @@ button.calendar-primary:hover {
   }
   .calendar-actions .calendar-primary {
     margin-left: auto;
-  }
-  .calendar-actions button {
-    padding: 7px 8px;
-    font-size: var(--text-xs);
   }
   .calendar-toolbar {
     padding-bottom: 8px;

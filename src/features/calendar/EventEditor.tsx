@@ -1,4 +1,5 @@
 import DateField from '../../components/DateField';
+import Button from '../../components/Button';
 import Select from '../../components/Select';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { CalendarDays, Clock3, MapPin, Trash2, X } from 'lucide-react';
@@ -261,12 +262,17 @@ export default function EventEditor({
               {confirmDelete ? '确认删除' : '删除'}
             </button>
           )}
-          <button type="button" className="event-cancel" onClick={onClose} disabled={busy}>
+          <Button variant="ghost" className="event-cancel" onClick={onClose} disabled={busy}>
             取消
-          </button>
-          <button type="submit" className="calendar-primary" disabled={busy || !value.title.trim()}>
+          </Button>
+          <Button
+            variant="primary"
+            type="submit"
+            className="calendar-primary"
+            disabled={busy || !value.title.trim()}
+          >
             {busy ? '保存中…' : '保存日程'}
-          </button>
+          </Button>
         </footer>
       </form>
     </dialog>

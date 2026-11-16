@@ -174,13 +174,6 @@
 .theme-swatch.system {
   background: linear-gradient(90deg, #ededeb 24%, #fff 24%, #fff 50%, #191919 50%);
 }
-.primary-action {
-  background: var(--primary);
-  color: var(--on-primary);
-}
-.primary-action:hover {
-  background: var(--primary-hover);
-}
 .board-status-pill {
   color: var(--status-foreground, var(--text));
 }

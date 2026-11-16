@@ -1,8 +1,4 @@
 /* One palette and action language for the whole case, including materials and money. */
-.case-redesigned {
-  --case-action-bg: var(--primary);
-  --case-action-fg: var(--on-primary);
-}
 .case-redesigned .case-toolbar {
   gap: 12px;
   border-bottom: 0;
@@ -53,14 +49,6 @@
   .case-redesigned .case-tag-query input {
     min-height: 40px;
   }
-}
-.case-redesigned .primary-action {
-  background: var(--case-action-bg);
-  color: var(--case-action-fg);
-  box-shadow: none;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  min-height: 44px;
 }
 .case-redesigned .feature-toolbar {
   gap: 12px;
@@ -206,9 +194,6 @@
   .case-redesigned .case-tabs .save-state {
     display: none;
   }
-  .case-redesigned .material-toolbar .primary-action {
-    flex: 1;
-  }
   .case-redesigned .material-row {
     gap: 12px;
   }
@@ -270,18 +255,6 @@
   background: var(--primary);
   color: var(--on-primary);
 }
-.case-redesigned .material-toolbar .primary-action {
-  background: transparent;
-  color: var(--text);
-  border: 1px solid var(--line);
-  flex: initial;
-}
-.workspace-dialog .primary-action {
-  border-radius: 8px;
-  min-height: 44px;
-  box-shadow: none;
-}
-
 @media (max-width: 760px) {
   .case-redesigned .material-search {
     flex-basis: 100%;

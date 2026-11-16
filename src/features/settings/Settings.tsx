@@ -1,3 +1,4 @@
+import Button from '../../components/Button';
 import { useEffect, useState } from 'react';
 import { Settings as SettingsIcon, Download, FolderOpen, RotateCcw, Check } from 'lucide-react';
 import { watchMaintenance } from '../../platform/maintenance';
@@ -347,9 +348,9 @@ export default function Settings({
                 {busy ? '正在处理…' : '检查更新'}
               </button>
               {update ? (
-                <button className="primary-action" onClick={() => setUpdateDialog(true)}>
+                <Button variant="primary" onClick={() => setUpdateDialog(true)}>
                   更新到 {update.version}
-                </button>
+                </Button>
               ) : (
                 checked && <span className="field-hint">当前已是最新版本。</span>
               )}

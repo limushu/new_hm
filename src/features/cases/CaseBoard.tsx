@@ -1,5 +1,6 @@
 import { currentStage, proceedingName } from '../../domain/proceedings';
 import Dialog from '../../components/Dialog';
+import Button from '../../components/Button';
 import { statusPalette } from '../../domain/statusPalette';
 import { useId, useRef, useState, useMemo } from 'react';
 import {
@@ -366,10 +367,14 @@ export default function CaseBoard({
                   ))}
                 </div>
                 {index === 0 && (
-                  <button className="new-case" onClick={() => onCreate(status.id)}>
-                    <Plus />
+                  <Button
+                    variant="secondary"
+                    icon={Plus}
+                    className="new-case"
+                    onClick={() => onCreate(status.id)}
+                  >
                     新建案件
-                  </button>
+                  </Button>
                 )}
                 {!cases.length && queryText && <p className="column-empty">没有匹配的案件</p>}
               </section>

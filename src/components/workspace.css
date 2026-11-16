@@ -66,25 +66,10 @@
 }
 .workspace-dialog footer {
   display: flex;
+  flex-wrap: wrap;
   justify-content: flex-end;
   gap: 10px;
   margin-top: 22px;
-}
-.workspace-dialog footer button,
-.feature-button {
-  border-radius: 6px;
-  font-size: var(--text-base);
-  padding: 7px 12px;
-}
-.primary-action {
-  background: var(--primary);
-  color: var(--on-primary);
-  border-radius: 6px;
-  padding: 7px 12px;
-  font-size: var(--text-base);
-}
-.primary-action:hover {
-  background: var(--primary);
 }
 .danger-button {
   background: var(--red-strong);
@@ -111,21 +96,8 @@
   flex: 1;
   min-width: 110px;
 }
-.feature-toolbar button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: var(--text-base);
-  padding: 6px 8px;
-  border-radius: 6px;
-}
 .feature-toolbar button:hover {
   background: var(--wash);
-}
-.feature-toolbar button.primary-action,
-.feature-toolbar button.primary-action:hover {
-  background: var(--primary);
-  color: var(--on-primary);
 }
 .feature-toolbar svg {
   width: 14px;

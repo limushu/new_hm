@@ -1,3 +1,4 @@
+import Button from '../../components/Button';
 import ObjectInspector from '../cases/ObjectInspector';
 import { caseSystem } from '../../case-system/modules';
 import { errorMessage } from '../../services/errors';
@@ -455,9 +456,9 @@ export default function Materials({
           <Mic />
           录音
         </button>
-        <button
+        <Button
           type="button"
-          className="primary-action"
+          variant="primary"
           title={
             filePicker
               ? `添加到 ${scopeName}${current ? ' / ' + pathOf(current) : ''}`
@@ -468,7 +469,7 @@ export default function Materials({
         >
           <Upload />
           添加材料
-        </button>
+        </Button>
       </div>
       {manifest && !filePicker && (
         <p className="feature-description">当前设备暂不支持添加文件，已有材料仍可查看和整理。</p>

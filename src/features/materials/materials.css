@@ -382,13 +382,6 @@
 .materials-touch .material-menu-trigger {
   min-height: 44px;
 }
-.materials-touch .material-toolbar button {
-  padding: 10px;
-  justify-content: center;
-}
-.materials-touch .material-toolbar .primary-action {
-  flex-grow: 1;
-}
 .materials-touch .material-list-heading,
 .materials-touch .material-row {
   grid-template-columns: minmax(0, 1fr) 58px 44px;
