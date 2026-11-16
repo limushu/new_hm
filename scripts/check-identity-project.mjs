@@ -1,6 +1,7 @@
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { projectIdentityConfig } from './identity-config.mjs';
+import { nativeAuthCallback } from './identity-auth-config.mjs';
 
 const root = resolve(import.meta.dirname, '..');
 const config = projectIdentityConfig(
@@ -13,6 +14,10 @@ const status = {
   providers: { apple: false, google: false, azure: false },
   workspaceSchema: 'unknown',
   managementAccess: 'missing',
+  nativeCallbackAllowed: null,
+  manualIdentityLinking: null,
+  providerConfiguration: null,
+  catalogPermissions: null,
   realLoginVerified: false,
   cloudSyncAvailable: false,
 };
@@ -52,6 +57,67 @@ if (process.env.SUPABASE_ACCESS_TOKEN) {
     const project = await response.json();
     status.managementAccess = project.id === config.projectRef ? 'ready' : 'project-mismatch';
   } else status.managementAccess = `rejected-${response.status}`;
+  if (status.managementAccess === 'ready') {
+    const response = await fetch(
+      `https://api.supabase.com/v1/projects/${config.projectRef}/config/auth`,
+      {
+        redirect: 'error',
+        signal: AbortSignal.timeout(15000),
+        headers: { authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}` },
+      },
+    );
+    if (response.ok) {
+      const auth = await response.json();
+      status.nativeCallbackAllowed =
+        auth.uri_allow_list
+          ?.split(',')
+          .map((value) => value.trim())
+          .includes(nativeAuthCallback) ?? false;
+      status.manualIdentityLinking = auth.security_manual_linking_enabled === true;
+      status.providerConfiguration = Object.fromEntries(
+        ['apple', 'google', 'azure'].map((provider) => [
+          provider,
+          {
+            enabled: auth[`external_${provider}_enabled`] === true,
+            clientIdConfigured: Boolean(auth[`external_${provider}_client_id`]),
+            secretConfigured: Boolean(auth[`external_${provider}_secret`]),
+          },
+        ]),
+      );
+    }
+    const permissions = await fetch(
+      `https://api.supabase.com/v1/projects/${config.projectRef}/database/query`,
+      {
+        method: 'POST',
+        redirect: 'error',
+        signal: AbortSignal.timeout(15000),
+        headers: {
+          authorization: `Bearer ${process.env.SUPABASE_ACCESS_TOKEN}`,
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify({
+          read_only: true,
+          query:
+            "select c.relname as table_name,c.relrowsecurity as rls_enabled,has_table_privilege('anon',c.oid,'SELECT') as anonymous_select,has_table_privilege('authenticated',c.oid,'SELECT') as authenticated_select from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='public' and c.relkind='r' and c.relname in ('account_profiles','cloud_bindings','workspaces') order by c.relname",
+        }),
+      },
+    );
+    if (permissions.ok) {
+      const tables = await permissions.json();
+      if (Array.isArray(tables))
+        status.catalogPermissions = {
+          tables,
+          allProtected:
+            tables.length === 3 &&
+            tables.every(
+              (table) =>
+                table.rls_enabled === true &&
+                table.anonymous_select === false &&
+                table.authenticated_select === true,
+            ),
+        };
+    }
+  }
 }
 const directory = resolve(root, 'artifacts/identity');
 mkdirSync(directory, { recursive: true });

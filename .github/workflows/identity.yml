@@ -7,6 +7,11 @@ on:
         required: true
         type: boolean
         default: false
+      configure_auth:
+        description: 'Add the native callback and manual identity linking while preserving existing provider credentials'
+        required: true
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -32,8 +37,13 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/deploy-identity.mjs --apply
+      - name: Configure native authentication routing
+        if: inputs.configure_auth
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: node scripts/configure-identity-auth.mjs --apply
       - name: Verify deployed project
-        if: inputs.apply
+        if: inputs.apply || inputs.configure_auth
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/check-identity-project.mjs

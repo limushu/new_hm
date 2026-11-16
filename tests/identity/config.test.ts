@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
 import { identityConfig, projectIdentityConfig } from '../../scripts/identity-config.mjs';
+import { identityAuthPatch, nativeAuthCallback } from '../../scripts/identity-auth-config.mjs';
 
 test('未配置托管服务时不宣告登录可用；只接受公开客户端 key', () => {
   expect(identityConfig({})).toEqual({ configured: false });
@@ -50,4 +51,31 @@ test('部署目标与公开客户端配置必须指向同一项目', () => {
   expect(() =>
     projectIdentityConfig({ projectRef: '', url: `https://${ref}.supabase.co`, publicKey: key }),
   ).toThrow('explicit project reference');
+});
+
+test('原生回调配置保留现有应用网址和提供器密钥，重复应用不产生更改', () => {
+  const current = {
+    site_url: 'https://existing.example',
+    uri_allow_list: 'https://existing.example/callback',
+    security_manual_linking_enabled: false,
+    external_google_enabled: true,
+    external_google_secret: 'must-not-copy',
+  };
+  const patch = identityAuthPatch(current);
+  expect(patch).toEqual({
+    uri_allow_list: `https://existing.example/callback,${nativeAuthCallback}`,
+    security_manual_linking_enabled: true,
+  });
+  expect(identityAuthPatch({ ...current, ...patch })).toEqual({});
+  expect(
+    identityAuthPatch({
+      site_url: 'http://localhost:3000',
+      uri_allow_list: '',
+      security_manual_linking_enabled: false,
+    }),
+  ).toEqual({
+    site_url: nativeAuthCallback,
+    uri_allow_list: nativeAuthCallback,
+    security_manual_linking_enabled: true,
+  });
 });
