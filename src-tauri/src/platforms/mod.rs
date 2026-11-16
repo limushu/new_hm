@@ -5,12 +5,13 @@ pub(crate) mod desktop;
 mod mobile;
 use hm_runtime::platform::{DocumentDriver, ExternalOpenDriver, HostDriver, LocalFilesystemDriver};
 use hm_runtime::RuntimeManifest;
+use std::sync::Arc;
 
 pub struct NativeDrivers {
     pub host: Box<dyn HostDriver>,
     pub external_open: Box<dyn ExternalOpenDriver>,
     pub local_filesystem: Box<dyn LocalFilesystemDriver>,
-    pub documents: Box<dyn DocumentDriver>,
+    pub documents: Arc<dyn DocumentDriver>,
     manifest: RuntimeManifest,
 }
 impl NativeDrivers {
@@ -26,7 +27,7 @@ pub fn setup(app: &mut tauri::App) {
         host: Box::new(desktop::DesktopPlatform(app.handle().clone())),
         external_open: Box::new(desktop::DesktopPlatform(app.handle().clone())),
         local_filesystem: Box::new(desktop::DesktopPlatform(app.handle().clone())),
-        documents: Box::new(desktop::documents::DesktopDocuments(app.handle().clone())),
+        documents: Arc::new(desktop::documents::DesktopDocuments(app.handle().clone())),
         manifest: RuntimeManifest::desktop(),
     };
     #[cfg(mobile)]
@@ -63,6 +64,16 @@ pub fn setup(app: &mut tauri::App) {
             speech.state = hm_runtime::Availability::Ready;
             speech.capabilities = vec![hm_runtime::Capability::TranscribeAudio];
         }
+        #[cfg(target_os = "ios")]
+        if let Some(backup) = manifest
+            .subsystems
+            .iter_mut()
+            .find(|s| s.id == hm_runtime::SubsystemId::Backup)
+        {
+            backup
+                .capabilities
+                .push(hm_runtime::Capability::BackupFiles);
+        }
         manifest
     };
     #[cfg(mobile)]
@@ -71,9 +82,9 @@ pub fn setup(app: &mut tauri::App) {
         external_open: Box::new(mobile::SandboxPlatform),
         local_filesystem: Box::new(mobile::SandboxPlatform),
         #[cfg(target_os = "ios")]
-        documents: tauri_plugin_hm_documents::driver(app.handle()),
+        documents: Arc::from(tauri_plugin_hm_documents::driver(app.handle())),
         #[cfg(not(target_os = "ios"))]
-        documents: Box::new(mobile::documents::UnavailableDocuments),
+        documents: Arc::new(mobile::documents::UnavailableDocuments),
         manifest,
     };
     #[cfg(target_os = "ios")]
@@ -89,6 +100,20 @@ pub fn setup(app: &mut tauri::App) {
     let speech = Box::new(hm_runtime::platform::UnavailableSpeech);
     app.manage(crate::subsystems::speech::SpeechState(
         std::sync::Mutex::new(hm_application::speech::SpeechService::new(speech)),
+    ));
+    let backup: Box<dyn hm_runtime::platform::BackupDriver> = if drivers
+        .manifest
+        .require(hm_runtime::Capability::BackupFiles)
+        .is_ok()
+    {
+        Box::new(hm_runtime::platform::FileBackupDriver(
+            drivers.documents.clone(),
+        ))
+    } else {
+        Box::new(hm_runtime::platform::UnavailableBackup)
+    };
+    app.manage(crate::subsystems::backup::BackupState(
+        std::sync::Mutex::new(hm_application::backup::BackupService::new(backup)),
     ));
     app.manage(drivers);
 }

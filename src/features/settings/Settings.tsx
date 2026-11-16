@@ -9,6 +9,7 @@ import Dialog from '../../components/Dialog';
 import UpdateDialog from '../../components/UpdateDialog';
 import Welcome from '../../components/Welcome';
 import PrivacyPolicy from './PrivacyPolicy';
+import BackupFiles from './BackupFiles';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
 import { useTheme } from '../../components/ThemeProvider';
@@ -29,6 +30,7 @@ export default function Settings({
     supports(manifest, 'background-maintenance') || supports(manifest, 'foreground-maintenance');
   const localBackup = supports(manifest, 'local-backup');
   const backupTransfer = supports(manifest, 'backup-transfer');
+  const backupFiles = supports(manifest, 'backup-files');
   const systemNotifications = supports(manifest, 'system-notifications');
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [health, setHealth] = useState<Record<string, string>>({});
@@ -165,10 +167,21 @@ export default function Settings({
       <section className="settings-section">
         <h2>备份与恢复</h2>
         <p className="feature-description">
-          {backupTransfer
-            ? '每天使用时自动备份一次，保留最近 7 份，包含案件、材料和录音。可把位置选在另一块磁盘。'
-            : '使用时检查当天备份，保留最近 7 份。本机副本不能防止设备丢失；当前版本尚不支持向设备外导出备份。'}
+          {backupFiles
+            ? '完整备份包含案件、人员关系、日程、收支、材料和录音。导出一份 ZIP 文件，可用于换机或恢复。'
+            : backupTransfer
+              ? '每天使用时自动备份一次，保留最近 7 份，包含案件、材料和录音。可把位置选在另一块磁盘。'
+              : '使用时检查当天备份，保留最近 7 份。本机副本不能防止设备丢失；当前版本尚不支持向设备外导出备份。'}
         </p>
+        {backupFiles && (
+          <BackupFiles
+            save={save}
+            onRestored={async () => {
+              setSettings(await command('get_settings', {}));
+              setBackup(null);
+            }}
+          />
+        )}
         <div className="settings-path">
           <code>{settings.backup_directory ?? '正在读取备份位置…'}</code>
           {backupTransfer && (

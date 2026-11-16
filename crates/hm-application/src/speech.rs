@@ -55,6 +55,9 @@ pub struct SpeechService {
     active: Option<ActiveJob>,
 }
 impl SpeechService {
+    pub fn has_pending(&self) -> bool {
+        self.active.is_some()
+    }
     pub fn new(driver: Box<dyn SpeechDriver>) -> Self {
         Self {
             driver,

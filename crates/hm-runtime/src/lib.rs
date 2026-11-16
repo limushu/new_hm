@@ -21,6 +21,7 @@ pub enum Capability {
     TranscribeAudio,
     LocalBackup,
     BackupTransfer,
+    BackupFiles,
     SystemNotifications,
 }
 
@@ -111,7 +112,11 @@ impl RuntimeManifest {
                 SubsystemDescriptor {
                     id: SubsystemId::Backup,
                     state: Availability::Ready,
-                    capabilities: vec![Capability::LocalBackup, Capability::BackupTransfer],
+                    capabilities: vec![
+                        Capability::LocalBackup,
+                        Capability::BackupTransfer,
+                        Capability::BackupFiles,
+                    ],
                 },
             ],
         }

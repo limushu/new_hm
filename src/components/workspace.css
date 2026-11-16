@@ -474,6 +474,12 @@
   flex-wrap: wrap;
   line-height: 1.8;
 }
+.backup-files {
+  margin-bottom: 20px;
+}
+.backup-files .feature-toolbar {
+  flex-wrap: wrap;
+}
 .backup-success span {
   display: block;
   flex-basis: 100%;

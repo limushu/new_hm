@@ -25,8 +25,12 @@ crates/
   hm-application/src/
     documents.rs                资源导入、逐文件错误汇总、释放访问资源
     recording.rs                会话编排、状态检查、归档失败保留产物
+    speech.rs                   设备内转写任务、草稿保存
+    backup.rs                   完整备份文件传输、待确认恢复令牌
   hm-runtime/src/platform/
     documents.rs                Document / DocumentDriver 契约
+    backup.rs                   BackupDriver / FileBackupDriver 契约
+    speech.rs                   SpeechDriver / SpeechJob 契约
     recording.rs                RecordingDriver / RecordingSession 契约
     error.rs                    标准驱动错误分类
     ports.rs                    Host / ExternalOpen / LocalFilesystem 独立接口
@@ -36,8 +40,10 @@ src-tauri/src/
   lib.rs                        组装与命令注册
   ipc/                          工作区、宿主 IPC
   subsystems/
-    documents/                  文档 IPC、预览、旧凭据和备份入口
-    recording/                  原生录音服务与 IPC
+    documents/                  文档 IPC、预览和旧凭据入口
+    recording/                  原生及兼容录音服务与 IPC
+    speech/                     转写服务与 IPC
+    backup/                     本机/文件备份与恢复 IPC
     host/                       桌面宿主生命周期
     updates/                    更新检查与安装
     maintenance/                备份和提醒协调
@@ -68,13 +74,13 @@ RecordingDriver 提供能力描述和开始会话；RecordingSession 提供状�
 
 RecordingService 拒绝重复开始和非法暂停，结束后释放会话、保留产物。归档失败保留产物，重试从头读取；归档成功或取消后释放产物。TS 界面通过统一控制接口操作，会根据返回产物保留对应扩展名，不固定要求 WebM。
 
-当前原生驱动为 UnavailableRecording，返回 capture=false；桌面显式允许原有 WebView 兼容后端，移动端不启用该回退。Swift/Kotlin 或桌面原生音频驱动尚未接入，不能把接口和测试驱动当成已具备原生录音。
+iOS 已接入 AVFoundation 原生录音驱动，支持权限、暂停与中断；桌面显式允许 WebView 兼容后端，Android 尚未安装原生录音驱动，不启用移动 WebView 回退。参见[设备内转写](../speech-transcription.md)和[备份与录音分层核对](../backup-subsystem.md)。
 
-原生录音的 IPC 和界面调用链已接好。真实驱动接入时，还需完成设备权限、中断状态展示、格式与生命周期的设备验收。
+录音驱动已有 iOS 模拟器原生测试；真实设备权限、中断、格式与生命周期验收仍需按实际构建完成。
 
 ## 有意保留的迁移边界
 
-凭据附加和备份目录选择仍使用 LocalFilesystemDriver 的本地路径契约；它们没有被宣称为通用文档提供器功能。移动端接入这些功能时，需将凭据流程迁移为资源导入，备份迁移为归档传输。
+旧凭据附加和桌面备份目录选择仍使用 LocalFilesystemDriver。完整备份已新增独立 BackupService / BackupDriver 文件传输，iOS 和桌面通过 DocumentDriver 提供器接入，Android 不开放尚未安装的能力。详见[备份子系统](../backup-subsystem.md)。
 
 host、updates、maintenance 仍含部分 Tauri 生命周期和 IPC，暂未全部提炼为独立能力端口。后续按真实功能需要拆分，不创建无人调用的接口或空的平台目录。
 

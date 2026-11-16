@@ -2,6 +2,7 @@ use crate::AppState;
 use hm_application::recording::RecordingService;
 use hm_core::MaterialTarget;
 use hm_runtime::platform::{DriverError, RecordingState as CaptureState, RecordingSupport};
+use hm_runtime::Capability;
 use std::sync::Mutex;
 use tauri::State;
 
@@ -75,4 +76,33 @@ pub fn archive_native_recording(
         .lock()
         .map_err(|_| DriverError::invalid_state("storage_unavailable"))?;
     service.archive(&store, &target, &name)
+}
+
+#[tauri::command(async)]
+pub fn save_recording(
+    platform: State<'_, NativeDrivers>,
+    state: State<'_, AppState>,
+    request: tauri::ipc::Request<'_>,
+) -> Result<String, DriverError> {
+    platform.manifest().require(Capability::RecordAudio)?;
+    let headers = request.headers();
+    let target: MaterialTarget = serde_json::from_str(
+        headers
+            .get("x-hm-target")
+            .ok_or_else(|| DriverError::invalid_state("recording_target_missing"))?
+            .to_str()
+            .map_err(|_| DriverError::invalid_state("recording_target_invalid"))?,
+    )
+    .map_err(|_| DriverError::invalid_state("recording_target_invalid"))?;
+    let encoded = headers
+        .get("x-hm-name")
+        .ok_or_else(|| DriverError::invalid_state("recording_name_missing"))?
+        .to_str()
+        .map_err(|_| DriverError::invalid_state("recording_name_invalid"))?;
+    let name: String = serde_json::from_str(encoded)
+        .map_err(|_| DriverError::invalid_state("recording_name_invalid"))?;
+    let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
+        return Err(DriverError::invalid_state("recording_data_invalid"));
+    };
+    Ok(access(&state, |s| s.save_recording(target, &name, bytes))?)
 }

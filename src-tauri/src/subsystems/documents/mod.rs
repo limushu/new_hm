@@ -3,7 +3,6 @@ use crate::{access, AppState};
 #[cfg(desktop)]
 use hm_application::documents::ImportIssue;
 use hm_application::documents::ImportReport;
-use hm_core::BackupInfo;
 use hm_core::MaterialTarget;
 use hm_runtime::platform::DriverError;
 use hm_runtime::Capability;
@@ -171,91 +170,6 @@ pub fn export_material(
         .documents
         .export(&dialog_title, &item.name, &mut source)
         .map(|exported| exported.is_some())
-}
-#[tauri::command(async)]
-pub fn save_recording(
-    platform: State<'_, NativeDrivers>,
-    state: State<'_, AppState>,
-    request: tauri::ipc::Request<'_>,
-) -> Result<String, DriverError> {
-    platform.manifest().require(Capability::RecordAudio)?;
-    let headers = request.headers();
-    let target: MaterialTarget = serde_json::from_str(
-        headers
-            .get("x-hm-target")
-            .ok_or_else(|| DriverError::invalid_state("recording_target_missing"))?
-            .to_str()
-            .map_err(|_| DriverError::invalid_state("recording_target_invalid"))?,
-    )
-    .map_err(|_| DriverError::invalid_state("recording_target_invalid"))?;
-    let encoded = headers
-        .get("x-hm-name")
-        .ok_or_else(|| DriverError::invalid_state("recording_name_missing"))?
-        .to_str()
-        .map_err(|_| DriverError::invalid_state("recording_name_invalid"))?;
-    let name: String = serde_json::from_str(encoded)
-        .map_err(|_| DriverError::invalid_state("recording_name_invalid"))?;
-    let tauri::ipc::InvokeBody::Raw(bytes) = request.body() else {
-        return Err(DriverError::invalid_state("recording_data_invalid"));
-    };
-    Ok(access(&state, |s| s.save_recording(target, &name, bytes))?)
-}
-#[tauri::command(async)]
-pub fn choose_backup_directory(
-    platform: State<'_, NativeDrivers>,
-    state: State<'_, AppState>,
-    dialog_title: String,
-) -> Result<Option<String>, DriverError> {
-    let Some(path) = platform.local_filesystem.pick_folder(&dialog_title)? else {
-        return Ok(None);
-    };
-    let path = path.to_string_lossy().into_owned();
-    access(&state, |s| s.set_setting("backup_directory", &path))?;
-    Ok(Some(path))
-}
-#[tauri::command(async)]
-pub fn run_backup(state: State<'_, AppState>) -> Result<BackupInfo, DriverError> {
-    let store = state
-        .0
-        .lock()
-        .map_err(|_| DriverError::invalid_state("storage_unavailable"))?;
-    let directory = store
-        .setting("backup_directory")
-        .map_err(hm_application::errors::core_error)?
-        .ok_or_else(|| DriverError::invalid_state("backup_directory_missing"))?;
-    let info = store
-        .create_backup(&PathBuf::from(directory), true)
-        .map_err(hm_application::errors::core_error)?;
-    store
-        .set_setting(
-            "last_backup_date",
-            &chrono::Local::now().format("%Y-%m-%d").to_string(),
-        )
-        .map_err(hm_application::errors::core_error)?;
-    Ok(info)
-}
-
-#[tauri::command(async)]
-pub fn pick_restore_backup(
-    platform: State<'_, NativeDrivers>,
-    dialog_title: String,
-) -> Result<Option<BackupInfo>, DriverError> {
-    let Some(path) = platform.local_filesystem.pick_folder(&dialog_title)? else {
-        return Ok(None);
-    };
-    hm_core::Store::inspect_backup(&path)
-        .map(Some)
-        .map_err(|e| DriverError::from(e.to_string()))
-}
-#[tauri::command(async)]
-pub fn apply_restore_backup(
-    platform: State<'_, NativeDrivers>,
-    state: State<'_, AppState>,
-    path: PathBuf,
-    confirmed: bool,
-) -> Result<BackupInfo, DriverError> {
-    platform.manifest().require(Capability::BackupTransfer)?;
-    Ok(access(&state, |s| s.restore_backup(&path, confirmed))?)
 }
 
 fn import_selected(

@@ -346,6 +346,15 @@ export interface BackupInfo {
   caseCount: number;
   fileCount: number;
 }
+export type BackupSummary = Omit<BackupInfo, 'directory'>;
+export interface BackupCandidate {
+  token: string;
+  summary: BackupSummary;
+}
+export interface BackupExport {
+  name: string;
+  summary: BackupSummary;
+}
 export interface Reminder {
   eventId: string;
   title: string;
@@ -417,6 +426,10 @@ export interface Commands {
   acknowledge_reminder: { args: { eventId: string; key: string }; result: null };
   choose_backup_directory: { args: Record<string, never>; result: string | null };
   run_backup: { args: Record<string, never>; result: BackupInfo };
+  export_backup_archive: { args: Record<string, never>; result: BackupExport | null };
+  pick_backup_archive: { args: Record<string, never>; result: BackupCandidate | null };
+  restore_backup_archive: { args: { token: string; confirmed: boolean }; result: BackupSummary };
+  discard_backup_archive: { args: { token: string }; result: null };
   pick_restore_backup: { args: Record<string, never>; result: BackupInfo | null };
   apply_restore_backup: { args: { path: string; confirmed: boolean }; result: BackupInfo };
   quit_app: { args: Record<string, never>; result: null };

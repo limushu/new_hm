@@ -1,4 +1,5 @@
 mod backup;
+pub use backup::{BackupArchive, PreparedBackup};
 mod case_overview;
 pub mod case_system;
 mod example;

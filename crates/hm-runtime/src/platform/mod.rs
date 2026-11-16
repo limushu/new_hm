@@ -1,4 +1,6 @@
+mod backup;
 mod documents;
+pub use backup::{BackupDriver, FileBackupDriver, UnavailableBackup};
 mod error;
 mod recording;
 mod speech;

@@ -30,14 +30,16 @@ pub fn start_transcription(
     material_id: String,
     language: String,
 ) -> Result<SpeechSnapshot, DriverError> {
-    let source = {
-        let store = state
-            .0
-            .lock()
-            .map_err(|_| DriverError::invalid_state("storage_unavailable"))?;
-        audio_source(&store, &material_id)?
-    }; // Never hold the workspace lock during staging, authorization or recognition.
-    service(&speech, |s| s.start(&id, source, &language))
+    service(&speech, |s| {
+        let source = {
+            let store = state
+                .0
+                .lock()
+                .map_err(|_| DriverError::invalid_state("storage_unavailable"))?;
+            audio_source(&store, &material_id)?
+        }; // Never hold the workspace lock during staging, authorization or recognition.
+        s.start(&id, source, &language)
+    })
 }
 #[tauri::command(async)]
 pub fn transcription_state(

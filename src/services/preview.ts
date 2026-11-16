@@ -1090,6 +1090,10 @@ export async function previewCommand<K extends keyof Commands>(
       break;
     }
     case 'choose_backup_directory':
+    case 'export_backup_archive':
+    case 'pick_backup_archive':
+    case 'restore_backup_archive':
+    case 'discard_backup_archive':
     case 'run_backup':
     case 'pick_restore_backup':
     case 'apply_restore_backup':

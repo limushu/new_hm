@@ -14,6 +14,7 @@ export type Capability =
   | 'transcribe-audio'
   | 'local-backup'
   | 'backup-transfer'
+  | 'backup-files'
   | 'system-notifications';
 
 export interface RuntimeManifest {

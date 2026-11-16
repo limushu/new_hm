@@ -75,14 +75,18 @@ fn backup_health(
         return Ok(health);
     }
     if let Some(directory) = settings.get("backup_directory") {
-        match s.create_backup(std::path::Path::new(directory), true) {
+        match hm_application::backup::BackupService::create_local(
+            s,
+            std::path::Path::new(directory),
+            true,
+        ) {
             Ok(info) => {
                 s.set_setting("last_backup_date", &today)?;
                 health.insert("lastBackup".into(), info.created_at);
                 health.insert("backupError".into(), String::new());
             }
             Err(error) => {
-                health.insert("backupError".into(), error.to_string());
+                health.insert("backupError".into(), error.detail.unwrap_or(error.code));
             }
         }
     }

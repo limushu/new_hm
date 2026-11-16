@@ -9,6 +9,9 @@ use std::{
 };
 use uuid::Uuid;
 
+mod archive;
+pub use archive::{BackupArchive, PreparedBackup};
+
 fn rename_staged(source: &Path, target: &Path) -> Result<()> {
     // Windows scanners may briefly hold a just-written file without delete sharing.
     // Retry only transient sharing/access errors; never replace an existing destination.
@@ -282,6 +285,18 @@ impl Store {
         })
     }
     pub fn restore_backup(&mut self, path: &Path, confirmed: bool) -> Result<BackupInfo> {
+        self.restore_backup_internal(path, confirmed, false)
+    }
+    /// A portable restore must not import another device's paths or preferences.
+    pub fn restore_portable_backup(&mut self, path: &Path, confirmed: bool) -> Result<BackupInfo> {
+        self.restore_backup_internal(path, confirmed, true)
+    }
+    fn restore_backup_internal(
+        &mut self,
+        path: &Path,
+        confirmed: bool,
+        portable: bool,
+    ) -> Result<BackupInfo> {
         if !confirmed {
             return Err(Error::Validation("恢复备份需要确认替换当前工作区".into()));
         }
@@ -291,6 +306,16 @@ impl Store {
             return Err(Error::Validation("备份位置不能是当前工作区".into()));
         }
         let recovery = self.create_backup(&directory.join("recovery"), false)?;
+        let device_keys = [
+            "backup_directory",
+            "last_backup_date",
+            "close_to_tray",
+            "notifications",
+            "onboarding_done",
+            "update_endpoint",
+            "theme",
+        ];
+        let device_settings = self.settings()?;
         let stage = tempfile::Builder::new()
             .prefix(".hm-restore-")
             .tempdir_in(&directory)?;
@@ -331,6 +356,15 @@ impl Store {
             )?;
             Store::migrate(&mut self.connection)?;
             self.connection.execute("INSERT INTO settings(key,value) VALUES('materials_directory',?1) ON CONFLICT(key) DO UPDATE SET value=excluded.value",[&generation_name])?;
+            if portable {
+                for key in device_keys {
+                    self.connection
+                        .execute("DELETE FROM settings WHERE key=?1", [key])?;
+                    if let Some(value) = device_settings.get(key) {
+                        self.set_setting(key, value)?;
+                    }
+                }
+            }
             std::fs::remove_file(&journal_path)?;
             Ok(())
         })();
