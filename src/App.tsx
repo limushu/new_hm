@@ -40,6 +40,7 @@ export default function App() {
     return () => query.removeEventListener('change', update);
   }, []);
   const [calendarDate, setCalendarDate] = useState(() => dateKey(new Date()));
+  const [todayRequest, setTodayRequest] = useState(0);
   const [calendarView, setCalendarView] = useState<'week' | 'day' | 'month' | 'agenda'>(() =>
     matchMedia('(max-width: 760px)').matches ? 'agenda' : 'week',
   );
@@ -157,7 +158,14 @@ export default function App() {
           </button>
         </div>
         <nav>
-          <button className={page === 'today' ? 'active' : ''} onClick={() => setPage('today')}>
+          <button
+            className={page === 'today' ? 'active' : ''}
+            onClick={() => {
+              setCalendarDate(dateKey(new Date()));
+              setTodayRequest((value) => value + 1);
+              setPage('today');
+            }}
+          >
             <CalendarDays />
             今天
           </button>
@@ -248,6 +256,7 @@ export default function App() {
             save={save}
             loading={loading}
             selected={calendarDate}
+            todayRequest={todayRequest}
             onSelect={setCalendarDate}
             view={calendarView}
             onViewChange={setCalendarView}

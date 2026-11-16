@@ -39,6 +39,7 @@ interface Props {
   onSelect: (date: string) => void;
   view: 'week' | 'day' | 'month' | 'agenda';
   onViewChange: (view: 'week' | 'day' | 'month' | 'agenda') => void;
+  todayRequest?: number;
 }
 
 export default function Calendar({
@@ -52,6 +53,7 @@ export default function Calendar({
   onSelect,
   view,
   onViewChange,
+  todayRequest = 0,
 }: Props) {
   const [month, setMonth] = useState(() => parseDate(selected));
   const setSelected = onSelect;
@@ -118,29 +120,31 @@ export default function Calendar({
             )}
           </h1>
         </div>
-        <div className="calendar-navigation">
-          <Button
-            className="calendar-today"
-            onClick={() => {
-              select(dateKey(new Date()));
-              setFocusToday((value) => value + 1);
-            }}
-          >
-            今天
-          </Button>
-          <Button
-            variant="ghost"
-            icon={ChevronLeft}
-            aria-label={view === 'month' ? '上个月' : view === 'week' ? '上一周' : '上一天'}
-            onClick={() => changeMonth(-1)}
-          />
-          <Button
-            variant="ghost"
-            icon={ChevronRight}
-            aria-label={view === 'month' ? '下个月' : view === 'week' ? '下一周' : '下一天'}
-            onClick={() => changeMonth(1)}
-          />
-        </div>
+        {view !== 'agenda' && (
+          <div className="calendar-navigation">
+            <Button
+              className="calendar-today"
+              onClick={() => {
+                select(dateKey(new Date()));
+                setFocusToday((value) => value + 1);
+              }}
+            >
+              今天
+            </Button>
+            <Button
+              variant="ghost"
+              icon={ChevronLeft}
+              aria-label={view === 'month' ? '上个月' : view === 'week' ? '上一周' : '上一天'}
+              onClick={() => changeMonth(-1)}
+            />
+            <Button
+              variant="ghost"
+              icon={ChevronRight}
+              aria-label={view === 'month' ? '下个月' : view === 'week' ? '下一周' : '下一天'}
+              onClick={() => changeMonth(1)}
+            />
+          </div>
+        )}
         <div className="calendar-actions">
           <div className="calendar-extra-actions">
             <Button variant="ghost" icon={Search} className="calendar-search" onClick={findCases}>
@@ -201,6 +205,7 @@ export default function Calendar({
               key={date}
               aria-label={`选择 ${date}`}
               aria-pressed={selected === date}
+              aria-current={date === today ? 'date' : undefined}
               onClick={() => select(date)}
             >
               <small>{['日', '一', '二', '三', '四', '五', '六'][parseDate(date).getDay()]}</small>
@@ -311,7 +316,7 @@ export default function Calendar({
       )}
       {(view === 'week' || view === 'day') && (
         <TimeGrid
-          focusToday={focusToday}
+          focusToday={focusToday + todayRequest}
           dates={view === 'day' ? [selected] : weekDates(selected)}
           selected={selected}
           events={events}

@@ -715,6 +715,10 @@
   padding: 9px 0;
   border-radius: 10px;
   min-height: 62px;
+  border: 1px solid transparent;
+}
+.agenda-week-strip button[aria-current='date'] {
+  border-color: var(--primary);
 }
 .agenda-week-strip small {
   font-size: 12px;
