@@ -1,8 +1,8 @@
-# 托管账号与用户自选云：部署准备
+# 托管账号与用户自选云：部署与接入
 
 用户已确认统一案笺身份，可以绑定 Apple、Google 和 Microsoft，案件保存到用户选择的云；按不需要自管服务器的 Supabase 托管方案接入。
 
-**状态：本地实现了通用同步原型与托管服务部署资料，用户已创建真实 Supabase 项目并提供公开客户端配置，账号服务连接验证通过；工作区表和三家 OAuth 仍未配置，客户端登录、账号绑定 UI、云存储配置与生产多设备同步仍未接通。** iOS CloudKit 驱动源码和装配已补充，具体边界见[驱动接入地图](design/platform-driver-map.md)。TestFlight 1.7.7（28.1）只有手动备份，不能作为账号或同步功能验收。
+**状态：真实 Supabase 项目已部署账号目录、权限规则和删除账号函数；原生应用回调与手动身份绑定配置已保存并复核。三家 OAuth 应用尚未配置，客户端登录、账号绑定 UI、云存储配置与生产多设备同步仍未接通。** 本地实现了通用同步原型，iOS CloudKit 驱动源码和装配已补充，具体边界见[驱动接入地图](design/platform-driver-map.md)。TestFlight 1.7.7（28.1）只有手动备份，不能作为账号或同步功能验收。
 
 ## 方案与边界
 
@@ -36,9 +36,9 @@ Project URL 和 publishable/anon key 可以提供给开发者用于客户端接�
 
 ## 自动部署资料
 
-[Hosted identity preparation](../.github/workflows/identity.yml) 仅允许 main 手动触发。默认只检查和打包资料；`apply=true` 才会调用管理 API 执行迁移并部署 Edge Function。
+[Hosted identity preparation](../.github/workflows/identity.yml) 仅允许 main 手动触发。默认只检查和打包资料；`apply=true` 才会调用管理 API 执行迁移并部署 Edge Function。`configure_auth=true` 独立配置原生回调和手动身份绑定，保留已有回调、正式 Site URL 与提供器凭据；只有未设置或默认 localhost 的 Site URL 才会替换为原生回调。不启用或代建三家 OAuth 应用。
 
-实际部署以仓库中的 `supabase/client.public.json` 为项目定位，不必额外设置仓库变量；需要 GitHub Secret `SUPABASE_ACCESS_TOKEN`（Supabase 个人管理令牌）。不把管理令牌交给客户端。脚本不会创建新项目、选择付费套餐或修改三家 OAuth 应用；它只部署当前仓库中已审阅的账号目录和删除函数。工作流会读取管理令牌并只输出访问是否就绪，不打印令牌；GitHub 连接无法读取 Secrets 列表时也可以通过这一方式检查。API 和 CLI 通过环境读取令牌，不将其放在命令参数中。
+实际部署以仓库中的 `supabase/client.public.json` 为项目定位，不必额外设置仓库变量；需要 GitHub Secret `SUPABASE_ACCESS_TOKEN`（Supabase 个人管理令牌）。不把管理令牌交给客户端。脚本不会创建新项目、选择付费套餐或修改三家 OAuth 应用；两个显式开关分别控制目录/函数部署与原生认证路由配置。工作流只输出权限、开关和配置是否存在等脱敏状态，不打印令牌或完整 Auth 配置；GitHub 连接无法读取 Secrets 列表时也可以通过这一方式检查。API 和 CLI 通过环境读取令牌，不将其放在命令参数中。
 
 Edge Function 使用平台注入的 `SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`。Apple 账号删除另外需要函数私密配置：`APPLE_KEY_ID`、`APPLE_TEAM_ID`、`APPLE_OAUTH_CLIENT_ID`、`APPLE_PRIVATE_KEY`；与实际 Apple OAuth 应用保持一致。这些值只放在 Supabase Function Secrets。函数每次生成短时 client-secret JWT，不把 Apple 私钥或刷新令牌写进日志、目录表或响应。
 
@@ -50,16 +50,22 @@ Edge Function 使用平台注入的 `SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPA
 
 统一账号登录不等于已获得云盘权限。首次选择工作区云服务时还要完成对应数据授权，存储驱动必须验证云账号与绑定一致。iCloud 私有容器还需要 Apple App ID 能力、容器及发行签名；OneDrive/Google Drive 需要相应 OAuth 数据权限和令牌刷新。切换云服务是迁移流程，不是切换一个登录按钮。
 
-缺少真实项目和 OAuth 配置时，不展示可用登录或“已同步”的假状态。接好上述资料后还须完成真实登录/绑定/删除、签名包、生产云权限和至少两台设备的验收，才能开放功能。
+缺少 OAuth 配置或客户端接入时，不展示可用登录或“已同步”的假状态。接好上述资料后还须完成真实登录/绑定/删除、签名包、生产云权限和至少两台设备的验收，才能开放功能。
 
 ## 已有验证
 
 测试在真实 PostgreSQL 引擎（PGlite）中运行迁移和 RLS，覆盖匿名拒绝、跨用户访问、身份字段不可冒认、跨用户/提供器绑定拒绝、令牌字段拒绝、引用约束和账号删除级联。删除函数测试验证服务端用户 ID、无效会话、请求大小、故障时不假报成功，以及 Apple ES256 签名和撤销先于删除的顺序。
 
-Rust 同步测试使用两份隔离 SQLite 和可替换内存云驱动，验证版本接续、附件复用、离线失败、账号隔离、并发冲突和保留双方版本。这些测试不代表 Supabase、Apple 或实际云盘已配置并可用。
+Rust 同步测试使用两份隔离 SQLite 和可替换内存云驱动，验证版本接续、附件复用、离线失败、账号隔离、并发冲突和保留双方版本。这些测试不代表真实登录或实际云盘同步已经可用。
 
-## 已验证的项目连接
+## 线上部署与验证记录
 
-用户提供的项目为 `vfbufazqpzetjkmkvjwp`，公开服务地址与 publishable key 保存在 [client.public.json](../supabase/client.public.json)。2026-11-16 通过实际 HTTP 验证 Auth 服务与公开 key 可用；Apple、Google、Azure 三项外部登录均为未开启，工作区目录表返回不存在。此结果不表示账号登录或云同步已开放。
+用户提供的项目为 `vfbufazqpzetjkmkvjwp`，公开服务地址与 publishable key 保存在 [client.public.json](../supabase/client.public.json)。2026-11-16 已执行以下操作，管理凭据只由仓库 Secret 交给工作流：
 
-`node scripts/check-identity-project.mjs` 输出公开连接、提供器开关、目录可用性及管理权限的脱敏状态，不输出 key 或管理令牌。提供器 OAuth 密钥仍应放在 Supabase 控制台，管理令牌放 GitHub Secrets，不发送到聊天。
+- [账号目录与函数部署](https://github.com/limushu/new_hm/actions/runs/43887889810)：在 14:39 UTC 成功应用迁移并部署 `delete-account`。三个目录表为 `account_profiles`、`cloud_bindings`、`workspaces`。
+- [认证路由配置与权限复核](https://github.com/limushu/new_hm/actions/runs/43888944441)：在 14:45 UTC 确认 `anjian://auth/callback` 已列入允许回调，manual identity linking 已开启；三个目录表均启用 RLS，匿名角色没有 SELECT 权限，认证角色具备受策略约束的 SELECT 权限。该次运行的 12 项账号测试通过。
+- 使用公开 key 实测三个目录表的匿名查询均返回 HTTP 401 / PostgreSQL `42501`；没有读取用户记录。删除接口 GET 返回 405，缺少会话或使用无效 bearer 的 POST 返回 401；没有执行真实用户删除。
+
+Apple、Google、Azure 的 OAuth client ID 与 secret 均未配置，三项外部登录均关闭。尚未验证真实注册、登录、绑定或删除，云同步仍未开放。
+
+`node scripts/check-identity-project.mjs` 输出公开连接、提供器开关、凭据是否存在、目录权限和认证路由的脱敏状态，不输出 key、提供器密钥或管理令牌。权限查询只读 PostgreSQL 系统目录，不读案件或账号行。提供器 OAuth 密钥仍应放在 Supabase 控制台，管理令牌放 GitHub Secrets，不发送到聊天。
