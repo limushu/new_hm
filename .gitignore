@@ -15,3 +15,7 @@ crates/tauri-plugin-*/.tauri/
 crates/tauri-plugin-*/ios/.build/
 
 public/pdfjs/
+supabase/.temp/
+supabase/.branches/
+supabase/.env
+supabase/functions/.env
