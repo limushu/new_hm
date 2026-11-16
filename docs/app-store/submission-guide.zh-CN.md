@@ -38,10 +38,10 @@
 - `screenshots/iphone/`：带灵动岛的 iPhone 中等显示屏竖屏，1206 × 2622 像素，对应后台动态岛 iPhone 中等显示屏分组。
 - `screenshots/iphone-large/`：带灵动岛的 iPhone 大显示屏竖屏，1320 × 2868 像素，对应后台动态岛 iPhone 大显示屏分组。
 - `screenshots/ipad/`：13 英寸 iPad 竖屏，2064 × 2752 像素。
-- 各目录按 01 至 04 顺序上传：案件列表、案件脉络、材料管理、费用记录。
+- 本次整理后的交付包各目录提供三张：`01-cases.png` 案件列表、`02-timeline.png` 案件脉络、`04-expenses.png` 费用记录，按此顺序上传。文件编号无需连续；材料页原图显示不完整，已剔除。原始 Actions Artifact 中的其他图片不自动视为可用素材。
 - 原图来自实际运行的原生应用与系统模拟器，不含真实用户数据；保持原始尺寸与界面内容，仅以不含 Alpha 通道的 RGB PNG 编码。不将浏览器预览、缩放图或其他设备截图冒充对应原生截图。
 - `reference/app-icon-1024.png` 是现有应用图标的参考副本。iOS 商店图标由构建中的资源目录提供，通常不需要在截图栏单独上传。
-- `capture-report.json` 记录来源提交、设备、尺寸与截图结果；生成后还须检查画面，无报错、遮挡或加载状态才使用。
+- 原始任务的 `capture-report.json` 记录采集结果；本次交付包的 `reference/capture-provenance.json` 汇总两批来源，`reference/visual-review.json` 记录收录与剔除结果。图片采集与真机功能验收分别记录。
 
 依据：[Apple 截图规格](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)。素材包不包含真机视频。这次 2.1 反馈明确要求真机录屏，请按 [补充资料与录屏脚本](review-response-2.1.zh-CN.md) 准备；它与商店页面可选的 App 预览视频是两项不同资料。
 
@@ -76,4 +76,4 @@
 
 先查看 App Store Connect「App 信息」中的中国大陆供应情况要求；无法明确时，向 [Apple Developer 支持](https://developer.apple.com/contact/)说明实际功能并确认，必要时向所在地通信管理局确认办理路径。可使用[发布准备文档](README.md)中的咨询说明，不填写虚构号码。
 
-提交前确认：20.1 真机升级与主要功能正常、真机演示视频已完成、公开链接可访问、两组截图画面已审阅、隐私及年龄问卷已完成、审核联系方式已填写、大陆备案适用性已核实。资料包不会自动提交审核或发布应用。
+提交前确认：20.1 真机升级与主要功能正常（包括材料页切换、导入与阅读）、真机演示视频已完成、公开链接可访问、上传的各组截图画面已审阅、隐私及年龄问卷已完成、审核联系方式已填写、大陆备案适用性已核实。资料包不会自动提交审核或发布应用。
