@@ -61,6 +61,7 @@ try {
           path: 'Host-Info.plist',
           properties: {
             NSMicrophoneUsageDescription: 'Native recording regression test',
+            NSSpeechRecognitionUsageDescription: 'Native on-device speech regression test',
             UIApplicationSceneManifest: { UIApplicationSupportsMultipleScenes: false },
             UILaunchScreen: {},
           },
@@ -72,8 +73,10 @@ try {
         sources: [
           join(root, 'crates/tauri-plugin-hm-recording/ios/Sources'),
           join(root, 'crates/tauri-plugin-hm-documents/ios/Sources'),
+          join(root, 'crates/tauri-plugin-hm-speech/ios/Sources'),
           join(root, 'tests/native/ios-recording/RecordingTests.swift'),
           join(root, 'tests/native/ios-recording/DocumentsTests.swift'),
+          join(root, 'tests/native/ios-recording/SpeechTests.swift'),
         ],
         dependencies: [{ target: 'RecordingHost' }, { package: 'Tauri' }],
         settings: {

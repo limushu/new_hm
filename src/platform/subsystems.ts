@@ -11,6 +11,7 @@ export type Capability =
   | 'file-export'
   | 'external-open'
   | 'record-audio'
+  | 'transcribe-audio'
   | 'local-backup'
   | 'backup-transfer'
   | 'system-notifications';
@@ -18,7 +19,7 @@ export type Capability =
 export interface RuntimeManifest {
   version: 1;
   subsystems: Array<{
-    id: 'host' | 'updates' | 'maintenance' | 'documents' | 'recording' | 'backup';
+    id: 'host' | 'updates' | 'maintenance' | 'documents' | 'recording' | 'speech' | 'backup';
     state: 'ready' | 'unsupported';
     capabilities: Capability[];
   }>;

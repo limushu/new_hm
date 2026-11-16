@@ -181,6 +181,12 @@ pub fn run() {
             subsystems::recording::cancel_native_recording,
             subsystems::recording::native_recording_state,
             subsystems::recording::archive_native_recording,
+            subsystems::speech::speech_support,
+            subsystems::speech::start_transcription,
+            subsystems::speech::transcription_state,
+            subsystems::speech::cancel_transcription,
+            subsystems::speech::discard_transcription,
+            subsystems::speech::save_transcription,
             ipc::host::set_window_theme,
             #[cfg(mobile)]
             subsystems::mobile::resume_runtime,

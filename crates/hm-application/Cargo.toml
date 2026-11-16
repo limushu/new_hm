@@ -5,6 +5,7 @@ edition.workspace = true
 publish = false
 
 [dependencies]
+uuid = { version = "1", features = ["v4"] }
 serde = { version = "1", features = ["derive"] }
 hm-core = { path = "../hm-core" }
 hm-runtime = { path = "../hm-runtime" }

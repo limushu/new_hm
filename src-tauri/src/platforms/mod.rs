@@ -54,6 +54,15 @@ pub fn setup(app: &mut tauri::App) {
             recording.state = hm_runtime::Availability::Ready;
             recording.capabilities = vec![hm_runtime::Capability::RecordAudio];
         }
+        #[cfg(target_os = "ios")]
+        if let Some(speech) = manifest
+            .subsystems
+            .iter_mut()
+            .find(|s| s.id == hm_runtime::SubsystemId::Speech)
+        {
+            speech.state = hm_runtime::Availability::Ready;
+            speech.capabilities = vec![hm_runtime::Capability::TranscribeAudio];
+        }
         manifest
     };
     #[cfg(mobile)]
@@ -73,6 +82,13 @@ pub fn setup(app: &mut tauri::App) {
     let recording = Box::new(hm_runtime::platform::UnavailableRecording);
     app.manage(crate::subsystems::recording::RecordingState(
         std::sync::Mutex::new(hm_application::recording::RecordingService::new(recording)),
+    ));
+    #[cfg(target_os = "ios")]
+    let speech = tauri_plugin_hm_speech::driver(app.handle());
+    #[cfg(not(target_os = "ios"))]
+    let speech = Box::new(hm_runtime::platform::UnavailableSpeech);
+    app.manage(crate::subsystems::speech::SpeechState(
+        std::sync::Mutex::new(hm_application::speech::SpeechService::new(speech)),
     ));
     app.manage(drivers);
 }

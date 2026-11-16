@@ -396,6 +396,75 @@ impl Store {
         String::from_utf8(bytes).map_err(|_| Error::Validation("document_encoding_invalid".into()))
     }
 
+    /// The derived text and its source relation commit together. A retry with
+    /// the same identity cannot import twice or overwrite a previously saved draft.
+    pub fn create_audio_transcript(
+        &self,
+        source_id: &str,
+        id: &str,
+        name: &str,
+        body: &str,
+    ) -> Result<String> {
+        crate::people::valid_id(id)?;
+        let source = self.material(source_id)?;
+        let extension = Path::new(&source.name)
+            .extension()
+            .and_then(|v| v.to_str())
+            .unwrap_or_default()
+            .to_ascii_lowercase();
+        if source.kind != "file"
+            || ![
+                "m4a", "mp3", "wav", "aac", "aif", "aiff", "caf", "ogg", "webm", "mp4",
+            ]
+            .contains(&extension.as_str())
+        {
+            return Err(Error::Validation("speech_audio_invalid".into()));
+        }
+        self.material_path(source_id)?;
+        if body.trim().is_empty()
+            || body.len() > 2 * 1024 * 1024
+            || !name.to_ascii_lowercase().ends_with(".md")
+        {
+            return Err(Error::Validation("document_content_invalid".into()));
+        }
+        let exists: bool = self.connection.query_row(
+            "SELECT EXISTS(SELECT 1 FROM materials WHERE id=?1)",
+            [id],
+            |r| r.get(0),
+        )?;
+        if exists {
+            let related: bool = self.connection.query_row("SELECT EXISTS(SELECT 1 FROM resource_relations WHERE case_id=?1 AND source_kind='material' AND source_id=?2 AND target_kind='material' AND target_id=?3 AND kind='transcript_of')", params![source.case_id,id,source_id], |r| r.get(0))?;
+            if related && self.read_text_document(id)? == body {
+                return Ok(id.into());
+            }
+            return Err(Error::Validation("speech_draft_already_saved".into()));
+        }
+        let target = MaterialTarget {
+            case_id: source.case_id.clone(),
+            proceeding_id: source.proceeding_id,
+            parent_id: source.parent_id,
+            record_id: source.record_id,
+            stage_id: None,
+        };
+        let directory = self.object_dir(&source.case_id, id, true)?;
+        let tx = self.connection.unchecked_transaction()?;
+        let result = (|| {
+            self.import_reader_with_id(
+                &target,
+                name,
+                &mut std::io::Cursor::new(body.as_bytes()),
+                id,
+            )?;
+            tx.execute("INSERT INTO resource_relations(id,case_id,source_kind,source_id,target_kind,target_id,kind,label) VALUES(?1,?2,'material',?3,'material',?4,'transcript_of','')", params![Uuid::new_v4().to_string(),source.case_id,id,source_id])?;
+            tx.commit()?;
+            Ok(id.to_string())
+        })();
+        if result.is_err() {
+            let _ = std::fs::remove_dir_all(directory);
+        }
+        result
+    }
+
     pub fn save_recording(
         &self,
         target: MaterialTarget,

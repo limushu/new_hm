@@ -7,6 +7,7 @@ pub mod maintenance;
 #[cfg(mobile)]
 pub mod mobile;
 pub mod recording;
+pub mod speech;
 #[cfg(desktop)]
 pub mod updates;
 use hm_runtime::RuntimeManifest;
@@ -24,7 +25,8 @@ pub fn configure(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::W
     #[cfg(target_os = "ios")]
     let builder = builder
         .plugin(tauri_plugin_hm_recording::init())
-        .plugin(tauri_plugin_hm_documents::init());
+        .plugin(tauri_plugin_hm_documents::init())
+        .plugin(tauri_plugin_hm_speech::init());
     #[cfg(desktop)]
     let builder = maintenance::configure(updates::configure(host::configure(builder)));
     builder

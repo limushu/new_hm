@@ -6,5 +6,7 @@
   <false/>
   <key>NSMicrophoneUsageDescription</key>
   <string>用于在你点击开始录音后录制案件音频，并保存到本机案件材料。</string>
+  <key>NSSpeechRecognitionUsageDescription</key>
+  <string>用于在你点击转成文字后，将所选录音在设备内识别为可编辑的案件文字材料。</string>
 </dict>
 </plist>

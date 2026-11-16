@@ -1559,6 +1559,7 @@ dependencies = [
  "tauri-plugin-dialog",
  "tauri-plugin-hm-documents",
  "tauri-plugin-hm-recording",
+ "tauri-plugin-hm-speech",
  "tauri-plugin-notification",
  "tauri-plugin-opener",
  "tauri-plugin-single-instance",
@@ -1575,6 +1576,7 @@ dependencies = [
  "hm-runtime",
  "serde",
  "tempfile",
+ "uuid",
 ]
 
 [[package]]
@@ -4204,6 +4206,18 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-hm-recording"
+version = "1.7.5"
+dependencies = [
+ "hm-runtime",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+ "tempfile",
+]
+
+[[package]]
+name = "tauri-plugin-hm-speech"
 version = "1.7.5"
 dependencies = [
  "hm-runtime",

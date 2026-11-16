@@ -1,10 +1,15 @@
 mod documents;
 mod error;
 mod recording;
+mod speech;
 pub use documents::{Document, DocumentDriver};
 pub use error::{DriverError, DriverErrorKind, DriverResult};
 pub use recording::{
     RecordingDriver, RecordingSession, RecordingState, RecordingSupport, UnavailableRecording,
+};
+pub use speech::{
+    SpeechDriver, SpeechJob, SpeechPhase, SpeechSegment, SpeechSnapshot, SpeechSupport,
+    UnavailableSpeech,
 };
 mod capabilities;
 mod ports;

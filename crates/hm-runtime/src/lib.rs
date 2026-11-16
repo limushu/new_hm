@@ -18,6 +18,7 @@ pub enum Capability {
     FileExport,
     ExternalOpen,
     RecordAudio,
+    TranscribeAudio,
     LocalBackup,
     BackupTransfer,
     SystemNotifications,
@@ -31,6 +32,7 @@ pub enum SubsystemId {
     Maintenance,
     Documents,
     Recording,
+    Speech,
     Backup,
 }
 
@@ -102,6 +104,11 @@ impl RuntimeManifest {
                     capabilities: vec![Capability::RecordAudio],
                 },
                 SubsystemDescriptor {
+                    id: SubsystemId::Speech,
+                    state: Availability::Unsupported,
+                    capabilities: vec![],
+                },
+                SubsystemDescriptor {
                     id: SubsystemId::Backup,
                     state: Availability::Ready,
                     capabilities: vec![Capability::LocalBackup, Capability::BackupTransfer],
@@ -137,6 +144,11 @@ impl RuntimeManifest {
                 },
                 SubsystemDescriptor {
                     id: SubsystemId::Recording,
+                    state: Availability::Unsupported,
+                    capabilities: vec![],
+                },
+                SubsystemDescriptor {
+                    id: SubsystemId::Speech,
                     state: Availability::Unsupported,
                     capabilities: vec![],
                 },
