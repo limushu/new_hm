@@ -5,7 +5,7 @@ on:
       simulator_run_id:
         description: Successful Mobile application checks run containing the verified simulator app
         required: true
-        default: '43811909980'
+        default: '43815508767'
       device_families:
         description: Comma-separated families to capture (iphone, iphone-large, ipad)
         required: false
