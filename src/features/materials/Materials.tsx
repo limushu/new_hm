@@ -642,7 +642,6 @@ export default function Materials({
         <ObjectInspector
           caseId={caseId}
           resource={objectSettings.resource}
-          initialPreview={false}
           data={data}
           save={save}
           onClose={() => setObjectId(null)}

@@ -4,7 +4,7 @@ default-members = ["crates/hm-core", "crates/hm-runtime", "crates/hm-application
 resolver = "2"
 
 [workspace.package]
-version = "1.7.6"
+version = "1.7.7"
 edition = "2021"
 license = "UNLICENSED"
 rust-version = "1.90"

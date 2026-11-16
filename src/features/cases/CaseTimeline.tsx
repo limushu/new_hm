@@ -5,7 +5,6 @@ import {
   ArrowUpRight,
   CalendarDays,
   CheckSquare,
-  Ellipsis,
   Files,
   Flag,
   ListFilter,
@@ -27,7 +26,7 @@ import {
   type TimelineFilter,
   type ResourceRef,
 } from '../../case-system/contracts';
-import ResourceSettings from './ResourceSettings';
+import ObjectActionMenu from './ObjectActionMenu';
 const icons = {
   progress: Flag,
   node: Flag,
@@ -53,7 +52,7 @@ export default function CaseTimeline({
   const [filterOpen, setFilterOpen] = useState(false);
   const [limit, setLimit] = useState(8);
   const [opened, setOpened] = useState<ResourceRef | null>(null);
-  const [settings, setSettings] = useState<TimelineEntry | null>(null);
+  const [initialMode, setInitialMode] = useState<'details' | 'info'>('details');
   const entries = useMemo(() => caseSystem.timeline(data, caseId), [data, caseId]);
   const today = dateKey(new Date());
   const filtered = filterTimeline(entries, filter);
@@ -67,7 +66,10 @@ export default function CaseTimeline({
     data.materials.filter((m) => m.caseId === caseId && !m.deletedAt).map((m) => [m.id, m]),
   );
   function open(entry: TimelineEntry) {
-    if (entry) setOpened(entry.resource);
+    if (entry) {
+      setInitialMode('details');
+      setOpened(entry.resource);
+    }
   }
   function files(entry: TimelineEntry) {
     return entry.related
@@ -102,13 +104,15 @@ export default function CaseTimeline({
               {entry.title || labels.get(entry.type) || entry.type}
               <ArrowUpRight />
             </button>
-            <button
-              className="timeline-entry-settings"
-              aria-label={`设置条目 ${entry.title}`}
-              onClick={() => setSettings(entry)}
-            >
-              <Ellipsis />
-            </button>
+            <ObjectActionMenu
+              entry={entry}
+              save={save}
+              onDetails={() => open(entry)}
+              onEditInfo={() => {
+                setInitialMode('info');
+                setOpened(entry.resource);
+              }}
+            />
           </div>
           <span className="timeline-entry-type">
             {labels.get(entry.type) || entry.type}
@@ -248,19 +252,12 @@ export default function CaseTimeline({
           </label>
         </Dialog>
       )}
-      {settings && (
-        <ResourceSettings
-          entry={settings}
-          data={data}
-          save={save}
-          onClose={() => setSettings(null)}
-        />
-      )}
       {opened && (
         <ObjectInspector
           key={resourceKey(opened)}
           caseId={caseId}
           resource={opened}
+          initialMode={initialMode}
           data={data}
           save={save}
           onClose={() => setOpened(null)}

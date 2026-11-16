@@ -1,56 +1,67 @@
 import { useState } from 'react';
-import { ChevronLeft, FileText, ArrowUpRight, Pencil, Star } from 'lucide-react';
+import { ChevronLeft, Pencil, Star } from 'lucide-react';
 import Dialog from '../../components/Dialog';
+import Button from '../../components/Button';
+import { useAction } from '../../components/useAction';
 import type { SaveAction, Workspace } from '../../domain/types';
 import { resourceKey, type ResourceRef } from '../../case-system/contracts';
 import { caseSystem } from '../../case-system/modules';
+import { timelineDateLabels } from '../../case-system/timeline';
 import { casePresentations } from './resourcePresentations';
 import { ResourceRelations } from './ResourceSettings';
-import ResourceSettings from './ResourceSettings';
 import ObjectProperties from './ObjectProperties';
-import ContactForm from '../contacts/ContactForm';
+import ObjectActionMenu from './ObjectActionMenu';
+import './object-detail.css';
+
 export default function ObjectInspector({
   caseId,
   resource,
   data,
   save,
   onClose,
-  initialPreview = true,
+  initialMode = 'details',
 }: {
   caseId: string;
   resource: ResourceRef;
   data: Workspace;
   save: SaveAction;
   onClose: () => void;
-  initialPreview?: boolean;
+  initialMode?: 'details' | 'info';
 }) {
   const [history, setHistory] = useState<ResourceRef[]>([resource]);
-  const [editing, setEditing] = useState(initialPreview && resource.kind === 'material'),
-    [settings, setSettings] = useState(false);
+  const [view, setView] = useState<'details' | 'info' | 'editor' | 'expanded'>(initialMode);
   const current = history[history.length - 1];
-  const objects = caseSystem.objects(data, caseId);
-  const item = objects.find((o) => resourceKey(o.resource) === resourceKey(current));
-  const contact =
-    current.kind === 'contact' ? data.contacts.find((c) => c.id === current.id) : null;
-  const milestone =
-    current.kind === 'milestone' ? data.caseEvents.find((e) => e.id === current.id) : null;
-  const program =
-    current.kind === 'proceeding' ? data.proceedings.find((p) => p.id === current.id) : null;
-  const record =
-    current.kind === 'record' ? data.workRecords.find((r) => r.id === current.id) : null;
-  const event =
-    current.kind === 'event' ? data.calendarEvents.find((e) => e.id === current.id) : null;
-  const task = current.kind === 'task' ? data.tasks.find((t) => t.id === current.id) : null;
-  const material =
-    current.kind === 'material' ? data.materials.find((m) => m.id === current.id) : null;
-  const node = !!milestone || !!program;
-  const Details = casePresentations.get(current.kind);
-  const body =
-    milestone?.notes ?? record?.body ?? event?.notes ?? material?.notes ?? contact?.notes ?? '';
+  const key = resourceKey(current);
+  const item = caseSystem.objects(data, caseId).find((o) => resourceKey(o.resource) === key);
+  const [important, setImportant] = useState(item?.importance === 'important');
+  const [tags, setTags] = useState(item?.tags.join('，') ?? '');
+  const { busy, error, run } = useAction();
+  const node = current.kind === 'milestone' || current.kind === 'proceeding';
+  const presentation = casePresentations.get(current.kind);
+  const Content = presentation?.content;
+  const Editor = presentation?.editor;
+  const Expanded = presentation?.expanded;
+  const editable = data.caseEvents.find((e) => e.id === current.id)?.kind !== 'stage_change';
+  const typeLabel =
+    caseSystem.types().find((type) => type.id === item?.type)?.label ??
+    (
+      {
+        contact: '人员或机构',
+        proceeding: '关键节点',
+        party: '当事人',
+        material: '材料',
+      } as Record<string, string>
+    )[current.kind] ??
+    '对象';
   function open(ref: ResourceRef) {
-    setEditing(ref.kind === 'material');
-    setSettings(false);
+    setView('details');
     setHistory((old) => [...old, ref]);
+  }
+  function editInfo() {
+    if (!item) return;
+    setImportant(item.importance === 'important');
+    setTags(item.tags.join('，'));
+    setView('info');
   }
   if (!item)
     return (
@@ -58,90 +69,163 @@ export default function ObjectInspector({
         <p>对象已删除或不属于本案。</p>
       </Dialog>
     );
+  const props = { resource: current, data, save, onOpen: open, onClose: () => setView('details') };
+  // A content editor or an explicitly expanded preview replaces the detail
+  // surface. No second, hidden detail dialog is mounted underneath it.
+  if (view === 'editor' && Editor) return <Editor key={key} {...props} />;
+  if (view === 'expanded' && Expanded) return <Expanded key={key} {...props} />;
+  const editingInfo = view === 'info';
   return (
-    <>
-      <Dialog title={node ? '节点详情' : '对象详情'} className="object-inspector" onClose={onClose}>
-        {history.length > 1 && (
-          <button
-            type="button"
-            className="object-back-link"
-            onClick={() => setHistory((old) => old.slice(0, -1))}
-          >
-            <ChevronLeft />
-            返回上一对象
-          </button>
-        )}
-        <header className="object-heading">
-          <h3>{item.title}</h3>
-          <button
-            type="button"
-            className="icon-button"
-            aria-label="对象设置"
-            onClick={() => setSettings(true)}
-          >
-            <Star className={item.importance === 'important' ? 'important' : ''} />
-          </button>
-        </header>
-        {task && (
-          <p className="field-hint">
-            {task.completed ? '已完成' : '待完成'}
-            {task.dueDate ? ` · ${task.dueDate} 截止` : ''}
-          </p>
-        )}
-        {contact && (
-          <div className="object-contact-fields">
-            {contact.phone && <a href={`tel:${contact.phone}`}>{contact.phone}</a>}
-            {contact.address && <p>{contact.address}</p>}
+    <Dialog
+      key={`${key}:${editingInfo ? 'info' : 'details'}`}
+      title={node ? '节点详情' : '对象详情'}
+      className="object-inspector"
+      showFooter={editingInfo}
+      cancelAction={() => setView('details')}
+      onClose={onClose}
+      submitLabel="保存信息"
+      onSubmit={
+        editingInfo
+          ? async () => {
+              await save('save_resource_metadata', {
+                input: {
+                  caseId,
+                  resource: current,
+                  importance: important ? 'important' : 'normal',
+                  tags: tags
+                    .split(/[,，]/)
+                    .map((tag) => tag.trim())
+                    .filter(Boolean),
+                },
+              });
+              setView('details');
+              return false;
+            }
+          : undefined
+      }
+    >
+      {history.length > 1 && !editingInfo && (
+        <button
+          type="button"
+          className="object-back-link"
+          onClick={() => {
+            setView('details');
+            setHistory((old) => old.slice(0, -1));
+          }}
+        >
+          <ChevronLeft />
+          返回上一对象
+        </button>
+      )}
+      <div className="object-heading">
+        <h3>{item.title}</h3>
+        {!editingInfo && (
+          <div className="object-heading-actions">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={item.importance === 'important' ? '取消重要标记' : '标为重要'}
+              aria-pressed={item.importance === 'important'}
+              disabled={busy}
+              onClick={() =>
+                void run(() =>
+                  save('save_resource_metadata', {
+                    input: {
+                      caseId,
+                      resource: current,
+                      importance: item.importance === 'important' ? 'normal' : 'important',
+                      tags: item.tags,
+                    },
+                  }),
+                )
+              }
+            >
+              <Star className={item.importance === 'important' ? 'important' : ''} />
+            </button>
+            <ObjectActionMenu
+              entry={item}
+              save={save}
+              label="对象操作"
+              onEditInfo={editInfo}
+              onRemoved={onClose}
+            />
           </div>
         )}
-        {program && (
-          <p className="field-hint">
-            {program.state === 'completed' ? '已办结' : '办理中'}
-            {program.caseNumber ? ` · ${program.caseNumber}` : ''}
-          </p>
-        )}
-        <ObjectProperties caseId={caseId} resource={current} data={data} save={save} />
-        {body && <p className="object-body">{body}</p>}
-        {(Details || contact) && !(milestone?.kind === 'stage_change') && (
-          <button type="button" className="object-edit-link" onClick={() => setEditing(true)}>
-            {material ? <FileText /> : <Pencil />}
-            {material ? '打开原件' : node ? '编辑节点' : '编辑内容'}
-            <ArrowUpRight />
-          </button>
-        )}
-        {record &&
-          data.materials
-            .filter((m) => m.recordId === record.id && !m.deletedAt)
-            .map((m) => (
-              <button
-                type="button"
-                className="object-attachment"
-                key={m.id}
-                onClick={() => open({ kind: 'material', id: m.id })}
-              >
-                <FileText />
-                {m.name}
-                <ArrowUpRight />
-              </button>
-            ))}
-        <ResourceRelations caseId={caseId} source={current} data={data} save={save} onOpen={open} />
-      </Dialog>
-      {settings && (
-        <ResourceSettings entry={item} data={data} save={save} onClose={() => setSettings(false)} />
-      )}
-      {editing &&
-        (contact ? (
-          <ContactForm value={contact} data={data} save={save} onClose={() => setEditing(false)} />
-        ) : Details ? (
-          <Details
-            key={resourceKey(current)}
-            resource={current}
+      </div>
+      <p className="object-summary">
+        {typeLabel}
+        {item.businessTime?.value
+          ? ` · ${timelineDateLabels[item.businessTime.role]} ${item.businessTime.value}`
+          : ''}
+      </p>
+      {editingInfo ? (
+        <>
+          <label className="resource-important">
+            <input
+              type="checkbox"
+              checked={important}
+              onChange={(event) => setImportant(event.target.checked)}
+            />
+            标为重要
+          </label>
+          <label>
+            标签
+            <input
+              aria-label="对象标签"
+              value={tags}
+              maxLength={2000}
+              onChange={(event) => setTags(event.target.value)}
+              placeholder="多个标签以逗号分隔"
+            />
+          </label>
+        </>
+      ) : (
+        <>
+          {Content && (
+            <Content
+              key={key}
+              {...props}
+              onExpand={Expanded ? () => setView('expanded') : undefined}
+            />
+          )}
+          {!!item.tags.length && (
+            <div className="object-tag-list">
+              {item.tags.map((tag) => (
+                <span key={tag}>#{tag}</span>
+              ))}
+            </div>
+          )}
+          {Editor && editable && (
+            <Button
+              variant="ghost"
+              icon={Pencil}
+              className="object-edit-link"
+              onClick={() => setView('editor')}
+            >
+              {node ? '编辑节点' : '编辑内容'}
+            </Button>
+          )}
+          <div className="object-info-heading">
+            <span>信息与属性</span>
+            <button type="button" onClick={editInfo}>
+              编辑信息
+            </button>
+          </div>
+          <ObjectProperties key={key} caseId={caseId} resource={current} data={data} save={save} />
+          <ResourceRelations
+            caseId={caseId}
+            source={current}
             data={data}
             save={save}
-            onClose={() => setEditing(false)}
             onOpen={open}
           />
-        ) : null)}
-    </>
+        </>
+      )}
+      {error && (
+        <p role="alert" className="error-message">
+          {error}
+        </p>
+      )}
+    </Dialog>
   );
 }

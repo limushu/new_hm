@@ -11,12 +11,16 @@ export default function Dialog({
   danger = false,
   className = '',
   secondaryAction,
+  showFooter = true,
+  cancelAction,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
   onSubmit?: () => Promise<void | false>;
   secondaryAction?: { label: string; run: () => Promise<void | false> };
+  showFooter?: boolean;
+  cancelAction?: () => void;
   submitLabel?: string;
   danger?: boolean;
   className?: string;
@@ -87,29 +91,31 @@ export default function Dialog({
             {error}
           </p>
         )}
-        <footer>
-          <Button variant="ghost" disabled={busy} onClick={onClose}>
-            {onSubmit ? '取消' : '关闭'}
-          </Button>
-          {onSubmit && (
-            <>
-              {secondaryAction && (
-                <Button
-                  disabled={busy}
-                  onClick={() => {
-                    const form = dialog.current?.querySelector('form');
-                    if (form?.reportValidity()) void commit(secondaryAction.run);
-                  }}
-                >
-                  {secondaryAction.label}
+        {showFooter && (
+          <footer>
+            <Button variant="ghost" disabled={busy} onClick={cancelAction ?? onClose}>
+              {onSubmit ? '取消' : '关闭'}
+            </Button>
+            {onSubmit && (
+              <>
+                {secondaryAction && (
+                  <Button
+                    disabled={busy}
+                    onClick={() => {
+                      const form = dialog.current?.querySelector('form');
+                      if (form?.reportValidity()) void commit(secondaryAction.run);
+                    }}
+                  >
+                    {secondaryAction.label}
+                  </Button>
+                )}
+                <Button variant={danger ? 'danger' : 'primary'} disabled={busy} type="submit">
+                  {busy ? '处理中…' : submitLabel}
                 </Button>
-              )}
-              <Button variant={danger ? 'danger' : 'primary'} disabled={busy} type="submit">
-                {busy ? '处理中…' : submitLabel}
-              </Button>
-            </>
-          )}
-        </footer>
+              </>
+            )}
+          </footer>
+        )}
       </form>
     </dialog>,
     document.body,

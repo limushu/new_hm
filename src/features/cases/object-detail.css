@@ -1,0 +1,114 @@
+.object-inspector > form {
+  display: flex;
+  flex-direction: column;
+  max-height: 88dvh;
+}
+.object-inspector > form > header,
+.object-inspector > form > footer {
+  flex-shrink: 0;
+}
+.object-inspector > form > fieldset {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  gap: 14px;
+}
+.object-inspector .object-heading {
+  margin: 0;
+  align-items: flex-start;
+}
+.object-inspector .object-heading h3 {
+  font-size: var(--text-title-sm);
+  line-height: 1.5;
+  flex: 1;
+  min-width: 0;
+}
+.object-heading-actions {
+  display: flex;
+  flex: none;
+  align-items: center;
+}
+.object-heading-actions .icon-button,
+.object-heading-actions .timeline-entry-settings {
+  width: 44px;
+  height: 44px;
+}
+.object-heading-actions .icon-button > svg {
+  width: 18px;
+  height: 18px;
+}
+.object-summary {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.object-info-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.object-info-heading button {
+  min-height: 44px;
+  color: var(--primary);
+  font-size: var(--text-base);
+}
+.object-inspector .object-properties,
+.object-inspector .object-body {
+  margin: 0;
+}
+.object-inspector .object-edit-link {
+  padding-left: 0;
+  justify-content: flex-start;
+}
+.object-inspector .resource-relations {
+  margin-top: 6px;
+  border-top: 1px solid var(--line);
+  padding-top: 10px;
+}
+.object-inspector .resource-relations .section-title {
+  margin: 0 0 8px;
+}
+.object-tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.object-ledger-content {
+  display: grid;
+  gap: 10px;
+}
+.object-ledger-content > strong {
+  font-size: var(--text-title);
+  font-weight: var(--weight-medium);
+}
+.object-action-anchor {
+  display: inline-flex;
+  position: relative;
+  flex: none;
+}
+.object-action-menu button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: var(--text-base);
+  text-align: left;
+}
+.object-action-menu button:hover,
+.object-action-menu button:focus-visible {
+  background: var(--hover);
+}
+.object-action-menu .danger-text {
+  color: var(--red-text);
+}
+.object-action-error {
+  color: var(--red-text);
+  font-size: var(--text-sm);
+}

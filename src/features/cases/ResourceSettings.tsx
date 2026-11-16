@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react';
-import Dialog from '../../components/Dialog';
 import { useAction } from '../../components/useAction';
 import type { SaveAction, Workspace } from '../../domain/types';
 import RelationEditor from './RelationEditor';
@@ -10,7 +9,6 @@ import {
   sameResource,
   type ResourceRef,
   type ResourceRelation,
-  type TimelineEntry,
 } from '../../case-system/contracts';
 
 export const relationLabels: Record<string, string> = {
@@ -166,58 +164,5 @@ export function ResourceRelations({
         />
       )}
     </section>
-  );
-}
-
-export default function ResourceSettings({
-  entry,
-  save,
-  onClose,
-}: {
-  entry: Pick<TimelineEntry, 'caseId' | 'resource' | 'title' | 'importance' | 'tags'>;
-  data: Workspace;
-  save: SaveAction;
-  onClose: () => void;
-}) {
-  const [important, setImportant] = useState(entry.importance === 'important');
-  const [tags, setTags] = useState(entry.tags.join('，'));
-  return (
-    <Dialog
-      title="条目设置"
-      submitLabel="保存条目设置"
-      onClose={onClose}
-      onSubmit={async () => {
-        await save('save_resource_metadata', {
-          input: {
-            caseId: entry.caseId,
-            resource: entry.resource,
-            importance: important ? 'important' : 'normal',
-            tags: tags
-              .split(/[,，]/)
-              .map((t) => t.trim())
-              .filter(Boolean),
-          },
-        });
-      }}
-    >
-      <p className="field-hint">{entry.title}</p>
-      <label className="resource-important">
-        <input
-          type="checkbox"
-          checked={important}
-          onChange={(e) => setImportant(e.target.checked)}
-        />
-        标为重要
-      </label>
-      <label>
-        标签
-        <input
-          aria-label="条目标签"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          placeholder="多个标签以逗号分隔"
-        />
-      </label>
-    </Dialog>
   );
 }

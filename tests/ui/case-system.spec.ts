@@ -52,10 +52,15 @@ test('收支在时间轴和账目共用原始记录，重要程度与标签可�
     .click();
   const entry = page.locator('.chronicle-entry').filter({ hasText: '出庭交通费（虚构）' });
   await expect(entry).toContainText('支出 ¥ 123.45');
-  await entry.getByRole('button', { name: '设置条目 出庭交通费（虚构）', exact: true }).click();
+  await entry.getByRole('button', { name: '条目操作 出庭交通费（虚构）', exact: true }).click();
+  await page.getByRole('menuitem', { name: '编辑信息', exact: true }).click();
   await page.getByRole('checkbox', { name: '标为重要', exact: true }).check();
-  await page.getByLabel('条目标签', { exact: true }).fill('差旅，报销');
-  await page.getByRole('button', { name: '保存条目设置', exact: true }).click();
+  await page.getByLabel('对象标签', { exact: true }).fill('差旅，报销');
+  await page.getByRole('button', { name: '保存信息', exact: true }).click();
+  await page
+    .getByRole('dialog', { name: '对象详情', exact: true })
+    .getByRole('button', { name: '关闭', exact: true })
+    .click();
   await page.getByRole('button', { name: '筛选', exact: true }).click();
   await page.getByRole('checkbox', { name: '只看重要条目', exact: true }).check();
   await selectOption(page, page.getByLabel('时间轴类型', { exact: true }), 'ledger');

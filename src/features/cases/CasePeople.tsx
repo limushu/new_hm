@@ -255,7 +255,6 @@ export default function CasePeople({
         <ObjectInspector
           caseId={caseId}
           resource={objectSettings.resource}
-          initialPreview={false}
           data={data}
           save={save}
           onClose={() => setObjectRef(null)}
