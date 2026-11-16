@@ -88,3 +88,83 @@ test('记账直接上传凭据，取消不导入，保存后材料与金额一�
   await expect(page.locator('.material-row')).toHaveCount(1);
   await expect(page.locator('.material-row')).toContainText(file.name);
 });
+
+test('绿色强调色随深浅主题派生，各页面主按钮一致且文字保持可读', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.reload();
+  const palette = () =>
+    page.evaluate(() => {
+      const node = document.createElement('i');
+      document.body.append(node);
+      const read = (token: string) => {
+        node.style.color = `var(--${token})`;
+        return getComputedStyle(node).color;
+      };
+      const result = {
+        fill: read('primary'),
+        hover: read('primary-hover'),
+        onFill: read('on-primary'),
+        text: read('blue-text'),
+        soft: read('blue-soft'),
+        surface: read('surface'),
+        calendar: read('calendar-card'),
+        edge: read('calendar-card-edge'),
+      };
+      node.remove();
+      return result;
+    });
+  const luminance = (color: string) => {
+    const rgb = color
+      .match(/[\d.]+/g)!
+      .slice(0, 3)
+      .map(Number)
+      .map((n) => {
+        const value = n / 255;
+        return value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4;
+      });
+    return rgb[0] * 0.2126 + rgb[1] * 0.7152 + rgb[2] * 0.0722;
+  };
+  const contrast = (a: string, b: string) => {
+    const x = luminance(a),
+      y = luminance(b);
+    return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05);
+  };
+  const colors = new Map<string, Awaited<ReturnType<typeof palette>>>();
+  for (const [theme, label] of [
+    ['light', '浅色'],
+    ['dark', '深色'],
+  ] as const) {
+    await page.getByRole('button', { name: '设置', exact: true }).click();
+    await page.getByRole('button', { name: label, exact: true }).click();
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    const tones = await palette();
+    colors.set(theme, tones);
+    for (const background of [tones.fill, tones.hover])
+      expect(contrast(tones.onFill, background)).toBeGreaterThanOrEqual(4.5);
+    for (const background of [tones.surface, tones.soft])
+      expect(contrast(tones.text, background)).toBeGreaterThanOrEqual(4.5);
+    expect(tones.calendar).toBe(tones.soft);
+    expect(tones.edge).toBe(tones.text);
+    await page.getByRole('button', { name: '今天', exact: true }).click();
+    await expect(page.getByRole('button', { name: '新建日程', exact: true })).toHaveCSS(
+      'background-color',
+      tones.fill,
+    );
+    await expect(page.getByRole('button', { name: '新建日程', exact: true })).toHaveCSS(
+      'color',
+      tones.onFill,
+    );
+    await page.getByRole('button', { name: '案件', exact: true }).click();
+    await expect(page.locator('.mobile-create-case')).toHaveCSS('background-color', tones.fill);
+    await expect(page.locator('.mobile-create-case')).toHaveCSS('color', tones.onFill);
+  }
+  expect(colors.get('dark')!.fill).not.toBe(colors.get('light')!.fill);
+  expect(colors.get('dark')!.text).not.toBe(colors.get('light')!.text);
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('button', { name: '跟随系统', exact: true }).click();
+  for (const theme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme: theme });
+    await expect(page.locator('html')).toHaveAttribute('data-theme', theme);
+    expect(await palette()).toEqual(colors.get(theme));
+  }
+});

@@ -1,5 +1,15 @@
-/* Colors describe UI roles. Both themes use the same typography and spacing. */
+/* One HSL accent seed, with role-based tones for each surface theme. */
 :root {
+  --accent-h: 151;
+  --accent-s: 19%;
+  --accent-l: 41%;
+  --accent-fill: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 7%));
+  --accent-fill-hover: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 12%));
+  --accent-text: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 27%));
+  --accent-soft: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 22%));
+  --accent-soft-hover: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 18%));
+  --accent-faint: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 26%));
+  --accent-line: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 10%));
   --surface-raised: #252525;
   --popup: #272727;
   --control: #292929;
@@ -9,16 +19,24 @@
   --wash: #ffffff08;
   --shadow-color: #0005;
   --backdrop: #0007;
-  --primary: #557b69;
-  --primary-hover: #638d79;
+  --primary: var(--accent-fill);
+  --primary-hover: var(--accent-fill-hover);
   --calendar-blue: var(--primary);
   --calendar-blue-hover: var(--primary-hover);
-  --on-primary: #fff;
-  --blue-text: #9ec4ae;
-  --blue-soft: #293a31;
-  --blue-faint: #202b25;
-  --blue-line: #3e5b4c;
-  --blue-strong: #557b69;
+  --on-primary: var(--bg);
+  --accent: var(--accent-text);
+  /* Compatibility aliases for existing interaction styles. */
+  --blue-text: var(--accent-text);
+  --blue-soft: var(--accent-soft);
+  --blue-faint: var(--accent-faint);
+  --blue-line: var(--accent-line);
+  --blue-strong: var(--accent-fill);
+  --calendar-card: var(--accent-soft);
+  --calendar-card-hover: var(--accent-soft-hover);
+  --calendar-card-edge: var(--accent-text);
+  --calendar-card-border: var(--accent-line);
+  --calendar-card-text: var(--text);
+  --calendar-card-meta: var(--muted);
   --green-text: #9ac4ad;
   --green-soft: #253a31;
   --green-faint: #1e2923;
@@ -37,7 +55,6 @@
   --red-soft: #402c2d;
   --red-line: #744a4d;
   --red-strong: #a3484c;
-  --accent: #9ec4ae;
   --icon-muted: #9b9b97;
   --board-neutral-column: #202020;
   --board-neutral-card: #202020;
@@ -60,6 +77,14 @@
 }
 :root[data-theme='light'] {
   color-scheme: light;
+  --accent-fill: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 3%));
+  --accent-fill-hover: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 8%));
+  --accent-text: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) - 8%));
+  --accent-soft: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 53%));
+  --accent-soft-hover: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 50%));
+  --accent-faint: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 56%));
+  --accent-line: hsl(var(--accent-h), var(--accent-s), calc(var(--accent-l) + 40%));
+  --on-primary: #fff;
   --bg: #f7f7f5;
   --surface: #ffffff;
   --surface-soft: #f2f2ef;
@@ -78,14 +103,6 @@
   --wash: #00000005;
   --shadow-color: #20251b1a;
   --backdrop: #15203040;
-  --accent: #3f6254;
-  --primary: #3f6254;
-  --primary-hover: #315043;
-  --blue-text: #3f6254;
-  --blue-soft: #edf3ee;
-  --blue-faint: #f3f6f2;
-  --blue-line: #ccdcd1;
-  --blue-strong: #3f6254;
   --green-text: #367459;
   --green-soft: #eaf4ee;
   --green-faint: #f0f6f1;
@@ -104,14 +121,6 @@
   --red-soft: #faeded;
   --red-line: #ebcbcd;
   --red-strong: #b74c4f;
-  --calendar-blue: var(--primary);
-  --calendar-blue-hover: var(--primary-hover);
-  --calendar-card: #e6eff9;
-  --calendar-card-hover: #dce9f6;
-  --calendar-card-edge: #79a4cf;
-  --calendar-card-border: #d4e1ef;
-  --calendar-card-text: #285780;
-  --calendar-card-meta: #4a7193;
   --board-neutral-column: #f1f1ef;
   --board-neutral-card: #ffffff;
   --board-neutral-line: #e0e0dd;

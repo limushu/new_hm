@@ -35,15 +35,6 @@
   --text-strong: var(--text);
   --muted: #9c9c97;
   --quiet: #747474;
-  --accent: #7d98ac;
-  --calendar-blue: var(--primary);
-  --calendar-blue-hover: var(--primary-hover);
-  --calendar-card: #162d46;
-  --calendar-card-hover: #1b3652;
-  --calendar-card-edge: #295a8c;
-  --calendar-card-border: var(--calendar-card);
-  --calendar-card-text: #d2dbe5;
-  --calendar-card-meta: #a5b4c4;
   --calendar-now: #ff0000;
   --radius: 7px;
 }
