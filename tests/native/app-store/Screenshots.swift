@@ -7,17 +7,9 @@ final class StoreScreenshots: XCTestCase {
   override func setUpWithError() throws {
     continueAfterFailure = false
     XCUIDevice.shared.orientation = .portrait
-    // Open the installed app just as a user does. Its binary is deliberately
-    // outside the screenshot test project, so do not relaunch it via XCTest.
-    XCUIDevice.shared.press(.home)
-    let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
-    let icon = springboard.icons["案笺"].firstMatch
-    for _ in 0..<4 {
-      if icon.exists && icon.isHittable { break }
-      springboard.swipeLeft()
-    }
-    XCTAssertTrue(icon.waitForExistence(timeout: 15))
-    icon.tap()
+    // simctl has already launched the verified app. Bring that process forward;
+    // SpringBoard may expose an off-page duplicate icon with a zero-size frame.
+    app.activate()
     XCTAssertTrue(app.wait(for: .runningForeground, timeout: 30))
     XCTAssertTrue(app.buttons["案件"].firstMatch.waitForExistence(timeout: 30))
   }
