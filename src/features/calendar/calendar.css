@@ -44,6 +44,11 @@
   margin-left: auto;
   padding-top: 21px;
 }
+.calendar-extra-actions {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
 .calendar-toolbar {
   display: flex;
   align-items: center;
@@ -759,4 +764,38 @@
 .calendar-view-agenda .calendar-actions .calendar-search,
 .calendar-view-agenda .calendar-actions .calendar-new-case {
   display: none;
+}
+
+@media (max-width: 760px) {
+  .calendar-header {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    gap: 10px 8px;
+  }
+  .calendar-heading {
+    grid-area: 1 / 1;
+    min-width: 0;
+  }
+  .calendar-actions {
+    display: contents;
+  }
+  .calendar-header .calendar-primary {
+    grid-area: 1 / 2;
+    margin: 0;
+    align-self: center;
+  }
+  .calendar-navigation {
+    grid-area: 2 / 1 / 3 / -1;
+    justify-self: end;
+    margin: 0;
+    padding: 0;
+  }
+  .calendar-extra-actions {
+    grid-area: 3 / 1 / 4 / -1;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .calendar-view-agenda .calendar-extra-actions {
+    display: none;
+  }
 }

@@ -142,18 +142,20 @@ export default function Calendar({
           />
         </div>
         <div className="calendar-actions">
-          <Button variant="ghost" icon={Search} className="calendar-search" onClick={findCases}>
-            <span>查找案件</span>
-          </Button>
-          <Button
-            variant="ghost"
-            icon={Folder}
-            className="calendar-new-case"
-            disabled={loading || !data.statuses.length}
-            onClick={newCase}
-          >
-            <span>新建案件</span>
-          </Button>
+          <div className="calendar-extra-actions">
+            <Button variant="ghost" icon={Search} className="calendar-search" onClick={findCases}>
+              <span>查找案件</span>
+            </Button>
+            <Button
+              variant="ghost"
+              icon={Folder}
+              className="calendar-new-case"
+              disabled={loading || !data.statuses.length}
+              onClick={newCase}
+            >
+              <span>新建案件</span>
+            </Button>
+          </div>
           <Button
             variant="primary"
             icon={Plus}
