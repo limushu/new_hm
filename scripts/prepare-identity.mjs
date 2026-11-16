@@ -16,8 +16,9 @@ for (const [source, destination] of files) {
   if (source.endsWith('.md')) {
     const links = new Map(files);
     const content = readFileSync(join(root, source), 'utf8').replace(
-      /\]\((\.\.?\/[^)]+)\)/g,
-      (_, target) => {
+      /\]\(([^)]+)\)/g,
+      (match, target) => {
+        if (/^(?:[a-z][a-z0-9+.-]*:|#|\/)/i.test(target)) return match;
         const repositoryPath = relative(
           root,
           resolve(dirname(join(root, source)), target),
