@@ -6,7 +6,7 @@
 
 2026-11-16，[签名构建与上传](https://github.com/limushu/new_hm/actions/runs/43979292574)成功。23:34:01 UTC 确认 `UPLOAD SUCCEEDED with no errors`；23:35:46 UTC 从 Apple API 读到 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`，已进入内部测试。已下载产物核对源码 `bfe8e63eccaea78e36274a633dcfb09e221e7eb7`、版本 1.7.7、构建 31.1、分发签名、`anjian` 回调 scheme 和包根隐私清单。Xcode 26.3 / iOS SDK 26.2；IPA SHA-256：`8241acd93126c06fc7baa54efaa9942dd736b7d11263e463f4101a0a47d2dfe9`。
 
-[应用检查](https://github.com/limushu/new_hm/actions/runs/43979143538)通过前端、Rust/Clippy 和 Windows 构建。[原生验证](https://github.com/limushu/new_hm/actions/runs/43977286801)在源码 `24e1da5` 上通过 iOS 构建、启动、数据持久化和全部 26 项原生测试，包括真实系统钥匙串的读写、替换、项目隔离、删除，以及授权 URL/迟到回调边界；该源码与 31.1 的 Rust/Swift/前端运行代码一致，后续只同步了账号隐私清单及其打包校验。签名产物再次验证了更新后的隐私清单。
+[应用检查](https://github.com/limushu/new_hm/actions/runs/43979143538)通过前端、Rust/Clippy 和 Windows 构建。[同一源码的移动验证](https://github.com/limushu/new_hm/actions/runs/43979143545)通过 Android 编译、iOS 构建、启动、数据持久化和全部 26 项原生测试，包括真实系统钥匙串的读写、替换、项目隔离、删除，以及授权 URL/迟到回调边界。签名产物再次验证了更新后的隐私清单。
 
 建议从 TestFlight 更新后先测试 Apple 登录、退出和重启后会话状态，确认本机案件保留；账号删除先使用专门的测试账号验证。新的账号隐私声明已覆盖用户标识、邮箱和姓名，用于 App 功能、与用户关联、不跟踪。现有审核视频、旧构建 Notes 与商店隐私问卷需按实际新功能更新后再重提 App Review。
 

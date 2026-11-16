@@ -68,7 +68,7 @@ Apple 的逐步操作与仓库 Secret 名称见[开通 Apple 登录](apple-sign-
 
 客户端新增 9 项 Rust 用例测试：PKCE/回调、公开状态不含令牌、未配置不授权、绑定账号错配/不可信网址、续期与钥匙串失败、离线退出、最后身份保护和删除边界；新增 4 项触屏界面回归。iOS 原生测试新增钥匙串读写/替换/隔离/删除、非法项目、授权 URL 和迟到回调隔离；原生编译及测试结果须以本次 CI 记录为准。
 
-2026-11-16，[原生验证](https://github.com/limushu/new_hm/actions/runs/43977286801)通过全部 26 项测试，包含上述 4 项账号测试；测试宿主由 Xcode 统一签名，调用真实系统钥匙串。测试不执行真实用户授权，也不替代 iPhone 上的 Apple 登录/删除验收。[1.7.7（31.1）签名任务](https://github.com/limushu/new_hm/actions/runs/43979292574)已完成上传并实际读到 Apple 的 `VALID` / `IN_BETA_TESTING` 状态，版本、回调 scheme 和包内隐私清单已核对。
+2026-11-16，[与签名包同一源码的原生验证](https://github.com/limushu/new_hm/actions/runs/43979143545)通过全部 26 项测试，包含上述 4 项账号测试；测试宿主由 Xcode 统一签名，调用真实系统钥匙串。测试不执行真实用户授权，也不替代 iPhone 上的 Apple 登录/删除验收。[1.7.7（31.1）签名任务](https://github.com/limushu/new_hm/actions/runs/43979292574)已完成上传并实际读到 Apple 的 `VALID` / `IN_BETA_TESTING` 状态，版本、回调 scheme 和包内隐私清单已核对。
 
 Rust 同步测试使用两份隔离 SQLite 和可替换内存云驱动，验证版本接续、附件复用、离线失败、账号隔离、并发冲突和保留双方版本。这些测试不代表真实登录或实际云盘同步已经可用。
 
