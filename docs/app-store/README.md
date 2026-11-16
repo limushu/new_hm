@@ -4,7 +4,9 @@
 
 清单日期栏为今天添加主题色描边，选中日期沿用填充色；移除清单顶部独立的今天和前后切换，不新增日期选择入口。点击已有的底部/侧栏「今天」导航返回当天，时间表视图也可重新定位当前时间。月、周、日视图保留原有日期浏览操作。
 
-当前待完整检查与签名上传，完成后补录结果。
+2026-11-16，[签名构建与上传](https://github.com/limushu/new_hm/actions/runs/43852211681)成功，10:59:07 UTC 确认 `UPLOAD SUCCEEDED with no errors`。已下载产物并核对源码 `bf37ed56b853f64ebc5aab50f4ccf8132d4eb09b`、版本 1.7.7、构建 27.1、分发签名检查状态、权限说明与根目录隐私清单。IPA SHA-256：`229752724131cd0f077ffcca894a773b9e4e1317e3e6d34213789d4dc1c5cac4`。上传状态为 `accepted-for-processing`，尚未单独核实 Apple 处理完成或 TestFlight 可安装状态。
+
+[应用检查](https://github.com/limushu/new_hm/actions/runs/43851497307)通过 53 项单元测试、124 项 Chromium 界面回归、15 项 WebKit 触摸回归、Rust 测试与 Clippy、Windows 构建。[移动端检查](https://github.com/limushu/new_hm/actions/runs/43851497525)通过 Android 编译、iOS 模拟器启动/持久化验收及 18 项原生驱动测试。本机另通过 12 项日程/时间表/导航回归，并在五档宽度、深浅主题共 10 组组合中核对今天描边、选择填充、已有导航返回当天与无横向溢出。浏览器及模拟器检查不代替真实 iPhone 验收或审核视频；本次未执行 App Review 重新提交或对外发布。
 
 ## 前一布局候选：1.7.7（26.1）
 
