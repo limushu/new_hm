@@ -19,3 +19,6 @@ supabase/.temp/
 supabase/.branches/
 supabase/.env
 supabase/functions/.env
+.env
+.env.*
+!.env.example

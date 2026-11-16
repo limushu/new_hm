@@ -21,3 +21,11 @@
 - 激活：当前安装包没有 `AnjianCloudKitContainer` 配置及 iCloud 发行权限。插件加载不访问 CKContainer；发起连接时返回 `cloud_not_configured`，不宣告可同步。
 
 iPadOS 复用 iOS 驱动。Mac 虽然也有 CloudKit SDK，Tauri 的 iOS Swift 插件桥不能直接当作 Mac 接入，仍需自己的桥接、装配、签名和验收。Windows 后续通过统一端口接 OneDrive/Google Drive 或适用的 CloudKit Web 授权方案，不会自动读取 Apple 私有容器。
+
+## 2026-11-16 验证记录
+
+功能源码 `4b7623685be4bcc0cba688185977a6e3fc7d84f9` 的[应用检查](https://github.com/limushu/new_hm/actions/runs/43870048434)通过 63 项单元/账号测试、126 项 Chromium、17 项 WebKit、Rust 测试/Clippy 及 Windows 构建。[移动检查](https://github.com/limushu/new_hm/actions/runs/43870048265)通过 Android 编译、iOS 应用构建/启动/持久化，以及 22 项原生测试，其中新增 4 项 CloudKit 适配测试。
+
+CloudKit 测试编译真实 SDK 代码，但数据库通过测试适配器替换，验证未配置不访问容器、云账号不符拒绝写入、条件更新/会话失效、索引与 CKAsset 文件处理及原件保留；不代表真实 CloudKit 服务器或多设备验收。未生成声称可用云同步的新 TestFlight，不改变 28.1 的手动备份定位。
+
+Supabase 资料打包与无部署检查也已通过；`apply=false` 未调用真实项目管理接口，尚未创建账号后端项目或配置 OAuth。
