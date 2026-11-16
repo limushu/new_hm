@@ -35,8 +35,8 @@
 
 ## 截图与图标
 
-- `screenshots/iphone/`：带灵动岛的 iPhone 中等显示屏竖屏，1206 × 2622 像素，对应当前必需项。
-- `screenshots/iphone-large/`：带灵动岛的 iPhone 大显示屏竖屏，1320 × 2868 像素，补充素材。
+- `screenshots/iphone/`：带灵动岛的 iPhone 中等显示屏竖屏，1206 × 2622 像素，对应后台动态岛 iPhone 中等显示屏分组。
+- `screenshots/iphone-large/`：带灵动岛的 iPhone 大显示屏竖屏，1320 × 2868 像素，对应后台动态岛 iPhone 大显示屏分组。
 - `screenshots/ipad/`：13 英寸 iPad 竖屏，2064 × 2752 像素。
 - 各目录按 01 至 04 顺序上传：案件列表、案件脉络、材料管理、费用记录。
 - 原图来自实际运行的原生应用与系统模拟器，不含真实用户数据；保持原始尺寸与界面内容，仅以不含 Alpha 通道的 RGB PNG 编码。不将浏览器预览、缩放图或其他设备截图冒充对应原生截图。

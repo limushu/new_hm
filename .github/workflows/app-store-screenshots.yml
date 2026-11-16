@@ -6,6 +6,10 @@ on:
         description: Successful Mobile application checks run containing the verified simulator app
         required: true
         default: '43796270094'
+      device_families:
+        description: Comma-separated families to capture (iphone, iphone-large, ipad)
+        required: false
+        default: 'iphone,iphone-large,ipad'
 permissions:
   contents: read
   actions: read
@@ -36,6 +40,8 @@ jobs:
           merge-multiple: true
           path: artifacts/app-store/source
       - name: Capture native iPhone and iPad screens
+        env:
+          SCREENSHOT_FAMILIES: ${{ inputs.device_families }}
         run: node scripts/capture-app-store.mjs
       - uses: actions/upload-artifact@v4
         if: always()

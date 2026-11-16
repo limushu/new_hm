@@ -109,6 +109,11 @@ try {
     throw new Error(
       'Required medium/large Dynamic Island iPhone or 13-inch iPad simulator unavailable',
     );
+  const requested = (process.env.SCREENSHOT_FAMILIES ?? families.map((item) => item.name).join(','))
+    .split(',')
+    .map((name) => name.trim());
+  if (!requested.length || requested.some((name) => !families.some((item) => item.name === name)))
+    throw new Error('Unknown screenshot device family');
 
   const exportPng = join(temporary, 'export-store-png');
   run('xcrun', ['swiftc', join(root, 'scripts/export-store-png.swift'), '-o', exportPng]);
@@ -177,7 +182,7 @@ try {
   ]);
   const project = join(temporary, 'AppStoreScreenshots.xcodeproj');
   let built = false;
-  for (const family of families) {
+  for (const family of families.filter((item) => requested.includes(item.name))) {
     const device = run(
       'xcrun',
       [
@@ -194,6 +199,10 @@ try {
     run('xcrun', ['simctl', 'bootstatus', device, '-b']);
     // Keep a real Simulator display attached so WebKit's compositor paints
     // frames as well as exposing its accessibility tree on headless CI hosts.
+    // An existing Simulator GUI ignores new launch arguments. Restart only its
+    // GUI so each booted device gets a real display before WebKit starts.
+    run('killall', ['Simulator'], { optional: true });
+    await delay(1000);
     run('open', ['-a', 'Simulator', '--args', '-CurrentDeviceUDID', device]);
     await delay(3000);
     run('xcrun', ['simctl', 'ui', device, 'appearance', 'light']);
