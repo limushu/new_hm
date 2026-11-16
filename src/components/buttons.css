@@ -36,7 +36,7 @@ button.primary-action > svg,
   height: var(--button-icon-size);
 }
 
-button.ui-button:has(> svg:only-child) {
+button.ui-button--icon {
   width: var(--button-height);
   padding: 0;
 }

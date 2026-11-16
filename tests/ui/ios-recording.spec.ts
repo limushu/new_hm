@@ -80,8 +80,18 @@ test('iOS 原生录音授权失败可重试，中断后继续并按 M4A 归档',
     .locator('.case-quick-actions > button')
     .filter({ hasText: '创建' })
     .evaluate((button) => getComputedStyle(button).backgroundColor);
-  await startButton.hover();
+  await page.mouse.move(0, 0);
   await expect(startButton).toHaveCSS('background-color', accent);
+  const hoverAccent = await startButton.evaluate((button) => {
+    const probe = document.createElement('span');
+    probe.style.backgroundColor = 'var(--primary-hover)';
+    button.append(probe);
+    const color = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return color;
+  });
+  await startButton.hover();
+  await expect(startButton).toHaveCSS('background-color', hoverAccent);
   await page.getByRole('button', { name: '开始录音', exact: true }).click();
   await expect(page.getByRole('button', { name: '暂停', exact: true })).toBeVisible();
   await page.evaluate(() => (window as unknown as { interruptAudio(): void }).interruptAudio());

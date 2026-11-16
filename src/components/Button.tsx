@@ -18,7 +18,7 @@ export default function Button({
     <button
       {...props}
       type={type}
-      className={`ui-button ui-button--${variant} ${variant === 'primary' ? 'primary-action' : variant === 'danger' ? 'danger-button' : ''} ${className}`}
+      className={`ui-button ui-button--${variant} ${Icon && children == null ? 'ui-button--icon' : ''} ${variant === 'primary' ? 'primary-action' : variant === 'danger' ? 'danger-button' : ''} ${className}`}
     >
       {Icon && <Icon aria-hidden="true" />}
       {children}
