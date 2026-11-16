@@ -731,6 +731,17 @@ export async function previewCommand<K extends keyof Commands>(
         options: input.property.options.map((o) => o.trim()),
       };
       validateProperty(property);
+      if (input.related !== undefined) {
+        if (property.kind !== 'relation' || input.related.length > 100)
+          throw new Error('关联属性无效');
+        const resources = resourceIndex(data, input.caseId, true);
+        for (const target of input.related)
+          if (
+            resourceKey(target) === resourceKey(input.resource) ||
+            !resources.has(resourceKey(target))
+          )
+            throw new Error('关联对象不存在或不属于本案');
+      }
       let metadata = data.resourceMetadata.find(
         (m) => m.caseId === input.caseId && resourceKey(m.resource) === resourceKey(input.resource),
       );
@@ -765,6 +776,37 @@ export async function previewCommand<K extends keyof Commands>(
           );
         properties[existing] = property;
       } else properties.push(property);
+      if (input.related !== undefined) {
+        const kind = `property.${property.id}`;
+        const previous = data.resourceRelations.filter(
+          (r) =>
+            r.caseId === input.caseId &&
+            resourceKey(r.source) === resourceKey(input.resource) &&
+            r.kind === kind,
+        );
+        data.resourceRelations = data.resourceRelations.filter(
+          (r) =>
+            !(
+              r.caseId === input.caseId &&
+              resourceKey(r.source) === resourceKey(input.resource) &&
+              r.kind === kind
+            ),
+        );
+        const seen = new Set<string>();
+        for (const target of input.related) {
+          const key = resourceKey(target);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          data.resourceRelations.push({
+            id: previous.find((r) => resourceKey(r.target) === key)?.id ?? crypto.randomUUID(),
+            caseId: input.caseId,
+            source: input.resource,
+            target,
+            kind,
+            label: property.name,
+          });
+        }
+      }
       metadata.properties = properties;
       break;
     }
@@ -811,6 +853,18 @@ export async function previewCommand<K extends keyof Commands>(
           ...item,
           properties: data.resourceMetadata[index].properties ?? [],
         };
+      break;
+    }
+    case 'save_resource_relations': {
+      const inputs = a.inputs as ResourceRelation[];
+      if (!inputs.length || inputs.length > 100) throw new Error('关联数量无效');
+      const previous = structuredClone(data.resourceRelations);
+      try {
+        for (const input of inputs) await previewCommand('save_resource_relation', { input });
+      } catch (error) {
+        data.resourceRelations = previous;
+        throw error;
+      }
       break;
     }
     case 'save_resource_relation': {

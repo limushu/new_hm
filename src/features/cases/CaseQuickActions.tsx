@@ -26,6 +26,20 @@ import { proceedingName } from '../../domain/proceedings';
 import { caseScope } from '../../domain/workspace';
 import type { CaseEvent, Material, SaveAction, Workspace } from '../../domain/types';
 const Preview = lazy(() => import('../materials/Preview'));
+export type CreationPanel =
+  | 'recording'
+  | 'create'
+  | 'document'
+  | 'record'
+  | 'event'
+  | 'task'
+  | 'search'
+  | 'ledger'
+  | 'import'
+  | 'node'
+  | 'person'
+  | 'organization'
+  | 'schedule';
 
 export function MilestoneEditor({
   value,
@@ -115,6 +129,8 @@ export default function CaseQuickActions({
   relationKind = 'related',
   relationLabel = '',
   onClose,
+  initialKind,
+  onCreated,
 }: {
   caseId: string;
   data: Workspace;
@@ -124,11 +140,14 @@ export default function CaseQuickActions({
   relationKind?: string;
   relationLabel?: string;
   onClose?: () => void;
+  initialKind?: CreationPanel;
+  onCreated?: (refs: ResourceRef[]) => Promise<void>;
 }) {
   const { manifest } = useSubsystems();
   const [objectProperties, setObjectProperties] = useState(defaultCreationProperties);
   const [relationIds] = useState(() => new Map<string, string>());
   const creation = useObjectCreation(caseId, data, objectProperties, save, async (refs) => {
+    await onCreated?.(refs);
     if (!relatedFrom) return;
     for (const target of refs) {
       const key = `${target.kind}:${target.id}`;
@@ -153,28 +172,16 @@ export default function CaseQuickActions({
       onChange={setObjectProperties}
     />
   );
-  const [panel, setPanel] = useState<
-    | 'recording'
-    | 'create'
-    | 'document'
-    | 'record'
-    | 'event'
-    | 'task'
-    | 'search'
-    | 'ledger'
-    | 'import'
-    | 'node'
-    | 'person'
-    | 'schedule'
-    | null
-  >(relatedFrom ? 'create' : null);
+  const [panel, setPanel] = useState<CreationPanel | null>(
+    initialKind ?? (relatedFrom ? 'create' : null),
+  );
   function closePanel() {
     setPanel(null);
     onClose?.();
   }
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<Material | null>(null);
-  const [draftId, setDraftId] = useState('');
+  const [draftId, setDraftId] = useState(() => crypto.randomUUID());
   const target = { caseId, proceedingId: null, parentId: null, recordId: null };
   function create(kind: typeof panel) {
     creation.reset();
@@ -204,7 +211,7 @@ export default function CaseQuickActions({
   }
   return (
     <>
-      {!relatedFrom && (
+      {!relatedFrom && !initialKind && (
         <nav className="case-quick-actions" aria-label="案件快捷操作">
           <button
             aria-label="快速录音"
@@ -303,8 +310,9 @@ export default function CaseQuickActions({
           </div>
         </Dialog>
       )}
-      {panel === 'person' && (
+      {(panel === 'person' || panel === 'organization') && (
         <CasePersonEditor
+          kind={panel === 'organization' ? 'organization' : 'person'}
           caseId={caseId}
           data={data}
           save={creation.save}

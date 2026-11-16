@@ -19,11 +19,15 @@ export default function Dialog({
   className?: string;
 }) {
   const dialog = useRef<HTMLDialogElement>(null);
+  const heading = useRef<HTMLHeadingElement>(null);
   const inflight = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   useEffect(() => {
     dialog.current?.showModal();
+    // Native dialogs otherwise focus the first button (close), drawing a
+    // keyboard ring around it even when the sheet was opened with a finger.
+    heading.current?.focus({ preventScroll: true });
     return () => dialog.current?.close();
   }, []);
   // Modal forms must be siblings in the DOM: a dialog opened from another
@@ -59,10 +63,12 @@ export default function Dialog({
         }}
       >
         <header>
-          <h2>{title}</h2>
+          <h2 ref={heading} tabIndex={-1} className="dialog-heading">
+            {title}
+          </h2>
           <button
             type="button"
-            className="icon-button"
+            className="icon-button dialog-close"
             aria-label="关闭"
             disabled={busy}
             onClick={onClose}

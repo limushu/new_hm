@@ -21,22 +21,20 @@ test('节点的自定义属性与值可编辑，能从节点直接新建律师�
   await form.getByLabel('属性名称', { exact: true }).fill('审理结果');
   await selectOption(page, form.getByLabel('属性类型', { exact: true }), 'select');
   await form.getByLabel('属性选项', { exact: true }).fill('待宣判，部分支持，调解');
+  await selectOption(page, form.getByLabel('属性值', { exact: true }), { label: '部分支持' });
   await form.getByRole('button', { name: '保存属性', exact: true }).click();
   const property = node.locator('.object-property-row').filter({ hasText: '审理结果' });
-  await property.locator('.object-property-main').click();
-  form = page.getByRole('dialog', { name: '审理结果', exact: true });
-  await selectOption(page, form.getByLabel('属性值', { exact: true }), { label: '部分支持' });
-  await form.getByRole('button', { name: '保存', exact: true }).click();
   await expect(property).toContainText('部分支持');
-  await node.getByRole('button', { name: '新建并关联', exact: true }).click();
-  await page
-    .getByRole('dialog', { name: '新建并关联', exact: true })
-    .getByRole('button', { name: /人物或机构/ })
-    .click();
+  await node.getByRole('button', { name: '添加关联', exact: true }).click();
+  const association = page.getByRole('dialog', { name: '添加案件关联', exact: true });
+  await selectOption(page, association.getByLabel('关联对象类型', { exact: true }), 'person');
+  await association.getByRole('button', { name: '＋ 新建人物并关联', exact: true }).click();
   form = page.getByRole('dialog', { name: '新建联系对象', exact: true });
   await form.getByLabel('对象名称', { exact: true }).fill('周律师');
   await form.getByLabel('本案身份', { exact: true }).fill('我方代理律师');
   await form.getByRole('button', { name: '保存', exact: true }).click();
+  await expect(node).not.toContainText('周律师');
+  await association.getByRole('button', { name: '保存关联', exact: true }).click();
   await expect(node.locator('.resource-related-object')).toContainText(['周律师']);
   await node.getByRole('button', { name: '关闭', exact: true }).last().click();
   await row.locator('.chronicle-entry-title').click();
@@ -66,20 +64,16 @@ test('关联属性使用同一套对象关系，删除属性保留新建人物',
   let form = page.getByRole('dialog', { name: '添加属性', exact: true });
   await form.getByLabel('属性名称', { exact: true }).fill('代理律师');
   await selectOption(page, form.getByLabel('属性类型', { exact: true }), 'relation');
-  await form.getByRole('button', { name: '保存属性', exact: true }).click();
-  await node.locator('.object-property-main').filter({ hasText: '代理律师' }).click();
-  const relation = page.getByRole('dialog', { name: '代理律师', exact: true });
-  await relation.getByRole('button', { name: '新建并关联', exact: true }).click();
-  await page
-    .getByRole('dialog', { name: '新建并关联', exact: true })
-    .getByRole('button', { name: /人物或机构/ })
-    .click();
+  await selectOption(page, form.getByLabel('关联对象类型', { exact: true }), 'person');
+  await form.getByRole('button', { name: '新建人物', exact: true }).click();
+  const propertyForm = form;
   form = page.getByRole('dialog', { name: '新建联系对象', exact: true });
   await form.getByLabel('对象名称', { exact: true }).fill('赵律师');
   await form.getByLabel('本案身份', { exact: true }).fill('我方律师');
   await form.getByRole('button', { name: '保存', exact: true }).click();
-  await expect(relation).toContainText('赵律师');
-  await relation.getByRole('button', { name: '关闭', exact: true }).last().click();
+  await expect(propertyForm).toContainText('赵律师');
+  await expect(node.locator('.object-property-main')).toHaveCount(0);
+  await propertyForm.getByRole('button', { name: '保存属性', exact: true }).click();
   await expect(node.locator('.object-property-main').filter({ hasText: '代理律师' })).toContainText(
     '1 个关联对象',
   );

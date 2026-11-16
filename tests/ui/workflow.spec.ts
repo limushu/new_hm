@@ -59,18 +59,22 @@ test('不同流程独立保存案号，新增流程不改变案件状态', async
   await openFlowDetails(page);
   await openLegacyCase(page);
   await openFlowDetails(page);
-  await page.getByRole('textbox', { name: '案号', exact: true }).fill('一审独立案号');
-  await page.getByRole('textbox', { name: '案号', exact: true }).press('Tab');
+  await page.getByRole('button', { name: '编辑案号', exact: true }).click();
+  await page.getByLabel('流程编号', { exact: true }).fill('一审独立案号');
+  await page
+    .getByRole('dialog', { name: '编辑流程编号', exact: true })
+    .getByRole('button', { name: '保存', exact: true })
+    .click();
   await expect(page.locator('.save-state')).toHaveText('已保存');
   await page.getByRole('button', { name: '新增流程', exact: true }).click();
   await selectOption(page, page.getByRole('combobox', { name: '流程模板' }), 'appeal');
   await page.getByRole('button', { name: '新增', exact: true }).click();
   await openFlowDetails(page);
   await expect(page.locator('.program-detail-heading h2')).toHaveText('二审');
-  await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue('');
+  await expect(page.getByRole('button', { name: '编辑案号', exact: true })).toHaveText('未填写');
   await page.getByRole('button', { name: '查看一审流程', exact: true }).click();
   await openFlowDetails(page);
-  await expect(page.getByRole('textbox', { name: '案号', exact: true })).toHaveValue(
+  await expect(page.getByRole('button', { name: '编辑案号', exact: true })).toHaveText(
     '一审独立案号',
   );
   await expect(page.getByRole('combobox', { name: '案件状态', exact: true })).toHaveAttribute(

@@ -61,6 +61,8 @@ pub struct ObjectPropertyInput {
     pub case_id: String,
     pub resource: ResourceRef,
     pub property: ObjectProperty,
+    #[serde(default)]
+    pub related: Option<Vec<ResourceRef>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

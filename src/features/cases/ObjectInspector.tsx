@@ -15,19 +15,18 @@ export default function ObjectInspector({
   data,
   save,
   onClose,
+  initialPreview = true,
 }: {
   caseId: string;
   resource: ResourceRef;
   data: Workspace;
   save: SaveAction;
   onClose: () => void;
+  initialPreview?: boolean;
 }) {
   const [history, setHistory] = useState<ResourceRef[]>([resource]);
-  const [editing, setEditing] = useState(resource.kind === 'material'),
+  const [editing, setEditing] = useState(initialPreview && resource.kind === 'material'),
     [settings, setSettings] = useState(false);
-  const [propertyRelation, setPropertyRelation] = useState<{ kind: string; label: string } | null>(
-    null,
-  );
   const current = history[history.length - 1];
   const objects = caseSystem.objects(data, caseId);
   const item = objects.find((o) => resourceKey(o.resource) === resourceKey(current));
@@ -49,7 +48,6 @@ export default function ObjectInspector({
   const body =
     milestone?.notes ?? record?.body ?? event?.notes ?? material?.notes ?? contact?.notes ?? '';
   function open(ref: ResourceRef) {
-    setPropertyRelation(null);
     setEditing(ref.kind === 'material');
     setSettings(false);
     setHistory((old) => [...old, ref]);
@@ -102,13 +100,7 @@ export default function ObjectInspector({
             {program.caseNumber ? ` · ${program.caseNumber}` : ''}
           </p>
         )}
-        <ObjectProperties
-          caseId={caseId}
-          resource={current}
-          data={data}
-          save={save}
-          onLink={(kind, label) => setPropertyRelation({ kind, label })}
-        />
+        <ObjectProperties caseId={caseId} resource={current} data={data} save={save} />
         {body && <p className="object-body">{body}</p>}
         {(Details || contact) && !(milestone?.kind === 'stage_change') && (
           <button type="button" className="object-edit-link" onClick={() => setEditing(true)}>
@@ -150,19 +142,6 @@ export default function ObjectInspector({
             onOpen={open}
           />
         ) : null)}
-      {propertyRelation && (
-        <Dialog title={propertyRelation.label} onClose={() => setPropertyRelation(null)}>
-          <ResourceRelations
-            caseId={caseId}
-            source={current}
-            data={data}
-            save={save}
-            propertyKind={propertyRelation.kind}
-            propertyLabel={propertyRelation.label}
-            onOpen={open}
-          />
-        </Dialog>
-      )}
     </>
   );
 }

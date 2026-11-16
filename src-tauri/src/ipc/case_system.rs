@@ -4,6 +4,15 @@ use hm_core::case_system::{ResourceMetadata, ResourceRelation};
 use tauri::State;
 
 #[tauri::command(async)]
+pub fn save_resource_relations(
+    state: State<'_, AppState>,
+    system: State<'_, CaseSystem>,
+    inputs: Vec<ResourceRelation>,
+) -> Result<(), String> {
+    access(&state, |store| system.relate_many(store, inputs))
+}
+
+#[tauri::command(async)]
 pub fn save_object_property(
     state: State<'_, AppState>,
     system: State<'_, CaseSystem>,

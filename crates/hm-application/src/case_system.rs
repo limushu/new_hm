@@ -48,4 +48,7 @@ impl CaseSystem {
     pub fn relate(&self, store: &Store, input: ResourceRelation) -> Result<()> {
         store.save_resource_relation(input, self.resolver.as_ref())
     }
+    pub fn relate_many(&self, store: &Store, inputs: Vec<ResourceRelation>) -> Result<()> {
+        store.save_resource_relations(inputs, self.resolver.as_ref())
+    }
 }

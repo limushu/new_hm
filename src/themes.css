@@ -11,6 +11,8 @@
   --backdrop: #0007;
   --primary: #557b69;
   --primary-hover: #638d79;
+  --calendar-blue: var(--primary);
+  --calendar-blue-hover: var(--primary-hover);
   --on-primary: #fff;
   --blue-text: #9ec4ae;
   --blue-soft: #293a31;

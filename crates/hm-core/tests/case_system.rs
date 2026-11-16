@@ -37,6 +37,90 @@ fn meta(case_id: &str, resource: ResourceRef) -> ResourceMetadata {
 }
 
 #[test]
+fn property_definition_and_initial_related_objects_commit_together() {
+    let mut store = Store::memory().unwrap();
+    let id = case(&mut store, "One");
+    let other = case(&mut store, "Other");
+    let source = task(&store, &id);
+    let target = task(&store, &id);
+    let foreign = task(&store, &other);
+    let property = ObjectProperty {
+        id: Uuid::new_v4().to_string(),
+        name: "Participants".into(),
+        kind: PropertyKind::Relation,
+        options: vec![],
+        value: serde_json::Value::Null,
+    };
+    let input = ObjectPropertyInput {
+        case_id: id.clone(),
+        resource: source.clone(),
+        property: property.clone(),
+        related: Some(vec![target.clone()]),
+    };
+    store
+        .save_object_property(input.clone(), &BuiltinResources)
+        .unwrap();
+    let relation_id = store.resource_relations().unwrap()[0].id.clone();
+    store
+        .save_object_property(input.clone(), &BuiltinResources)
+        .unwrap();
+    assert_eq!(store.resource_relations().unwrap()[0].id, relation_id);
+    let mut invalid = input.clone();
+    invalid.property.name = "Rejected edit".into();
+    invalid.related = Some(vec![foreign]);
+    assert!(store
+        .save_object_property(invalid, &BuiltinResources)
+        .is_err());
+    assert_eq!(
+        store.resource_metadata().unwrap()[0].properties[0].name,
+        "Participants"
+    );
+    assert_eq!(store.resource_relations().unwrap()[0].target, target);
+    let mut clear = input;
+    clear.related = Some(vec![]);
+    store
+        .save_object_property(clear, &BuiltinResources)
+        .unwrap();
+    assert!(store.resource_relations().unwrap().is_empty());
+    assert!(store
+        .workspace()
+        .unwrap()
+        .tasks
+        .iter()
+        .any(|t| t.id == target.id));
+}
+
+#[test]
+fn confirming_several_relations_is_atomic() {
+    let mut store = Store::memory().unwrap();
+    let id = case(&mut store, "One");
+    let other = case(&mut store, "Other");
+    let source = task(&store, &id);
+    let target = task(&store, &id);
+    let foreign = task(&store, &other);
+    let first = ResourceRelation {
+        id: Uuid::new_v4().to_string(),
+        case_id: id.clone(),
+        source: source.clone(),
+        target,
+        kind: "related".into(),
+        label: String::new(),
+    };
+    let invalid = ResourceRelation {
+        id: Uuid::new_v4().to_string(),
+        case_id: id,
+        source,
+        target: foreign,
+        kind: "related".into(),
+        label: String::new(),
+    };
+    assert!(store
+        .save_resource_relations(vec![first, invalid], &BuiltinResources)
+        .is_err());
+    assert!(store.resource_relations().unwrap().is_empty());
+}
+
+#[test]
 fn custom_properties_keep_types_and_survive_restart() {
     let root = tempfile::tempdir().unwrap();
     let path = root.path().join("workspace.sqlite3");
@@ -53,6 +137,7 @@ fn custom_properties_keep_types_and_survive_restart() {
     store
         .save_object_property(
             ObjectPropertyInput {
+                related: None,
                 case_id: case_id.clone(),
                 resource: resource.clone(),
                 property: field.clone(),
@@ -69,6 +154,7 @@ fn custom_properties_keep_types_and_survive_restart() {
     assert!(store
         .save_object_property(
             ObjectPropertyInput {
+                related: None,
                 case_id: case_id.clone(),
                 resource: resource.clone(),
                 property: invalid
@@ -107,6 +193,7 @@ fn custom_properties_reject_foreign_objects_and_relation_fields_reuse_edges() {
     assert!(store
         .save_object_property(
             ObjectPropertyInput {
+                related: None,
                 case_id: case_id.clone(),
                 resource: foreign,
                 property: field.clone()
@@ -117,6 +204,7 @@ fn custom_properties_reject_foreign_objects_and_relation_fields_reuse_edges() {
     store
         .save_object_property(
             ObjectPropertyInput {
+                related: None,
                 case_id: case_id.clone(),
                 resource: source.clone(),
                 property: field.clone(),
@@ -343,6 +431,7 @@ fn backup_restore_preserves_annotations_and_relations_without_duplicating_resour
     store
         .save_object_property(
             ObjectPropertyInput {
+                related: None,
                 case_id: id.clone(),
                 resource: relation.source.clone(),
                 property: ObjectProperty {

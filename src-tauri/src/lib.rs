@@ -163,6 +163,7 @@ pub fn run() {
             ipc::case_system::delete_object_property,
             ipc::case_system::apply_object_properties,
             ipc::case_system::save_resource_relation,
+            ipc::case_system::save_resource_relations,
             ipc::case_system::delete_resource_relation,
             subsystems::subsystem_manifest,
             subsystems::recording::native_recording_support,

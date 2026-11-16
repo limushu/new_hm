@@ -166,7 +166,7 @@ test('窄窗口仍显示新版提示，关闭更新面板后保留正在编辑�
   await notice.click();
   await page.getByRole('button', { name: '取消', exact: true }).click();
   await expect(page.getByLabel('案件名称', { exact: true })).toHaveValue('更新期间保留的案件编辑');
-  await expect(page.locator('.save-state')).toHaveText('已保存');
+  await expect(page.locator('.save-state')).toHaveText('名称待保存');
   await page.setViewportSize({ width: 390, height: 700 });
   await notice.click();
   const box = await page.getByRole('dialog', { name: '安装 1.2.0', exact: true }).boundingBox();

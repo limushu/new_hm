@@ -1,4 +1,4 @@
-import ResourceSettings from './ResourceSettings';
+import ObjectInspector from './ObjectInspector';
 import { caseSystem } from '../../case-system/modules';
 import type { ResourceRef } from '../../case-system/contracts';
 import type { ReactNode } from 'react';
@@ -315,8 +315,10 @@ export default function CasePeople({
         />
       )}
       {objectSettings && (
-        <ResourceSettings
-          entry={objectSettings}
+        <ObjectInspector
+          caseId={caseId}
+          resource={objectSettings.resource}
+          initialPreview={false}
           data={data}
           save={save}
           onClose={() => setObjectRef(null)}

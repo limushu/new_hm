@@ -17,7 +17,7 @@ async function expectPaneFits(page: Page) {
       nodes.map((node) => {
         const row = node.getBoundingClientRect();
         const control = node
-          .querySelector('.select-field, .contact-picker, input')!
+          .querySelector('.select-field, .contact-picker, input, .program-number-value')!
           .getBoundingClientRect();
         return {
           left: control.left,
@@ -47,10 +47,14 @@ test('流程详情按侧页实际宽度适配，小桌面、展开和手机均�
   await openFlowDetails(page);
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await expect(page.locator('.program-detail-heading h2')).toHaveText('二审');
+  await page.getByRole('button', { name: '编辑案号', exact: true }).click();
   await page
-    .getByLabel('案号', { exact: true })
+    .getByLabel('流程编号', { exact: true })
     .fill('（2026）这是用于小窗口验收的较长案号 0123456789 号');
-  await page.getByLabel('案号', { exact: true }).press('Tab');
+  await page
+    .getByRole('dialog', { name: '编辑流程编号', exact: true })
+    .getByRole('button', { name: '保存', exact: true })
+    .click();
   await expect(page.locator('.save-state')).toHaveText('已保存');
 
   for (const viewport of [
@@ -82,7 +86,9 @@ test('流程详情按侧页实际宽度适配，小桌面、展开和手机均�
     await expect(page.locator('.program-detail-heading h2')).toHaveText('一审');
     await page.getByRole('button', { name: '查看二审流程', exact: true }).click();
     await openFlowDetails(page);
-    await expect(page.getByLabel('案号', { exact: true })).toHaveValue(/较长案号/);
+    await expect(page.getByRole('button', { name: '编辑案号', exact: true })).toHaveText(
+      /较长案号/,
+    );
   }
 
   await page.setViewportSize({ width: 1024, height: 768 });

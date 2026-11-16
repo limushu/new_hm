@@ -421,6 +421,7 @@ export interface Commands {
         caseId: string;
         resource: import('../case-system/contracts').ResourceRef;
         property: import('../case-system/contracts').ObjectProperty;
+        related?: import('../case-system/contracts').ResourceRef[];
       };
     };
     result: null;
@@ -430,6 +431,7 @@ export interface Commands {
     result: null;
   };
   save_resource_relation: { args: { input: ResourceRelation }; result: null };
+  save_resource_relations: { args: { inputs: ResourceRelation[] }; result: null };
   delete_resource_relation: { args: { caseId: string; id: string }; result: null };
 }
 

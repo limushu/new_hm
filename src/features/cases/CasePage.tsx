@@ -91,6 +91,8 @@ export default function CasePage({
   const [programForm, setProgramForm] = useState(false);
   const [saved, setSaved] = useState(!draft);
   const [remove, setRemove] = useState(false);
+  const [leaving, setLeaving] = useState(false);
+  const [numberEdit, setNumberEdit] = useState<{ id: string; value: string } | null>(null);
   const inFlight = useRef<Promise<boolean> | null>(null);
   const pendingAction = useRef<Promise<boolean> | null>(null);
   const section = useRef<HTMLElement>(null);
@@ -213,20 +215,9 @@ export default function CasePage({
     return promise;
   }
   async function onClose() {
-    // Light-dismiss must flush the active information field before unmounting it.
-    const active = document.activeElement;
-    if (active instanceof HTMLElement && section.current?.contains(active)) active.blur();
     if (pendingAction.current && !(await pendingAction.current)) return;
-    if (!title.trim() && !saved) {
-      close();
-      return;
-    }
-    if (!title.trim()) {
-      setLocalError('案件名称不能为空');
-      titleInput.current?.focus();
-      return;
-    }
-    if (await commit()) close();
+    if (title.trim() !== item.title && (saved || title.trim())) setLeaving(true);
+    else close();
   }
 
   return (
@@ -273,14 +264,33 @@ export default function CasePage({
               value={title}
               maxLength={120}
               onChange={(e) => setTitle(e.target.value)}
-              onBlur={() => {
-                if (title.trim()) void commit();
-              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.nativeEvent.isComposing) void commit();
               }}
             />
           </div>
+          {(title.trim() !== item.title || !saved) && (
+            <div className="case-name-confirm">
+              <button
+                type="button"
+                className="primary-action"
+                disabled={saving || !title.trim()}
+                onClick={() => void commit()}
+              >
+                {saved ? '保存名称' : '创建案件'}
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() => {
+                  if (!saved) close();
+                  else setTitle(item.title);
+                }}
+              >
+                取消修改
+              </button>
+            </div>
+          )}
           <div className="case-properties">
             <div className="case-status-property">
               <span>
@@ -295,7 +305,7 @@ export default function CasePage({
                   act(async () => {
                     if (create) await save('save_case_status', { input: status });
                     setStatusId(status.id);
-                    if (title.trim() && !(await commit({ statusId: status.id })))
+                    if (saved && !(await commit({ statusId: status.id, title: item.title })))
                       throw new Error('案件状态尚未保存，请重试');
                   })
                 }
@@ -312,7 +322,7 @@ export default function CasePage({
                 disabled={saving}
                 onChange={(value) => {
                   setTags(value);
-                  if (title.trim()) void commit({ tags: value });
+                  if (saved) void commit({ tags: value, title: item.title });
                 }}
               />
             </div>
@@ -362,7 +372,13 @@ export default function CasePage({
               </button>
             ))}
             <span className="save-state" aria-live="polite">
-              {saving ? '保存中…' : saved ? '已保存' : '填写名称开始'}
+              {saving
+                ? '保存中…'
+                : saved
+                  ? title.trim() === item.title
+                    ? '已保存'
+                    : '名称待保存'
+                  : '填写名称后保存'}
             </span>
           </nav>
           {!saved ? (
@@ -585,27 +601,16 @@ export default function CasePage({
                             ).map(([key, label]) => (
                               <label key={key}>
                                 <span>{label}</span>
-                                <input
-                                  aria-label={label}
-                                  defaultValue={program[key]}
-                                  maxLength={200}
-                                  placeholder="未填写"
-                                  disabled={saving}
-                                  onBlur={(e) => {
-                                    if (e.target.value !== program[key])
-                                      void act(() =>
-                                        save('update_proceeding', {
-                                          input: {
-                                            id: program.id,
-                                            stage: program.stage,
-                                            court: program.court,
-                                            judge: program.judge,
-                                            [key]: e.target.value,
-                                          },
-                                        }),
-                                      );
-                                  }}
-                                />
+                                <button
+                                  type="button"
+                                  className="program-number-value"
+                                  aria-label={`编辑${label}`}
+                                  onClick={() =>
+                                    setNumberEdit({ id: program.id, value: program[key] })
+                                  }
+                                >
+                                  {program[key] || '未填写'}
+                                </button>
                               </label>
                             ))}
                             <label>
@@ -821,6 +826,59 @@ export default function CasePage({
               : '恢复此流程的办理状态。'}
             此操作不改变整个案件的结案状态。
           </p>
+        </Dialog>
+      )}
+      {leaving && (
+        <Dialog
+          title="离开前保存修改？"
+          submitLabel="保存并离开"
+          onClose={() => setLeaving(false)}
+          onSubmit={async () => {
+            if (!(await commit())) throw new Error('请填写有效的案件名称后保存');
+            close();
+          }}
+        >
+          <p>案件名称尚未保存。</p>
+          <button
+            type="button"
+            className="discard-case-name"
+            onClick={() => {
+              setTitle(item.title);
+              setLeaving(false);
+              close();
+            }}
+          >
+            放弃修改并离开
+          </button>
+        </Dialog>
+      )}
+      {numberEdit && (
+        <Dialog
+          title="编辑流程编号"
+          onClose={() => setNumberEdit(null)}
+          onSubmit={async () => {
+            const current = data.proceedings.find((p) => p.id === numberEdit.id);
+            if (!current) throw new Error('流程已不存在');
+            await save('update_proceeding', {
+              input: {
+                id: current.id,
+                stage: current.stage,
+                court: current.court,
+                judge: current.judge,
+                caseNumber: numberEdit.value,
+              },
+            });
+          }}
+        >
+          <label>
+            {program?.category === 'non_litigation' ? '参考编号' : '案号'}
+            <input
+              aria-label="流程编号"
+              value={numberEdit.value}
+              onChange={(e) => setNumberEdit({ ...numberEdit, value: e.target.value })}
+              maxLength={200}
+            />
+          </label>
         </Dialog>
       )}
       {remove && (

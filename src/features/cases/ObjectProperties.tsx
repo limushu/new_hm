@@ -15,38 +15,36 @@ import DateField from '../../components/DateField';
 import type { SaveAction, Workspace } from '../../domain/types';
 import {
   resourceKey,
+  sameResource,
   type ResourceRef,
   type ObjectProperty,
   type PropertyKind,
 } from '../../case-system/contracts';
 import { propertyLabels, validateProperty } from '../../case-system/properties';
+import { resourceGroup, resourceGroups } from '../../case-system/selection';
+import ResourcePicker from './ResourcePicker';
+import CaseQuickActions, { type CreationPanel } from './CaseQuickActions';
 
 export default function ObjectProperties({
   caseId,
   resource,
   data,
   save,
-  onLink,
 }: {
   caseId: string;
   resource: ResourceRef;
   data: Workspace;
   save: SaveAction;
-  onLink?: (kind: string, label: string) => void;
 }) {
   const fields =
-    data.resourceMetadata.find(
-      (m) => m.caseId === caseId && resourceKey(m.resource) === resourceKey(resource),
-    )?.properties ?? [];
-  const [editing, setEditing] = useState<ObjectProperty | null>(null);
-  const [definition, setDefinition] = useState(false);
-  const [options, setOptions] = useState('');
-  const [remove, setRemove] = useState<ObjectProperty | null>(null);
-  function add() {
-    setEditing({ id: crypto.randomUUID(), name: '', kind: 'text', options: [], value: null });
-    setDefinition(true);
-    setOptions('');
-  }
+    data.resourceMetadata.find((m) => m.caseId === caseId && sameResource(m.resource, resource))
+      ?.properties ?? [];
+  const [editing, setEditing] = useState<ObjectProperty | null>(null),
+    [options, setOptions] = useState('');
+  const [related, setRelated] = useState<ResourceRef[]>([]),
+    [group, setGroup] = useState('');
+  const [creating, setCreating] = useState(false),
+    [remove, setRemove] = useState<ObjectProperty | null>(null);
   const icons = {
     text: Type,
     number: Hash,
@@ -56,19 +54,40 @@ export default function ObjectProperties({
     select: ListFilter,
     multi_select: ListFilter,
   };
-  function value(p: ObjectProperty) {
+  const parsedOptions = options
+    .split(/[,，]/)
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const creator = resourceGroups.find((g) => g.id === group)?.creator;
+  function edit(p: ObjectProperty) {
+    const refs = data.resourceRelations
+      .filter(
+        (r) =>
+          r.caseId === caseId && sameResource(r.source, resource) && r.kind === `property.${p.id}`,
+      )
+      .map((r) => r.target);
+    setEditing({ ...p });
+    setOptions(p.options.join('，'));
+    setRelated(refs);
+    setGroup(refs[0] ? resourceGroup(data, refs[0]) : '');
+  }
+  function display(p: ObjectProperty) {
     if (p.kind === 'relation') {
       const count = data.resourceRelations.filter(
         (r) =>
-          r.caseId === caseId &&
-          resourceKey(r.source) === resourceKey(resource) &&
-          r.kind === `property.${p.id}`,
+          r.caseId === caseId && sameResource(r.source, resource) && r.kind === `property.${p.id}`,
       ).length;
-      return count ? `${count} 个关联对象` : '选择或新建对象';
+      return count ? `${count} 个关联对象` : '待填写';
     }
-    if (p.value === null) return '待填写';
-    if (p.kind === 'checkbox') return p.value ? '是' : '否';
-    return Array.isArray(p.value) ? p.value.join('、') || '待填写' : String(p.value);
+    return p.value === null
+      ? '待填写'
+      : p.kind === 'checkbox'
+        ? p.value
+          ? '是'
+          : '否'
+        : Array.isArray(p.value)
+          ? p.value.join('、') || '待填写'
+          : String(p.value);
   }
   return (
     <section className="object-properties" aria-label="对象自定义属性">
@@ -76,138 +95,133 @@ export default function ObjectProperties({
         const Icon = icons[p.kind];
         return (
           <div className="object-property-row" key={p.id}>
-            <button
-              type="button"
-              className="object-property-main"
-              onClick={() => {
-                if (p.kind === 'relation' && onLink) onLink(`property.${p.id}`, p.name);
-                else {
-                  setEditing({ ...p });
-                  setDefinition(false);
-                }
-              }}
-            >
+            <button type="button" className="object-property-main" onClick={() => edit(p)}>
               <span className="object-property-name">
                 <Icon />
                 {p.name}
               </span>
               <span className={p.value === null && p.kind !== 'relation' ? 'muted' : ''}>
-                {value(p)}
+                {display(p)}
               </span>
             </button>
             <button
               type="button"
               className="icon-button"
               aria-label={`编辑属性 ${p.name}`}
-              onClick={() => {
-                setEditing({ ...p });
-                setOptions(p.options.join('，'));
-                setDefinition(true);
-              }}
+              onClick={() => edit(p)}
             >
               <Ellipsis />
             </button>
           </div>
         );
       })}
-      <button type="button" className="object-add-property" onClick={add}>
+      <button
+        type="button"
+        className="object-add-property"
+        onClick={() =>
+          edit({ id: crypto.randomUUID(), name: '', kind: 'text', options: [], value: null })
+        }
+      >
         <Plus />
         添加属性
       </button>
       {editing && (
         <Dialog
-          title={
-            definition
-              ? fields.some((p) => p.id === editing.id)
-                ? '编辑属性'
-                : '添加属性'
-              : editing.name
-          }
-          submitLabel={definition ? '保存属性' : '保存'}
+          title={fields.some((p) => p.id === editing.id) ? '编辑属性' : '添加属性'}
+          className="object-property-editor"
+          submitLabel="保存属性"
           onClose={() => setEditing(null)}
           onSubmit={async () => {
-            const input = {
+            const property = {
               ...editing,
               name: editing.name.trim(),
-              options: definition
-                ? options
-                    .split(/[,，]/)
-                    .map((o) => o.trim())
-                    .filter(Boolean)
-                : editing.options,
+              options: ['select', 'multi_select'].includes(editing.kind) ? parsedOptions : [],
             };
-            validateProperty(input);
-            await save('save_object_property', { input: { caseId, resource, property: input } });
+            validateProperty(property);
+            await save('save_object_property', {
+              input: {
+                caseId,
+                resource,
+                property,
+                ...(property.kind === 'relation' ? { related } : {}),
+              },
+            });
           }}
         >
-          {definition ? (
+          <label>
+            属性名称
+            <input
+              aria-label="属性名称"
+              required
+              maxLength={60}
+              value={editing.name}
+              onChange={(e) => setEditing({ ...editing, name: e.target.value })}
+              placeholder="例如：审理结果"
+            />
+          </label>
+          <label>
+            属性类型
+            <Select
+              aria-label="属性类型"
+              value={editing.kind}
+              onValueChange={(kind) => {
+                setEditing({ ...editing, kind: kind as PropertyKind, options: [], value: null });
+                setOptions('');
+                setRelated([]);
+                setGroup('');
+              }}
+            >
+              {Object.entries(propertyLabels).map(([kind, label]) => (
+                <option key={kind} value={kind}>
+                  {label}
+                </option>
+              ))}
+            </Select>
+          </label>
+          {['select', 'multi_select'].includes(editing.kind) && (
+            <label>
+              选项
+              <input
+                aria-label="属性选项"
+                value={options}
+                onChange={(e) => setOptions(e.target.value)}
+                placeholder="用逗号分隔，例如：待宣判，部分支持，调解"
+              />
+            </label>
+          )}
+          {editing.kind === 'relation' ? (
             <>
-              <label>
-                属性名称
-                <input
-                  aria-label="属性名称"
-                  required
-                  maxLength={60}
-                  value={editing.name}
-                  onChange={(e) => setEditing({ ...editing, name: e.target.value })}
-                  placeholder="例如：审理结果"
-                />
-              </label>
-              <label>
-                属性类型
-                <Select
-                  aria-label="属性类型"
-                  value={editing.kind}
-                  onValueChange={(kind) => {
-                    setEditing({
-                      ...editing,
-                      kind: kind as PropertyKind,
-                      options: [],
-                      value: null,
-                    });
-                    setOptions('');
-                  }}
-                >
-                  {Object.entries(propertyLabels).map(([k, n]) => (
-                    <option key={k} value={k}>
-                      {n}
-                    </option>
-                  ))}
-                </Select>
-              </label>
-              {['select', 'multi_select'].includes(editing.kind) && (
-                <label>
-                  选项
-                  <input
-                    aria-label="属性选项"
-                    value={options}
-                    onChange={(e) => setOptions(e.target.value)}
-                    placeholder="用逗号分隔，例如：待宣判，部分支持，调解"
-                  />
-                </label>
-              )}
-              {fields.some((p) => p.id === editing.id) && (
-                <>
-                  <p className="field-hint">
-                    变更类型会清空原值；删除关联属性只移除该属性中的关系，保留关联对象。
-                  </p>
+              <p className="object-scope">
+                当前案件 · {data.cases.find((c) => c.id === caseId)?.title}
+              </p>
+              <ResourcePicker
+                caseId={caseId}
+                data={data}
+                source={resource}
+                value={related}
+                onChange={setRelated}
+                kind={group}
+                onKindChange={setGroup}
+              >
+                {creator && (
                   <button
                     type="button"
-                    className="object-delete-property"
-                    onClick={() => setRemove(editing)}
+                    className="object-edit-link"
+                    onClick={() => setCreating(true)}
                   >
-                    删除此属性
+                    <Plus />
+                    新建{resourceGroups.find((g) => g.id === group)?.label}
                   </button>
-                </>
-              )}
+                )}
+              </ResourcePicker>
             </>
           ) : (
             <label>
-              {editing.name}
+              属性内容
               {editing.kind === 'text' ? (
                 <textarea
                   aria-label="属性值"
-                  rows={4}
+                  rows={3}
                   maxLength={20000}
                   value={String(editing.value ?? '')}
                   onChange={(e) => setEditing({ ...editing, value: e.target.value || null })}
@@ -238,7 +252,7 @@ export default function ObjectProperties({
                   onValueChange={(value) => setEditing({ ...editing, value: value || null })}
                 >
                   <option value="">待填写</option>
-                  {editing.options.map((o) => (
+                  {parsedOptions.map((o) => (
                     <option key={o} value={o}>
                       {o}
                     </option>
@@ -246,7 +260,7 @@ export default function ObjectProperties({
                 </Select>
               ) : editing.kind === 'multi_select' ? (
                 <div className="object-property-options">
-                  {editing.options.map((o) => (
+                  {parsedOptions.map((o) => (
                     <label key={o}>
                       <input
                         type="checkbox"
@@ -262,8 +276,11 @@ export default function ObjectProperties({
                       {o}
                     </label>
                   ))}
+                  {!parsedOptions.length && (
+                    <span className="field-hint">先填写选项，再选择内容。</span>
+                  )}
                 </div>
-              ) : editing.kind === 'checkbox' ? (
+              ) : (
                 <Select
                   aria-label="属性值"
                   value={editing.value === null ? '' : String(editing.value)}
@@ -275,12 +292,35 @@ export default function ObjectProperties({
                   <option value="true">是</option>
                   <option value="false">否</option>
                 </Select>
-              ) : (
-                <p className="field-hint">通过“添加关联”选择已有对象或新建。</p>
               )}
             </label>
           )}
+          {fields.some((p) => p.id === editing.id) && (
+            <button
+              type="button"
+              className="object-delete-property"
+              onClick={() => setRemove(editing)}
+            >
+              删除此属性
+            </button>
+          )}
+          <p className="field-hint">点击保存后生效；取消或关闭会放弃本次修改。</p>
         </Dialog>
+      )}
+      {creating && creator && (
+        <CaseQuickActions
+          caseId={caseId}
+          data={data}
+          save={save}
+          onMaterials={() => {}}
+          initialKind={creator as CreationPanel}
+          onClose={() => setCreating(false)}
+          onCreated={async (refs) =>
+            setRelated((old) => [
+              ...new Map([...old, ...refs].map((ref) => [resourceKey(ref), ref])).values(),
+            ])
+          }
+        />
       )}
       {remove && (
         <Dialog
@@ -293,7 +333,7 @@ export default function ObjectProperties({
             setEditing(null);
           }}
         >
-          <p>删除「{remove.name}」及其属性值？对象正文和关联对象都会保留。</p>
+          <p>删除「{remove.name}」及其内容？关联的独立对象会保留。</p>
         </Dialog>
       )}
     </section>

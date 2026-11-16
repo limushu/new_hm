@@ -21,9 +21,11 @@ test('人物和部门关系可在本案建立，并进入关系图', async ({ pa
   await page.getByRole('tab', { name: '人员', exact: true }).click();
   await page.getByText('编辑人物与机构之间的关系', { exact: true }).click();
   await page.getByRole('button', { name: '添加关联', exact: true }).click();
-  await selectOption(page, page.getByLabel('关联起点', { exact: true }), { label: '示例客户' });
-  await selectOption(page, page.getByLabel('关联目标', { exact: true }), { label: '示例公司部门' });
-  await page.getByText('关系类型（可选）', { exact: true }).click();
+  await selectOption(page, page.getByLabel('关联起点类型', { exact: true }), 'person');
+  await page.getByRole('checkbox', { name: '选择 示例客户', exact: true }).check();
+  await selectOption(page, page.getByLabel('关联对象类型', { exact: true }), 'organization');
+  await page.getByRole('checkbox', { name: '选择 示例公司部门', exact: true }).check();
+  await page.getByText('更多关系设置', { exact: true }).click();
   await selectOption(page, page.getByLabel('关系类型', { exact: true }), 'affiliated_with');
   await page.getByLabel('关联说明', { exact: true }).fill('任职于');
   await page.getByRole('button', { name: '保存关联', exact: true }).click();
@@ -100,15 +102,17 @@ test('条目关联使用同一份材料并保留原件预览', async ({ page }) 
   await page.getByLabel('事件名称', { exact: true }).fill('完成证据梳理');
   await page.getByRole('button', { name: '保存事件', exact: true }).click();
   const entry = page.locator('.chronicle-entry').filter({ hasText: '完成证据梳理' });
-  await entry.getByRole('button', { name: '设置条目 完成证据梳理', exact: true }).click();
-  await page.getByRole('button', { name: '添加关联', exact: true }).click();
-  await selectOption(page, page.getByLabel('关联目标', { exact: true }), { label: '案件分析.md' });
+  await entry.locator('.chronicle-entry-title').click();
+  const details = page.getByRole('dialog', { name: '节点详情', exact: true });
+  await details.getByRole('button', { name: '添加关联', exact: true }).click();
+  await selectOption(page, page.getByLabel('关联对象类型', { exact: true }), 'document');
+  await page.getByRole('checkbox', { name: '选择 案件分析.md', exact: true }).check();
   await page.getByLabel('关联说明', { exact: true }).fill('分析依据');
   await page.getByRole('button', { name: '保存关联', exact: true }).click();
-  await expect(page.getByRole('region', { name: '条目关联', exact: true })).toContainText(
+  await expect(details.getByRole('region', { name: '条目关联', exact: true })).toContainText(
     '分析依据',
   );
-  await page.getByRole('button', { name: '保存条目设置', exact: true }).click();
+  await details.getByRole('button', { name: '关闭', exact: true }).last().click();
   await expect(entry).toContainText('案件分析.md');
   await entry.getByRole('button', { name: '案件分析.md', exact: true }).click();
   await expect(page.locator('.text-document-preview')).toContainText('虚构分析依据');

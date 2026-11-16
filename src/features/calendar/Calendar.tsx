@@ -331,8 +331,8 @@ export default function Calendar({
         <header>
           <div>
             <h2>
-              {displayDate(selected)}
-              {selected === today && <span>今天</span>}
+              {view === 'agenda' ? '当天安排' : displayDate(selected)}
+              {view !== 'agenda' && selected === today && <span>今天</span>}
             </h2>
             <p>
               {dayEvents.length + dayTasks.length
@@ -425,7 +425,9 @@ export default function Calendar({
           <p className="agenda-empty">
             {loading
               ? '正在读取本地日历…'
-              : '当天暂无安排。点击日期格中的 +，或双击空白处添加日程。'}
+              : view === 'agenda'
+                ? '当天暂无安排，可点击「新建日程」添加。'
+                : '当天暂无安排。点击日期格中的 +，或双击空白处添加日程。'}
           </p>
         )}
       </section>

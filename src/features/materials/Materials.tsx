@@ -1,4 +1,4 @@
-import ResourceSettings from '../cases/ResourceSettings';
+import ObjectInspector from '../cases/ObjectInspector';
 import { caseSystem } from '../../case-system/modules';
 import { errorMessage } from '../../services/errors';
 import Select from '../../components/Select';
@@ -638,8 +638,10 @@ export default function Materials({
         />
       )}
       {objectSettings && (
-        <ResourceSettings
-          entry={objectSettings}
+        <ObjectInspector
+          caseId={caseId}
+          resource={objectSettings.resource}
+          initialPreview={false}
           data={data}
           save={save}
           onClose={() => setObjectId(null)}

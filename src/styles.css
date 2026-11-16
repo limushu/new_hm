@@ -36,8 +36,8 @@
   --muted: #9c9c97;
   --quiet: #747474;
   --accent: #7d98ac;
-  --calendar-blue: #3b6c90;
-  --calendar-blue-hover: #467a9f;
+  --calendar-blue: var(--primary);
+  --calendar-blue-hover: var(--primary-hover);
   --calendar-card: #162d46;
   --calendar-card-hover: #1b3652;
   --calendar-card-edge: #295a8c;
