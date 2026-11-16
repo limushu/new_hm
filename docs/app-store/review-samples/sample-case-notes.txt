@@ -1,0 +1,13 @@
+案笺审核示例：案件工作记录（全部虚构）
+Anjian review sample — fictional case notes
+
+用途：演示文件导入、阅读、归档和对象关联。
+Purpose: demonstrate file import, reading, filing and object links.
+
+案件名称：审核演示 · 借款资料整理
+当事人：虚构当事人甲、虚构当事人乙
+当前节点：一审
+下一步：核对示例借条与转账记录
+
+本文件仅用于产品演示，不包含真实个人信息、真实案件或受保护的第三方文书，也不构成法律意见。
+This file contains fictional demonstration data only. It is not legal advice or a third-party legal document.

@@ -52,12 +52,13 @@ final class StoreScreenshots: XCTestCase {
     capture("01-cases")
     tap("示例 · 借款合同纠纷")
     XCTAssertTrue(app.textFields["案件名称"].firstMatch.waitForExistence(timeout: 15))
-    capture("02-case-overview")
-    tap("办理")
-    XCTAssertTrue(app.staticTexts["工作阶段"].firstMatch.waitForExistence(timeout: 10))
-    capture("03-workflow")
+    XCTAssertTrue(app.staticTexts["案件时间轴"].firstMatch.waitForExistence(timeout: 10))
+    capture("02-timeline")
     tap("材料")
     XCTAssertTrue(app.buttons["材料归档说明.txt"].firstMatch.waitForExistence(timeout: 10))
-    capture("04-materials")
+    capture("03-materials")
+    tap("费用")
+    XCTAssertTrue(app.staticTexts["收入合计"].firstMatch.waitForExistence(timeout: 10))
+    capture("04-expenses")
   }
 }

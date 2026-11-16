@@ -1,5 +1,5 @@
 //! Fictional App Store screenshots only; never opens an existing workspace.
-use hm_core::{AddTask, CalendarEvent, CreateCase, Store};
+use hm_core::{AddTask, CalendarEvent, CreateCase, LedgerEntry, Store};
 use std::path::PathBuf;
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -31,6 +31,23 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })?;
     }
     let case_id = store.seed_example("8e3b7b52-843e-4c6b-a893-1e774b441a09")?;
+    for (id, category, amount) in [
+        ("78c5338e-b921-4fad-8d75-6dd3c5d5f64a", "差旅费", 12000),
+        ("6fd56fb6-6104-4272-9243-cbf373aa6015", "打印费", 8000),
+    ] {
+        store.save_ledger(LedgerEntry {
+            id: id.into(),
+            case_id: case_id.clone(),
+            proceeding_id: None,
+            kind: "expense".into(),
+            amount_cents: amount,
+            entry_date: date.clone(),
+            category: category.into(),
+            notes: format!("示例{category}（虚构）"),
+            reimbursement: "none".into(),
+            material_id: None,
+        })?;
+    }
     store.add_task(AddTask {
         case_id: case_id.clone(),
         title: "整理示例证据目录".into(),
@@ -49,6 +66,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         reminder_minutes: None,
     })?;
     store.set_setting("onboarding_done", "hm-welcome-1")?;
+    store.set_setting("theme", "light")?;
     println!("{}", serde_json::json!({"fictional": true, "cases": 3}));
     Ok(())
 }

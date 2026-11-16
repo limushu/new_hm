@@ -4,7 +4,14 @@ import { join, resolve } from 'node:path';
 const root = resolve(import.meta.dirname, '..');
 const output = resolve(process.argv[2] ?? join(root, 'artifacts/app-store/materials'));
 const metadata = JSON.parse(readFileSync(join(root, 'docs/app-store/metadata.zh-CN.json'), 'utf8'));
-const limits = { name: 30, subtitle: 30, promotionalText: 170, keywords: 100, description: 4000 };
+const limits = {
+  name: 30,
+  subtitle: 30,
+  promotionalText: 170,
+  keywords: 100,
+  description: 4000,
+  reviewNotes: 4000,
+};
 for (const [field, limit] of Object.entries(limits)) {
   const count = [...metadata[field]].length;
   if (count > limit) throw new Error(`${field} exceeds ${limit} characters: ${count}`);
@@ -25,6 +32,13 @@ for (const [file, content] of Object.entries({
   writeFileSync(join(output, 'text', file), content + '\n');
 cpSync(join(root, 'docs/app-store/metadata.zh-CN.json'), join(output, 'metadata.zh-CN.json'));
 cpSync(join(root, 'docs/app-store/submission-guide.zh-CN.md'), join(output, 'READ-ME.zh-CN.md'));
+cpSync(
+  join(root, 'docs/app-store/review-response-2.1.zh-CN.md'),
+  join(output, 'review-response-2.1.zh-CN.md'),
+);
+cpSync(join(root, 'docs/app-store/review-samples'), join(output, 'review-samples'), {
+  recursive: true,
+});
 writeFileSync(
   join(output, 'reference/release-readiness-url.txt'),
   'https://github.com/limushu/new_hm/blob/main/docs/app-store/README.md\n',
@@ -38,6 +52,9 @@ cpSync(join(root, 'docs/app-store/support.md'), join(output, 'policy/support.md'
 cpSync(join(root, 'docs/app-store/site'), join(output, 'policy/site'), { recursive: true });
 const links = {
   'READ-ME.zh-CN.md': {
+    '(README.md)': '(https://github.com/limushu/new_hm/blob/main/docs/app-store/README.md)',
+  },
+  'review-response-2.1.zh-CN.md': {
     '(README.md)': '(https://github.com/limushu/new_hm/blob/main/docs/app-store/README.md)',
   },
   'policy/privacy-policy.md': {},

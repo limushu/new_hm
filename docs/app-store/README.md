@@ -1,6 +1,8 @@
 # App Store 首发准备
 
-更新于 2026-11-13。用户确认首发中国大陆、免费无内购，并反馈 10.1 的 iPhone 功能正常。当前尚未向 App Review 提交，也没有改变商店地区、价格或发布状态。
+更新于 2026-11-16。用户确认旧版 **1.4.3（11.1）** 收到 Guideline 2.1 补充信息要求，并决定改用最新主分支重提。当前重提候选为 **1.7.4（20.1）**，应用源码提交 `19552e2e9c3e14bd591fd2309ab4d90dda98d0f1`；[签名上传](https://github.com/limushu/new_hm/actions/runs/43796282757)、[移动端检查](https://github.com/limushu/new_hm/actions/runs/43796270094)和[应用检查](https://github.com/limushu/new_hm/actions/runs/43796891598)均已通过。最新主分支相对此应用源码只补充了测试与上架资料。
+
+六项英文审核备注已更新，真机录屏步骤见 [2.1 补充资料](review-response-2.1.zh-CN.md)。视频及其设备、系统资料仍待用户提供；不得保留占位符提交。本文准备工作尚未在 Apple 后台替换构建、重新提交或发布。
 
 ## 可审核资料
 
@@ -14,11 +16,11 @@
 
 在 Actions 手动运行 [App Store screenshots](../../.github/workflows/app-store-screenshots.yml)，指定已通过移动检查且产品源码未变化的模拟器构建任务。它在新的 iPhone 16 Pro、iPhone 16 Pro Max 与 iPad Pro 13-inch 模拟器上安装真实应用，使用虚构工作区，通过原生界面操作截取各四张 PNG，并与商店文案一起打包到 `app-store-materials-*` Artifact。脚本验证原图尺寸并导出不含 Alpha 通道的 RGB PNG，结果仍需人工检查画面。无需个人 Mac 或 iPad，不会修改用户设备或提交商店审核。
 
-2026-11-13，[截图任务](https://github.com/limushu/new_hm/actions/runs/43408250791)已通过，产出[完整原始素材包](https://github.com/limushu/new_hm/actions/runs/43408250791/artifacts/14029043998)（保留至 2026-12-13）。12 张截图已逐张检查画面，并核对尺寸、RGB 格式和无 Alpha 通道：iPhone 中等显示屏 1206 × 2622、大显示屏 1320 × 2868、13 英寸 iPad 2064 × 2752，各四张。全部使用虚构示例工作区；画面来自实际应用在系统模拟器上的运行，不代表 iPad 真机验收或 Apple 已批准这些素材。下载原始素材包后，上传 `screenshots/` 内对应分组的 PNG，`diagnostics/` 为排查资料，不上传商店。
+历史 1.4.3 素材（新版须更换）：2026-11-13，[截图任务](https://github.com/limushu/new_hm/actions/runs/43408250791)已通过，产出[完整原始素材包](https://github.com/limushu/new_hm/actions/runs/43408250791/artifacts/14029043998)（保留至 2026-12-13）。12 张截图已逐张检查画面，并核对尺寸、RGB 格式和无 Alpha 通道：iPhone 中等显示屏 1206 × 2622、大显示屏 1320 × 2868、13 英寸 iPad 2064 × 2752，各四张。全部使用虚构示例工作区；画面来自实际应用在系统模拟器上的运行，不代表 iPad 真机验收或 Apple 已批准这些素材。下载原始素材包后，上传 `screenshots/` 内对应分组的 PNG，`diagnostics/` 为排查资料，不上传商店。
 
-## 安装包调整与验证
+## 历史安装包调整与验证（1.4.3）
 
-当前候选包为 **1.4.3（11.1）**，源码提交 `2cb9387736aec6508cfb3913b0ad676a258361a5`。2026-11-13 09:19 UTC，[签名构建任务](https://github.com/limushu/new_hm/actions/runs/43399395501)确认 `UPLOAD SUCCEEDED with no errors`。上传成功不等于 Apple 已处理完构建、TestFlight 已可安装或 App Review 已提交。
+当时的候选包为 **1.4.3（11.1）**，源码提交 `2cb9387736aec6508cfb3913b0ad676a258361a5`。2026-11-13 09:19 UTC，[签名构建任务](https://github.com/limushu/new_hm/actions/runs/43399395501)确认 `UPLOAD SUCCEEDED with no errors`。上传成功不等于 Apple 已处理完构建、TestFlight 已可安装或 App Review 已提交。
 
 [应用检查](https://github.com/limushu/new_hm/actions/runs/43399272086)和[移动端检查](https://github.com/limushu/new_hm/actions/runs/43399272031)均通过。iOS 模拟器验证了由内嵌 SQLite 创建的工作区在系统 SQLite 下启动、备份及重开后保留虚构案件和材料字节；录音与系统文件驱动的 10 项原生测试全部通过。正式 IPA 根目录隐私清单、系统 SQLite 链接、签名及项目列出的 required-reason API 检查通过，正式包未检出这些尚未解释的 API 候选项。这些结果不代替新版本在用户真机上的升级验收或 Apple 审核。
 
@@ -50,11 +52,10 @@ Info.ios.plist 增加不使用非豁免加密的声明：当前应用无自定�
 
 > 案笺（com.limushu.hm）拟在中国大陆免费上架，用于本机整理案件、日程、用户选择的材料和录音，无需注册登录，不提供开发者运营的云同步、联网内容分发、广告或在线法律咨询。文件选择与导出使用 iOS 系统文件提供器。请确认此类应用在中国大陆 App Store 分发是否要求提供 App 备案号，以及应提交哪些适用性说明或备案材料。
 
-## 提交前仍需完成
+## 本次重新提交的待办
 
-1. 确认大陆区备案适用性；需要备案时取得并在 App Store Connect 填写真实 App 备案号。
-2. 在 TestFlight 等待 11.1 处理完成并可供测试后，保留现有应用数据直接更新，真机核对原有案件、材料、录音和备份可读取，并确认设置中的隐私政策可以打开。模拟器工作区兼容性检查已通过，真机升级结果尚未确认。
-3. 上传已检查的 iPhone 与 iPad 原生截图，按 [Apple 截图规格](https://developer.apple.com/help/app-store-connect/reference/app-information/screenshot-specifications/)放入对应设备分组。必需的中等显示屏 iPhone 与 13 英寸 iPad 素材均已备齐。
-4. App Store Connect 填写版本、类别、年龄分级、内容权利、App 隐私、公开支持/隐私 URL，以及审核联系人电话和邮箱；审核联系资料由用户在 Apple 后台填写，无需公开在仓库。
-5. 核对“App 未收集数据”的申报与最终 SDK/服务一致；核对支持链接和隐私文档可以公开访问。
-6. 用户审阅资料与最终构建后提交 App Review，发布方式保持手动。审核通过与正式对外发布分别确认。
+1. 在 TestFlight 使用 1.7.4（20.1）完成实际支持设备上的主要流程验收；仅记录真实完成的测试。
+2. 按 [2.1 录屏脚本](review-response-2.1.zh-CN.md) 录制从启动开始的真机演示，补全视频、设备和系统资料。
+3. 使用重新生成并检查过的 1.7.4 截图更新商店画面；模拟器素材与真机演示分别标注来源。
+4. 在 Apple 后台更新商店版本、构建、六项 Notes 和真实审核联系人，核对隐私、年龄分级与中国大陆供应要求。
+5. 核对支持和隐私链接可公开访问，保持免费、手动发布。重新提交审核和正式对外发布由用户在后台执行。

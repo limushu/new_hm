@@ -1,0 +1,10 @@
+案笺审核示例：费用记录（全部虚构）
+Anjian review sample — fictional expense note
+
+类别：差旅费 / Travel
+金额：人民币 100.00 元 / CNY 100.00
+备注：虚构的出行费用，用于演示材料归档和收支记录关联。
+Note: a fictional travel expense for demonstrating material filing and expense links.
+
+本文件不是发票、付款凭证或法律文书，不包含真实个人或支付信息。
+This is not an invoice, proof of payment or legal instrument. No real personal or payment information is included.

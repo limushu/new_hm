@@ -5,7 +5,7 @@ on:
       simulator_run_id:
         description: Successful Mobile application checks run containing the verified simulator app
         required: true
-        default: '43399272031'
+        default: '43796270094'
 permissions:
   contents: read
   actions: read
