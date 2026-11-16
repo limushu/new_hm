@@ -292,6 +292,10 @@
   .case-redesigned .case-body {
     padding: 12px 24px 24px;
   }
+  .case-redesigned .case-body .case-properties {
+    margin: 6px 0;
+    gap: 6px 12px;
+  }
   .case-redesigned .case-body .case-tabs {
     margin-bottom: 14px;
   }
