@@ -65,7 +65,7 @@ export default function AccountSettings() {
         </div>
       )}
       {snapshot && !snapshot.installed && (
-        <p className="field-hint">此平台的安全登录驱动尚未接入，可继续离线使用。</p>
+        <p className="field-hint">此平台暂不支持账号登录，可继续离线使用。</p>
       )}
       {snapshot?.installed && (
         <>

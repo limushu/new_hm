@@ -22,7 +22,7 @@ final class IdentityCredentials {
     if status == errSecItemNotFound { return nil }
     guard status == errSecSuccess, let data = item as? Data, data.count <= 65536,
           let credential = String(data: data, encoding: .utf8) else {
-      throw NSError(domain: "identity_secure_storage_failed", code: 0)
+      throw NSError(domain: "identity_secure_storage_failed", code: Int(status))
     }
     return credential
   }
@@ -30,7 +30,7 @@ final class IdentityCredentials {
     var search = try query(project)
     guard let credential = credential else {
       let status = SecItemDelete(search as CFDictionary)
-      guard status == errSecSuccess || status == errSecItemNotFound else { throw NSError(domain: "identity_secure_storage_failed", code: 0) }
+      guard status == errSecSuccess || status == errSecItemNotFound else { throw NSError(domain: "identity_secure_storage_failed", code: Int(status)) }
       return
     }
     guard let data = credential.data(using: .utf8), data.count <= 65536, !data.isEmpty else {
@@ -43,6 +43,6 @@ final class IdentityCredentials {
       for (key, value) in attributes { search[key] = value }
       status = SecItemAdd(search as CFDictionary, nil)
     }
-    guard status == errSecSuccess else { throw NSError(domain: "identity_secure_storage_failed", code: 0) }
+    guard status == errSecSuccess else { throw NSError(domain: "identity_secure_storage_failed", code: Int(status)) }
   }
 }

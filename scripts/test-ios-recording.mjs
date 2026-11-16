@@ -118,12 +118,32 @@ try {
     'CODE_SIGNING_ALLOWED=NO',
   ];
   run('xcodebuild', [...argumentsForBuild, 'build-for-testing']);
-  run('xcrun', [
-    'simctl',
-    'install',
-    device,
-    join(temporary, 'build/Build/Products/Debug-iphonesimulator/RecordingHost.app'),
+  // Keychain evaluates the host executable's entitlements even in Simulator.
+  // An unsigned XCTest host returns errSecMissingEntitlement; use an ad-hoc
+  // simulator-only signature rather than replacing the production Keychain API.
+  const host = join(temporary, 'build/Build/Products/Debug-iphonesimulator/RecordingHost.app');
+  const testEntitlements = join(temporary, 'Host-Test.entitlements');
+  writeFileSync(
+    testEntitlements,
+    `<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+<key>application-identifier</key><string>HMTEST0000.com.limushu.hm.recordingtests</string>
+<key>com.apple.developer.team-identifier</key><string>HMTEST0000</string>
+<key>keychain-access-groups</key><array><string>HMTEST0000.com.limushu.hm.recordingtests</string></array>
+<key>get-task-allow</key><true/>
+</dict></plist>`,
+  );
+  run('codesign', [
+    '--force',
+    '--sign',
+    '-',
+    '--entitlements',
+    testEntitlements,
+    '--timestamp=none',
+    host,
   ]);
+  run('xcrun', ['simctl', 'install', device, host]);
   run('xcrun', [
     'simctl',
     'privacy',
