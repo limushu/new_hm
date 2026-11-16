@@ -58,6 +58,8 @@ Edge Function 使用平台注入的 `SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPA
 
 下一步在 Supabase Auth Providers 中配置所需平台，服务器回调统一为 `https://vfbufazqpzetjkmkvjwp.supabase.co/auth/v1/callback`。Apple 需要 Services ID 和有效 client-secret JWT，Google 需要 Web OAuth client ID/secret，Microsoft 需要 Entra 应用 client ID/secret 与正确账户范围。凭据由平台所有者在对应控制台配置，不发送聊天。iOS 的 `anjian` URL scheme 已加入工程模板，但它不能替代上述 OAuth 应用注册。
 
+Apple 的逐步操作与仓库 Secret 名称见[开通 Apple 登录](apple-sign-in-setup.md)。工作流新增 `configure_apple=true` 开关，只在显式选择且四项 Sign in with Apple 凭据齐全时生成 JWT、配置提供器和删除授权撤销凭据。默认不会启用 Apple，现有 App Store Connect API 密钥不能替代 Apple 登录密钥。
+
 ## 已有验证
 
 测试在真实 PostgreSQL 引擎（PGlite）中运行迁移和 RLS，覆盖匿名拒绝、跨用户访问、身份字段不可冒认、跨用户/提供器绑定拒绝、令牌字段拒绝、引用约束和账号删除级联。删除函数测试验证服务端用户 ID、无效会话、请求大小、故障时不假报成功，以及 Apple ES256 签名和撤销先于删除的顺序。

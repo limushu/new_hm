@@ -12,6 +12,11 @@ on:
         required: true
         type: boolean
         default: false
+      configure_apple:
+        description: 'Configure Apple OAuth and account deletion from Sign in with Apple GitHub Secrets'
+        required: true
+        type: boolean
+        default: false
 permissions:
   contents: read
 jobs:
@@ -42,8 +47,17 @@ jobs:
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/configure-identity-auth.mjs --apply
+      - name: Configure Apple provider and account deletion
+        if: inputs.configure_apple
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          APPLE_SIGN_IN_TEAM_ID: ${{ secrets.APPLE_SIGN_IN_TEAM_ID }}
+          APPLE_SIGN_IN_KEY_ID: ${{ secrets.APPLE_SIGN_IN_KEY_ID }}
+          APPLE_SIGN_IN_CLIENT_ID: ${{ secrets.APPLE_SIGN_IN_CLIENT_ID }}
+          APPLE_SIGN_IN_PRIVATE_KEY: ${{ secrets.APPLE_SIGN_IN_PRIVATE_KEY }}
+        run: node scripts/configure-apple-identity.mjs --apply
       - name: Verify deployed project
-        if: inputs.apply || inputs.configure_auth
+        if: inputs.apply || inputs.configure_auth || inputs.configure_apple
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: node scripts/check-identity-project.mjs

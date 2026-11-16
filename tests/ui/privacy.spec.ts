@@ -8,7 +8,9 @@ test('手机设置中可离线阅读隐私政策，关闭后保留设置页', as
   const dialog = page.getByRole('dialog', { name: '案笺隐私政策' });
   await expect(dialog).toBeVisible();
   const policy = dialog.getByRole('article', { name: '隐私政策正文' });
-  await expect(policy).toContainText('应用不向开发者上传这些内容');
+  await expect(policy).toContainText('案件内容、录音与本机偏好不上传到账号服务');
+  await expect(policy).toContainText('账号服务由 Supabase 托管');
+  await expect(policy).toContainText('本机案件、已导出备份和外部云文件不随账号删除');
   await expect(policy).toContainText('系统设备备份');
   await expect(policy).toContainText('移入回收站的内容仍可恢复');
   await policy.evaluate((node) => (node.scrollTop = node.scrollHeight));
