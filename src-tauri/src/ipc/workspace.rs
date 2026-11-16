@@ -177,8 +177,11 @@ pub fn save_contact(
     state: State<'_, AppState>,
     input: Contact,
     court_ids: Option<Vec<String>>,
+    case_link: Option<ContactCaseContext>,
 ) -> std::result::Result<(), String> {
-    access(&state, |s| s.save_contact_with_courts(input, court_ids))
+    access(&state, |s| {
+        s.save_contact_in_case(input, court_ids, case_link)
+    })
 }
 #[tauri::command(async)]
 pub fn set_proceeding_contacts(

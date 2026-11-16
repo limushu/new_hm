@@ -24,6 +24,136 @@ fn case(s: &mut Store) -> Case {
     item
 }
 #[test]
+fn courts_and_judges_can_join_cases_without_replacing_proceeding_participants() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("workspace.sqlite3");
+    let mut s = Store::open(&path).unwrap();
+    let a = case(&mut s);
+    let b = s
+        .create_case(CreateCase {
+            id: Uuid::new_v4().to_string(),
+            title: "Case without proceedings".into(),
+            case_type: "civil".into(),
+            status_id: "not_started".into(),
+            tags: None,
+        })
+        .unwrap();
+    let primary_court = person("Primary court", "court");
+    let court = person("Shared court", "court");
+    let judge = person("Shared judge", "judge");
+    s.save_contact(primary_court.clone()).unwrap();
+    s.set_proceeding_contacts(ProceedingContacts {
+        proceeding_id: a.current_proceeding_id.clone().unwrap(),
+        court_id: Some(primary_court.id.clone()),
+        judge_id: None,
+    })
+    .unwrap();
+    let mut links = Vec::new();
+    for c in [court.clone(), judge.clone()] {
+        let id = Uuid::new_v4().to_string();
+        s.save_contact_in_case(
+            c.clone(),
+            None,
+            Some(ContactCaseContext {
+                id: id.clone(),
+                case_id: a.id.clone(),
+                role: "Case participant".into(),
+            }),
+        )
+        .unwrap();
+        links.push(id);
+        let link = ContactLink {
+            id: Uuid::new_v4().to_string(),
+            case_id: b.id.clone(),
+            contact_id: c.id,
+            proceeding_id: None,
+            role: "Case participant".into(),
+        };
+        s.save_contact_link(link.clone()).unwrap();
+        s.save_contact_link(link).unwrap(); // Retry updates the same relation.
+    }
+    drop(s);
+    let s = Store::open(&path).unwrap();
+    assert_eq!(s.contacts().unwrap().len(), 3);
+    assert_eq!(s.contact_links().unwrap().len(), 5);
+    let w = s.workspace().unwrap();
+    assert!(!w.proceedings.iter().any(|p| p.case_id == b.id));
+    let p = w
+        .proceedings
+        .iter()
+        .find(|p| Some(&p.id) == a.current_proceeding_id.as_ref())
+        .unwrap();
+    assert_eq!(p.court, primary_court.name);
+    assert!(p.judge.is_empty());
+    for id in links {
+        s.delete_contact_link(&id).unwrap();
+    }
+    assert_eq!(s.contact_links().unwrap().len(), 3);
+    assert_eq!(s.contacts().unwrap().len(), 3);
+    assert_eq!(
+        s.workspace()
+            .unwrap()
+            .proceedings
+            .iter()
+            .find(|p| p.id == a.current_proceeding_id.clone().unwrap())
+            .unwrap()
+            .court,
+        primary_court.name
+    );
+}
+#[test]
+fn new_contact_and_case_link_are_saved_atomically() {
+    let mut s = Store::memory().unwrap();
+    let a = case(&mut s);
+    let court = person("Must not be left in the directory", "court");
+    let link = ContactCaseContext {
+        id: Uuid::new_v4().to_string(),
+        case_id: a.id.clone(),
+        role: "Court".into(),
+    };
+    assert!(s
+        .save_contact_in_case(
+            court.clone(),
+            None,
+            Some(ContactCaseContext {
+                role: "x".repeat(51),
+                ..link.clone()
+            })
+        )
+        .is_err());
+    assert!(s.contacts().unwrap().is_empty());
+    assert!(s.contact_links().unwrap().is_empty());
+    assert!(s
+        .save_contact_in_case(
+            court.clone(),
+            None,
+            Some(ContactCaseContext {
+                case_id: Uuid::new_v4().to_string(),
+                ..link.clone()
+            })
+        )
+        .is_err());
+    assert!(s.contacts().unwrap().is_empty());
+    s.save_contact_in_case(court.clone(), None, Some(link.clone()))
+        .unwrap();
+    s.save_contact_in_case(court.clone(), None, Some(link.clone()))
+        .unwrap();
+    assert_eq!(s.contacts().unwrap().len(), 1);
+    assert_eq!(s.contact_links().unwrap().len(), 1);
+    s.trash_case(&a.id).unwrap();
+    assert!(s
+        .save_contact_in_case(
+            Contact {
+                name: "Must roll back edit".into(),
+                ..court.clone()
+            },
+            None,
+            Some(link)
+        )
+        .is_err());
+    assert_eq!(s.contacts().unwrap()[0].name, court.name);
+}
+#[test]
 fn program_selection_reuses_objects_and_keeps_proceedings_and_history_separate() {
     let mut s = Store::memory().unwrap();
     let a = case(&mut s);

@@ -312,11 +312,32 @@ export default function CaseQuickActions({
       )}
       {(panel === 'person' || panel === 'organization') && (
         <CasePersonEditor
-          kind={panel === 'organization' ? 'organization' : 'person'}
+          kind={
+            panel === 'organization'
+              ? 'organization'
+              : initialKind === 'person'
+                ? 'person'
+                : undefined
+          }
           caseId={caseId}
           data={data}
           save={creation.save}
           properties={fields}
+          onContactSelected={(contact) => {
+            const metadata =
+              contact &&
+              data.resourceMetadata.find(
+                (m) =>
+                  m.caseId === caseId &&
+                  m.resource.kind === 'contact' &&
+                  m.resource.id === contact.id,
+              );
+            setObjectProperties({
+              importance: metadata?.importance ?? 'normal',
+              tags: metadata?.tags ?? [],
+              nodes: [],
+            });
+          }}
           onClose={closePanel}
         />
       )}

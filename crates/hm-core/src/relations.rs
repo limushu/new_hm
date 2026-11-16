@@ -193,6 +193,14 @@ impl Store {
         input: Contact,
         courts: Option<Vec<String>>,
     ) -> Result<()> {
+        self.save_contact_in_case(input, courts, None)
+    }
+    pub fn save_contact_in_case(
+        &self,
+        input: Contact,
+        courts: Option<Vec<String>>,
+        case_link: Option<ContactCaseContext>,
+    ) -> Result<()> {
         let tx = self.connection.unchecked_transaction()?;
         if let Some(ids) = &courts {
             if input.kind != "judge" && !ids.is_empty() {
@@ -214,6 +222,15 @@ impl Store {
                     params![input.id, id],
                 )?;
             }
+        }
+        if let Some(link) = case_link {
+            self.save_contact_link(ContactLink {
+                id: link.id,
+                case_id: link.case_id,
+                contact_id: input.id,
+                proceeding_id: None,
+                role: link.role,
+            })?;
         }
         tx.commit()?;
         Ok(())

@@ -98,11 +98,14 @@ impl Store {
             )
             .optional()?;
         let kind = kind.ok_or(Error::NotFound)?;
-        if ["court", "judge"].contains(&kind.as_str()) && input.proceeding_id.is_none() {
-            return Err(Error::Validation("法院和法官请关联到具体办理流程".into()));
-        }
-        if kind == "court" || kind == "judge" {
-            let program = input.proceeding_id.as_ref().unwrap();
+        // A directory object may participate in the whole case before its
+        // procedural role is known. Only explicit proceeding links update the
+        // primary court/judge and the corresponding historical snapshot.
+        if let Some(program) = input
+            .proceeding_id
+            .as_ref()
+            .filter(|_| kind == "court" || kind == "judge")
+        {
             let court = if kind == "court" {
                 Some(input.contact_id.clone())
             } else {

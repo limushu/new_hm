@@ -504,6 +504,32 @@ export async function previewCommand<K extends keyof Commands>(
     case 'save_case_event': {
       const input = a.input as Record<string, unknown>;
       if (name === 'save_contact') {
+        const link = a.caseLink as { id: string; caseId: string; role: string } | undefined;
+        if (link) {
+          if (!data.cases.some((c) => c.id === link.caseId && !c.deletedAt))
+            throw new Error('案件不存在');
+          if (!link.role.trim() || link.role.trim().length > 50)
+            throw new Error('本案身份请填写 1 至 50 字');
+          if (
+            data.contactLinks.some(
+              (l) =>
+                l.id !== link.id &&
+                l.caseId === link.caseId &&
+                l.contactId === input.id &&
+                l.proceedingId === null &&
+                l.role === link.role.trim(),
+            )
+          )
+            throw new Error('已有相同身份的关联');
+          const row = {
+            ...link,
+            role: link.role.trim(),
+            contactId: input.id as string,
+            proceedingId: null,
+          };
+          data.contactLinks = data.contactLinks.filter((l) => l.id !== link.id);
+          data.contactLinks.push(row);
+        }
         for (const p of data.caseParties)
           if (p.contactId === input.id) p.name = input.name as string;
         const courts = a.courtIds as string[] | undefined;

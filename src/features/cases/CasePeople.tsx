@@ -5,7 +5,6 @@ import type { ReactNode } from 'react';
 import { ResourceRelations } from './ResourceSettings';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Building2, Network, UserRound, ArrowUpRight, Plus } from 'lucide-react';
-import ContactPicker from '../contacts/ContactPicker';
 import CasePersonEditor from './CasePersonEditor';
 import Dialog from '../../components/Dialog';
 import type { SaveAction, Workspace, Contact } from '../../domain/types';
@@ -39,10 +38,7 @@ export default function CasePeople({
     : null;
   const [selected, setSelected] = useState<Contact | null>(null);
   const [graph, setGraph] = useState(false);
-  const [adding, setAdding] = useState<'choose' | 'person' | 'organization' | null>(null);
-  const [chosen, setChosen] = useState<Contact | null>(null);
-  const [role, setRole] = useState('');
-  const [linkId, setLinkId] = useState(() => crypto.randomUUID());
+  const [adding, setAdding] = useState(false);
   const programs = data.proceedings.filter((p) => p.caseId === caseId);
   const item = data.cases.find((c) => c.id === caseId);
   const links = data.contactLinks.filter((l) => l.caseId === caseId);
@@ -141,15 +137,7 @@ export default function CasePeople({
       <Shell title="相关人及机构" className="case-people-dialog" onClose={onClose}>
         <div className="section-title">
           <h3>人员与机构</h3>
-          <button
-            type="button"
-            onClick={() => {
-              setChosen(null);
-              setRole('');
-              setLinkId(crypto.randomUUID());
-              setAdding('choose');
-            }}
-          >
+          <button type="button" onClick={() => setAdding(true)}>
             <Plus />
             添加人员或机构
           </button>
@@ -255,63 +243,12 @@ export default function CasePeople({
           <CaseContacts caseId={caseId} data={data} save={save} onCase={onCase} />
         </details>
       </Shell>
-      {adding === 'choose' && (
-        <Dialog
-          title="添加人员或机构"
-          submitLabel="添加到本案"
-          onClose={() => setAdding(null)}
-          onSubmit={async () => {
-            if (!chosen) throw new Error('请选择联系人，或新建人物和机构');
-            const existing = links.find(
-              (l) =>
-                l.contactId === chosen.id &&
-                l.proceedingId === null &&
-                l.role === (role.trim() || '相关人'),
-            );
-            if (!existing)
-              await save('save_contact_link', {
-                input: {
-                  id: linkId,
-                  caseId,
-                  contactId: chosen.id,
-                  proceedingId: null,
-                  role: role.trim() || '相关人',
-                },
-              });
-          }}
-        >
-          <ContactPicker
-            label="选择已有联系人"
-            contacts={data.contacts}
-            value={chosen?.id ?? null}
-            onSelect={setChosen}
-          />
-          <label>
-            本案身份（可选）
-            <input
-              aria-label="本案身份"
-              value={role}
-              onChange={(e) => setRole(e.target.value)}
-              placeholder="例如：我方代理律师、原告、承办法官"
-            />
-          </label>
-          <div className="feature-toolbar">
-            <button type="button" onClick={() => setAdding('person')}>
-              新建人物
-            </button>
-            <button type="button" onClick={() => setAdding('organization')}>
-              新建机构
-            </button>
-          </div>
-        </Dialog>
-      )}
-      {(adding === 'person' || adding === 'organization') && (
+      {adding && (
         <CasePersonEditor
           caseId={caseId}
-          kind={adding === 'person' ? 'person' : 'organization'}
           data={data}
           save={save}
-          onClose={() => setAdding(null)}
+          onClose={() => setAdding(false)}
         />
       )}
       {objectSettings && (

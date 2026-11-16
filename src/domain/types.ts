@@ -370,7 +370,14 @@ export interface Commands {
   material_preview: { args: { id: string }; result: string };
   open_material: { args: { id: string }; result: null };
   export_material: { args: { id: string }; result: boolean };
-  save_contact: { args: { input: Contact; courtIds?: string[] }; result: null };
+  save_contact: {
+    args: {
+      input: Contact;
+      courtIds?: string[];
+      caseLink?: Pick<ContactLink, 'id' | 'caseId' | 'role'>;
+    };
+    result: null;
+  };
   set_proceeding_contacts: {
     args: { input: { proceedingId: string; courtId: string | null; judgeId: string | null } };
     result: null;

@@ -301,6 +301,13 @@ pub struct ContactLink {
     pub proceeding_id: Option<String>,
     pub role: String,
 }
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ContactCaseContext {
+    pub id: String,
+    pub case_id: String,
+    pub role: String,
+}
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct ContactRelation {

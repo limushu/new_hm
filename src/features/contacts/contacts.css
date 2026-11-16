@@ -294,6 +294,130 @@
 .court-memberships {
   min-width: 0;
 }
+.contact-kind-options {
+  display: grid;
+  gap: 8px;
+}
+.contact-kind-options > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  text-align: left;
+}
+.contact-kind-options > button > svg {
+  width: 21px;
+  height: 21px;
+  color: var(--accent-text);
+  flex-shrink: 0;
+}
+.contact-kind-options > button > svg:last-child {
+  width: 16px;
+  margin-left: auto;
+  color: var(--muted);
+}
+.contact-kind-options strong,
+.contact-kind-options small,
+.contact-existing-list strong,
+.contact-existing-list small {
+  display: block;
+}
+.contact-kind-options strong,
+.contact-existing-list strong {
+  font-weight: 500;
+}
+.contact-kind-options small,
+.contact-existing-list small {
+  color: var(--muted);
+  font-size: var(--text-xs);
+  margin-top: 4px;
+}
+.contact-kind-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.contact-kind-heading button {
+  color: var(--accent-text);
+  padding: 6px 0;
+}
+.contact-source-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  background: var(--control);
+  border-radius: 9px;
+}
+.contact-source-options button {
+  min-height: 40px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: var(--muted);
+}
+.contact-source-options button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.contact-source-options small {
+  margin-left: 3px;
+  font-size: var(--text-xs);
+}
+.workspace-dialog .contact-existing-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.contact-existing-search svg {
+  width: 18px;
+  flex-shrink: 0;
+}
+.contact-existing-list {
+  display: grid;
+  max-height: 220px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.contact-existing-list > button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  border-radius: 6px;
+  overflow-wrap: anywhere;
+}
+.contact-existing-list > button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  color: var(--accent-text);
+}
+.contact-existing-list svg {
+  width: 18px;
+  flex-shrink: 0;
+}
+.contact-selection {
+  font-size: var(--text-sm);
+  color: var(--accent-text);
+}
+.contact-extra-fields summary {
+  color: var(--muted);
+  font-size: var(--text-sm);
+  padding: 5px 0;
+  cursor: pointer;
+}
+.contact-extra-fields[open] {
+  display: grid;
+  gap: 12px;
+}
 .field-label {
   color: var(--muted);
   font-size: var(--text-sm);
