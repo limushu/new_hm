@@ -489,7 +489,7 @@ export default function CaseQuickActions({
       )}
       {selected && (
         <Suspense fallback={null}>
-          <Preview item={selected} onClose={() => setSelected(null)} />
+          <Preview item={selected} save={save} onClose={() => setSelected(null)} />
         </Suspense>
       )}
     </>

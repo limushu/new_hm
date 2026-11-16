@@ -128,6 +128,10 @@ export interface CaseInput {
 }
 export type ProceedingInput = Pick<Proceeding, 'id' | 'stage' | 'caseNumber' | 'court' | 'judge'>;
 export interface Commands {
+  save_transcription: {
+    args: { id: string; documentId: string; name: string; body: string };
+    result: string;
+  };
   subsystem_manifest: { args: Record<string, never>; result: RuntimeManifest };
   resume_runtime: { args: Record<string, never>; result: void };
   get_update_status: {

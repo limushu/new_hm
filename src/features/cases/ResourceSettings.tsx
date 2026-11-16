@@ -15,6 +15,7 @@ import {
 
 export const relationLabels: Record<string, string> = {
   related: '关联',
+  transcript_of: '转写自录音',
   in_node: '属于节点',
   attachment: '附件',
   evidence: '依据',

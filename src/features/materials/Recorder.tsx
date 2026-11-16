@@ -6,8 +6,11 @@ import {
   type RecordingProduct,
 } from '../../platform/recording';
 import Dialog from '../../components/Dialog';
-import type { MaterialTarget, SaveAction } from '../../domain/types';
+import type { Material, MaterialTarget, SaveAction } from '../../domain/types';
 import { nativeRuntime } from '../../services/repository';
+import { useSubsystems } from '../../platform/SubsystemProvider';
+import { supports } from '../../platform/subsystems';
+import Transcription from './Transcription';
 export default function Recorder({
   target,
   save,
@@ -24,6 +27,9 @@ export default function Recorder({
   );
   const [status, setStatus] = useState<'idle' | 'recording' | 'paused' | 'stopped'>('idle');
   const [product, setProduct] = useState<RecordingProduct | null>(null);
+  const [transcript, setTranscript] = useState<Material | null>(null);
+  const { manifest } = useSubsystems();
+  const archived = useRef<string | null>(null);
   const blob = product?.blob;
   const [canPause, setCanPause] = useState(true);
   const [error, setError] = useState('');
@@ -124,6 +130,32 @@ export default function Recorder({
     }
     onClose();
   };
+  async function archiveRecording(): Promise<Material> {
+    if (!product) throw new Error('请先结束录音');
+    const extension = product.name.match(/\.[^.]+$/)?.[0] ?? '';
+    if (extension && !name.trim().toLowerCase().endsWith(extension.toLowerCase()))
+      throw new Error(`请保留 ${extension} 扩展名`);
+    if (nativeRuntime) {
+      archived.current = await product.archive(target, name.trim());
+      const data = await save('load_workspace', {});
+      const material = data.materials.find((m) => m.id === archived.current);
+      if (!material) throw new Error('录音已保存，请从材料页打开后重试');
+      return material;
+    }
+    if (!blob) throw new Error('录音内容暂不可用');
+    const { registerPreviewFiles } = await import('../../services/preview');
+    await save('import_material_paths', {
+      target,
+      paths: registerPreviewFiles([new File([blob], name, { type: 'audio/webm' })]),
+    });
+    const data = await save('load_workspace', {});
+    const material = [...data.materials]
+      .reverse()
+      .find((m) => m.caseId === target.caseId && m.name === name);
+    if (!material) throw new Error('录音已保存，请从材料页查看');
+    return material;
+  }
+  if (transcript) return <Transcription item={transcript} save={save} onClose={onClose} />;
   return (
     <Dialog
       className="recording-dialog"
@@ -132,23 +164,22 @@ export default function Recorder({
       onSubmit={
         product
           ? async () => {
-              const extension = product.name.match(/\.[^.]+$/)?.[0] ?? '';
-              if (extension && !name.trim().toLowerCase().endsWith(extension.toLowerCase()))
-                throw new Error(`请保留 ${extension} 扩展名`);
-              if (nativeRuntime) {
-                await product.archive(target, name.trim());
-                await save('load_workspace', {});
-              } else if (blob) {
-                const { registerPreviewFiles } = await import('../../services/preview');
-                await save('import_material_paths', {
-                  target,
-                  paths: registerPreviewFiles([new File([blob], name, { type: 'audio/webm' })]),
-                });
-              }
+              await archiveRecording();
             }
           : undefined
       }
       submitLabel="保存录音"
+      secondaryAction={
+        product && nativeRuntime && supports(manifest, 'transcribe-audio')
+          ? {
+              label: '转成文字',
+              run: async () => {
+                setTranscript(await archiveRecording());
+                return false;
+              },
+            }
+          : undefined
+      }
     >
       {properties}
       <label>
@@ -218,6 +249,9 @@ export default function Recorder({
         仅在点击开始后使用麦克风。结束后保存到当前案件材料中。iPhone
         锁屏、切到后台或来电时会暂停录音。
       </p>
+      {product && supports(manifest, 'transcribe-audio') && (
+        <p className="field-hint">点击转成文字会先保存原录音，再进行设备内识别。</p>
+      )}
       {error && (
         <p role="alert" className="error-message">
           {error}

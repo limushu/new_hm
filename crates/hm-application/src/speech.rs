@@ -47,6 +47,7 @@ pub fn audio_source(store: &Store, id: &str) -> DriverResult<AudioSource> {
 struct ActiveJob {
     id: String,
     source_id: String,
+    language: String,
     job: Box<dyn SpeechJob>,
 }
 pub struct SpeechService {
@@ -81,7 +82,10 @@ impl SpeechService {
             return Err(DriverError::invalid_state("speech_job_invalid"));
         }
         if let Some(active) = &self.active {
-            if active.id == id && active.source_id == source.material_id {
+            if active.id == id
+                && active.source_id == source.material_id
+                && active.language == language
+            {
                 return self.snapshot(id);
             }
             return Err(DriverError::invalid_state("speech_busy"));
@@ -98,6 +102,7 @@ impl SpeechService {
         self.active = Some(ActiveJob {
             id: id.into(),
             source_id,
+            language: language.into(),
             job,
         });
         self.snapshot(id)
@@ -125,7 +130,7 @@ impl SpeechService {
     }
     pub fn discard(&mut self, id: &str) -> DriverResult<()> {
         if self.active.as_ref().is_some_and(|v| v.id == id) {
-            self.active.as_mut().unwrap().job.cancel()?;
+            self.active.as_mut().unwrap().job.dispose()?;
             self.active = None;
         }
         Ok(())

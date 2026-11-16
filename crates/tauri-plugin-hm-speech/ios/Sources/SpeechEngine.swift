@@ -55,7 +55,8 @@ final class AppleSpeechEngine: SpeechEngine {
     let task = recognizer.recognitionTask(with: request) { result, error in
       if let result = result {
         update(SpeechUpdate(text: result.bestTranscription.formattedString, final: result.isFinal), nil)
-      } else if let error = error as NSError? {
+      }
+      if result?.isFinal != true, let error = error as NSError? {
         if error.domain == "kAFAssistantErrorDomain" && error.code == 1110 {
           update(SpeechUpdate(text: "", final: true), nil)
         } else { update(nil, "speech_recognition_failed") }

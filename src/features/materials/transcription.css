@@ -1,0 +1,74 @@
+.transcription-dialog {
+  width: min(680px, calc(100vw - 32px));
+}
+.transcription-dialog > form {
+  display: flex;
+  flex-direction: column;
+  max-height: 88dvh;
+}
+.transcription-dialog > form > header,
+.transcription-dialog > form > footer {
+  flex-shrink: 0;
+}
+.transcription-dialog > form > fieldset {
+  overflow-y: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+  padding: 0 2px;
+}
+.transcription-dialog > form > footer {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.transcription-source {
+  color: var(--muted);
+  font-size: var(--text-sm);
+}
+.transcription-source span {
+  display: block;
+  margin-top: 5px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+.transcription-progress {
+  display: grid;
+  gap: 8px;
+  color: var(--accent-text);
+  font-size: var(--text-sm);
+}
+.transcription-progress progress {
+  width: 100%;
+  height: 5px;
+  accent-color: var(--primary);
+}
+.transcription-progress small {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+.transcription-body {
+  min-height: 220px;
+  resize: vertical;
+  line-height: 1.8;
+}
+.transcription-controls {
+  display: flex;
+  gap: 10px;
+}
+.transcription-controls button {
+  min-height: 40px;
+  padding: 6px 10px;
+  color: var(--accent-text);
+}
+.preview-transcribe {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 16px auto 0;
+  color: var(--accent-text);
+  padding: 8px 12px;
+}
+.preview-transcribe svg {
+  width: 18px;
+  height: 18px;
+}

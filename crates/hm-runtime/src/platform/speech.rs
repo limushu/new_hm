@@ -67,6 +67,11 @@ impl SpeechSnapshot {
 pub trait SpeechJob: Send {
     fn snapshot(&self) -> DriverResult<SpeechSnapshot>;
     fn cancel(&mut self) -> DriverResult<SpeechSnapshot>;
+    /// Explicit user disposal acknowledges native release before a replacement
+    /// job starts. Drop remains a nonblocking fallback for host teardown.
+    fn dispose(&mut self) -> DriverResult<()> {
+        self.cancel().map(|_| ())
+    }
     // Drop must release the recognition task and staged audio, without waiting on the UI thread.
 }
 pub trait SpeechDriver: Send + Sync {

@@ -22,6 +22,7 @@ it('原生驱动归档失败可重试，刷新失败重试不会重复归档，�
     if (name === 'native_recording_state') return 'paused';
     if (name === 'archive_native_recording' && ++archiveAttempts === 1)
       throw new Error('归档暂时失败');
+    if (name === 'archive_native_recording') return 'archived-audio-id';
   });
   const capture = await startRecording(vi.fn());
   await capture.pause();
@@ -32,8 +33,8 @@ it('原生驱动归档失败可重试，刷新失败重试不会重复归档，�
   expect(product.blob).toBeUndefined();
   const target = { caseId: 'case', proceedingId: null, parentId: null, recordId: null };
   await expect(product.archive(target, product.name)).rejects.toThrow('归档暂时失败');
-  await product.archive(target, product.name);
-  await product.archive(target, product.name);
+  expect(await product.archive(target, product.name)).toBe('archived-audio-id');
+  expect(await product.archive(target, product.name)).toBe('archived-audio-id');
   await capture.dispose();
   expect(archiveAttempts).toBe(2);
   expect(invoke.mock.calls.map(([name]) => name)).not.toContain('cancel_native_recording');

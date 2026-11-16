@@ -1,0 +1,28 @@
+# 录音转文字
+
+首个实现为 iOS 设备内转写。结束录音后点「转成文字」，先保存原录音，再请求语音识别授权；已有音频预览也提供入口。识别完成后可编辑名称与文字，明确保存后才生成文档。原音频不被覆盖，派生文档继承案件、节点与文件夹，并以 `transcript_of` 关联原音频。
+
+普通话与英语均需设备和本地语言资源支持。能力不可用时说明原因，不自动上传音频或回退云端。切后台、取消和超时停止识别，保留已识别部分供用户决定是否保存。重新转写和关闭未保存内容需要确认。
+
+## 分层与扩展
+
+- `hm-runtime::platform::speech` 定义能力、任务、进度与分段结果。桌面和 Android 暂用不可用驱动；新增实现无需更改材料存储业务。
+- `hm-application::speech` 校验对象与授权文件，管理单个任务及派生文档保存。任务绑定源对象、语言和请求 ID，重试不重复启动；读取音频与识别期间不持有工作区数据库锁。
+- `tauri-plugin-hm-speech` 是 Rust 调用的私有 iOS 桥。原音频临时副本按任务释放，识别使用 Apple Speech，45 秒分段并转换为 16 kHz 单声道 PCM。清理须收到原生确认后才允许重新开始，避免旧任务影响新任务。
+- TypeScript 负责入口、语言选择、进度、错误说明及草稿编辑。状态轮询通过任务与版本校验，迟到结果不能覆盖已停止后的编辑。
+- `hm-core::Store::create_audio_transcript` 以事务保存派生文档与来源关系；失败回滚文件与数据库，同一请求重试不会覆盖已保存文字。
+
+## 隐私与系统约束
+
+发起前及每次识别前均检查 `supportsOnDeviceRecognition`，所有请求强制 `requiresOnDeviceRecognition = true`。Apple 文档说明后者只有在设备支持时才生效，因此不能省略前者。驱动不使用麦克风、不设置录音会话，不提供云端识别路径。系统语言资源的准备与设备支持由 iOS 决定。
+
+- [requiresOnDeviceRecognition](https://developer.apple.com/documentation/speech/sfspeechrecognitionrequest/requiresondevicerecognition)
+- [supportsOnDeviceRecognition](https://developer.apple.com/documentation/speech/sfspeechrecognizer/supportsondevicerecognition)
+
+未来可实现其他本地识别驱动。若引入远端服务，必须另行设计明确选择、数据处理说明、授权及凭据管理，不能复用当前“设备内”承诺。
+
+## 验证边界
+
+核心测试覆盖原始音频不变、派生关系、重新打开、幂等及事务失败回滚；应用测试覆盖单任务、陈旧请求、取消、失败保存与能力限制。Swift 测试使用真实 WAV 和 AVAudioConverter，识别输出由注入引擎提供，覆盖分段顺序、设备内策略、拒绝授权、取消、迟到回调和超时。浏览器端使用模拟原生桥验证录音归档、草稿编辑、部分保存、失败重试及权限提示。
+
+这些测试证明接口和生命周期行为，不证明 Apple 模型的识别准确率、真机语言资源可用性或锁屏行为。TestFlight 真机需验证普通话及英语、较长录音、拒绝后重新授权、后台中断、已有音频导入、保存后重启及播放原录音。审核所需真机视频另行录制。

@@ -89,6 +89,7 @@ impl SpeechDriver for IosSpeech {
             bridge: self.clone(),
             id: id.into(),
             directory: Some(directory),
+            disposed: false,
         }))
     }
 }
@@ -96,6 +97,7 @@ struct IosSpeechJob {
     bridge: IosSpeech,
     id: String,
     directory: Option<tempfile::TempDir>,
+    disposed: bool,
 }
 impl SpeechJob for IosSpeechJob {
     fn snapshot(&self) -> DriverResult<SpeechSnapshot> {
@@ -110,9 +112,21 @@ impl SpeechJob for IosSpeechJob {
             .snapshot
             .ok_or_else(|| DriverError::invalid_state("speech_bridge_failed"))
     }
+    fn dispose(&mut self) -> DriverResult<()> {
+        if !self.disposed {
+            self.bridge
+                .call("discard", serde_json::json!({"id": self.id}))?;
+            self.disposed = true;
+            self.directory = None;
+        }
+        Ok(())
+    }
 }
 impl Drop for IosSpeechJob {
     fn drop(&mut self) {
+        if self.disposed {
+            return;
+        }
         let bridge = self.bridge.clone();
         let id = self.id.clone();
         let directory = self.directory.take();

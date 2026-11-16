@@ -12,12 +12,12 @@ import { EntryForm } from '../finance/Finance';
 import EventEditor from '../calendar/EventEditor';
 const Preview = lazy(() => import('../materials/Preview'));
 
-function MaterialDetails({ resource, data, onClose }: ResourceDetailsProps) {
+function MaterialDetails({ resource, data, save, onClose }: ResourceDetailsProps) {
   const item = data.materials.find((m) => m.id === resource.id && !m.deletedAt);
   if (!item) return null;
   return /\.(pdf|png|jpe?g|gif|webp|bmp|webm|ogg|mp3|wav|m4a|mp4|md|txt)$/i.test(item.name) ? (
     <Suspense fallback={null}>
-      <Preview item={item} onClose={onClose} />
+      <Preview item={item} save={save} onClose={onClose} />
     </Suspense>
   ) : (
     <Dialog title="材料详情" onClose={onClose}>

@@ -6,7 +6,7 @@ import { nativeRuntime } from '../services/repository';
 export interface RecordingProduct {
   name: string;
   blob?: Blob;
-  archive(target: MaterialTarget, name: string): Promise<void>;
+  archive(target: MaterialTarget, name: string): Promise<string>;
 }
 export interface RecordingCapture {
   canPause: boolean;
@@ -18,7 +18,7 @@ export interface RecordingCapture {
 }
 
 export async function saveNativeRecording(target: MaterialTarget, name: string, data: Blob) {
-  await invoke('save_recording', new Uint8Array(await data.arrayBuffer()), {
+  return invoke<string>('save_recording', new Uint8Array(await data.arrayBuffer()), {
     headers: { 'x-hm-target': jsonHeader(target), 'x-hm-name': jsonHeader(name) },
   });
 }
@@ -34,7 +34,7 @@ export async function startRecording(
     }>('native_recording_support');
     if (backends.native.capture) {
       await invoke('start_native_recording');
-      let archived = false;
+      let archived: string | null = null;
       return {
         canPause: backends.native.pause,
         state: () => invoke('native_recording_state'),
@@ -45,9 +45,9 @@ export async function startRecording(
           return {
             name,
             async archive(target, name) {
-              if (archived) return;
-              await invoke('archive_native_recording', { target, name });
-              archived = true;
+              if (archived) return archived;
+              archived = await invoke<string>('archive_native_recording', { target, name });
+              return archived;
             },
           };
         },

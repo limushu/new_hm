@@ -833,7 +833,7 @@ export default function Materials({
       )}
       {preview && (
         <Suspense fallback={<p className="quiet-empty">正在打开预览…</p>}>
-          <Preview item={preview} onClose={() => setPreview(null)} />
+          <Preview item={preview} save={save} onClose={() => setPreview(null)} />
         </Suspense>
       )}
     </section>

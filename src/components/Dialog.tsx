@@ -9,11 +9,13 @@ export default function Dialog({
   submitLabel = '保存',
   danger = false,
   className = '',
+  secondaryAction,
 }: {
   title: string;
   children: ReactNode;
   onClose: () => void;
-  onSubmit?: () => Promise<void>;
+  onSubmit?: () => Promise<void | false>;
+  secondaryAction?: { label: string; run: () => Promise<void | false> };
   submitLabel?: string;
   danger?: boolean;
   className?: string;
@@ -23,6 +25,20 @@ export default function Dialog({
   const inflight = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  async function commit(action: () => Promise<void | false>) {
+    if (inflight.current) return;
+    inflight.current = true;
+    setBusy(true);
+    setError('');
+    try {
+      if ((await action()) !== false) onClose();
+    } catch (reason) {
+      setError(String(reason));
+    } finally {
+      inflight.current = false;
+      setBusy(false);
+    }
+  }
   useEffect(() => {
     dialog.current?.showModal();
     // Native dialogs otherwise focus the first button (close), drawing a
@@ -47,19 +63,7 @@ export default function Dialog({
         onSubmit={async (event) => {
           event.preventDefault();
           event.stopPropagation();
-          if (!onSubmit || inflight.current) return;
-          inflight.current = true;
-          setBusy(true);
-          setError('');
-          try {
-            await onSubmit();
-            onClose();
-          } catch (reason) {
-            setError(String(reason));
-          } finally {
-            inflight.current = false;
-            setBusy(false);
-          }
+          if (onSubmit) await commit(onSubmit);
         }}
       >
         <header>
@@ -87,13 +91,27 @@ export default function Dialog({
             {onSubmit ? '取消' : '关闭'}
           </button>
           {onSubmit && (
-            <button
-              className={danger ? 'danger-button' : 'primary-action'}
-              disabled={busy}
-              type="submit"
-            >
-              {busy ? '处理中…' : submitLabel}
-            </button>
+            <>
+              {secondaryAction && (
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={() => {
+                    const form = dialog.current?.querySelector('form');
+                    if (form?.reportValidity()) void commit(secondaryAction.run);
+                  }}
+                >
+                  {secondaryAction.label}
+                </button>
+              )}
+              <button
+                className={danger ? 'danger-button' : 'primary-action'}
+                disabled={busy}
+                type="submit"
+              >
+                {busy ? '处理中…' : submitLabel}
+              </button>
+            </>
           )}
         </footer>
       </form>

@@ -4,7 +4,7 @@
 
 面向独立执业律师的本地工作应用：案件、办理流程、材料归档、日程、联系人和简单收支。无需登录，离线使用。技术栈为 Tauri 2、React/TypeScript、Rust、SQLite。
 
-当前交付版本 **1.4.0，Windows x64 安装版**。macOS、Android、iOS 是后续目标，尚未做发布验收。视觉延续已确认的 Notion 式深灰、圆角和舒展留白。
+Windows 初期交付为 **1.4.0，x64 安装版**。当前 iOS 功能候选 **1.7.6（23.1）** 新增[设备内录音转文字](docs/speech-transcription.md)，TestFlight 与审核准备状态见 [App Store 发布记录](docs/app-store/README.md)。macOS、Android 尚未做发布验收。
 
 ## 使用与验收
 

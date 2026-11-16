@@ -46,19 +46,15 @@ export default function Contacts({
             <Users />
             联系对象
           </h1>
-          <p>从一个对象，找到与它有关的案件和联系。</p>
         </div>
         <div className="contacts-actions">
-          <button onClick={() => setGraph(true)}>
-            <Network />
-            关系图
-          </button>
           <button className="primary-action" onClick={() => setEdit(emptyContact())}>
             <Plus />
             新建对象
           </button>
         </div>
       </div>
+      <p className="contacts-intro">集中管理案件中的人员与机构，查看他们之间的联系。</p>
       <div className="contacts-tools">
         <div className="contact-search">
           <Search />
@@ -77,6 +73,10 @@ export default function Contacts({
             </option>
           ))}
         </Select>
+        <button className="contacts-graph" onClick={() => setGraph(true)}>
+          <Network />
+          关系图
+        </button>
         <span>{rows.length} 个对象</span>
       </div>
       {graph && (

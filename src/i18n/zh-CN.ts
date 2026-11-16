@@ -1,5 +1,20 @@
 /** Human-facing native-operation text. Backend codes remain language independent. */
 export const operationMessages: Record<string, string> = {
+  speech_audio_invalid: '无法读取这份音频，请检查文件或转为 M4A、WAV 格式后重试',
+  speech_permission_denied: '语音识别权限未开启，请在 iPhone 设置中允许案笺使用语音识别',
+  speech_on_device_unavailable: '设备暂不支持当前语言的设备内识别，请更换语言或稍后重试',
+  speech_language_unsupported: '当前支持普通话和英语识别',
+  speech_recognition_failed: '转写未能完成，可保留已识别部分或重新转写',
+  speech_interrupted: '转写已中断，请保持应用在前台后重试；已识别的部分仍可保存',
+  speech_timed_out: '这段音频识别超时，可保存已识别部分，或稍后重试',
+  speech_result_invalid: '识别结果暂不可用，请缩短录音或重新转写',
+  speech_busy: '还有一份转写未处理，请先保存或放弃后再开始',
+  speech_job_missing: '转写任务已结束，请重新开始',
+  speech_job_invalid: '转写任务无效，请重新开始',
+  speech_unavailable: '转写服务暂不可用，请重新启动应用',
+  speech_bridge_failed: '语音识别服务暂不可用，请重试',
+  speech_not_finished: '请先完成或停止转写，再保存识别文字',
+  speech_draft_already_saved: '这份转写稿已经保存，请先查看已保存的文档',
   object_property_invalid: '请检查属性名称、类型和选项',
   object_property_value_invalid: '属性值与所选类型不符，请检查后重试',
   object_property_exists: '此对象已有同名属性，请使用其他名称',
@@ -51,6 +66,7 @@ export const operationMessages: Record<string, string> = {
   recording_data_invalid: '录音数据无效',
 };
 export const capabilityNames: Record<string, string> = {
+  speech_transcription: '语音转文字',
   audio_capture: '原生录音',
   audio_pause: '暂停录音',
   document_pick: '文档选择',
