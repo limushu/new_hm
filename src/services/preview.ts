@@ -661,6 +661,7 @@ export async function previewCommand<K extends keyof Commands>(
         throw new Error('已有同名案件状态，请选择已有状态');
       if (old) Object.assign(old, { ...input, name: input.name.trim() });
       else data.statuses.push({ ...input, name: input.name.trim() });
+      result = data.statuses;
       break;
     }
     case 'delete_case_status':
@@ -1112,6 +1113,11 @@ export async function previewCommand<K extends keyof Commands>(
       if (!input.title.trim()) throw new Error('请输入案件名称');
       Object.assign(findCase(input.id), input);
       if (input.tags) writeTags(input.id, input.tags);
+      result = {
+        item: findCase(input.id),
+        tags: data.caseTags.filter((t) => t.caseId === input.id),
+        tagCatalog: data.tagCatalog,
+      };
       break;
     }
     case 'set_case_status': {
@@ -1120,6 +1126,11 @@ export async function previewCommand<K extends keyof Commands>(
         throw new Error('案件或目标状态无效');
       item.statusId = a.statusId as string;
       item.updatedAt = new Date().toISOString();
+      result = {
+        item,
+        tags: data.caseTags.filter((t) => t.caseId === item.id),
+        tagCatalog: data.tagCatalog,
+      };
       break;
     }
     case 'save_workflow_template': {

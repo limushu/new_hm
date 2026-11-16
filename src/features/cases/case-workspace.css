@@ -25,9 +25,11 @@
   color: var(--text);
   white-space: nowrap;
 }
-.case-page .case-body .case-tabs > button:hover {
-  background: var(--hover);
-  color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+  .case-page .case-body .case-tabs > button:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
 }
 .case-page .case-body .case-tabs > button.active {
   background: var(--blue-soft);

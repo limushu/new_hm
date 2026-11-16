@@ -401,3 +401,48 @@ fn deleting_any_stage_keeps_history_and_program_scope_and_can_leave_no_current_s
         .iter()
         .any(|m| m.id == folder && m.proceeding_id.as_ref() == Some(program)));
 }
+
+#[test]
+fn case_header_contains_canonical_tags_and_status_without_case_bodies() {
+    let mut store = Store::memory().unwrap();
+    let item = create(&mut store, None);
+    let other = create(&mut store, Some(vec!["other".into()]));
+    store
+        .add_record(&item.id, "A separate work record")
+        .unwrap();
+    store
+        .update_case(UpdateCase {
+            id: item.id.clone(),
+            title: "  Updated case  ".into(),
+            case_type: "civil".into(),
+            status_id: "closed".into(),
+            tags: Some(vec!["#Contract".into(), "contract".into(), "证据".into()]),
+        })
+        .unwrap();
+    let header = store.case_header(&item.id).unwrap();
+    assert_eq!(header.item.title, "Updated case");
+    assert_eq!(header.item.status_id, "closed");
+    assert_eq!(
+        header
+            .tags
+            .iter()
+            .map(|t| t.tag.as_str())
+            .collect::<Vec<_>>(),
+        vec!["contract", "证据"]
+    );
+    assert!(header.tags.iter().all(|t| t.case_id == item.id));
+    assert!(header.tag_catalog.contains(&"other".to_string()));
+    let wire = serde_json::to_value(&header).unwrap();
+    assert_eq!(wire.as_object().unwrap().len(), 3);
+    assert!(wire.get("workRecords").is_none());
+    assert_eq!(store.case_header(&other.id).unwrap().tags[0].tag, "other");
+    store.set_case_status(&item.id, "in_progress").unwrap();
+    assert_eq!(
+        store.case_header(&item.id).unwrap().item.status_id,
+        "in_progress"
+    );
+    assert_eq!(store.workspace().unwrap().work_records.len(), 1);
+    store.trash_case(&item.id).unwrap();
+    assert!(store.case_header(&item.id).is_err());
+    assert!(store.case_header("missing").is_err());
+}

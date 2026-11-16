@@ -42,6 +42,14 @@ pub struct CaseTag {
     pub case_id: String,
     pub tag: String,
 }
+/// Canonical header fields after a write, without transferring case bodies or files.
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct CaseHeader {
+    pub item: Case,
+    pub tags: Vec<CaseTag>,
+    pub tag_catalog: Vec<String>,
+}
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProceedingMeta {

@@ -42,6 +42,11 @@ export interface CaseFile {
   updatedAt: string;
   deletedAt: string | null;
 }
+export interface CaseHeader {
+  item: CaseFile;
+  tags: { caseId: string; tag: string }[];
+  tagCatalog: string[];
+}
 export interface Proceeding {
   parentId: string | null;
   state: 'active' | 'completed';
@@ -138,8 +143,8 @@ export interface Commands {
   save_calendar_event: { args: { input: CalendarEvent }; result: null };
   delete_calendar_event: { args: { id: string }; result: null };
   create_case: { args: { input: CaseInput }; result: CaseFile };
-  update_case: { args: { input: CaseInput }; result: null };
-  set_case_status: { args: { id: string; statusId: string }; result: null };
+  update_case: { args: { input: CaseInput }; result: CaseHeader };
+  set_case_status: { args: { id: string; statusId: string }; result: CaseHeader };
   add_proceeding: {
     args: { caseId: string; kind: ProgramKind; parentId?: string | null; name?: string };
     result: string;
@@ -392,7 +397,7 @@ export interface Commands {
     args: { kind: 'case' | 'record' | 'material'; id: string; confirmed: boolean };
     result: null;
   };
-  save_case_status: { args: { input: CaseStatus }; result: null };
+  save_case_status: { args: { input: CaseStatus }; result: CaseStatus[] };
   delete_case_status: { args: { id: string }; result: null };
   get_settings: { args: Record<string, never>; result: Record<string, string> };
   set_setting: { args: { key: string; value: string }; result: null };

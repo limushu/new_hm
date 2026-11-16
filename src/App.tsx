@@ -12,7 +12,16 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { CalendarDays, Folder, Settings, Trash2, Users, Search, Bell } from 'lucide-react';
 import { command, nativeRuntime, previewMode } from './services/repository';
 import { emptyWorkspace } from './domain/types';
-import type { CaseFile, Commands, Contact, SaveAction, Workspace } from './domain/types';
+import type {
+  CaseFile,
+  CaseHeader,
+  CaseStatus,
+  Commands,
+  Contact,
+  SaveAction,
+  Workspace,
+} from './domain/types';
+import { mergeCaseHeader } from './domain/caseHeader';
 import CasePage from './features/cases/CasePage';
 import Calendar from './features/calendar/Calendar';
 import CaseBoard from './features/cases/CaseBoard';
@@ -80,7 +89,11 @@ export default function App() {
   const save: SaveAction = useCallback(
     async <K extends keyof Commands>(name: K, args: Commands[K]['args']) => {
       const result = await command(name, args);
-      await refresh();
+      if (name === 'update_case' || name === 'set_case_status') {
+        setData((data) => mergeCaseHeader(data, result as CaseHeader));
+      } else if (name === 'save_case_status') {
+        setData((data) => ({ ...data, statuses: result as CaseStatus[] }));
+      } else await refresh();
       return result;
     },
     [refresh],
@@ -251,15 +264,7 @@ export default function App() {
             onOpen={navigateCase}
             save={save}
             onMove={async (id, statusId) => {
-              await command('set_case_status', { id, statusId });
-              setData((current) => ({
-                ...current,
-                cases: current.cases.map((item) =>
-                  item.id === id
-                    ? { ...item, statusId, updatedAt: new Date().toISOString() }
-                    : item,
-                ),
-              }));
+              await save('set_case_status', { id, statusId });
             }}
           />
         </RetainedView>

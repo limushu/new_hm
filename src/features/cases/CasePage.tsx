@@ -93,6 +93,7 @@ export default function CasePage({
   const [remove, setRemove] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [numberEdit, setNumberEdit] = useState<{ id: string; value: string } | null>(null);
+  const [archiveOpen, setArchiveOpen] = useState(false);
   const inFlight = useRef<Promise<boolean> | null>(null);
   const pendingAction = useRef<Promise<boolean> | null>(null);
   const section = useRef<HTMLElement>(null);
@@ -305,8 +306,10 @@ export default function CasePage({
                   act(async () => {
                     if (create) await save('save_case_status', { input: status });
                     setStatusId(status.id);
-                    if (saved && !(await commit({ statusId: status.id, title: item.title })))
+                    if (saved && !(await commit({ statusId: status.id, title: item.title }))) {
+                      setStatusId(item.statusId);
                       throw new Error('案件状态尚未保存，请重试');
+                    }
                   })
                 }
               />
@@ -321,8 +324,12 @@ export default function CasePage({
                 catalog={data.tagCatalog}
                 disabled={saving}
                 onChange={(value) => {
+                  const previous = tags;
                   setTags(value);
-                  if (saved) void commit({ tags: value, title: item.title });
+                  if (saved)
+                    void commit({ tags: value, title: item.title }).then((ok) => {
+                      if (!ok) setTags(previous);
+                    });
                 }}
               />
             </div>
@@ -391,75 +398,83 @@ export default function CasePage({
               <RetainedView active={tab === 'overview'}>
                 <div className="case-overview-content">
                   <CaseChronicle item={item} data={data} save={save} />
-                  <details className="case-workspace-details">
+                  <details
+                    className="case-workspace-details"
+                    onToggle={(e) => setArchiveOpen(e.currentTarget.open)}
+                  >
                     <summary>工作与案件资料</summary>
-                    <CaseOverview
-                      item={item}
-                      data={data}
-                      save={save}
-                      onCase={onCase}
-                      onProgram={viewProgram}
-                      onAdd={addProgram}
-                      actions={
-                        <>
-                          <WorkTasks caseId={item.id} data={data} save={save} onWork={viewWork} />
-                          <CaseSchedule caseId={item.id} data={data} save={save} />
-                        </>
-                      }
-                      onFinance={() => {
-                        setFinanceScope(caseScope);
-                        setTab('finance');
-                      }}
-                    />
-                    <section className="case-section" data-tone="violet">
-                      <div className="section-title">
-                        <h3>
-                          <Files aria-hidden="true" />
-                          材料
-                        </h3>
-                        <button onClick={() => setTab('materials')}>
-                          查看材料
-                          <ChevronRight />
-                        </button>
-                      </div>
-                      <div className="overview-materials">
-                        {[
-                          { id: 'all', name: '全案材料' },
-                          { id: 'shared', name: '案件共用' },
-                          ...programs.map((p) => ({ id: p.id, name: proceedingName(p, programs) })),
-                        ].map((scope) => (
-                          <button
-                            key={scope.id}
-                            onClick={() => {
-                              setMaterialScope({
-                                proceedingId: scope.id === 'all' ? null : scope.id,
-                                stageId: null,
-                              });
-                              setTab('materials');
-                            }}
-                          >
-                            <span>{scope.name}</span>
-                            <strong>
-                              {
-                                data.materials.filter(
-                                  (m) =>
-                                    m.caseId === item.id &&
-                                    !m.deletedAt &&
-                                    m.kind === 'file' &&
-                                    (scope.id === 'all' ||
-                                      (m.proceedingId ?? 'shared') === scope.id ||
-                                      resourceLinks(data, 'material', m.id).some(
-                                        (l) => l.proceedingId === scope.id,
-                                      )),
-                                ).length
-                              }{' '}
-                              份
-                            </strong>
+                    <RetainedView active={archiveOpen}>
+                      <CaseOverview
+                        item={item}
+                        data={data}
+                        save={save}
+                        onCase={onCase}
+                        onProgram={viewProgram}
+                        onAdd={addProgram}
+                        actions={
+                          <>
+                            <WorkTasks caseId={item.id} data={data} save={save} onWork={viewWork} />
+                            <CaseSchedule caseId={item.id} data={data} save={save} />
+                          </>
+                        }
+                        onFinance={() => {
+                          setFinanceScope(caseScope);
+                          setTab('finance');
+                        }}
+                      />
+                      <section className="case-section" data-tone="violet">
+                        <div className="section-title">
+                          <h3>
+                            <Files aria-hidden="true" />
+                            材料
+                          </h3>
+                          <button onClick={() => setTab('materials')}>
+                            查看材料
+                            <ChevronRight />
                           </button>
-                        ))}
-                      </div>
-                    </section>
-                    <Records caseId={item.id} data={data} save={save} />
+                        </div>
+                        <div className="overview-materials">
+                          {[
+                            { id: 'all', name: '全案材料' },
+                            { id: 'shared', name: '案件共用' },
+                            ...programs.map((p) => ({
+                              id: p.id,
+                              name: proceedingName(p, programs),
+                            })),
+                          ].map((scope) => (
+                            <button
+                              key={scope.id}
+                              onClick={() => {
+                                setMaterialScope({
+                                  proceedingId: scope.id === 'all' ? null : scope.id,
+                                  stageId: null,
+                                });
+                                setTab('materials');
+                              }}
+                            >
+                              <span>{scope.name}</span>
+                              <strong>
+                                {
+                                  data.materials.filter(
+                                    (m) =>
+                                      m.caseId === item.id &&
+                                      !m.deletedAt &&
+                                      m.kind === 'file' &&
+                                      (scope.id === 'all' ||
+                                        (m.proceedingId ?? 'shared') === scope.id ||
+                                        resourceLinks(data, 'material', m.id).some(
+                                          (l) => l.proceedingId === scope.id,
+                                        )),
+                                  ).length
+                                }{' '}
+                                份
+                              </strong>
+                            </button>
+                          ))}
+                        </div>
+                      </section>
+                      <Records caseId={item.id} data={data} save={save} />
+                    </RetainedView>
                   </details>
                 </div>
               </RetainedView>

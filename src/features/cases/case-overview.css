@@ -105,18 +105,21 @@
   border-radius: 5px;
   padding: 3px 7px;
   font-size: var(--text-base);
+  max-width: 100%;
+  overflow-wrap: anywhere;
 }
 .case-tag-chips button {
   padding: 0;
   display: flex;
   color: var(--muted);
+  flex: none;
 }
 .case-tag-chips svg {
   width: 11px;
   height: 11px;
 }
 .case-tag-chips input {
-  width: 210px;
+  width: auto;
   max-width: 100%;
   padding: 5px 0;
   background: none;

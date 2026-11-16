@@ -1,4 +1,4 @@
-import { useCallback, useId, useState } from 'react';
+import { useCallback, useId, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import { usePopover } from '../../components/usePopover';
 export default function CaseTags({
@@ -17,6 +17,7 @@ export default function CaseTags({
   const [error, setError] = useState('');
   const [active, setActive] = useState(-1);
   const id = useId();
+  const input = useRef<HTMLInputElement>(null);
   const close = useCallback(() => setOpen(false), []);
   const { anchor, popup } = usePopover(open && !disabled, close, 250);
   const name = query.trim().replace(/^#+/, '').toLowerCase();
@@ -27,6 +28,7 @@ export default function CaseTags({
       setError('标签限 1–30 字、不含空格，每案最多 12 个');
       return;
     }
+    if (matchMedia('(pointer: coarse)').matches) input.current?.blur();
     if (!value.includes(tag)) onChange([...value, tag].sort());
     setQuery('');
     setOpen(false);
@@ -51,6 +53,7 @@ export default function CaseTags({
         ))}
         <div className="case-tag-query" ref={anchor}>
           <input
+            ref={input}
             aria-label="案件标签"
             role="combobox"
             aria-expanded={open && !disabled}
@@ -61,6 +64,7 @@ export default function CaseTags({
             placeholder={value.length ? '+ 标签' : '# 添加标签'}
             value={query}
             maxLength={31}
+            size={value.length ? 6 : 10}
             onFocus={() => setOpen(true)}
             onClick={() => setOpen(true)}
             onBlur={() => setOpen(false)}

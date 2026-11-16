@@ -26,7 +26,7 @@ fn case_type(value: &str) -> Result<()> {
     }
     Ok(())
 }
-fn map_case(r: &rusqlite::Row<'_>) -> rusqlite::Result<Case> {
+pub(crate) fn map_case(r: &rusqlite::Row<'_>) -> rusqlite::Result<Case> {
     Ok(Case {
         id: r.get(0)?,
         title: r.get(1)?,
@@ -163,17 +163,7 @@ impl Store {
         Ok(())
     }
     pub fn workspace(&self) -> Result<Workspace> {
-        let statuses = self
-            .connection
-            .prepare("SELECT id,name,color FROM case_statuses ORDER BY position")?
-            .query_map([], |r| {
-                Ok(CaseStatus {
-                    id: r.get(0)?,
-                    name: r.get(1)?,
-                    color: r.get(2)?,
-                })
-            })?
-            .collect::<rusqlite::Result<Vec<_>>>()?;
+        let statuses = self.case_statuses()?;
         let cases=self.connection.prepare("SELECT id,title,case_type,status_id,current_proceeding_id,created_at,updated_at,deleted_at FROM cases ORDER BY created_at DESC,id")?.query_map([],map_case)?.collect::<rusqlite::Result<Vec<_>>>()?;
         let proceedings=self.connection.prepare("SELECT id,case_id,kind,stage,case_number,court,judge,parent_id,state,completed_at,name,category FROM proceedings ORDER BY created_at,id")?.query_map([],|r|Ok(Proceeding{id:r.get(0)?,case_id:r.get(1)?,kind:r.get(2)?,stage:r.get(3)?,case_number:r.get(4)?,court:r.get(5)?,judge:r.get(6)?,parent_id:r.get(7)?,state:r.get(8)?,completed_at:r.get(9)?,name:r.get(10)?,category:r.get(11)?}))?.collect::<rusqlite::Result<Vec<_>>>()?;
         let tasks = self
@@ -216,11 +206,7 @@ impl Store {
             workflow_templates: self.workflow_templates()?,
             case_parties: self.case_parties()?,
             proceeding_party_roles: self.proceeding_party_roles()?,
-            tag_catalog: self
-                .connection
-                .prepare("SELECT name FROM tag_catalog ORDER BY name")?
-                .query_map([], |r| r.get(0))?
-                .collect::<rusqlite::Result<Vec<_>>>()?,
+            tag_catalog: self.tag_catalog()?,
             case_tags: self
                 .connection
                 .prepare("SELECT case_id,tag FROM case_tags ORDER BY case_id,tag")?

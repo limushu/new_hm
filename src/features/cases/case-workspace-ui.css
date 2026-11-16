@@ -23,6 +23,37 @@
   margin-left: auto;
   font-size: var(--text-xs);
 }
+@container case-panel (max-width: 600px) {
+  .case-redesigned .case-body .case-properties {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    margin: 14px 0 16px;
+  }
+  .case-redesigned .case-properties > .case-category {
+    flex: none;
+    width: 100%;
+    min-width: 0;
+  }
+  .case-redesigned .case-tag-chips {
+    gap: 6px 8px;
+  }
+  .case-redesigned .case-tag-chips > span {
+    min-height: 32px;
+    padding: 0 4px 0 8px;
+    background: var(--control);
+    font-size: 13px;
+  }
+  .case-redesigned .case-tag-chips > span > button {
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    min-height: 32px;
+  }
+  .case-redesigned .case-tag-query input {
+    min-height: 40px;
+  }
+}
 .case-redesigned .primary-action {
   background: var(--case-action-bg);
   color: var(--case-action-fg);
@@ -257,11 +288,6 @@
   }
 }
 
-.case-redesigned[data-tab='materials'] .case-properties,
-.case-redesigned[data-tab='finance'] .case-properties,
-.case-redesigned[data-tab='relations'] .case-properties {
-  display: none;
-}
 @media (min-width: 761px) and (max-height: 700px) {
   .case-redesigned .case-body {
     padding: 12px 24px 24px;

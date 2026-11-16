@@ -297,8 +297,11 @@ pub fn purge_item(
 pub fn save_case_status(
     state: State<'_, AppState>,
     input: CaseStatus,
-) -> std::result::Result<(), String> {
-    access(&state, |s| s.save_case_status(input))
+) -> std::result::Result<Vec<CaseStatus>, String> {
+    access(&state, |s| {
+        s.save_case_status(input)?;
+        s.case_statuses()
+    })
 }
 
 #[tauri::command(async)]

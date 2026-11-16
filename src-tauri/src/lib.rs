@@ -2,8 +2,8 @@ mod ipc;
 mod platforms;
 mod subsystems;
 use hm_core::{
-    AddTask, CalendarEvent, Case, CreateCase, StorageLocation, Store, UpdateCase, UpdateProceeding,
-    Workspace,
+    AddTask, CalendarEvent, Case, CaseHeader, CreateCase, StorageLocation, Store, UpdateCase,
+    UpdateProceeding, Workspace,
 };
 use std::sync::Mutex;
 use tauri::{Manager, State};
@@ -40,16 +40,23 @@ fn create_case(state: State<'_, AppState>, input: CreateCase) -> Result<Case, St
     access(&state, |s| s.create_case(input))
 }
 #[tauri::command(async)]
-fn update_case(state: State<'_, AppState>, input: UpdateCase) -> Result<(), String> {
-    access(&state, |s| s.update_case(input))
+fn update_case(state: State<'_, AppState>, input: UpdateCase) -> Result<CaseHeader, String> {
+    access(&state, |s| {
+        let id = input.id.clone();
+        s.update_case(input)?;
+        s.case_header(&id)
+    })
 }
 #[tauri::command(async)]
 fn set_case_status(
     state: State<'_, AppState>,
     id: String,
     status_id: String,
-) -> Result<(), String> {
-    access(&state, |s| s.set_case_status(&id, &status_id))
+) -> Result<CaseHeader, String> {
+    access(&state, |s| {
+        s.set_case_status(&id, &status_id)?;
+        s.case_header(&id)
+    })
 }
 #[tauri::command(async)]
 fn add_proceeding(

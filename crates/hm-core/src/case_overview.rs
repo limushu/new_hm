@@ -32,6 +32,47 @@ pub(crate) fn write_tags(db: &Connection, case_id: &str, tags: &[String]) -> Res
     Ok(())
 }
 impl Store {
+    pub fn case_statuses(&self) -> Result<Vec<CaseStatus>> {
+        Ok(self
+            .connection
+            .prepare("SELECT id,name,color FROM case_statuses ORDER BY position")?
+            .query_map([], |r| {
+                Ok(CaseStatus {
+                    id: r.get(0)?,
+                    name: r.get(1)?,
+                    color: r.get(2)?,
+                })
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?)
+    }
+    pub fn tag_catalog(&self) -> Result<Vec<String>> {
+        Ok(self
+            .connection
+            .prepare("SELECT name FROM tag_catalog ORDER BY name")?
+            .query_map([], |r| r.get(0))?
+            .collect::<rusqlite::Result<Vec<_>>>()?)
+    }
+    pub fn case_header(&self, id: &str) -> Result<CaseHeader> {
+        let item = self.connection.query_row(
+            "SELECT id,title,case_type,status_id,current_proceeding_id,created_at,updated_at,deleted_at FROM cases WHERE id=?1 AND deleted_at IS NULL",
+            [id], crate::store::map_case,
+        ).optional()?.ok_or(Error::NotFound)?;
+        let tags = self
+            .connection
+            .prepare("SELECT case_id,tag FROM case_tags WHERE case_id=?1 ORDER BY tag")?
+            .query_map([id], |r| {
+                Ok(CaseTag {
+                    case_id: r.get(0)?,
+                    tag: r.get(1)?,
+                })
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        Ok(CaseHeader {
+            item,
+            tags,
+            tag_catalog: self.tag_catalog()?,
+        })
+    }
     pub fn update_proceeding_meta(&mut self, input: ProceedingMeta) -> Result<()> {
         let owner: String = self
             .connection
