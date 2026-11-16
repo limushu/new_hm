@@ -88,6 +88,7 @@ button.calendar-primary:hover {
   justify-content: space-between;
   border-bottom: 1px solid var(--line);
   padding-bottom: 12px;
+  align-items: center;
 }
 .calendar-filters {
   display: flex;
@@ -105,6 +106,23 @@ button.calendar-primary:hover {
 }
 .calendar-filters button:hover {
   background: var(--surface-raised);
+}
+.calendar-view-select {
+  flex: none;
+}
+.calendar-toolbar .calendar-view-select .select-trigger {
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 4px 0 10px;
+  border: 0;
+  background: transparent;
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.calendar-toolbar .calendar-view-select .select-trigger:hover,
+.calendar-toolbar .calendar-view-select .select-trigger[aria-expanded='true'] {
+  color: var(--text);
+  background: var(--hover);
 }
 .calendar-view-label {
   display: flex;

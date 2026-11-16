@@ -1,7 +1,7 @@
 import type { CaseFile, Workspace, SaveAction } from '../../domain/types';
 import CaseTimeline from './CaseTimeline';
 import { useMemo, useState } from 'react';
-import { ChevronRight, ChevronDown } from 'lucide-react';
+import { ChevronRight, ChevronDown, GitBranch } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import Select from '../../components/Select';
 import ObjectInspector from './ObjectInspector';
@@ -58,17 +58,18 @@ export default function CaseChronicle({
   const next = pending[0];
   return (
     <div className="case-chronicle">
-      <section className="case-focus-summary" aria-label="当前关注与下一步">
+      <section className="case-focus-panel" aria-label="当前关注与下一步">
         <div className="case-focus-caption">
           <span>当前关注</span>
           <button
             type="button"
+            aria-label={focus ? '切换当前关注节点' : '选择节点'}
             onClick={() => {
               setFocusKey(focus ? resourceKey(focus.resource) : '');
               setChoosing(true);
             }}
           >
-            选择节点
+            {focus ? '切换' : '选择节点'}
             <ChevronDown />
           </button>
         </div>
@@ -78,7 +79,8 @@ export default function CaseChronicle({
             className="case-focus-main"
             onClick={() => setSelected(focus.resource)}
           >
-            <span>
+            <GitBranch className="case-focus-icon" aria-hidden="true" />
+            <span className="case-focus-content">
               <strong>{focus.title}</strong>
               <small>
                 {focus.properties

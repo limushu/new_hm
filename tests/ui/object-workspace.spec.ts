@@ -41,7 +41,7 @@ test('节点的自定义属性与值可编辑，能从节点直接新建律师�
   node = page.getByRole('dialog', { name: '节点详情', exact: true });
   await expect(node).toContainText('部分支持');
   await node.getByRole('button', { name: '关闭', exact: true }).last().click();
-  await page.getByRole('button', { name: '选择节点', exact: true }).click();
+  await page.getByRole('button', { name: '切换当前关注节点', exact: true }).click();
   const focus = page.getByRole('dialog', { name: '选择当前关注节点', exact: true });
   await selectOption(page, focus.getByLabel('当前关注节点', { exact: true }), {
     label: '一审·审理',

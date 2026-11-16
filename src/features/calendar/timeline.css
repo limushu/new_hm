@@ -98,14 +98,6 @@
 .task-color {
   border: 1px solid var(--line-strong);
 }
-.calendar-view-select {
-  padding: 5px 9px;
-  border-radius: 6px;
-  border: 1px solid var(--line);
-  font-size: var(--text-sm);
-  min-width: 82px;
-  background: var(--surface);
-}
 .calendar-view-week,
 .calendar-view-day {
   max-width: none;

@@ -473,8 +473,10 @@
   color: var(--muted);
   min-height: 36px;
 }
-.case-focus-summary {
-  margin-bottom: 28px;
+.case-focus-panel {
+  margin: 0 0 28px;
+  padding: 0 0 20px;
+  border-bottom: 1px solid var(--line);
 }
 .case-focus-caption {
   display: flex;
@@ -487,7 +489,10 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  min-height: 36px;
+  min-height: 44px;
+  min-width: 44px;
+  justify-content: flex-end;
+  padding: 0;
 }
 .case-focus-caption svg {
   width: 14px;
@@ -497,38 +502,54 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   text-align: left;
   width: 100%;
-  padding: 5px 0 20px;
-  border-bottom: 1px solid var(--line);
+  min-height: 60px;
+  padding: 3px 0 7px;
+}
+.case-focus-main .case-focus-icon {
+  width: 20px;
+  height: 20px;
+  color: var(--blue-text);
+}
+.case-focus-content {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .case-focus-main strong {
   display: block;
-  font-size: 19px;
-  font-weight: 500;
+  font-size: var(--text-heading);
+  font-weight: var(--weight-strong);
+  color: var(--text);
 }
 .case-focus-main small {
   display: block;
   color: var(--muted);
   font-size: 13px;
-  margin-top: 6px;
+  margin-top: 3px;
 }
-.case-focus-main > svg {
+.case-focus-main > svg:last-child {
   width: 18px;
   color: var(--muted);
 }
 .case-next-action {
-  margin-top: 20px;
-  padding: 16px;
-  border-radius: 10px;
-  background: color-mix(in srgb, var(--primary) 7%, var(--surface));
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr);
+  align-items: start;
+  column-gap: 12px;
+  margin-top: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.case-next-action > .case-focus-caption {
+  padding-top: 3px;
 }
 .case-next-action > div {
   display: flex;
   align-items: flex-start;
   gap: 10px;
-  margin-top: 10px;
 }
 .case-next-action input {
   flex: none;
@@ -540,10 +561,12 @@
 .case-next-action button {
   text-align: left;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
 }
 .case-next-action > small {
   display: block;
+  grid-column: 2;
   margin: 5px 0 0 29px;
   color: var(--muted);
 }

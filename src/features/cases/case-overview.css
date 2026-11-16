@@ -279,13 +279,6 @@
   color: var(--muted);
   font-size: var(--text-xs);
 }
-.case-focus-summary {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
-  padding: 22px 0 8px;
-}
 .eyebrow {
   display: flex;
   align-items: center;
@@ -298,26 +291,8 @@
   width: 13px;
   height: 13px;
 }
-.case-focus-summary strong {
-  font-size: var(--text-title-sm);
-  font-weight: 600;
-}
-.case-focus-summary .is-empty,
 .program-node-stage.is-empty {
   color: var(--quiet);
-}
-.case-focus-summary p {
-  color: var(--text);
-  font-size: var(--text-sm);
-  margin-top: 7px;
-}
-.case-focus-summary > button {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--blue-text);
-  font-size: var(--text-sm);
-  white-space: nowrap;
 }
 .overview-people {
   display: flex;
@@ -419,9 +394,6 @@
   .program-node {
     width: 164px;
   }
-  .case-focus-summary strong {
-    font-size: var(--text-heading);
-  }
   .case-properties {
     flex-wrap: wrap;
   }
@@ -463,9 +435,6 @@
   margin: 0;
   padding: 20px 0;
   border: 0;
-}
-.case-overview-content > .case-focus-summary {
-  border-bottom: 1px solid var(--line);
 }
 .case-overview-content .quiet-empty {
   padding: 8px 0;
