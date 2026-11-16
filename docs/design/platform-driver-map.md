@@ -8,7 +8,7 @@
 | 文件 | [DocumentDriver](../../crates/hm-runtime/src/platform/documents.rs) | [Rust 桥](../../crates/tauri-plugin-hm-documents/src/ios.rs) → [Swift 系统文件](../../crates/tauri-plugin-hm-documents/ios/Sources/DocumentsPlugin.swift) | [桌面文件驱动](../../src-tauri/src/platforms/desktop/documents.rs)；Android 未接 |
 | 转文字 | [SpeechDriver](../../crates/hm-runtime/src/platform/speech.rs)、[SpeechService](../../crates/hm-application/src/speech.rs) | [Rust 桥](../../crates/tauri-plugin-hm-speech/src/ios.rs) → [Apple Speech](../../crates/tauri-plugin-hm-speech/ios/Sources/SpeechEngine.swift) | 当前未安装相应驱动 |
 | 备份文件 | [BackupDriver](../../crates/hm-runtime/src/platform/backup.rs)、[BackupService](../../crates/hm-application/src/backup.rs) | 复用系统文件驱动，可主动选择 iCloud 云盘 | 桌面复用文件对话框；不是自动同步 |
-| 账号登录 | [IdentityDriver](../../crates/hm-runtime/src/platform/identity.rs)、[IdentityService](../../crates/hm-application/src/identity.rs) | [Rust 桥](../../crates/tauri-plugin-hm-identity/src/ios.rs) → [系统授权窗口](../../crates/tauri-plugin-hm-identity/ios/Sources/IdentityPlugin.swift) / [本机钥匙串](../../crates/tauri-plugin-hm-identity/ios/Sources/IdentityCredentials.swift) | 暂为 `UnavailableIdentity`，不采用不安全存储回退；OAuth 应用仍待配置 |
+| 账号登录 | [IdentityDriver](../../crates/hm-runtime/src/platform/identity.rs)、[IdentityService](../../crates/hm-application/src/identity.rs) | [Rust 桥](../../crates/tauri-plugin-hm-identity/src/ios.rs) → [系统授权窗口](../../crates/tauri-plugin-hm-identity/ios/Sources/IdentityPlugin.swift) / [本机钥匙串](../../crates/tauri-plugin-hm-identity/ios/Sources/IdentityCredentials.swift) | 桌面与 Android 暂为 `UnavailableIdentity`，相应驱动待接入 |
 | 持续同步 | [SyncDriver / SyncSession](../../crates/hm-runtime/src/platform/sync.rs)、[SyncService](../../crates/hm-application/src/sync.rs) | 新增 [CloudKit Rust 驱动](../../crates/tauri-plugin-hm-cloudkit/src/ios.rs) → [CloudKit 数据库适配](../../crates/tauri-plugin-hm-cloudkit/ios/Sources/CloudDatabase.swift) | 当前使用 `UnavailableSync`；Mac、Windows、Google Drive、OneDrive 驱动待接 |
 
 新 CloudKit 插件由 [subsystems/mod.rs](../../src-tauri/src/subsystems/mod.rs) 注册，在平台装配中注入 `NativeDrivers.sync`。查询 `native_sync_provider` 只返回已安装的驱动名称，**不代表容器、登录或同步已可用**。驱动存在、服务已装配、具备发行权限和真实账号验收分别记录。
@@ -30,3 +30,5 @@ iPadOS 复用 iOS 驱动。Mac 虽然也有 CloudKit SDK，Tauri 的 iOS Swift �
 CloudKit 测试编译真实 SDK 代码，但数据库通过测试适配器替换，验证未配置不访问容器、云账号不符拒绝写入、条件更新/会话失效、索引与 CKAsset 文件处理及原件保留；不代表真实 CloudKit 服务器或多设备验收。未生成声称可用云同步的新 TestFlight，不改变 28.1 的手动备份定位。
 
 账号后端于 2026-11-16 部署到用户提供的 Supabase 项目，权限及原生回调验证见[线上记录](../managed-identity.md#线上部署与验证记录)。账号客户端是此后的改动，不能沿用上面的旧源码 CI 作为其原生验证证据；也不改变 28.1 仍为本机/手动备份版本的事实。
+
+后续账号验证见[原生任务](https://github.com/limushu/new_hm/actions/runs/43977286801)：源码 `24e1da5` 通过全部 26 项原生测试，包含钥匙串真实读写、项目隔离和清除，以及授权 URL 与迟到回调隔离。账号运行代码随后未变；补充账号隐私清单后的 `bfe8e63` 已生成 **1.7.7（31.1）** 并由 Apple 确认为 `VALID` / `IN_BETA_TESTING`。该版本可验收 Apple 账号入口，自动 CloudKit 同步仍未开放，真实登录/删除与跨设备使用需要分别验收。

@@ -1,6 +1,16 @@
 # App Store 首发准备
 
-## 当前备份候选：1.7.7（28.1）
+## 当前账号内测候选：1.7.7（31.1）
+
+新增「设置 → 案笺账号」，通过通用账号用例与 iOS 系统授权窗口/钥匙串接入托管身份；本项目当前已配置 Apple 登录，Google/Microsoft 尚未配置。登录、绑定、解绑、退出及显式确认删除都有客户端入口；真实 Apple 登录与删除仍需用户在 iPhone 上验收。本机案件可继续离线使用，自动 iCloud 同步尚未开放。
+
+2026-11-16，[签名构建与上传](https://github.com/limushu/new_hm/actions/runs/43979292574)成功。23:34:01 UTC 确认 `UPLOAD SUCCEEDED with no errors`；23:35:46 UTC 从 Apple API 读到 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`，已进入内部测试。已下载产物核对源码 `bfe8e63eccaea78e36274a633dcfb09e221e7eb7`、版本 1.7.7、构建 31.1、分发签名、`anjian` 回调 scheme 和包根隐私清单。Xcode 26.3 / iOS SDK 26.2；IPA SHA-256：`8241acd93126c06fc7baa54efaa9942dd736b7d11263e463f4101a0a47d2dfe9`。
+
+[应用检查](https://github.com/limushu/new_hm/actions/runs/43979143538)通过前端、Rust/Clippy 和 Windows 构建。[原生验证](https://github.com/limushu/new_hm/actions/runs/43977286801)在源码 `24e1da5` 上通过 iOS 构建、启动、数据持久化和全部 26 项原生测试，包括真实系统钥匙串的读写、替换、项目隔离、删除，以及授权 URL/迟到回调边界；该源码与 31.1 的 Rust/Swift/前端运行代码一致，后续只同步了账号隐私清单及其打包校验。签名产物再次验证了更新后的隐私清单。
+
+建议从 TestFlight 更新后先测试 Apple 登录、退出和重启后会话状态，确认本机案件保留；账号删除先使用专门的测试账号验证。新的账号隐私声明已覆盖用户标识、邮箱和姓名，用于 App 功能、与用户关联、不跟踪。现有审核视频、旧构建 Notes 与商店隐私问卷需按实际新功能更新后再重提 App Review。
+
+## 前一备份候选：1.7.7（28.1）
 
 此构建仅提供手动备份文件传输，尚未实现用户后续明确要求的 iCloud 跨设备持续同步。完整工作区 ZIP 备份通过通用备份子系统导出，并可经 iOS 系统文件保存到 iCloud 云盘。恢复先校验、显示摘要并显式确认，保留恢复前副本和目标设备的路径/设置。云盘上传由系统文件提供器处理，手动备份不等于自动同步。设计和验证边界见[备份子系统](../backup-subsystem.md)。
 
