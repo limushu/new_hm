@@ -2,9 +2,13 @@
 
 ## 当前备份候选：1.7.7（28.1）
 
-完整工作区 ZIP 备份通过通用备份子系统导出，并可经 iOS 系统文件保存到 iCloud 云盘。恢复先校验、显示摘要并显式确认，保留恢复前副本和目标设备的路径/设置。云盘上传由系统文件提供器处理，手动备份不等于自动同步。设计和验证边界见[备份子系统](../backup-subsystem.md)。
+此构建仅提供手动备份文件传输，尚未实现用户后续明确要求的 iCloud 跨设备持续同步。完整工作区 ZIP 备份通过通用备份子系统导出，并可经 iOS 系统文件保存到 iCloud 云盘。恢复先校验、显示摘要并显式确认，保留恢复前副本和目标设备的路径/设置。云盘上传由系统文件提供器处理，手动备份不等于自动同步。设计和验证边界见[备份子系统](../backup-subsystem.md)。
 
-当前正在运行检查和签名打包，尚未确认本构建上传。真实 iCloud 账号上传/下载和物理设备恢复需真机验收；未重新提交 App Review 或发布 App Store。
+2026-11-16，[签名构建与上传](https://github.com/limushu/new_hm/actions/runs/43859095673)成功，11:41:12 UTC 确认 `UPLOAD SUCCEEDED with no errors`。已下载产物并核对源码 `7e93359a4e0574470e0189eda3aa41197238c7c3`、版本 1.7.7、构建 28.1、分发签名检查状态、麦克风/语音识别权限与根目录隐私清单。IPA SHA-256：`a968775ce85dc047d0c6aa3a322b799e4c7644a5b9b8227fe9b5e2df7aa8750a`。上传状态为 `accepted-for-processing`，Apple 处理完成及 TestFlight 可安装状态尚未单独核实。
+
+[应用检查](https://github.com/limushu/new_hm/actions/runs/43859057615)通过 53 项单元测试、126 项 Chromium 界面回归、17 项 WebKit 触摸回归、Rust 测试与 Clippy、Windows 构建。[移动端检查](https://github.com/limushu/new_hm/actions/runs/43859057553)通过 Android 编译、iOS 模拟器启动/工作区持久化及 18 项原生驱动测试。本机完成隔离工作区 ZIP 往返、关系/收支/材料恢复、原音频字节核对、本机设置保留、恢复前副本、篡改拒绝、可替换内存驱动与令牌确认测试；另核对四档宽度和深浅主题共 8 组布局，新入口统一 44px 高且无横向溢出。
+
+真实 iCloud 账号上传/下载和物理设备恢复仍需真机验收；自动化和模拟器不替代这些实测，未重新提交 App Review 或发布 App Store。
 
 ## 前一清单候选：1.7.7（27.1）
 
