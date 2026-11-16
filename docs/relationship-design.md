@@ -8,6 +8,8 @@
 
 `save_contact` 增加可选 `caseLink` 上下文（关系 id、案件 id、本案身份）。Rust 将新档案、法官任职法院及案件级身份放在同一个事务中保存；无效案件或身份导致整体回滚。既有独立建档调用保持兼容，无数据库 schema 变更。对象公共属性仍通过原有扩展接口完成；属性写入失败保留原身份供重试，不重复建档。
 
+手机界面预览：[先选类型](design/current/contact-type-1.7.5-light.png)、[复用已有法院](design/current/contact-reuse-1.7.5-light.png)、[新建法院](design/current/contact-create-1.7.5-dark.png)。这些图是使用虚构数据的浏览器界面验证，不作为 App Store 原生截图或真机验收证据。
+
 ## 既有设计（1.4.1）
 
 本轮来自 2026-10-18 的评审：支持侧页外返回；法院、法官、案件建立可复用关系；参考 Obsidian 的反向链接和局部关系，优化字体。
