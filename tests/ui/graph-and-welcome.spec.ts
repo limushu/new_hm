@@ -75,6 +75,22 @@ test('节点拖动与画布平移分别工作，滚轮缩放、重置、键盘�
   await page.getByRole('button', { name: '关系图', exact: true }).click();
   const dialog = page.getByRole('dialog', { name: '全局关系图', exact: true });
   const node = dialog.getByRole('button', { name: '查看示例法院', exact: true });
+  const svg = dialog.locator('.graph-canvas > svg');
+  // Opening the native dialog changes its measured size. Capture the baseline
+  // after ResizeObserver has applied that size, rather than the initial fallback.
+  await expect
+    .poll(() =>
+      svg.evaluate((element) => {
+        const box = element.getBoundingClientRect();
+        const view = (element as SVGSVGElement).viewBox.baseVal;
+        return (
+          box.width > 0 &&
+          view.width === Math.round(box.width) &&
+          view.height === Math.round(box.height)
+        );
+      }),
+    )
+    .toBe(true);
   const original = await node.getAttribute('transform');
   const dot = await node.locator('.graph-dot').boundingBox();
   if (!dot) throw new Error('节点不可见');
@@ -84,7 +100,6 @@ test('节点拖动与画布平移分别工作，滚轮缩放、重置、键盘�
   await page.mouse.up();
   await expect(node).not.toHaveAttribute('transform', original!);
   await expect(dialog).toBeVisible();
-  const svg = dialog.locator('.graph-canvas > svg');
   const canvas = await svg.boundingBox();
   if (!canvas) throw new Error('画布不可见');
   const world = svg.locator(':scope > g');
