@@ -2,6 +2,8 @@ mod backup;
 mod documents;
 pub use backup::{BackupDriver, FileBackupDriver, UnavailableBackup};
 mod error;
+mod identity;
+pub use identity::{IdentityDriver, UnavailableIdentity};
 mod recording;
 mod speech;
 mod sync;
@@ -45,7 +47,11 @@ mod tests {
     #[test]
     fn unsupported_subsystem_cannot_grant_capabilities() {
         let mut manifest = RuntimeManifest::mobile();
-        manifest.subsystems[1]
+        manifest
+            .subsystems
+            .iter_mut()
+            .find(|s| s.id == crate::SubsystemId::Updates)
+            .unwrap()
             .capabilities
             .push(Capability::SignedUpdates);
         assert!(manifest.require(Capability::SignedUpdates).is_err());

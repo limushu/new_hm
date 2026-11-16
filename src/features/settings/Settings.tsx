@@ -10,6 +10,7 @@ import UpdateDialog from '../../components/UpdateDialog';
 import Welcome from '../../components/Welcome';
 import PrivacyPolicy from './PrivacyPolicy';
 import BackupFiles from './BackupFiles';
+import AccountSettings from './AccountSettings';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
 import { useTheme } from '../../components/ThemeProvider';
@@ -164,6 +165,7 @@ export default function Settings({
           <code>{storage?.dataDirectory ?? '正在读取…'}</code>
         </div>
       </section>
+      <AccountSettings />
       <section className="settings-section">
         <h2>备份与恢复</h2>
         <p className="feature-description">

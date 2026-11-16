@@ -1,0 +1,45 @@
+.account-settings h2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.account-settings h2 svg {
+  width: 19px;
+  height: 19px;
+  color: var(--muted);
+}
+.account-summary {
+  display: grid;
+  gap: 5px;
+  padding: 12px 0;
+}
+.account-summary span,
+.account-summary small,
+.account-provider small {
+  color: var(--muted);
+}
+.account-summary strong,
+.account-summary span {
+  overflow-wrap: anywhere;
+}
+.account-providers {
+  margin-block: 12px;
+}
+.account-provider {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 66px;
+  border-bottom: 1px solid var(--line);
+}
+.account-provider > span {
+  display: grid;
+  gap: 4px;
+}
+.account-provider small {
+  font-size: 12px;
+}
+.account-provider .ui-button {
+  flex: 0 0 auto;
+}

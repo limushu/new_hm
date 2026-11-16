@@ -2,7 +2,7 @@
 
 用户已确认统一案笺身份，可以绑定 Apple、Google 和 Microsoft，案件保存到用户选择的云；按不需要自管服务器的 Supabase 托管方案接入。
 
-**状态：真实 Supabase 项目已部署账号目录、权限规则和删除账号函数；原生应用回调与手动身份绑定配置已保存并复核。三家 OAuth 应用尚未配置，客户端登录、账号绑定 UI、云存储配置与生产多设备同步仍未接通。** 本地实现了通用同步原型，iOS CloudKit 驱动源码和装配已补充，具体边界见[驱动接入地图](design/platform-driver-map.md)。TestFlight 1.7.7（28.1）只有手动备份，不能作为账号或同步功能验收。
+**状态：真实 Supabase 项目已部署账号目录、权限规则和删除账号函数；原生应用回调与手动身份绑定配置已保存并复核。客户端已加入账号用例、设置入口和 iOS 系统授权/钥匙串驱动。三家 OAuth 应用尚未配置，真实登录/绑定/删除、云存储配置与生产多设备同步尚未验收。** 本地实现了通用同步原型，iOS CloudKit 驱动源码和装配已补充，具体边界见[驱动接入地图](design/platform-driver-map.md)。TestFlight 1.7.7（28.1）只有手动备份，不包含本次账号客户端，不能作为账号或同步功能验收。
 
 ## 方案与边界
 
@@ -44,17 +44,25 @@ Edge Function 使用平台注入的 `SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPA
 
 账号删除入口当前针对原生客户端，不提供浏览器 CORS 接口。日后增加 Web 端须单独配置允许来源。账号目录删除会级联清除自己的服务端元数据，不代表已经删除用户云盘中的案件文件；产品删除流程还须明确本机与外部云内容的处理范围。
 
-## 客户端仍需接入的工作
+## 客户端接入与剩余工作
 
-三家登录通过系统授权窗口和 PKCE / nonce 完成，刷新凭据保存到 iOS/macOS Keychain 或 Windows 凭据存储，不写 localStorage、普通设置或同步快照。服务端的 secret/service_role 不能用于原生客户端。
+当前调用链为[账号设置](../src/features/settings/AccountSettings.tsx) → [账号 IPC](../src-tauri/src/subsystems/identity/mod.rs) → [IdentityService](../crates/hm-application/src/identity.rs) → [IdentityDriver](../crates/hm-runtime/src/platform/identity.rs) / [托管 HTTP 适配](../crates/hm-application/src/identity/hosted.rs)。iOS/iPadOS 使用 [Rust 桥](../crates/tauri-plugin-hm-identity/src/ios.rs) → [ASWebAuthenticationSession](../crates/tauri-plugin-hm-identity/ios/Sources/IdentityPlugin.swift) 与[设备专属钥匙串](../crates/tauri-plugin-hm-identity/ios/Sources/IdentityCredentials.swift)。桌面及 Android 返回未支持，不以浏览器存储代替安全驱动。
+
+登录采用随机 PKCE S256，严格检查回调并向 Auth user 接口验证身份；绑定必须返回同一个案笺用户，最后一种登录方式不能解绑。刷新凭据只写入原生钥匙串，标记 WhenUnlockedThisDeviceOnly 且不参与 iCloud Keychain；UI IPC 仅返回公开账号资料，不返回访问/刷新令牌。凭据不进入 localStorage、普通设置、SQLite 或同步快照；服务端的 secret/service_role 不进入原生客户端。阻塞网络与系统授权在独立工作线程运行，不获取业务数据库锁。
+
+设置页支持查询配置、登录、绑定、解绑、退出和显式确认删除；未配置的登录方式禁用，网络异常可重试。退出登录可以离线执行并保留本机案件。删除调用已部署的服务端入口，失败时不清除账号；Apple 缺少可撤销授权时重新授权，仍无刷新令牌则拒绝删除。Apple OAuth 和撤销配置需与真实 Services ID 匹配后完整验收，不能以模拟测试代替。
 
 统一账号登录不等于已获得云盘权限。首次选择工作区云服务时还要完成对应数据授权，存储驱动必须验证云账号与绑定一致。iCloud 私有容器还需要 Apple App ID 能力、容器及发行签名；OneDrive/Google Drive 需要相应 OAuth 数据权限和令牌刷新。切换云服务是迁移流程，不是切换一个登录按钮。
 
 缺少 OAuth 配置或客户端接入时，不展示可用登录或“已同步”的假状态。接好上述资料后还须完成真实登录/绑定/删除、签名包、生产云权限和至少两台设备的验收，才能开放功能。
 
+下一步在 Supabase Auth Providers 中配置所需平台，服务器回调统一为 `https://vfbufazqpzetjkmkvjwp.supabase.co/auth/v1/callback`。Apple 需要 Services ID 和有效 client-secret JWT，Google 需要 Web OAuth client ID/secret，Microsoft 需要 Entra 应用 client ID/secret 与正确账户范围。凭据由平台所有者在对应控制台配置，不发送聊天。iOS 的 `anjian` URL scheme 已加入工程模板，但它不能替代上述 OAuth 应用注册。
+
 ## 已有验证
 
 测试在真实 PostgreSQL 引擎（PGlite）中运行迁移和 RLS，覆盖匿名拒绝、跨用户访问、身份字段不可冒认、跨用户/提供器绑定拒绝、令牌字段拒绝、引用约束和账号删除级联。删除函数测试验证服务端用户 ID、无效会话、请求大小、故障时不假报成功，以及 Apple ES256 签名和撤销先于删除的顺序。
+
+客户端新增 9 项 Rust 用例测试：PKCE/回调、公开状态不含令牌、未配置不授权、绑定账号错配/不可信网址、续期与钥匙串失败、离线退出、最后身份保护和删除边界；新增 4 项触屏界面回归。iOS 原生测试新增钥匙串读写/替换/隔离/删除、非法项目、授权 URL 和迟到回调隔离；原生编译及测试结果须以本次 CI 记录为准。
 
 Rust 同步测试使用两份隔离 SQLite 和可替换内存云驱动，验证版本接续、附件复用、离线失败、账号隔离、并发冲突和保留双方版本。这些测试不代表真实登录或实际云盘同步已经可用。
 

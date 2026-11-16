@@ -1092,6 +1092,15 @@ export async function previewCommand<K extends keyof Commands>(
     case 'native_sync_provider':
       result = null;
       break;
+    case 'identity_status':
+      result = { installed: false, providers: [], account: null, cloudSyncAvailable: false };
+      break;
+    case 'identity_sign_in':
+    case 'identity_link':
+    case 'identity_unlink':
+    case 'identity_sign_out':
+    case 'identity_delete_account':
+      throw new Error('界面预览不执行真实账号操作');
     case 'choose_backup_directory':
     case 'export_backup_archive':
     case 'pick_backup_archive':

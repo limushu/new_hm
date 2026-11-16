@@ -21,7 +21,7 @@ impl NativeDrivers {
     }
 }
 
-pub fn setup(app: &mut tauri::App) {
+pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     use tauri::Manager;
     #[cfg(desktop)]
     let drivers = NativeDrivers {
@@ -36,6 +36,15 @@ pub fn setup(app: &mut tauri::App) {
     let manifest = {
         #[allow(unused_mut)]
         let mut manifest = RuntimeManifest::mobile();
+        #[cfg(target_os = "ios")]
+        if let Some(identity) = manifest
+            .subsystems
+            .iter_mut()
+            .find(|s| s.id == hm_runtime::SubsystemId::Identity)
+        {
+            identity.state = hm_runtime::Availability::Ready;
+            identity.capabilities = vec![hm_runtime::Capability::AccountLogin];
+        }
         #[cfg(target_os = "ios")]
         if let Some(documents) = manifest
             .subsystems
@@ -122,4 +131,10 @@ pub fn setup(app: &mut tauri::App) {
         std::sync::Mutex::new(hm_application::backup::BackupService::new(backup)),
     ));
     app.manage(drivers);
+    #[cfg(target_os = "ios")]
+    let identity = tauri_plugin_hm_identity::driver(app.handle());
+    #[cfg(not(target_os = "ios"))]
+    let identity = Box::new(hm_runtime::platform::UnavailableIdentity);
+    crate::subsystems::identity::setup(app, identity)?;
+    Ok(())
 }

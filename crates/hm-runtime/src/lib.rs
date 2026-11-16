@@ -23,6 +23,7 @@ pub enum Capability {
     BackupTransfer,
     BackupFiles,
     SystemNotifications,
+    AccountLogin,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -35,6 +36,7 @@ pub enum SubsystemId {
     Recording,
     Speech,
     Backup,
+    Identity,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
@@ -66,6 +68,11 @@ impl RuntimeManifest {
         Self {
             version: 1,
             subsystems: vec![
+                SubsystemDescriptor {
+                    id: SubsystemId::Identity,
+                    state: Availability::Unsupported,
+                    capabilities: vec![],
+                },
                 SubsystemDescriptor {
                     id: SubsystemId::Host,
                     state: Availability::Ready,
@@ -127,6 +134,11 @@ impl RuntimeManifest {
         Self {
             version: 1,
             subsystems: vec![
+                SubsystemDescriptor {
+                    id: SubsystemId::Identity,
+                    state: Availability::Unsupported,
+                    capabilities: vec![],
+                },
                 SubsystemDescriptor {
                     id: SubsystemId::Host,
                     state: Availability::Ready,

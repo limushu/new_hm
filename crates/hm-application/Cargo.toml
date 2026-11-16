@@ -12,6 +12,9 @@ hm-runtime = { path = "../hm-runtime" }
 serde_json = "1"
 sha2 = "0.10"
 tempfile = "3"
+base64 = "0.22"
+url = "2"
+reqwest = { version = "0.12", default-features = false, features = ["blocking", "json", "rustls-tls"] }
 
 [dev-dependencies]
 tempfile = "3"

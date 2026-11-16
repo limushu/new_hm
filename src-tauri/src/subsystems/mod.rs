@@ -4,6 +4,7 @@ pub mod documents;
 mod health;
 #[cfg(desktop)]
 pub mod host;
+pub mod identity;
 pub mod maintenance;
 #[cfg(mobile)]
 pub mod mobile;
@@ -29,6 +30,7 @@ pub fn configure(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::W
         .plugin(tauri_plugin_hm_recording::init())
         .plugin(tauri_plugin_hm_documents::init())
         .plugin(tauri_plugin_hm_speech::init())
+        .plugin(tauri_plugin_hm_identity::init())
         .plugin(tauri_plugin_hm_cloudkit::init());
     #[cfg(desktop)]
     let builder = maintenance::configure(updates::configure(host::configure(builder)));
@@ -42,7 +44,7 @@ pub fn subsystem_manifest(state: State<'_, RuntimeState>) -> RuntimeManifest {
 
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(health::RuntimeHealth::default());
-    crate::platforms::setup(app);
+    crate::platforms::setup(app)?;
     #[cfg(desktop)]
     {
         host::setup(app)?;

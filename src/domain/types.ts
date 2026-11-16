@@ -427,6 +427,12 @@ export interface Commands {
   choose_backup_directory: { args: Record<string, never>; result: string | null };
   run_backup: { args: Record<string, never>; result: BackupInfo };
   native_sync_provider: { args: Record<string, never>; result: string | null };
+  identity_status: { args: Record<string, never>; result: IdentitySnapshot };
+  identity_sign_in: { args: { provider: IdentityProvider }; result: IdentitySnapshot };
+  identity_link: { args: { provider: IdentityProvider }; result: IdentitySnapshot };
+  identity_unlink: { args: { provider: IdentityProvider }; result: IdentitySnapshot };
+  identity_sign_out: { args: Record<string, never>; result: null };
+  identity_delete_account: { args: { confirmed: boolean }; result: null };
   export_backup_archive: { args: Record<string, never>; result: BackupExport | null };
   pick_backup_archive: { args: Record<string, never>; result: BackupCandidate | null };
   restore_backup_archive: { args: { token: string; confirmed: boolean }; result: BackupSummary };
@@ -479,3 +485,4 @@ export interface Commands {
     result: null;
   };
 }
+import type { IdentityProvider, IdentitySnapshot } from './identity';

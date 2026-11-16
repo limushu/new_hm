@@ -15,12 +15,21 @@ export type Capability =
   | 'local-backup'
   | 'backup-transfer'
   | 'backup-files'
-  | 'system-notifications';
+  | 'system-notifications'
+  | 'account-login';
 
 export interface RuntimeManifest {
   version: 1;
   subsystems: Array<{
-    id: 'host' | 'updates' | 'maintenance' | 'documents' | 'recording' | 'speech' | 'backup';
+    id:
+      | 'host'
+      | 'updates'
+      | 'maintenance'
+      | 'documents'
+      | 'recording'
+      | 'speech'
+      | 'backup'
+      | 'identity';
     state: 'ready' | 'unsupported';
     capabilities: Capability[];
   }>;

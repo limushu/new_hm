@@ -57,6 +57,9 @@ targets:
       path: {{app.name}}_iOS/Info.plist
       properties:
         LSRequiresIPhoneOS: true
+        CFBundleURLTypes:
+          - CFBundleURLName: com.limushu.hm.auth
+            CFBundleURLSchemes: [anjian]
         UILaunchStoryboardName: LaunchScreen
         UIRequiredDeviceCapabilities: [arm64, metal]
         UISupportedInterfaceOrientations:

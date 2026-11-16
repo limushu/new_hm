@@ -8,3 +8,4 @@ pub mod sync;
 pub mod errors;
 
 pub mod case_system;
+pub mod identity;
