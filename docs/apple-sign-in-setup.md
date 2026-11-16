@@ -1,6 +1,6 @@
 # 开通 Apple 登录
 
-本页对应案笺的原生系统浏览器 OAuth 接入。iOS 界面和凭据驱动已写入代码，下面的 Apple 平台配置尚需账号持有人完成；准备好凭据不代表真实登录验收通过。官方依据：[Supabase Apple 登录](https://supabase.com/docs/guides/auth/social-login/auth-apple)。
+本页对应案笺的原生系统浏览器 OAuth 接入。以下步骤用于首次开通与维护；当前项目已在 2026-11-16 完成 Apple 平台及 Supabase 配置，见[线上记录](managed-identity.md#线上部署与验证记录)。iOS 界面和凭据驱动已写入代码，真实登录仍待包含账号功能的新测试构建验收。官方依据：[Supabase Apple 登录](https://supabase.com/docs/guides/auth/social-login/auth-apple)。
 
 ## Apple Developer
 

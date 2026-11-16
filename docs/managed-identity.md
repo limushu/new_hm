@@ -2,7 +2,7 @@
 
 用户已确认统一案笺身份，可以绑定 Apple、Google 和 Microsoft，案件保存到用户选择的云；按不需要自管服务器的 Supabase 托管方案接入。
 
-**状态：真实 Supabase 项目已部署账号目录、权限规则和删除账号函数；原生应用回调与手动身份绑定配置已保存并复核。客户端已加入账号用例、设置入口和 iOS 系统授权/钥匙串驱动。三家 OAuth 应用尚未配置，真实登录/绑定/删除、云存储配置与生产多设备同步尚未验收。** 本地实现了通用同步原型，iOS CloudKit 驱动源码和装配已补充，具体边界见[驱动接入地图](design/platform-driver-map.md)。TestFlight 1.7.7（28.1）只有手动备份，不包含本次账号客户端，不能作为账号或同步功能验收。
+**状态：真实 Supabase 项目已部署账号目录、权限规则和删除账号函数；原生应用回调与手动身份绑定配置已保存并复核。客户端已加入账号用例、设置入口和 iOS 系统授权/钥匙串驱动。Apple OAuth 及删除授权撤销凭据已配置，Google/Microsoft 尚未配置；真实登录/绑定/删除、云存储配置与生产多设备同步尚未验收。** 本地实现了通用同步原型，iOS CloudKit 驱动源码和装配已补充，具体边界见[驱动接入地图](design/platform-driver-map.md)。TestFlight 1.7.7（28.1）只有手动备份，不包含本次账号客户端，不能作为账号或同步功能验收。
 
 ## 方案与边界
 
@@ -76,6 +76,9 @@ Rust 同步测试使用两份隔离 SQLite 和可替换内存云驱动，验证�
 - [认证路由配置与权限复核](https://github.com/limushu/new_hm/actions/runs/43888944441)：在 14:45 UTC 确认 `anjian://auth/callback` 已列入允许回调，manual identity linking 已开启；三个目录表均启用 RLS，匿名角色没有 SELECT 权限，认证角色具备受策略约束的 SELECT 权限。该次运行的 12 项账号测试通过。
 - 使用公开 key 实测三个目录表的匿名查询均返回 HTTP 401 / PostgreSQL `42501`；没有读取用户记录。删除接口 GET 返回 405，缺少会话或使用无效 bearer 的 POST 返回 401；没有执行真实用户删除。
 
-Apple、Google、Azure 的 OAuth client ID 与 secret 均未配置，三项外部登录均关闭。尚未验证真实注册、登录、绑定或删除，云同步仍未开放。
+- [Apple 登录配置](https://github.com/limushu/new_hm/actions/runs/43899614713)：15:44 UTC 使用用户新增的四项 GitHub Secrets 完成配置；先写入删除接口的授权撤销凭据，再启用 Apple 提供器。JWT 到期为 **2027-04-15 15:44 UTC**，需提前重跑相同任务更新。日志和产物只有脱敏状态，不含私钥或 JWT。
+- 15:45 UTC 公开 Auth settings 已实际返回 Apple 开启、Google/Azure 关闭。随后实测 PKCE 授权入口返回 HTTP 302，目标为 Apple 授权主机，Services ID 为 `com.limushu.hm.auth`，服务器回调与本项目一致；未提交用户凭据、未完成 Apple 用户登录。
+
+Apple 的服务端配置与授权入口检查通过，不等于真实注册、登录、绑定或删除已验收；Google/Azure 仍未配置，云同步未开放。
 
 `node scripts/check-identity-project.mjs` 输出公开连接、提供器开关、凭据是否存在、目录权限和认证路由的脱敏状态，不输出 key、提供器密钥或管理令牌。权限查询只读 PostgreSQL 系统目录，不读案件或账号行。提供器 OAuth 密钥仍应放在 Supabase 控制台，管理令牌放 GitHub Secrets，不发送到聊天。

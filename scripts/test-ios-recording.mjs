@@ -110,7 +110,7 @@ try {
     '-configuration',
     'Debug',
     '-destination',
-    `id=${device}`,
+    `id=${device},arch=${process.arch === 'arm64' ? 'arm64' : 'x86_64'}`,
     '-derivedDataPath',
     join(temporary, 'build'),
     '-parallel-testing-enabled',
@@ -141,6 +141,7 @@ try {
     '--entitlements',
     testEntitlements,
     '--timestamp=none',
+    '--generate-entitlement-der',
     host,
   ]);
   run('xcrun', ['simctl', 'install', device, host]);
@@ -154,6 +155,12 @@ try {
   ]);
   run('xcodebuild', [
     ...argumentsForBuild,
+    '-test-timeouts-enabled',
+    'YES',
+    '-default-test-execution-time-allowance',
+    '45',
+    '-maximum-test-execution-time-allowance',
+    '90',
     '-resultBundlePath',
     join(output, 'native-recording.xcresult'),
     'test-without-building',

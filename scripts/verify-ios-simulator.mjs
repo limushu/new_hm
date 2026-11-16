@@ -3,6 +3,7 @@ import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } fr
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
+import { selectSimulatorRuntime } from './ios-simulator-config.mjs';
 
 if (process.platform !== 'darwin') {
   throw new Error(
@@ -136,10 +137,10 @@ try {
   const runtimes = JSON.parse(
     run('xcrun', ['simctl', 'list', 'runtimes', '-j'], { capture: true }),
   ).runtimes;
-  const runtime = runtimes
-    .filter((r) => r.isAvailable && r.identifier.includes('.iOS-'))
-    .sort((a, b) => b.version.localeCompare(a.version, undefined, { numeric: true }))[0];
-  if (!runtime) throw new Error('No available iOS simulator runtime');
+  report.simulatorSdk = run('xcrun', ['--sdk', 'iphonesimulator', '--show-sdk-version'], {
+    capture: true,
+  });
+  const runtime = selectSimulatorRuntime(runtimes, report.simulatorSdk);
   const types = JSON.parse(
     run('xcrun', ['simctl', 'list', 'devicetypes', '-j'], { capture: true }),
   ).devicetypes;

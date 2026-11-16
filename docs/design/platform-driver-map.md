@@ -18,7 +18,7 @@
 - 核心：[一致快照与逻辑指纹](../../crates/hm-core/src/backup/sync.rs)，不把 SQLite/WAL 放到云盘；本机设置和提醒送达状态不随工作数据同步。
 - 通用用例：基于一致版本接续，复用未变的附件块，云端条件更新防止覆盖，并发修改暂停并保留可恢复版本。当前是快照版本原型，尚未实现对象字段级自动合并。
 - iOS 驱动：CloudKit 私有数据库、账号绑定检查、record change tag 条件写入、16 MiB 附件分块与校验。Swift 文件包括真实 CloudKit API，测试另外注入内存数据库验证边界；不以模拟账号冒充真实云账号。
-- 托管账号：[Supabase 部署与接入](../managed-identity.md)。目录和删除函数已真实部署；新增账号设置 UI、通用用例与 iOS 安全驱动。三家 OAuth 应用尚未配置，真实登录与云存储授权未验收。
+- 托管账号：[Supabase 部署与接入](../managed-identity.md)。目录和删除函数已真实部署；新增账号设置 UI、通用用例与 iOS 安全驱动。Apple OAuth 与删除授权撤销凭据已配置，Google/Microsoft 未配置；真实登录与云存储授权未验收。
 - 激活：当前安装包没有 `AnjianCloudKitContainer` 配置及 iCloud 发行权限。插件加载不访问 CKContainer；发起连接时返回 `cloud_not_configured`，不宣告可同步。
 
 iPadOS 复用 iOS 驱动。Mac 虽然也有 CloudKit SDK，Tauri 的 iOS Swift 插件桥不能直接当作 Mac 接入，仍需自己的桥接、装配、签名和验收。Windows 后续通过统一端口接 OneDrive/Google Drive 或适用的 CloudKit Web 授权方案，不会自动读取 Apple 私有容器。
