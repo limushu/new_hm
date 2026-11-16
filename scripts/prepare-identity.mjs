@@ -5,6 +5,7 @@ const root = resolve(import.meta.dirname, '..');
 const output = resolve(process.argv[2] ?? join(root, 'artifacts/identity'));
 mkdirSync(output, { recursive: true });
 const files = [
+  ['supabase/client.public.json', 'client.public.json'],
   ['supabase/migrations/202611160001_account_catalog.sql', 'account-catalog.sql'],
   ['supabase/functions/delete-account/handler.ts', 'delete-account/handler.ts'],
   ['supabase/functions/delete-account/index.ts', 'delete-account/index.ts'],

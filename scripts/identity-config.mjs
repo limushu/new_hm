@@ -39,3 +39,20 @@ export function identityConfig(env) {
     'Use a publishable/anon key. Secret keys, service_role and user access tokens cannot be bundled',
   );
 }
+
+export function projectIdentityConfig(value) {
+  const config = identityConfig({
+    ANJIAN_AUTH_URL: value?.url,
+    ANJIAN_AUTH_PUBLIC_KEY: value?.publicKey,
+  });
+  if (!config.configured || !/^[a-z0-9]{20}$/.test(value?.projectRef ?? ''))
+    throw new Error(
+      'Identity project needs an explicit project reference and public configuration',
+    );
+  if (
+    new URL(config.origin).hostname.endsWith('.supabase.co') &&
+    new URL(config.origin).hostname !== `${value.projectRef}.supabase.co`
+  )
+    throw new Error('Identity project reference and service URL do not match');
+  return { ...config, projectRef: value.projectRef };
+}

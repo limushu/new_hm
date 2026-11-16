@@ -1,18 +1,24 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { identityMigrationSql } from './identity-migration.mjs';
+import { projectIdentityConfig } from './identity-config.mjs';
 
 if (!process.argv.includes('--apply')) {
   console.log(
     'Dry run: would apply account catalog migration and deploy delete-account. No external calls.',
   );
 } else {
-  const project = process.env.SUPABASE_PROJECT_REF;
+  const root = resolve(import.meta.dirname, '..');
+  const config = projectIdentityConfig(
+    JSON.parse(readFileSync(resolve(root, 'supabase/client.public.json'), 'utf8')),
+  );
+  const project = process.env.SUPABASE_PROJECT_REF || config.projectRef;
   const access = process.env.SUPABASE_ACCESS_TOKEN;
   if (!project || !/^[a-z0-9]{20}$/.test(project) || !access)
     throw new Error('Set SUPABASE_PROJECT_REF and SUPABASE_ACCESS_TOKEN before deployment');
-  const root = resolve(import.meta.dirname, '..');
+  if (project !== config.projectRef)
+    throw new Error('Deployment target must match the reviewed public client project');
   const query = identityMigrationSql(
     readFileSync(resolve(root, 'supabase/migrations/202611160001_account_catalog.sql'), 'utf8'),
   );
@@ -47,6 +53,17 @@ if (!process.argv.includes('--apply')) {
     throw new Error(
       'Edge Function deployment failed. Catalog migration remains applied and can be retried.',
     );
+  const statusPath = resolve(root, 'artifacts/identity/status.json');
+  if (existsSync(statusPath)) {
+    const status = JSON.parse(readFileSync(statusPath, 'utf8'));
+    Object.assign(status, {
+      projectRef: config.projectRef,
+      status: 'backend-deployed-client-integration-pending',
+      backendSchemaDeployed: true,
+      deleteFunctionDeployed: true,
+    });
+    writeFileSync(statusPath, JSON.stringify(status, null, 2) + '\n');
+  }
   console.log(
     'Hosted identity schema and deletion function deployed. OAuth providers and app/cloud clients still require configuration and real-device testing.',
   );

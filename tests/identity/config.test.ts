@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest';
-import { identityConfig } from '../../scripts/identity-config.mjs';
+import { identityConfig, projectIdentityConfig } from '../../scripts/identity-config.mjs';
 
 test('未配置托管服务时不宣告登录可用；只接受公开客户端 key', () => {
   expect(identityConfig({})).toEqual({ configured: false });
@@ -36,4 +36,18 @@ test('未配置托管服务时不宣告登录可用；只接受公开客户端 k
     );
   }
   expect(() => identityConfig({ ANJIAN_AUTH_URL: origin })).toThrow('needs both');
+});
+
+test('部署目标与公开客户端配置必须指向同一项目', () => {
+  const key = 'sb_publishable_abcdefghijklmnopqrstuvwxyz0123456789';
+  const ref = 'abcdefghijklmnopqrst';
+  expect(
+    projectIdentityConfig({ projectRef: ref, url: `https://${ref}.supabase.co`, publicKey: key }),
+  ).toMatchObject({ projectRef: ref, configured: true });
+  expect(() =>
+    projectIdentityConfig({ projectRef: ref, url: 'https://other.supabase.co', publicKey: key }),
+  ).toThrow('do not match');
+  expect(() =>
+    projectIdentityConfig({ projectRef: '', url: `https://${ref}.supabase.co`, publicKey: key }),
+  ).toThrow('explicit project reference');
 });

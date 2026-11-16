@@ -1,8 +1,8 @@
 # 托管账号与用户自选云：部署准备
 
-用户已确认统一案笺身份，可以绑定 Apple、Google 和 Microsoft，案件保存到用户选择的云；目前没有现成账号后端，先准备不需要自管服务器的托管方案。
+用户已确认统一案笺身份，可以绑定 Apple、Google 和 Microsoft，案件保存到用户选择的云；按不需要自管服务器的 Supabase 托管方案接入。
 
-**状态：本地实现了通用同步原型与托管服务部署资料，未创建或部署真实项目，客户端登录、账号绑定 UI、云存储配置与生产多设备同步仍未接通。** iOS CloudKit 驱动源码和装配已补充，具体边界见[驱动接入地图](design/platform-driver-map.md)。TestFlight 1.7.7（28.1）只有手动备份，不能作为账号或同步功能验收。
+**状态：本地实现了通用同步原型与托管服务部署资料，用户已创建真实 Supabase 项目并提供公开客户端配置，账号服务连接验证通过；工作区表和三家 OAuth 仍未配置，客户端登录、账号绑定 UI、云存储配置与生产多设备同步仍未接通。** iOS CloudKit 驱动源码和装配已补充，具体边界见[驱动接入地图](design/platform-driver-map.md)。TestFlight 1.7.7（28.1）只有手动备份，不能作为账号或同步功能验收。
 
 ## 方案与边界
 
@@ -21,7 +21,7 @@ Supabase Postgres 只存账号显示资料、工作区目录、云存储绑定�
 - [Supabase 本地配置](../supabase/config.toml)：允许的原生回调与手动身份绑定；实际 OAuth 提供器仍需在托管项目中配置。
 - [公共客户端配置检查](../scripts/identity-config.mjs)：接受 Project URL 与 publishable/anon key，拒绝 service_role、secret key、用户访问令牌或非 HTTPS 地址。
 
-`npm run identity:prepare` 生成 `artifacts/identity/`，包含迁移 SQL、删除函数和此说明。不创建项目、不启用真实登录、不包含任何凭据。
+`npm run identity:prepare` 生成 `artifacts/identity/`，包含迁移 SQL、删除函数和此说明。不创建项目、不启用真实登录；只包含公开客户端配置，不包含管理凭据或私钥。
 
 ## 首次开通
 
@@ -38,7 +38,7 @@ Project URL 和 publishable/anon key 可以提供给开发者用于客户端接�
 
 [Hosted identity preparation](../.github/workflows/identity.yml) 仅允许 main 手动触发。默认只检查和打包资料；`apply=true` 才会调用管理 API 执行迁移并部署 Edge Function。
 
-实际部署需要仓库变量 `SUPABASE_PROJECT_REF`，以及 GitHub Secret `SUPABASE_ACCESS_TOKEN`（Supabase 个人管理令牌）。不把管理令牌交给客户端。脚本不会创建新项目、选择付费套餐或修改三家 OAuth 应用；它只部署当前仓库中已审阅的账号目录和删除函数。API 和 CLI 通过环境读取令牌，不将其放在命令参数中。
+实际部署以仓库中的 `supabase/client.public.json` 为项目定位，不必额外设置仓库变量；需要 GitHub Secret `SUPABASE_ACCESS_TOKEN`（Supabase 个人管理令牌）。不把管理令牌交给客户端。脚本不会创建新项目、选择付费套餐或修改三家 OAuth 应用；它只部署当前仓库中已审阅的账号目录和删除函数。工作流会读取管理令牌并只输出访问是否就绪，不打印令牌；GitHub 连接无法读取 Secrets 列表时也可以通过这一方式检查。API 和 CLI 通过环境读取令牌，不将其放在命令参数中。
 
 Edge Function 使用平台注入的 `SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPABASE_SERVICE_ROLE_KEY`。Apple 账号删除另外需要函数私密配置：`APPLE_KEY_ID`、`APPLE_TEAM_ID`、`APPLE_OAUTH_CLIENT_ID`、`APPLE_PRIVATE_KEY`；与实际 Apple OAuth 应用保持一致。这些值只放在 Supabase Function Secrets。函数每次生成短时 client-secret JWT，不把 Apple 私钥或刷新令牌写进日志、目录表或响应。
 
@@ -57,3 +57,9 @@ Edge Function 使用平台注入的 `SUPABASE_URL`、`SUPABASE_ANON_KEY`、`SUPA
 测试在真实 PostgreSQL 引擎（PGlite）中运行迁移和 RLS，覆盖匿名拒绝、跨用户访问、身份字段不可冒认、跨用户/提供器绑定拒绝、令牌字段拒绝、引用约束和账号删除级联。删除函数测试验证服务端用户 ID、无效会话、请求大小、故障时不假报成功，以及 Apple ES256 签名和撤销先于删除的顺序。
 
 Rust 同步测试使用两份隔离 SQLite 和可替换内存云驱动，验证版本接续、附件复用、离线失败、账号隔离、并发冲突和保留双方版本。这些测试不代表 Supabase、Apple 或实际云盘已配置并可用。
+
+## 已验证的项目连接
+
+用户提供的项目为 `vfbufazqpzetjkmkvjwp`，公开服务地址与 publishable key 保存在 [client.public.json](../supabase/client.public.json)。2026-11-16 通过实际 HTTP 验证 Auth 服务与公开 key 可用；Apple、Google、Azure 三项外部登录均为未开启，工作区目录表返回不存在。此结果不表示账号登录或云同步已开放。
+
+`node scripts/check-identity-project.mjs` 输出公开连接、提供器开关、目录可用性及管理权限的脱敏状态，不输出 key 或管理令牌。提供器 OAuth 密钥仍应放在 Supabase 控制台，管理令牌放 GitHub Secrets，不发送到聊天。
