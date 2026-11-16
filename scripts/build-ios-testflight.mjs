@@ -9,6 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { testFlightStatus } from './ios-testflight-status.mjs';
 import {
   releaseSettings,
   configureAppleEnvironment,
@@ -138,6 +139,13 @@ try {
       settings.issuer,
     ]);
     report.upload = 'accepted-for-processing';
+    report.testFlight = await testFlightStatus(
+      { keyId: settings.keyId, issuer: settings.issuer, privateKey: readFileSync(keyPath, 'utf8') },
+      { bundleId: 'com.limushu.hm', version: report.version, buildNumber: settings.buildNumber },
+    );
+    console.log(JSON.stringify({ testFlight: report.testFlight }));
+    if (['INVALID', 'FAILED'].includes(report.testFlight.processingState))
+      throw new Error('Apple rejected the uploaded build during processing');
   }
 } catch (error) {
   report.status = 'failed';

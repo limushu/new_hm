@@ -45,7 +45,7 @@ jobs:
           command -v xcodegen >/dev/null || brew install xcodegen
           command -v pod >/dev/null || brew install cocoapods
       - run: npm ci
-      - run: npx vitest run scripts/ios-release-config.test.mjs
+      - run: npx vitest run scripts/ios-*.test.mjs
       - name: Archive, verify and optionally upload
         env:
           APPLE_DEVELOPMENT_TEAM: ${{ vars.APPLE_TEAM_ID }}
