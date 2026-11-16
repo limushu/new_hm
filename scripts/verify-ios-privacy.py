@@ -23,7 +23,18 @@ if manifest != expected:
     raise SystemExit("Bundled privacy manifest differs from the reviewed source")
 assert manifest["NSPrivacyTracking"] is False
 assert manifest["NSPrivacyTrackingDomains"] == []
-assert manifest["NSPrivacyCollectedDataTypes"] == []
+collected = manifest["NSPrivacyCollectedDataTypes"]
+collected_types = {entry["NSPrivacyCollectedDataType"] for entry in collected}
+# Optional hosted login processes account identity, not the user's case files.
+assert len(collected) == 3 and collected_types == {
+    "NSPrivacyCollectedDataTypeUserID",
+    "NSPrivacyCollectedDataTypeEmailAddress",
+    "NSPrivacyCollectedDataTypeName",
+}
+for entry in collected:
+    assert entry["NSPrivacyCollectedDataTypeLinked"] is True
+    assert entry["NSPrivacyCollectedDataTypeTracking"] is False
+    assert entry["NSPrivacyCollectedDataTypePurposes"] == ["NSPrivacyCollectedDataTypePurposeAppFunctionality"]
 categories = {
     entry["NSPrivacyAccessedAPIType"]: set(entry["NSPrivacyAccessedAPITypeReasons"])
     for entry in manifest["NSPrivacyAccessedAPITypes"]
@@ -63,7 +74,7 @@ def imports(binary):
     return symbols, libraries
 
 
-report = {"privacyManifest": "verified", "tracking": False, "categories": sorted(categories)}
+report = {"privacyManifest": "verified", "tracking": False, "categories": sorted(categories), "collectedDataTypes": sorted(collected_types)}
 if bundle:
     info = plistlib.loads((bundle / "Info.plist").read_bytes())
     if info.get("ITSAppUsesNonExemptEncryption") is not False:
