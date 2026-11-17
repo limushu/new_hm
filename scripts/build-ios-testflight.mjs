@@ -79,7 +79,8 @@ try {
       { keyId: settings.keyId, issuer: settings.issuer, privateKey: readFileSync(keyPath, 'utf8') },
       { profile: process.env.IOS_MOBILE_PROVISION, create: true },
     );
-    process.env.IOS_MOBILE_PROVISION = signed.profile;
+    if (signed.profile) process.env.IOS_MOBILE_PROVISION = signed.profile;
+    else delete process.env.IOS_MOBILE_PROVISION;
     template = join(temporary, 'ios-cloudkit.yml');
     writeFileSync(
       template,

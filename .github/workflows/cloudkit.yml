@@ -23,7 +23,7 @@ jobs:
       - uses: maxim-lobanov/setup-xcode@v1
         with:
           xcode-version: latest-stable
-      - name: Verify iCloud capability and refresh distribution profile
+      - name: Verify iCloud capability and prepare distribution signing
         env:
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
@@ -33,7 +33,7 @@ jobs:
           node --input-type=module <<'JS'
           import { cloudSigning } from './scripts/ios-cloudkit-signing.mjs';
           const result=await cloudSigning({keyId:process.env.APPLE_API_KEY,issuer:process.env.APPLE_API_ISSUER,privateKey:process.env.APPLE_API_PRIVATE_KEY},{profile:process.env.IOS_MOBILE_PROVISION,create:true});
-          console.log(JSON.stringify({capability:result.capability,existingProfileReady:result.profileReady}));
+          console.log(JSON.stringify({capability:result.capability,profileReady:result.profileReady,automaticSigning:result.automaticSigning===true}));
           JS
       - name: Inspect installed CloudKit command interface
         if: always()

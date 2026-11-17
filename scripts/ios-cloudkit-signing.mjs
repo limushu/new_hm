@@ -93,11 +93,9 @@ export async function cloudSigning(
     throw new Error('Enable iCloud / CloudKit for com.limushu.hm in Apple Developer first');
   const result = { capability: 'ICLOUD', profileReady: false };
   if (!profile) {
-    if (create)
-      throw new Error(
-        'CloudKit signing currently requires the existing manual distribution profile',
-      );
-    return result;
+    // Existing TestFlight builds use Xcode-managed signing. Xcode can refresh
+    // that profile with the new entitlements; the exported IPA is authoritative.
+    return { ...result, automaticSigning: true };
   }
   const existing = decodeProfile(profile);
   if (

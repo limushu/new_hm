@@ -71,6 +71,6 @@ it('selects the exact App ID from prefix matches and does not pass unsupported r
       },
     },
   );
-  expect(result).toEqual({ capability: 'ICLOUD', profileReady: false });
+  expect(result).toEqual({ capability: 'ICLOUD', profileReady: false, automaticSigning: true });
   expect(calls).toHaveLength(2);
 });
