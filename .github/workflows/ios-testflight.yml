@@ -64,7 +64,7 @@ jobs:
           IOS_UPLOAD_TO_TESTFLIGHT: ${{ inputs.upload }}
           IOS_SOURCE_SHA: ${{ github.sha }}
           IOS_ENABLE_CLOUDKIT: ${{ inputs.cloudkit }}
-          CKTOOL_MANAGEMENT_TOKEN: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN }}
+          CKTOOL_MANAGEMENT_TOKEN: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN || secrets.CLOUDKIT_MANAGMENT_TOKEN }}
         run: node scripts/build-ios-testflight.mjs
       - uses: actions/upload-artifact@v4
         if: always()

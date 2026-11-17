@@ -41,8 +41,14 @@ jobs:
           xcrun cktool --help
           xcrun cktool import-schema --help
           xcrun cktool export-schema --help
+      - name: Check CloudKit secret mapping
+        if: inputs.deploy_schema
+        env:
+          TOKEN_CONFIGURED: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN != '' }}
+          ALIAS_CONFIGURED: ${{ secrets.CLOUDKIT_MANAGMENT_TOKEN != '' }}
+        run: echo "CloudKit token configured=$TOKEN_CONFIGURED; compatible name configured=$ALIAS_CONFIGURED"
       - name: Deploy reviewed schema
         if: inputs.deploy_schema
         env:
-          CKTOOL_MANAGEMENT_TOKEN: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN }}
+          CKTOOL_MANAGEMENT_TOKEN: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN || secrets.CLOUDKIT_MANAGMENT_TOKEN }}
         run: node scripts/cloudkit-schema.mjs
