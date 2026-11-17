@@ -86,7 +86,8 @@ export async function cloudSigning(
   }
   if (bundles.data?.length !== 1) throw new Error('Expected one registered Anjian App ID');
   const bundle = bundles.data[0].id;
-  const capabilities = await api(`bundleIds/${bundle}/bundleIdCapabilities?limit=200`);
+  // Apple's live relationship endpoint rejects limit despite its OpenAPI schema.
+  const capabilities = await api(`bundleIds/${bundle}/bundleIdCapabilities`);
   const capability = capabilities.data?.find((row) => row.attributes?.capabilityType === 'ICLOUD');
   if (!capability)
     throw new Error('Enable iCloud / CloudKit for com.limushu.hm in Apple Developer first');

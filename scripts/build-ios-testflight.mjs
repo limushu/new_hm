@@ -10,6 +10,7 @@ import {
 } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { testFlightStatus } from './ios-testflight-status.mjs';
+import { exportCloudSchema } from './cloudkit-schema.mjs';
 import {
   cloudContainer,
   cloudSigning,
@@ -72,23 +73,7 @@ try {
         'CloudKit production verification requires CLOUDKIT_MANAGEMENT_TOKEN in GitHub Secrets',
       );
     const schema = join(temporary, 'production.ckdb');
-    run(
-      'xcrun',
-      [
-        'cktool',
-        'export-schema',
-        '--team-id',
-        settings.team,
-        '--container-id',
-        cloudContainer,
-        '--environment',
-        'production',
-        '--file',
-        schema,
-      ],
-      true,
-    );
-    verifyCloudSchema(readFileSync(schema, 'utf8'));
+    verifyCloudSchema(exportCloudSchema(settings.team, 'production', schema));
     report.cloudKitSchema = 'production-verified';
     const signed = await cloudSigning(
       { keyId: settings.keyId, issuer: settings.issuer, privateKey: readFileSync(keyPath, 'utf8') },

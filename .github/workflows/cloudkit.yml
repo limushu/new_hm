@@ -40,19 +40,9 @@ jobs:
         run: |
           xcrun cktool --help
           xcrun cktool import-schema --help
-          xcrun cktool deploy-schema --help
+          xcrun cktool export-schema --help
       - name: Deploy reviewed schema
         if: inputs.deploy_schema
         env:
           CKTOOL_MANAGEMENT_TOKEN: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN }}
-        run: |
-          test -n "$CKTOOL_MANAGEMENT_TOKEN" || { echo 'Add CLOUDKIT_MANAGEMENT_TOKEN in GitHub Secrets first'; exit 1; }
-          xcrun cktool import-schema --team-id UN356US9WL --container-id iCloud.com.limushu.hm --environment development --file cloudkit/schema.ckdb
-          xcrun cktool deploy-schema --team-id UN356US9WL --container-id iCloud.com.limushu.hm
-          xcrun cktool export-schema --team-id UN356US9WL --container-id iCloud.com.limushu.hm --environment production --file /tmp/anjian-production.ckdb
-          python3 - <<'PY'
-          from pathlib import Path
-          schema=Path('/tmp/anjian-production.ckdb').read_text()
-          assert all(name in schema for name in ['AnjianSyncHead','AnjianSyncIndex','AnjianSyncChunk'])
-          print('CloudKit Production schema verified')
-          PY
+        run: node scripts/cloudkit-schema.mjs
