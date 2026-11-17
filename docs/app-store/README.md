@@ -1,6 +1,16 @@
 # App Store 首发准备
 
-## 当前备份与图标修复内测：1.8.4（37.2）
+## 当前主页页头统一内测：1.8.5（38.1）
+
+今天、案件、联系对象、回收站共用同一个纯文字页头，设置页也同步接入；统一顶部起点、24px 手机标题、字重、行高和说明文字。三个新建主按钮均为 112×44px，按标题行居中，不再被说明文字高度带偏。清单日期的星期移到辅助说明行，窄屏保留完整月份日期与操作按钮。页面不再分别覆盖顶部内边距和标题样式，见[公共页头规范与四页对照](../design/visual-principles.md)。
+
+2026-11-17，[签名与上传](https://github.com/limushu/new_hm/actions/runs/44055775336)于 09:36:23 UTC 确认 `UPLOAD SUCCEEDED with no errors`；[独立状态检查](https://github.com/limushu/new_hm/actions/runs/44057348007)于 09:38:28 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`。构建 ID `3431d728-60ac-424e-94a0-ec888a9f8322`，内部测试员可更新；未重新提交 App Review 或发布 App Store。
+
+实际 IPA 源码 `bc1dbf75f094f0ecf994861d6622aecb99fc92c1`，版本 1.8.5 / 38.1，Xcode 26.3（17C529）/ SDK 26.2。已下载核对包名、启动屏、麦克风/识别/日历用途说明、根隐私清单和实际 Mach-O 分发权限，CloudKit 保持 `Production`。实际 HM 图标解码后品牌像素误差为 0；手写 8 仍是设计稿，未更换进包。IPA SHA-256：`b1de3c43ccff10c9c608d2ea13f88f53328b3a2d92746dc167059a1ebe3bd417`。
+
+[同一源码应用检查](https://github.com/limushu/new_hm/actions/runs/44055772609)通过 Rust/Clippy、Windows 构建、87 项前端单元测试、144 项 Chromium 和 35 项 WebKit 回归。本机另完成 80 组页头渲染坐标及按钮尺寸核对，覆盖 Chromium/WebKit、320/390/430/1280px 和深浅主题；16 项相关 Chromium、9 项 WebKit 操作回归通过。[移动检查](https://github.com/limushu/new_hm/actions/runs/44055772587)也已通过 Android 编译、iOS 构建/启动/工作区持久化、实际 App 四标签贴底检查及 34 项原生 SDK 测试。模拟器窗口为 414×896pt，案件创建按钮距底部 34pt。浏览器与模拟器验收不替代用户签名真机体验。
+
+## 前一备份与图标修复内测：1.8.4（37.2）
 
 修复 iOS 更新后遗留旧沙盒绝对路径导致的自动/手动备份权限错误。公共应用层按当前工作区解析托管目标，桌面自选备份位置仍受尊重；成功日期仅在完整快照完成后更新。数据、材料和历史备份保持原位，见[备份子系统](../backup-subsystem.md)。实际 AppIcon 已换为仓库的 HM 品牌素材；手写 8 仍为[设计预览](../design/current/brand-8-concept-2026-11-17.png)，未进入这个安装包。保留前版的全屏、贴底操作栏和自选强调色。
 
