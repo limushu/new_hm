@@ -1,4 +1,5 @@
 import type { ResourceMetadata, ResourceRelation } from '../case-system/contracts';
+import type { CloudWorkspace, SyncStatus } from './sync';
 export interface OperationError {
   code: string;
   kind?: string;
@@ -427,6 +428,14 @@ export interface Commands {
   choose_backup_directory: { args: Record<string, never>; result: string | null };
   run_backup: { args: Record<string, never>; result: BackupInfo };
   native_sync_provider: { args: Record<string, never>; result: string | null };
+  sync_status: { args: Record<string, never>; result: SyncStatus };
+  sync_workspaces: { args: Record<string, never>; result: CloudWorkspace[] };
+  sync_enable: { args: { workspaceId: string | null }; result: SyncStatus };
+  sync_disable: { args: Record<string, never>; result: SyncStatus };
+  sync_presence: { args: { foreground: boolean }; result: null };
+  sync_tick: { args: Record<string, never>; result: SyncStatus };
+  sync_apply_pending: { args: { token: string }; result: SyncStatus };
+  sync_resolve: { args: { token: string; useLocal: boolean }; result: SyncStatus };
   identity_status: { args: Record<string, never>; result: IdentitySnapshot };
   identity_sign_in: { args: { provider: IdentityProvider }; result: IdentitySnapshot };
   identity_link: { args: { provider: IdentityProvider }; result: IdentitySnapshot };

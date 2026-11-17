@@ -1,9 +1,11 @@
 //! Offline-first replica synchronization. No Tauri, OAuth, Apple SDK or cloud paths.
+mod lease;
 use crate::{backup::BackupSummary, errors::core_error};
 use hm_core::{SyncSnapshot, SyncSnapshotManifest};
 use hm_runtime::platform::{
     DriverError, DriverResult, ReplicaIdentity, SyncDriver, SyncHead, SyncSession,
 };
+pub use lease::SyncEpoch;
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{
@@ -81,11 +83,25 @@ pub struct SyncConflict {
 pub struct SyncReport {
     pub phase: &'static str,
     pub conflict: Option<SyncConflict>,
+    pub incoming: Option<IncomingVersion>,
+}
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct IncomingVersion {
+    pub token: String,
+    pub summary: BackupSummary,
+}
+struct PendingIncoming {
+    token: String,
+    head: SyncHead,
+    expected_local: String,
+    snapshot: SyncSnapshot,
 }
 fn report(phase: &'static str) -> SyncReport {
     SyncReport {
         phase,
         conflict: None,
+        incoming: None,
     }
 }
 
@@ -95,6 +111,7 @@ pub struct SyncService {
     state_path: PathBuf,
     state: LocalState,
     conflict_head: Option<(String, SyncHead)>,
+    pending: Option<PendingIncoming>,
 }
 impl SyncService {
     pub fn open(
@@ -123,6 +140,7 @@ impl SyncService {
             state_path,
             state,
             conflict_head: None,
+            pending: None,
         })
     }
     fn persist(&mut self, state: LocalState) -> DriverResult<()> {
@@ -138,6 +156,21 @@ impl SyncService {
     }
     pub fn enabled(&self) -> bool {
         self.state.enabled
+    }
+    pub fn stored_identity(private_directory: &Path) -> DriverResult<Option<ReplicaIdentity>> {
+        let path = private_directory.join("sync-device-state.json");
+        if !path.exists() {
+            return Ok(None);
+        }
+        if std::fs::metadata(&path)?.len() > 1024 * 1024 {
+            return Err(invalid());
+        }
+        let state: LocalState =
+            serde_json::from_slice(&std::fs::read(path)?).map_err(|_| invalid())?;
+        if state.format != 1 {
+            return Err(invalid());
+        }
+        Ok(state.account)
     }
     pub fn enable(&mut self) -> DriverResult<ReplicaIdentity> {
         let session = self.driver.open(&self.identity)?;
@@ -170,6 +203,15 @@ impl SyncService {
         let mut next = self.state.clone();
         next.enabled = false;
         self.persist(next)?;
+        self.conflict_head = None;
+        self.pending = None;
+        Ok(())
+    }
+    pub fn require_reconciliation(&mut self) -> DriverResult<()> {
+        let mut state = self.state.clone();
+        state.baseline = None;
+        self.persist(state)?;
+        self.pending = None;
         self.conflict_head = None;
         Ok(())
     }
@@ -287,6 +329,7 @@ impl SyncService {
         });
         self.persist(next)?;
         self.conflict_head = None;
+        self.pending = None;
         Ok(())
     }
     fn preserve(&mut self, revision: String, summary: BackupSummary) -> DriverResult<()> {
@@ -320,6 +363,76 @@ impl SyncService {
         &mut self,
         local: &SyncSnapshot,
         mut apply: impl FnMut(&SyncSnapshot, &str) -> DriverResult<()>,
+    ) -> DriverResult<SyncReport> {
+        self.synchronize_inner(local, false, &mut apply)
+    }
+    /// Download and verify in the background. Replacement is a separate local
+    /// commit so the host can preserve open editors before applying incoming data.
+    pub fn prepare_synchronize(&mut self, local: &SyncSnapshot) -> DriverResult<SyncReport> {
+        if let Some(pending) = &self.pending {
+            if pending.expected_local == local.manifest.fingerprint {
+                return Ok(self.incoming_report());
+            }
+            self.pending = None;
+        }
+        self.synchronize_inner(local, true, &mut |_, _| Err(invalid()))
+    }
+    fn incoming_report(&self) -> SyncReport {
+        let pending = self.pending.as_ref().expect("prepared incoming version");
+        SyncReport {
+            phase: "incoming",
+            conflict: None,
+            incoming: Some(IncomingVersion {
+                token: pending.token.clone(),
+                summary: (&pending.snapshot.info()).into(),
+            }),
+        }
+    }
+    fn accept_incoming(
+        &mut self,
+        incoming: SyncSnapshot,
+        head: SyncHead,
+        local: &str,
+        deferred: bool,
+        apply: &mut impl FnMut(&SyncSnapshot, &str) -> DriverResult<()>,
+    ) -> DriverResult<SyncReport> {
+        if deferred {
+            self.pending = Some(PendingIncoming {
+                token: uuid::Uuid::new_v4().to_string(),
+                head,
+                expected_local: local.into(),
+                snapshot: incoming,
+            });
+            return Ok(self.incoming_report());
+        }
+        apply(&incoming, local)?;
+        self.advance(head.revision, incoming.manifest.fingerprint.clone())?;
+        Ok(report("downloaded"))
+    }
+    pub fn apply_prepared(
+        &mut self,
+        token: &str,
+        mut apply: impl FnMut(&SyncSnapshot, &str) -> DriverResult<()>,
+    ) -> DriverResult<SyncReport> {
+        if !self.enabled() {
+            return Err(DriverError::invalid_state("sync_disabled"));
+        }
+        let pending = self
+            .pending
+            .as_ref()
+            .filter(|p| p.token == token)
+            .ok_or_else(|| DriverError::invalid_state("sync_incoming_expired"))?;
+        apply(&pending.snapshot, &pending.expected_local)?;
+        let revision = pending.head.revision.clone();
+        let fingerprint = pending.snapshot.manifest.fingerprint.clone();
+        self.advance(revision, fingerprint)?;
+        Ok(report("downloaded"))
+    }
+    fn synchronize_inner(
+        &mut self,
+        local: &SyncSnapshot,
+        deferred: bool,
+        apply: &mut impl FnMut(&SyncSnapshot, &str) -> DriverResult<()>,
     ) -> DriverResult<SyncReport> {
         if !self.enabled() {
             return Ok(report("disabled"));
@@ -359,14 +472,19 @@ impl SyncService {
         }
         if !dirty || (baseline.is_none() && local.pristine) {
             let incoming = Self::pull(session.as_mut(), manifest)?;
-            apply(&incoming, &local.manifest.fingerprint)?;
-            self.advance(head.revision, incoming.manifest.fingerprint.clone())?;
-            return Ok(report("downloaded"));
+            return self.accept_incoming(
+                incoming,
+                head,
+                &local.manifest.fingerprint,
+                deferred,
+                apply,
+            );
         }
         let token = uuid::Uuid::new_v4().to_string();
         self.conflict_head = Some((token.clone(), head));
         Ok(SyncReport {
             phase: "conflict",
+            incoming: None,
             conflict: Some(SyncConflict {
                 token,
                 local: (&local.info()).into(),

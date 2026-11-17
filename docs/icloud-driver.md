@@ -2,7 +2,7 @@
 
 实现位于 [tauri-plugin-hm-cloudkit](../crates/tauri-plugin-hm-cloudkit/src/ios.rs)，通过 [平台装配](../src-tauri/src/platforms/mod.rs) 注入统一 SyncDriver。[源码接入地图](design/platform-driver-map.md) 区分真实驱动与测试实现。
 
-当前驱动代码已加入工程，但没有配置真实 CloudKit 容器、Apple 发行权限或统一账号项目。**不是可用云同步发布版。** 普通插件初始化不创建 CKContainer，避免现有无 iCloud 权限的安装包访问该 API。
+用户已于 2026-11-17 确认容器关联，统一账号服务已配置。客户端已接入自动调度，发行 profile、CloudKit Production schema 和新候选真机往返仍在验证。**尚未完成可用云同步发布验收。** 普通插件初始化不创建 CKContainer，避免现有无 iCloud 权限的安装包访问该 API。
 
 ## 驱动实现
 
@@ -25,3 +25,9 @@
 原生测试使用真实 CloudKit 类型/代码，数据库访问通过可替换适配器隔离，不依赖 CI 登录个人 iCloud。它能验证编译、条件更新、账号变化、原生桥和文件处理，不能验证实际生产授权、网络传输或多设备一致性。
 
 2026-11-16，iOS 编译及上述 4 项 CloudKit 原生适配测试通过，连同既有录音/文件/转写共 22 项原生测试通过。工作流和源码见[平台驱动验证记录](design/platform-driver-map.md)。签名权限、真实账号、大附件云传输和多设备验证仍未完成。
+
+## 自动部署与签名核验
+
+[生产配置工作流](../.github/workflows/cloudkit.yml)首先读取 App ID 能力；选择部署时从 GitHub Secret `CLOUDKIT_MANAGEMENT_TOKEN` 读取管理令牌，导入[审核过的 schema](../cloudkit/schema.ckdb)，部署并导出生产 schema 校验。该令牌不打入客户端。CloudKit Console 的账户菜单可创建 Management Token；只填 GitHub Secret，不发送聊天。
+
+[签名脚本](../scripts/ios-cloudkit-signing.mjs)匹配现有发行证书，必要时为同一 App ID 创建更新后的 profile，不撤销证书。启用 CloudKit 的发行构建先验证生产 schema 和 profile，才给临时 Xcode 模板写入容器与 Production entitlement；导出 IPA 后再次检查实际签名。默认模拟器和普通构建不添加激活标记。`ios-testflight.yml` 的 `cloudkit` 参数默认关闭，必须明确开启才生成同步候选。

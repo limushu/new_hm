@@ -8,7 +8,8 @@ import SettingsPage from './features/settings/Settings';
 import GlobalSearch from './components/GlobalSearch';
 import Notifications from './components/Notifications';
 import Trash from './components/Trash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCloudSync } from './platform/SyncProvider';
 import { CalendarDays, Folder, Settings, Trash2, Users, Search, Bell } from 'lucide-react';
 import { command, nativeRuntime, previewMode } from './services/repository';
 import { emptyWorkspace } from './domain/types';
@@ -56,11 +57,30 @@ export default function App() {
   const [focusMaterialId, setFocusMaterialId] = useState<string | undefined>();
   const [error, setError] = useState('');
   const [storage, setStorage] = useState<Commands['storage_info']['result'] | null>(null);
+  const [syncGeneration, setSyncGeneration] = useState(0);
+  const { register: registerSync } = useCloudSync();
+  const syncBlocked = useRef(true);
+  syncBlocked.current = loading || !!draft || welcome;
   const refresh = useCallback(async () => {
     const workspace = await command('load_workspace', {});
     setData(workspace);
     return workspace;
   }, []);
+  useEffect(
+    () =>
+      registerSync({
+        blocked: () => syncBlocked.current,
+        applied: async () => {
+          const workspace = await refresh();
+          setOpened((id) =>
+            workspace.cases.some((item) => item.id === id && !item.deletedAt) ? id : null,
+          );
+          setContactOpen(null);
+          setSyncGeneration((value) => value + 1);
+        },
+      }),
+    [registerSync, refresh],
+  );
   useEffect(() => {
     let canceled = false;
     void command('storage_info', {})
@@ -247,7 +267,7 @@ export default function App() {
             </button>
           </div>
         )}
-        <RetainedView active={page === 'today'}>
+        <RetainedView key={`today-${syncGeneration}`} active={page === 'today'}>
           <Calendar
             data={data}
             openCase={navigateCase}
@@ -262,7 +282,7 @@ export default function App() {
             onViewChange={setCalendarView}
           />
         </RetainedView>
-        <RetainedView active={page === 'cases'}>
+        <RetainedView key={`cases-${syncGeneration}`} active={page === 'cases'}>
           <CaseBoard
             compact={compact}
             data={data}
@@ -277,10 +297,10 @@ export default function App() {
             }}
           />
         </RetainedView>
-        <RetainedView active={page === 'contacts'}>
+        <RetainedView key={`contacts-${syncGeneration}`} active={page === 'contacts'}>
           <Contacts data={data} save={save} onCase={navigateCase} />
         </RetainedView>
-        <RetainedView active={page === 'trash'}>
+        <RetainedView key={`trash-${syncGeneration}`} active={page === 'trash'}>
           <Trash data={data} save={save} />
         </RetainedView>
         <RetainedView active={page === 'settings'}>
@@ -290,7 +310,7 @@ export default function App() {
       {welcome && <Welcome onDone={() => setWelcome(false)} />}
       {openItem && (
         <CasePage
-          key={openItem.id + initialTab + (focusMaterialId ?? '')}
+          key={syncGeneration + openItem.id + initialTab + (focusMaterialId ?? '')}
           item={openItem}
           data={data}
           onCase={navigateCase}

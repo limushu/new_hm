@@ -79,7 +79,7 @@ test('未配置的提供器不可登录，不把账号与同步混为一谈', as
   await expect(
     section.getByRole('button', { name: '使用 Google 登录', exact: true }),
   ).toBeDisabled();
-  await expect(section).toContainText('自动跨设备同步尚未开放');
+  await expect(section).toContainText('跨设备同步需在下方单独开启');
   expect(
     await page.evaluate(() =>
       JSON.stringify((window as unknown as { accountCalls: unknown[] }).accountCalls),

@@ -6,6 +6,17 @@ use hm_runtime::platform::{DriverError, IdentityDriver};
 use std::sync::Mutex;
 use tauri::{AppHandle, Manager};
 pub struct IdentityState(Mutex<IdentityService>);
+pub(crate) fn verified<T>(
+    app: &AppHandle,
+    action: impl FnOnce(&IdentityService) -> Result<T, DriverError>,
+) -> Result<T, DriverError> {
+    let state = app.state::<IdentityState>();
+    let service = state
+        .0
+        .try_lock()
+        .map_err(|_| DriverError::invalid_state("identity_busy"))?;
+    action(&service)
+}
 pub fn setup(
     app: &tauri::App,
     driver: Box<dyn IdentityDriver>,
@@ -62,9 +73,13 @@ pub async fn identity_unlink(
 }
 #[tauri::command]
 pub async fn identity_sign_out(app: AppHandle) -> Result<(), DriverError> {
+    let _ = super::sync::pause(&app, false);
     run(app, IdentityService::sign_out).await
 }
 #[tauri::command]
 pub async fn identity_delete_account(app: AppHandle, confirmed: bool) -> Result<(), DriverError> {
+    if confirmed {
+        let _ = super::sync::pause(&app, false);
+    }
     run(app, move |s| s.delete_account(confirmed)).await
 }

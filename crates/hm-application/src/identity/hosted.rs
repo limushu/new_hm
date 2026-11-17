@@ -60,7 +60,13 @@ impl IdentityBackend for HostedIdentity {
         access: Option<&str>,
         body: Option<Value>,
     ) -> DriverResult<BackendReply> {
-        if !(path.starts_with("/auth/v1/") || path == "/functions/v1/delete-account")
+        let catalog_path = path
+            .split('?')
+            .next()
+            .is_some_and(|p| ["/rest/v1/cloud_bindings", "/rest/v1/workspaces"].contains(&p));
+        if !(path.starts_with("/auth/v1/")
+            || path == "/functions/v1/delete-account"
+            || catalog_path)
             || path.contains("..")
             || path.contains('#')
         {

@@ -109,6 +109,7 @@ pub fn discard_backup_archive(
 }
 #[tauri::command(async)]
 pub fn restore_backup_archive(
+    app: tauri::AppHandle,
     platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     backup: State<'_, BackupState>,
@@ -118,6 +119,9 @@ pub fn restore_backup_archive(
     confirmed: bool,
 ) -> Result<BackupSummary, DriverError> {
     platform.manifest().require(Capability::BackupFiles)?;
+    if confirmed {
+        super::sync::pause(&app, true)?;
+    }
     let mut service = backup
         .0
         .lock()
@@ -142,11 +146,15 @@ pub fn restore_backup_archive(
 }
 #[tauri::command(async)]
 pub fn apply_restore_backup(
+    app: tauri::AppHandle,
     platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
     path: PathBuf,
     confirmed: bool,
 ) -> Result<BackupInfo, DriverError> {
     platform.manifest().require(Capability::BackupTransfer)?;
+    if confirmed {
+        super::sync::pause(&app, true)?;
+    }
     Ok(access(&state, |s| s.restore_backup(&path, confirmed))?)
 }

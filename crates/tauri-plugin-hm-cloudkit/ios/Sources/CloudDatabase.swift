@@ -24,6 +24,7 @@ func cloudError(_ error: Error) -> String {
   case .networkFailure, .networkUnavailable: return "cloud_offline"
   case .quotaExceeded: return "cloud_quota_exceeded"
   case .permissionFailure: return "cloud_permission_denied"
+  case .serverRejectedRequest: return "cloud_schema_missing"
   default: return "cloud_operation_failed"
   }
 }

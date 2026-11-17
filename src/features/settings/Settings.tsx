@@ -11,6 +11,7 @@ import Welcome from '../../components/Welcome';
 import PrivacyPolicy from './PrivacyPolicy';
 import BackupFiles from './BackupFiles';
 import AccountSettings from './AccountSettings';
+import SyncSettings from './SyncSettings';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
 import { useTheme } from '../../components/ThemeProvider';
@@ -166,6 +167,7 @@ export default function Settings({
         </div>
       </section>
       <AccountSettings />
+      <SyncSettings />
       <section className="settings-section">
         <h2>备份与恢复</h2>
         <p className="feature-description">

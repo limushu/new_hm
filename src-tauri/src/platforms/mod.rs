@@ -12,7 +12,7 @@ pub struct NativeDrivers {
     pub external_open: Box<dyn ExternalOpenDriver>,
     pub local_filesystem: Box<dyn LocalFilesystemDriver>,
     pub documents: Arc<dyn DocumentDriver>,
-    pub sync: Box<dyn hm_runtime::platform::SyncDriver>,
+    pub sync: Arc<dyn hm_runtime::platform::SyncDriver>,
     manifest: RuntimeManifest,
 }
 impl NativeDrivers {
@@ -29,7 +29,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         external_open: Box::new(desktop::DesktopPlatform(app.handle().clone())),
         local_filesystem: Box::new(desktop::DesktopPlatform(app.handle().clone())),
         documents: Arc::new(desktop::documents::DesktopDocuments(app.handle().clone())),
-        sync: Box::new(hm_runtime::platform::UnavailableSync),
+        sync: Arc::new(hm_runtime::platform::UnavailableSync),
         manifest: RuntimeManifest::desktop(),
     };
     #[cfg(mobile)]
@@ -97,9 +97,9 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         #[cfg(not(target_os = "ios"))]
         documents: Arc::new(mobile::documents::UnavailableDocuments),
         #[cfg(target_os = "ios")]
-        sync: tauri_plugin_hm_cloudkit::driver(app.handle()),
+        sync: Arc::from(tauri_plugin_hm_cloudkit::driver(app.handle())),
         #[cfg(not(target_os = "ios"))]
-        sync: Box::new(hm_runtime::platform::UnavailableSync),
+        sync: Arc::new(hm_runtime::platform::UnavailableSync),
         manifest,
     };
     #[cfg(target_os = "ios")]

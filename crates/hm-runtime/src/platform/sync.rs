@@ -1,7 +1,13 @@
 //! Provider-neutral replica transport. Login identities and storage locations are distinct.
 use super::{DriverError, DriverResult};
 use serde::{Deserialize, Serialize};
-use std::io::Read;
+use std::{io::Read, sync::Arc};
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SyncSupport {
+    pub installed: bool,
+    pub configured: bool,
+}
 
 /// Subject is an opaque provider ID, never an email address or credential.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -28,6 +34,12 @@ pub struct SyncHead {
 }
 
 pub trait SyncDriver: Send + Sync {
+    fn support(&self) -> DriverResult<SyncSupport> {
+        Ok(SyncSupport {
+            installed: self.provider().is_some(),
+            configured: false,
+        })
+    }
     /// Installation only; configuration and account readiness are separate.
     fn provider(&self) -> Option<&'static str> {
         None
@@ -39,6 +51,20 @@ pub trait SyncDriver: Send + Sync {
     /// Opens a session bound to the authorized cloud account. A provider must
     /// invalidate it on account changes, never silently switch credentials.
     fn open(&self, identity: &ReplicaIdentity) -> DriverResult<Box<dyn SyncSession>>;
+}
+impl<T: SyncDriver + ?Sized> SyncDriver for Arc<T> {
+    fn support(&self) -> DriverResult<SyncSupport> {
+        (**self).support()
+    }
+    fn provider(&self) -> Option<&'static str> {
+        (**self).provider()
+    }
+    fn storage_account(&self) -> DriverResult<CloudIdentity> {
+        (**self).storage_account()
+    }
+    fn open(&self, identity: &ReplicaIdentity) -> DriverResult<Box<dyn SyncSession>> {
+        (**self).open(identity)
+    }
 }
 pub trait SyncSession: Send {
     fn identity(&self) -> &ReplicaIdentity;

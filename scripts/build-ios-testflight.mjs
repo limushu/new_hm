@@ -11,6 +11,12 @@ import {
 import { join, resolve } from 'node:path';
 import { testFlightStatus } from './ios-testflight-status.mjs';
 import {
+  cloudContainer,
+  cloudSigning,
+  cloudProjectTemplate,
+  verifyCloudSchema,
+} from './ios-cloudkit-signing.mjs';
+import {
   releaseSettings,
   configureAppleEnvironment,
   checkSubmissionToolchain,
@@ -58,6 +64,44 @@ try {
   writeFileSync(keyPath, process.env.APPLE_API_PRIVATE_KEY, { mode: 0o600 });
   configureAppleEnvironment(process.env, settings, keyPath, temporary);
   const configPath = join(temporary, 'ios-release.json');
+  let template = join(root, 'src-tauri/ios-project.yml');
+  const cloudkit = process.env.IOS_ENABLE_CLOUDKIT === 'true';
+  if (cloudkit) {
+    if (!process.env.CKTOOL_MANAGEMENT_TOKEN)
+      throw new Error(
+        'CloudKit production verification requires CLOUDKIT_MANAGEMENT_TOKEN in GitHub Secrets',
+      );
+    const schema = join(temporary, 'production.ckdb');
+    run(
+      'xcrun',
+      [
+        'cktool',
+        'export-schema',
+        '--team-id',
+        settings.team,
+        '--container-id',
+        cloudContainer,
+        '--environment',
+        'production',
+        '--file',
+        schema,
+      ],
+      true,
+    );
+    verifyCloudSchema(readFileSync(schema, 'utf8'));
+    report.cloudKitSchema = 'production-verified';
+    const signed = await cloudSigning(
+      { keyId: settings.keyId, issuer: settings.issuer, privateKey: readFileSync(keyPath, 'utf8') },
+      { profile: process.env.IOS_MOBILE_PROVISION, create: true },
+    );
+    process.env.IOS_MOBILE_PROVISION = signed.profile;
+    template = join(temporary, 'ios-cloudkit.yml');
+    writeFileSync(
+      template,
+      cloudProjectTemplate(readFileSync(join(root, 'src-tauri/ios-project.yml'), 'utf8')),
+      { mode: 0o600 },
+    );
+  }
   writeFileSync(
     configPath,
     JSON.stringify({
@@ -65,7 +109,7 @@ try {
         iOS: {
           developmentTeam: settings.team,
           bundleVersion: settings.buildNumber,
-          template: join(root, 'src-tauri/ios-project.yml'),
+          template,
         },
       },
     }),
@@ -122,6 +166,19 @@ try {
   );
   if (entitlements.status !== 0 || entitlementCheck.status !== 0)
     throw new Error('IPA does not have distribution entitlements for this app');
+  if (cloudkit) {
+    const checked = spawnSync(
+      'python3',
+      [
+        '-c',
+        'import plistlib,sys; p=plistlib.loads(sys.stdin.buffer.read()); assert "iCloud.com.limushu.hm" in p.get("com.apple.developer.icloud-container-identifiers",[]); assert "CloudKit" in p.get("com.apple.developer.icloud-services",[]); assert p.get("com.apple.developer.icloud-container-environment")=="Production"',
+      ],
+      { input: entitlements.stdout, encoding: 'utf8' },
+    );
+    if (checked.status !== 0 || plist('AnjianCloudKitContainer') !== cloudContainer)
+      throw new Error('Exported IPA does not authorize CloudKit Production');
+    report.cloudKitEntitlements = 'verified-in-exported-ipa';
+  }
   const destination = join(output, 'anjian-testflight.ipa');
   copyFileSync(ipas[0], destination);
   report.status = 'signed-and-verified';

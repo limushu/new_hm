@@ -389,3 +389,118 @@ fn a_missing_remote_head_is_not_silently_recreated_after_previously_syncing() {
     );
     assert!(cloud.0.lock().unwrap().head.is_none());
 }
+
+#[test]
+fn deferred_download_never_applies_until_editor_gate_accepts_and_rechecks_local_changes() {
+    let cloud = MemoryCloud(Arc::new(Mutex::new(Cloud::default())));
+    let a = tempfile::tempdir().unwrap();
+    let b = tempfile::tempdir().unwrap();
+    let mut first = store(a.path());
+    let case = create(&mut first, "Incoming fixture");
+    let mut second = store(b.path());
+    let mut publisher = service(&cloud, &a.path().join("sync"));
+    let mut receiver = service(&cloud, &b.path().join("sync"));
+    sync(&mut publisher, &mut first).unwrap();
+    let original = second.create_sync_snapshot().unwrap();
+    let report = receiver.prepare_synchronize(&original).unwrap();
+    let token = report.incoming.unwrap().token;
+    assert_eq!(report.phase, "incoming");
+    assert!(second.workspace().unwrap().cases.is_empty());
+    assert_eq!(
+        receiver
+            .prepare_synchronize(&original)
+            .unwrap()
+            .incoming
+            .unwrap()
+            .token,
+        token
+    );
+    let busy = receiver.apply_prepared(&token, |_, _| {
+        Err(DriverError::invalid_state("sync_workspace_busy"))
+    });
+    assert_eq!(busy.err().unwrap().code, "sync_workspace_busy");
+    create(
+        &mut second,
+        "Unsaved gate was released after another local save",
+    );
+    let changed = receiver.apply_prepared(&token, |incoming, expected| {
+        incoming
+            .apply(&mut second, expected)
+            .map(|_| ())
+            .map_err(hm_application::errors::core_error)
+    });
+    assert_eq!(changed.err().unwrap().code, "sync_local_changed");
+    assert_eq!(second.workspace().unwrap().cases.len(), 1);
+    assert_ne!(second.workspace().unwrap().cases[0].id, case);
+    let changed = second.create_sync_snapshot().unwrap();
+    assert_eq!(
+        receiver.prepare_synchronize(&changed).unwrap().phase,
+        "conflict"
+    );
+    assert_eq!(
+        receiver
+            .apply_prepared(&token, |_, _| Ok(()))
+            .err()
+            .unwrap()
+            .code,
+        "sync_incoming_expired"
+    );
+}
+#[test]
+fn deferred_apply_persists_baseline_and_restoring_a_backup_requires_reconciliation() {
+    let cloud = MemoryCloud(Arc::new(Mutex::new(Cloud::default())));
+    let a = tempfile::tempdir().unwrap();
+    let b = tempfile::tempdir().unwrap();
+    let mut first = store(a.path());
+    let case = create(&mut first, "Restore fixture");
+    let mut second = store(b.path());
+    let mut publisher = service(&cloud, &a.path().join("sync"));
+    let mut receiver = service(&cloud, &b.path().join("sync"));
+    sync(&mut publisher, &mut first).unwrap();
+    let incoming = receiver
+        .prepare_synchronize(&second.create_sync_snapshot().unwrap())
+        .unwrap()
+        .incoming
+        .unwrap();
+    receiver
+        .apply_prepared(&incoming.token, |incoming, expected| {
+            incoming
+                .apply(&mut second, expected)
+                .map(|_| ())
+                .map_err(hm_application::errors::core_error)
+        })
+        .unwrap();
+    assert_eq!(sync(&mut receiver, &mut second).unwrap().phase, "current");
+    second.set_case_status(&case, "in_progress").unwrap();
+    receiver.require_reconciliation().unwrap();
+    let head = cloud.0.lock().unwrap().head.clone();
+    assert_eq!(sync(&mut receiver, &mut second).unwrap().phase, "conflict");
+    assert_eq!(cloud.0.lock().unwrap().head, head);
+}
+#[test]
+fn cancellation_stops_existing_reads_and_publishing_and_a_new_lease_can_resume() {
+    use hm_application::sync::SyncEpoch;
+    let cloud = MemoryCloud(Arc::new(Mutex::new(Cloud::default())));
+    let epoch = SyncEpoch::default();
+    let account = cloud.0.lock().unwrap().account.clone();
+    cloud
+        .0
+        .lock()
+        .unwrap()
+        .blobs
+        .insert("fixture".into(), b"bytes".to_vec());
+    let guarded = epoch.guard(Arc::new(cloud.clone()));
+    let mut session = guarded.open(&account).unwrap();
+    let mut reader = session.get_blob("fixture").unwrap();
+    epoch.invalidate();
+    // This must terminate read_to_end; Interrupted would make it retry forever.
+    let error = reader.read_to_end(&mut vec![]).unwrap_err();
+    assert_eq!(error.kind(), std::io::ErrorKind::ConnectionAborted);
+    assert_eq!(
+        session.publish(None, "revision").err().unwrap().code,
+        "sync_interrupted"
+    );
+    assert!(guarded.open(&account).is_err());
+    assert!(epoch.guard(Arc::new(cloud.clone())).open(&account).is_ok());
+    assert!(cloud.0.lock().unwrap().head.is_none());
+}

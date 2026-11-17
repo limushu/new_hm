@@ -9,13 +9,17 @@ private struct Options: Decodable {
 }
 private struct Reply: Encodable {
   var error: String?; var subject: String?; var sessionId: String?; var head: CloudHead?; var exists: Bool?
-  var json: String?; var written: UInt64?; var conflict: Bool?
+  var json: String?; var written: UInt64?; var conflict: Bool?; var configured: Bool?
 }
 final class CloudKitPlugin: Plugin {
   var configuration: () -> String? = { Bundle.main.object(forInfoDictionaryKey: "AnjianCloudKitContainer") as? String }
   var databaseFactory: (String, String, String) -> CloudDatabase = { AppleCloudDatabase(container: $0, owner: $1, workspace: $2) }
   private let lock = NSLock()
   private var sessions: [String: CloudReplica] = [:]
+  @objc func support(_ invoke: Invoke) {
+    // Reading configuration must not instantiate CloudKit or request an account.
+    invoke.resolve(Reply(configured: configuration()?.hasPrefix("iCloud.") == true))
+  }
   @objc func account(_ invoke: Invoke) {
     guard let container=configuration(),container.hasPrefix("iCloud.") else {invoke.resolve(Reply(error:"cloud_not_configured"));return}
     let database=databaseFactory(container,"00000000-0000-0000-0000-000000000000","00000000-0000-0000-0000-000000000000")

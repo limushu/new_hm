@@ -1,7 +1,9 @@
 //! Unified identity. The backend verifies identity; native drivers own authorization
 //! and credentials. Workspace data, preferences and backup snapshots never own tokens.
+mod catalog;
 mod hosted;
 use base64::{engine::general_purpose::URL_SAFE_NO_PAD, Engine};
+pub use catalog::{CloudWorkspace, WorkspaceCatalog};
 use hm_runtime::platform::{DriverError, DriverResult, IdentityDriver};
 pub use hosted::{HostedIdentity, PublicIdentityConfig};
 use serde::{Deserialize, Serialize};

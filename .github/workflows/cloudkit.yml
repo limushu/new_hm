@@ -1,0 +1,57 @@
+name: CloudKit production configuration
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_schema:
+        description: 'Import and deploy the reviewed Anjian record schema to CloudKit Production'
+        type: boolean
+        required: true
+        default: false
+permissions:
+  contents: read
+jobs:
+  configure:
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-15
+    timeout-minutes: 15
+    environment: ios-testflight
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+      - name: Verify registered iCloud capability
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          IOS_MOBILE_PROVISION: ${{ secrets.IOS_MOBILE_PROVISION }}
+        run: |
+          node --input-type=module <<'JS'
+          import { cloudSigning } from './scripts/ios-cloudkit-signing.mjs';
+          const result=await cloudSigning({keyId:process.env.APPLE_API_KEY,issuer:process.env.APPLE_API_ISSUER,privateKey:process.env.APPLE_API_PRIVATE_KEY},{profile:process.env.IOS_MOBILE_PROVISION});
+          console.log(JSON.stringify({capability:result.capability,existingProfileReady:result.profileReady}));
+          JS
+      - name: Inspect installed CloudKit command interface
+        run: |
+          xcrun cktool --help
+          xcrun cktool import-schema --help
+          xcrun cktool deploy-schema --help
+      - name: Deploy reviewed schema
+        if: inputs.deploy_schema
+        env:
+          CKTOOL_MANAGEMENT_TOKEN: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN }}
+        run: |
+          test -n "$CKTOOL_MANAGEMENT_TOKEN" || { echo 'Add CLOUDKIT_MANAGEMENT_TOKEN in GitHub Secrets first'; exit 1; }
+          xcrun cktool import-schema --team-id UN356US9WL --container-id iCloud.com.limushu.hm --environment development --file cloudkit/schema.ckdb
+          xcrun cktool deploy-schema --team-id UN356US9WL --container-id iCloud.com.limushu.hm
+          xcrun cktool export-schema --team-id UN356US9WL --container-id iCloud.com.limushu.hm --environment production --file /tmp/anjian-production.ckdb
+          python3 - <<'PY'
+          from pathlib import Path
+          schema=Path('/tmp/anjian-production.ckdb').read_text()
+          assert all(name in schema for name in ['AnjianSyncHead','AnjianSyncIndex','AnjianSyncChunk'])
+          print('CloudKit Production schema verified')
+          PY

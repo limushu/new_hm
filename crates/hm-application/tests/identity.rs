@@ -42,6 +42,9 @@ impl IdentityDriver for Native {
     }
 }
 struct Server {
+    bindings: Vec<Value>,
+    workspaces: Vec<Value>,
+    catalog_race: bool,
     enabled: bool,
     offline: bool,
     exchanged_user: String,
@@ -56,6 +59,9 @@ struct Server {
 impl Default for Server {
     fn default() -> Self {
         Self {
+            bindings: vec![],
+            workspaces: vec![],
+            catalog_race: false,
             enabled: true,
             offline: false,
             exchanged_user: USER.into(),
@@ -89,7 +95,9 @@ impl IdentityBackend for Backend {
         body: Option<Value>,
     ) -> DriverResult<BackendReply> {
         let mut server = self.0.lock().unwrap();
-        server.calls.push((method.into(), path.into(), body));
+        server
+            .calls
+            .push((method.into(), path.into(), body.clone()));
         if server.offline {
             return Err(DriverError::invalid_state("identity_service_unavailable"));
         }
@@ -124,6 +132,24 @@ impl IdentityBackend for Backend {
             (200, json!({}))
         } else if path.starts_with("/auth/v1/logout?") {
             (204, Value::Null)
+        } else if path.starts_with("/rest/v1/cloud_bindings") {
+            if method == "GET" {
+                (200, json!(server.bindings))
+            } else {
+                let mut row = body.unwrap();
+                row["owner_id"] = server.current_user.clone().into();
+                server.bindings.push(row);
+                (if server.catalog_race { 409 } else { 201 }, Value::Null)
+            }
+        } else if path.starts_with("/rest/v1/workspaces") {
+            if method == "GET" {
+                (200, json!(server.workspaces))
+            } else {
+                let mut row = body.unwrap();
+                row["owner_id"] = server.current_user.clone().into();
+                server.workspaces.push(row);
+                (if server.catalog_race { 409 } else { 201 }, Value::Null)
+            }
         } else {
             panic!("Unexpected account request {method} {path}")
         };
@@ -354,4 +380,61 @@ fn public_configuration_is_project_pinned_and_rejects_privileged_keys_or_urls() 
     let actual: PublicIdentityConfig =
         serde_json::from_str(include_str!("../../../supabase/client.public.json")).unwrap();
     actual.validate().unwrap();
+}
+
+#[test]
+fn cloud_catalog_converges_first_device_races_uses_verified_owner_and_never_submits_owner() {
+    use hm_runtime::platform::CloudIdentity;
+    let (service, vault, server) = setup();
+    vault.lock().unwrap().value = Some(credential(4_000_000_000));
+    server.lock().unwrap().catalog_race = true;
+    let storage = CloudIdentity {
+        provider: "cloudkit".into(),
+        subject: "opaque-cloud-subject,not-a-query".into(),
+    };
+    let first = service.sync_identity(&storage, None).unwrap();
+    let second = service.sync_identity(&storage, None).unwrap();
+    assert_eq!(first, second);
+    assert_eq!(first.user_id, USER);
+    let server = server.lock().unwrap();
+    assert_eq!(server.bindings.len(), 1);
+    assert_eq!(server.workspaces.len(), 1);
+    for (method, path, body) in &server.calls {
+        if path.starts_with("/rest/v1/") {
+            assert!(!path.contains(&storage.subject));
+            if method == "POST" {
+                assert!(body.as_ref().unwrap().get("owner_id").is_none());
+            }
+        }
+    }
+}
+#[test]
+fn cloud_catalog_rejects_foreign_rows_mismatched_locators_and_unknown_selected_workspace() {
+    use hm_runtime::platform::CloudIdentity;
+    let (service, vault, server) = setup();
+    vault.lock().unwrap().value = Some(credential(4_000_000_000));
+    let storage = CloudIdentity {
+        provider: "cloudkit".into(),
+        subject: "opaque-cloud-subject".into(),
+    };
+    service.sync_identity(&storage, None).unwrap();
+    assert_eq!(
+        error(service.sync_identity(&storage, Some(OTHER))),
+        "sync_scope_mismatch"
+    );
+    server.lock().unwrap().workspaces[0]["remote_locator"]["workspaceId"] = OTHER.into();
+    assert_eq!(
+        error(service.sync_identity(&storage, None)),
+        "sync_scope_mismatch"
+    );
+    server.lock().unwrap().bindings[0]["owner_id"] = OTHER.into();
+    assert_eq!(
+        error(service.cloud_workspaces(&storage)),
+        "sync_scope_mismatch"
+    );
+    server.lock().unwrap().user_status = 401;
+    assert_eq!(
+        error(service.verified_user_id()),
+        "identity_session_expired"
+    );
 }

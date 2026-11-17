@@ -73,3 +73,31 @@ fn fingerprints_ignore_device_settings_and_page_layout_but_detect_external_file_
         .is_err()
     );
 }
+
+#[test]
+fn preparation_can_finish_without_the_store_and_generation_detects_edits_during_file_copy() {
+    let root = tempfile::tempdir().unwrap();
+    let mut store = Store::open(&root.path().join("workspace.sqlite3")).unwrap();
+    let case = store
+        .create_case(CreateCase {
+            id: uuid::Uuid::new_v4().to_string(),
+            title: "Snapshot capture".into(),
+            case_type: "civil".into(),
+            status_id: "not_started".into(),
+            tags: None,
+        })
+        .unwrap();
+    let prepared = store.prepare_sync_snapshot().unwrap();
+    let generation = prepared.generation;
+    store.set_case_status(&case.id, "in_progress").unwrap();
+    // The owned SQLite copy finishes outside the original database lock.
+    let snapshot = prepared.finish().unwrap();
+    assert_ne!(generation, store.sync_generation());
+    assert_ne!(
+        snapshot.manifest.fingerprint,
+        store.sync_fingerprint().unwrap()
+    );
+    let prepared = store.prepare_sync_snapshot().unwrap();
+    drop(store);
+    assert!(!prepared.finish().unwrap().pristine);
+}

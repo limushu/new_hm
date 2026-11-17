@@ -11,6 +11,11 @@ on:
         description: 'Optional Apple build number; defaults to workflow run number and attempt'
         required: false
         type: string
+      cloudkit:
+        description: 'Enable iCloud sync after verifying Production schema and regenerating the distribution profile'
+        required: true
+        type: boolean
+        default: false
 permissions:
   contents: read
 concurrency:
@@ -58,6 +63,8 @@ jobs:
           IOS_BUILD_NUMBER: ${{ inputs.build_number }}
           IOS_UPLOAD_TO_TESTFLIGHT: ${{ inputs.upload }}
           IOS_SOURCE_SHA: ${{ github.sha }}
+          IOS_ENABLE_CLOUDKIT: ${{ inputs.cloudkit }}
+          CKTOOL_MANAGEMENT_TOKEN: ${{ secrets.CLOUDKIT_MANAGEMENT_TOKEN }}
         run: node scripts/build-ios-testflight.mjs
       - uses: actions/upload-artifact@v4
         if: always()

@@ -80,6 +80,62 @@ pub struct SyncSnapshot {
     pub manifest: SyncSnapshotManifest,
     pub pristine: bool,
 }
+/// Capture SQLite and file handles under the workspace lock; copy large files
+/// after releasing it. The host rechecks generation before using the result.
+pub struct PreparedSyncSnapshot {
+    directory: tempfile::TempDir,
+    manifest: Manifest,
+    sources: Vec<(String, File)>,
+    pub generation: u64,
+}
+impl PreparedSyncSnapshot {
+    pub fn finish(self) -> Result<SyncSnapshot> {
+        let Self {
+            directory,
+            mut manifest,
+            sources,
+            ..
+        } = self;
+        let root = directory.path().canonicalize()?;
+        let path = root.join("workspace.sqlite3");
+        let db = Connection::open(&path)?;
+        db.execute_batch("PRAGMA journal_mode=DELETE; PRAGMA secure_delete=ON; DELETE FROM reminder_deliveries; DELETE FROM settings; VACUUM;")?;
+        drop(db);
+        let mut total = std::fs::metadata(&path)?.len();
+        manifest
+            .files
+            .insert("workspace.sqlite3".into(), hash(&path)?);
+        for (relative, mut source) in sources {
+            let target = root.join(&relative);
+            std::fs::create_dir_all(target.parent().ok_or_else(invalid)?)?;
+            let mut output = File::create(&target)?;
+            total += std::io::copy(
+                &mut Read::by_ref(&mut source).take(MAX_TOTAL_BYTES.saturating_sub(total) + 1),
+                &mut output,
+            )?;
+            if total > MAX_TOTAL_BYTES {
+                return Err(invalid());
+            }
+            output.sync_all()?;
+            manifest.files.insert(relative, hash(&target)?);
+        }
+        std::fs::write(root.join("manifest.json"), serde_json::to_vec(&manifest)?)?;
+        inspect(&root)?;
+        let db = Connection::open_with_flags(&path, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
+        let fingerprint = logical_fingerprint(&db, &manifest.files)?;
+        let empty = Store::memory()?;
+        let pristine = fingerprint == logical_fingerprint(&empty.connection, &BTreeMap::new())?;
+        Ok(SyncSnapshot {
+            directory,
+            root,
+            manifest: SyncSnapshotManifest {
+                backup: manifest,
+                fingerprint,
+            },
+            pristine,
+        })
+    }
+}
 fn framed(hasher: &mut Sha256, value: &[u8]) {
     hasher.update((value.len() as u64).to_le_bytes());
     hasher.update(value);
@@ -194,6 +250,62 @@ impl SyncSnapshot {
     }
 }
 impl Store {
+    pub fn sync_generation(&self) -> u64 {
+        self.connection.total_changes()
+    }
+    pub fn prepare_sync_snapshot(&self) -> Result<PreparedSyncSnapshot> {
+        let directory = tempfile::Builder::new()
+            .prefix("hm-sync-outgoing-")
+            .tempdir()?;
+        self.connection
+            .backup("main", directory.path().join("workspace.sqlite3"), None)?;
+        let materials = self.material_root()?;
+        let rows = self
+            .connection
+            .prepare("SELECT case_id,id,storage_name FROM materials WHERE kind='file'")?
+            .query_map([], |r| {
+                Ok((
+                    r.get::<_, String>(0)?,
+                    r.get::<_, String>(1)?,
+                    r.get::<_, String>(2)?,
+                ))
+            })?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        if rows.len() > 100000 {
+            return Err(invalid());
+        }
+        let mut sources = vec![];
+        for (case, id, name) in rows {
+            crate::people::valid_id(&case)?;
+            crate::people::valid_id(&id)?;
+            crate::materials::valid_name(&name)?;
+            let path = materials.join(&case).join(&id).join(&name).canonicalize()?;
+            if !path.starts_with(&materials) {
+                return Err(invalid());
+            }
+            sources.push((format!("materials/{case}/{id}/{name}"), File::open(path)?));
+        }
+        let manifest = Manifest {
+            application: "com.limushu.hm".into(),
+            format: 1,
+            created_at: self.connection.query_row(
+                "SELECT strftime('%Y-%m-%dT%H:%M:%fZ','now')",
+                [],
+                |r| r.get(0),
+            )?,
+            case_count: self
+                .connection
+                .query_row("SELECT count(*) FROM cases", [], |r| r.get::<_, i64>(0))?
+                as usize,
+            files: BTreeMap::new(),
+        };
+        Ok(PreparedSyncSnapshot {
+            directory,
+            manifest,
+            sources,
+            generation: self.sync_generation(),
+        })
+    }
     pub fn sync_fingerprint(&self) -> Result<String> {
         let mut files = BTreeMap::new();
         for material in self.materials()?.into_iter().filter(|m| m.kind == "file") {
@@ -223,36 +335,12 @@ impl Store {
         logical_fingerprint(&self.connection, &files)
     }
     pub fn create_sync_snapshot(&self) -> Result<SyncSnapshot> {
-        let directory = tempfile::Builder::new()
-            .prefix("hm-sync-outgoing-")
-            .tempdir()?;
-        let info = self.create_backup(directory.path(), false)?;
-        let (root, mut backup) = inspect(Path::new(&info.directory))?;
-        let path = root.join("workspace.sqlite3");
-        let db = Connection::open(&path)?;
-        db.execute_batch(
-            "PRAGMA journal_mode=DELETE; PRAGMA secure_delete=ON; DELETE FROM reminder_deliveries; DELETE FROM settings; VACUUM;",
-        )?;
-        drop(db);
-        backup
-            .files
-            .insert("workspace.sqlite3".into(), hash(&path)?);
-        std::fs::write(root.join("manifest.json"), serde_json::to_vec(&backup)?)?;
-        inspect(&root)?;
-        let db = Connection::open_with_flags(&path, OpenFlags::SQLITE_OPEN_READ_ONLY)?;
-        let fingerprint = logical_fingerprint(&db, &backup.files)?;
-        let empty = Store::memory()?;
-        let pristine = fingerprint == logical_fingerprint(&empty.connection, &BTreeMap::new())?;
-        // Path/preferences travel only as disposable snapshot metadata; restore preserves the target device's settings.
-        let manifest = SyncSnapshotManifest {
-            backup,
-            fingerprint,
-        };
-        Ok(SyncSnapshot {
-            directory,
-            root,
-            manifest,
-            pristine,
-        })
+        let prepared = self.prepare_sync_snapshot()?;
+        let generation = prepared.generation;
+        let snapshot = prepared.finish()?;
+        if self.sync_generation() != generation {
+            return Err(Error::Validation("sync_local_changed".into()));
+        }
+        Ok(snapshot)
     }
 }

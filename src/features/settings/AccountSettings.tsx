@@ -50,7 +50,7 @@ export default function AccountSettings() {
         案笺账号
       </h2>
       <p className="feature-description">
-        无需登录也能使用本机案件。登录用于统一身份，自动跨设备同步尚未开放。
+        无需登录也能使用本机案件。登录用于统一身份，跨设备同步需在下方单独开启。
       </p>
       {loading && (
         <p className="field-hint" role="status">

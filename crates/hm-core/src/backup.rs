@@ -12,7 +12,7 @@ use uuid::Uuid;
 mod archive;
 mod sync;
 pub use archive::{BackupArchive, PreparedBackup};
-pub use sync::{SyncSnapshot, SyncSnapshotManifest};
+pub use sync::{PreparedSyncSnapshot, SyncSnapshot, SyncSnapshotManifest};
 
 fn rename_staged(source: &Path, target: &Path) -> Result<()> {
     // Windows scanners may briefly hold a just-written file without delete sharing.

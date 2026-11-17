@@ -42,6 +42,7 @@ final class CloudKitTests: XCTestCase {
       }, sendChannelData: { _, _ in }, data: data)
       do {
         switch command {
+        case "support": plugin.support(invoke)
         case "sessionOpen": try plugin.sessionOpen(invoke)
         case "sessionClose": try plugin.sessionClose(invoke)
         case "head": try plugin.head(invoke)
@@ -64,6 +65,14 @@ final class CloudKitTests: XCTestCase {
     plugin.databaseFactory = { _, _, _ in XCTFail("No SDK access without signed configuration"); return MemoryCloudDatabase() }
     let response = try await call(plugin, "sessionOpen", ["ownerId": owner, "workspaceId": workspace, "subject": "private-cloud-user"])
     XCTAssertEqual(response["error"] as? String, "cloud_not_configured")
+    let support = try await call(plugin, "support", [:])
+    XCTAssertEqual(support["configured"] as? Bool, false)
+  }
+  func testConfiguredSupportDoesNotCreateACloudContainerOrAccessTheAccount() async throws {
+    let plugin = CloudKitPlugin(); plugin.configuration = { "iCloud.test.anjian" }
+    plugin.databaseFactory = { _, _, _ in XCTFail("Support query must be local"); return MemoryCloudDatabase() }
+    let support = try await call(plugin, "support", [:])
+    XCTAssertEqual(support["configured"] as? Bool, true)
   }
   func testChangedCloudAccountCannotCreateAZoneOrWriteAnything() async throws {
     let plugin = CloudKitPlugin(), database = MemoryCloudDatabase(); database.subject = "different-user"

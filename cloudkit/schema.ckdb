@@ -1,0 +1,21 @@
+DEFINE SCHEMA
+
+    RECORD TYPE AnjianSyncHead (
+        revision STRING,
+        GRANT WRITE TO "_creator",
+        GRANT CREATE TO "_icloud"
+    );
+
+    RECORD TYPE AnjianSyncIndex (
+        sha STRING,
+        json STRING,
+        GRANT WRITE TO "_creator",
+        GRANT CREATE TO "_icloud"
+    );
+
+    RECORD TYPE AnjianSyncChunk (
+        sha STRING,
+        data ASSET,
+        GRANT WRITE TO "_creator",
+        GRANT CREATE TO "_icloud"
+    );

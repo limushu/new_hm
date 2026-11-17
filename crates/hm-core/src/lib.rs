@@ -1,5 +1,7 @@
 mod backup;
-pub use backup::{BackupArchive, PreparedBackup, SyncSnapshot, SyncSnapshotManifest};
+pub use backup::{
+    BackupArchive, PreparedBackup, PreparedSyncSnapshot, SyncSnapshot, SyncSnapshotManifest,
+};
 mod case_overview;
 pub mod case_system;
 mod example;

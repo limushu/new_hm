@@ -35,6 +35,7 @@ struct Reply {
     json: Option<String>,
     written: Option<u64>,
     conflict: Option<bool>,
+    configured: Option<bool>,
 }
 impl Bridge {
     fn call(&self, command: &str, payload: serde_json::Value) -> DriverResult<Reply> {
@@ -67,6 +68,13 @@ pub fn driver(app: &tauri::AppHandle) -> Box<dyn SyncDriver> {
     })
 }
 impl SyncDriver for IosCloudKit {
+    fn support(&self) -> DriverResult<hm_runtime::platform::SyncSupport> {
+        let reply = self.bridge.call("support", serde_json::json!({}))?;
+        Ok(hm_runtime::platform::SyncSupport {
+            installed: true,
+            configured: reply.configured == Some(true),
+        })
+    }
     fn provider(&self) -> Option<&'static str> {
         Some("cloudkit")
     }

@@ -17,7 +17,7 @@ pub use speech::{
     UnavailableSpeech,
 };
 pub use sync::{
-    CloudIdentity, ReplicaIdentity, SyncDriver, SyncHead, SyncSession, UnavailableSync,
+    CloudIdentity, ReplicaIdentity, SyncDriver, SyncHead, SyncSession, SyncSupport, UnavailableSync,
 };
 mod capabilities;
 mod ports;

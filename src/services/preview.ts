@@ -1092,6 +1092,29 @@ export async function previewCommand<K extends keyof Commands>(
     case 'native_sync_provider':
       result = null;
       break;
+    case 'sync_status':
+    case 'sync_tick':
+      result = {
+        installed: false,
+        configured: false,
+        enabled: false,
+        phase: 'disabled',
+        errorCode: null,
+        lastSuccessAt: null,
+        workspaceLabel: null,
+        conflict: null,
+        incoming: null,
+      };
+      break;
+    case 'sync_presence':
+      result = null;
+      break;
+    case 'sync_enable':
+    case 'sync_disable':
+    case 'sync_workspaces':
+    case 'sync_apply_pending':
+    case 'sync_resolve':
+      throw new Error('界面预览不执行真实云同步');
     case 'identity_status':
       result = { installed: false, providers: [], account: null, cloudSyncAvailable: false };
       break;

@@ -45,6 +45,7 @@ pub fn subsystem_manifest(state: State<'_, RuntimeState>) -> RuntimeManifest {
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(health::RuntimeHealth::default());
     crate::platforms::setup(app)?;
+    sync::setup(app)?;
     #[cfg(desktop)]
     {
         host::setup(app)?;
