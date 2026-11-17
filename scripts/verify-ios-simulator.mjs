@@ -236,6 +236,8 @@ try {
   report.checks.push('bundled-to-system-sqlite-workspace-and-material-retained');
   run('xcrun', ['simctl', 'io', device, 'screenshot', join(output, 'reopened-workspace.png')]);
   report.checks.push('restart-private-workspace-retained');
+  run('node', [join(root, 'scripts/test-ios-viewport.mjs'), device]);
+  report.checks.push('installed-app-full-window-and-pinned-case-actions');
   run('node', [join(root, 'scripts/test-ios-recording.mjs'), device]);
   report.checks.push('native-recording-scene-authorization-and-m4a');
   report.checks.push('native-speech-on-device-policy-chunks-and-cancellation');
