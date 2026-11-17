@@ -107,6 +107,7 @@ fn managed_backup_follows_relocated_workspace_preserves_history_and_only_marks_s
     let root = tempfile::tempdir().unwrap();
     let original = root.path().join("old-container");
     std::fs::create_dir(&original).unwrap();
+    let original = original.canonicalize().unwrap();
     let mut store = Store::open(&original.join("workspace.sqlite3")).unwrap();
     let case = store
         .create_case(CreateCase {
@@ -141,6 +142,7 @@ fn managed_backup_follows_relocated_workspace_preserves_history_and_only_marks_s
     drop(store);
     let current = root.path().join("current-container");
     std::fs::rename(&original, &current).unwrap();
+    let current = current.canonicalize().unwrap();
     // The old location cannot be used as a directory. A stale persisted path
     // would fail here, as inaccessible old sandbox paths do on a device.
     std::fs::write(&original, b"old location is unavailable").unwrap();
@@ -196,7 +198,7 @@ fn configurable_backup_keeps_selected_folder_and_never_falls_back_or_marks_faile
     let backup = target.run_now(&store, day).unwrap();
     assert_eq!(
         std::path::Path::new(&backup.directory).parent().unwrap(),
-        external
+        external.canonicalize().unwrap()
     );
     let blocked = root.path().join("blocked");
     std::fs::write(&blocked, b"unavailable volume").unwrap();
