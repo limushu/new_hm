@@ -316,6 +316,7 @@ fn apply(
     let mut store = business.0.lock().map_err(|_| unavailable())?;
     state.check(lease)?;
     snapshot.apply(&mut store, expected).map_err(core_error)?;
+    store.mark_changed();
     Ok(())
 }
 fn perform(app: &AppHandle, state: &SyncState, action: Action) -> DriverResult<SyncStatus> {

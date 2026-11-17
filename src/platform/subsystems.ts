@@ -15,6 +15,7 @@ export type Capability =
   | 'local-backup'
   | 'backup-transfer'
   | 'backup-files'
+  | 'system-calendar'
   | 'system-notifications'
   | 'account-login';
 
@@ -22,6 +23,7 @@ export interface RuntimeManifest {
   version: 1;
   subsystems: Array<{
     id:
+      | 'agenda'
       | 'host'
       | 'updates'
       | 'maintenance'

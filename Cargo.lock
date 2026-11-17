@@ -1571,7 +1571,7 @@ checksum = "7f24254aa9a54b5c858eaee2f5bccdb46aaf0e486a595ed5fd8f86ba55232a70"
 
 [[package]]
 name = "hm-app"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "chrono",
  "hm-application",
@@ -1583,6 +1583,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-autostart",
  "tauri-plugin-dialog",
+ "tauri-plugin-hm-agenda",
  "tauri-plugin-hm-cloudkit",
  "tauri-plugin-hm-documents",
  "tauri-plugin-hm-identity",
@@ -1598,9 +1599,10 @@ dependencies = [
 
 [[package]]
 name = "hm-application"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "base64 0.22.1",
+ "chrono",
  "hm-core",
  "hm-runtime",
  "reqwest 0.12.28",
@@ -1614,7 +1616,7 @@ dependencies = [
 
 [[package]]
 name = "hm-core"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "chrono",
  "rusqlite",
@@ -1630,7 +1632,7 @@ dependencies = [
 
 [[package]]
 name = "hm-runtime"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -4375,8 +4377,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "tauri-plugin-hm-agenda"
+version = "1.8.1"
+dependencies = [
+ "hm-runtime",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-plugin",
+]
+
+[[package]]
 name = "tauri-plugin-hm-cloudkit"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "hm-runtime",
  "serde",
@@ -4389,7 +4402,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-hm-documents"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "hm-runtime",
  "serde",
@@ -4401,7 +4414,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-hm-identity"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "hm-runtime",
  "serde",
@@ -4412,7 +4425,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-hm-recording"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "hm-runtime",
  "serde",
@@ -4424,7 +4437,7 @@ dependencies = [
 
 [[package]]
 name = "tauri-plugin-hm-speech"
-version = "1.8.0"
+version = "1.8.1"
 dependencies = [
  "hm-runtime",
  "serde",

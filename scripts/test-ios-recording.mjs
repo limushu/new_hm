@@ -95,11 +95,13 @@ try {
           join(root, 'crates/tauri-plugin-hm-speech/ios/Sources'),
           join(root, 'crates/tauri-plugin-hm-cloudkit/ios/Sources'),
           join(root, 'crates/tauri-plugin-hm-identity/ios/Sources'),
+          join(root, 'crates/tauri-plugin-hm-agenda/ios/Sources'),
           join(root, 'tests/native/ios-recording/RecordingTests.swift'),
           join(root, 'tests/native/ios-recording/DocumentsTests.swift'),
           join(root, 'tests/native/ios-recording/SpeechTests.swift'),
           join(root, 'tests/native/ios-recording/CloudKitTests.swift'),
           join(root, 'tests/native/ios-recording/IdentityTests.swift'),
+          join(root, 'tests/native/ios-recording/AgendaTests.swift'),
         ],
         dependencies: [{ target: 'RecordingHost' }, { package: 'Tauri' }],
         settings: {

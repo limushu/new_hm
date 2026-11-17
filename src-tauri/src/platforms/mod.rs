@@ -24,7 +24,8 @@ impl NativeDrivers {
 pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     use tauri::Manager;
     #[cfg(desktop)]
-    let drivers = NativeDrivers {
+    #[allow(unused_mut)]
+    let mut drivers = NativeDrivers {
         host: Box::new(desktop::DesktopPlatform(app.handle().clone())),
         external_open: Box::new(desktop::DesktopPlatform(app.handle().clone())),
         local_filesystem: Box::new(desktop::DesktopPlatform(app.handle().clone())),
@@ -88,7 +89,8 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         manifest
     };
     #[cfg(mobile)]
-    let drivers = NativeDrivers {
+    #[allow(unused_mut)]
+    let mut drivers = NativeDrivers {
         host: Box::new(mobile::SandboxPlatform),
         external_open: Box::new(mobile::SandboxPlatform),
         local_filesystem: Box::new(mobile::SandboxPlatform),
@@ -102,6 +104,34 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         sync: Arc::new(hm_runtime::platform::UnavailableSync),
         manifest,
     };
+    #[cfg(target_os = "ios")]
+    if let Some(agenda) = drivers
+        .manifest
+        .subsystems
+        .iter_mut()
+        .find(|s| s.id == hm_runtime::SubsystemId::Agenda)
+    {
+        agenda.state = hm_runtime::Availability::Ready;
+        agenda.capabilities = vec![
+            hm_runtime::Capability::SystemNotifications,
+            hm_runtime::Capability::SystemCalendar,
+        ];
+    }
+    #[cfg(target_os = "ios")]
+    let notifications = tauri_plugin_hm_agenda::notification_driver(app.handle());
+    #[cfg(desktop)]
+    let notifications: Box<dyn hm_runtime::platform::NotificationDriver> = Box::new(
+        desktop::notifications::DesktopNotifications(app.handle().clone()),
+    );
+    #[cfg(not(any(desktop, target_os = "ios")))]
+    let notifications: Box<dyn hm_runtime::platform::NotificationDriver> =
+        Box::new(hm_runtime::platform::UnavailableNotifications);
+    #[cfg(target_os = "ios")]
+    let calendar = tauri_plugin_hm_agenda::calendar_driver(app.handle());
+    #[cfg(not(target_os = "ios"))]
+    let calendar: Box<dyn hm_runtime::platform::CalendarDriver> =
+        Box::new(hm_runtime::platform::UnavailableCalendar);
+    crate::subsystems::agenda::setup(app, notifications, calendar);
     #[cfg(target_os = "ios")]
     let recording = tauri_plugin_hm_recording::driver(app.handle());
     #[cfg(not(target_os = "ios"))]

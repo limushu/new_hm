@@ -23,12 +23,14 @@ pub enum Capability {
     BackupTransfer,
     BackupFiles,
     SystemNotifications,
+    SystemCalendar,
     AccountLogin,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub enum SubsystemId {
+    Agenda,
     Host,
     Updates,
     Maintenance,
@@ -69,6 +71,11 @@ impl RuntimeManifest {
             version: 1,
             subsystems: vec![
                 SubsystemDescriptor {
+                    id: SubsystemId::Agenda,
+                    state: Availability::Ready,
+                    capabilities: vec![Capability::SystemNotifications],
+                },
+                SubsystemDescriptor {
                     id: SubsystemId::Identity,
                     state: Availability::Unsupported,
                     capabilities: vec![],
@@ -90,10 +97,7 @@ impl RuntimeManifest {
                 SubsystemDescriptor {
                     id: SubsystemId::Maintenance,
                     state: Availability::Ready,
-                    capabilities: vec![
-                        Capability::BackgroundMaintenance,
-                        Capability::SystemNotifications,
-                    ],
+                    capabilities: vec![Capability::BackgroundMaintenance],
                 },
                 SubsystemDescriptor {
                     id: SubsystemId::Documents,
@@ -134,6 +138,11 @@ impl RuntimeManifest {
         Self {
             version: 1,
             subsystems: vec![
+                SubsystemDescriptor {
+                    id: SubsystemId::Agenda,
+                    state: Availability::Unsupported,
+                    capabilities: vec![],
+                },
                 SubsystemDescriptor {
                     id: SubsystemId::Identity,
                     state: Availability::Unsupported,

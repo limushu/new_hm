@@ -5,6 +5,7 @@ import App from './App';
 import ThemeProvider from './components/ThemeProvider';
 import SubsystemProvider from './platform/SubsystemProvider';
 import SyncProvider from './platform/SyncProvider';
+import DeviceAgendaProvider from './platform/DeviceAgendaProvider';
 import './styles.css';
 import './themes.css';
 import './components/buttons.css';
@@ -13,9 +14,11 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <SubsystemProvider>
       <ThemeProvider>
-        <SyncProvider>
-          <App />
-        </SyncProvider>
+        <DeviceAgendaProvider>
+          <SyncProvider>
+            <App />
+          </SyncProvider>
+        </DeviceAgendaProvider>
       </ThemeProvider>
     </SubsystemProvider>
   </React.StrictMode>,

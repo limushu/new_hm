@@ -23,6 +23,7 @@ chrono = "0.4"
 tempfile = "3"
 
 [target.'cfg(target_os = "ios")'.dependencies]
+tauri-plugin-hm-agenda = { path = "../crates/tauri-plugin-hm-agenda" }
 tauri-plugin-hm-identity = { path = "../crates/tauri-plugin-hm-identity" }
 tauri-plugin-hm-recording = { path = "../crates/tauri-plugin-hm-recording" }
 tauri-plugin-hm-documents = { path = "../crates/tauri-plugin-hm-documents" }

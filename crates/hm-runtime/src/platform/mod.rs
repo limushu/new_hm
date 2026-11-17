@@ -1,3 +1,9 @@
+mod agenda;
+pub use agenda::{
+    Authorization, CalendarCopy, CalendarDriver, CalendarSupport, CalendarTarget,
+    DeviceNotification, LocalDateTime, NotificationDriver, NotificationMode, NotificationRecord,
+    NotificationSupport, UnavailableCalendar, UnavailableNotifications,
+};
 mod backup;
 mod documents;
 pub use backup::{BackupDriver, FileBackupDriver, UnavailableBackup};

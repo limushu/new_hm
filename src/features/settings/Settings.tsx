@@ -12,6 +12,7 @@ import PrivacyPolicy from './PrivacyPolicy';
 import BackupFiles from './BackupFiles';
 import AccountSettings from './AccountSettings';
 import SyncSettings from './SyncSettings';
+import DeviceAgendaSettings from './DeviceAgendaSettings';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
 import { useTheme } from '../../components/ThemeProvider';
@@ -261,18 +262,10 @@ export default function Settings({
       <section className="settings-section">
         <h2>提醒与后台运行</h2>
         {systemNotifications ? (
-          <label className="setting-toggle">
-            <span>
-              日程系统通知<small>只提醒已设置提醒时间的日程。</small>
-            </span>
-            <input
-              type="checkbox"
-              aria-label="日程系统通知"
-              checked={settings.notifications !== 'false'}
-              disabled={busy}
-              onChange={(e) => void setting('notifications', String(e.target.checked))}
-            />
-          </label>
+          <DeviceAgendaSettings
+            enabled={settings.notifications !== 'false'}
+            onEnabled={(value) => setting('notifications', String(value))}
+          />
         ) : (
           <p className="field-hint">系统提醒尚不可用，日程仍可在应用内查看。</p>
         )}

@@ -1,8 +1,6 @@
 use crate::{access, AppState};
 use std::collections::BTreeMap;
 use tauri::{Manager, State};
-#[cfg(desktop)]
-use tauri_plugin_notification::NotificationExt;
 
 #[cfg(desktop)]
 pub(super) fn configure(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wry> {
@@ -25,29 +23,10 @@ pub(super) fn setup(
         std::time::Duration::ZERO,
         std::time::Duration::from_secs(60),
         move || {
+            super::agenda::changed(&handle);
             let result = access(&handle.state::<AppState>(), |s| {
                 let now = chrono::Local::now();
-                let settings = s.settings()?;
-                let mut health = backup_health(s, now)?;
-                health.insert("notificationError".into(), String::new());
-                if settings.get("notifications").is_none_or(|v| v != "false") {
-                    for reminder in s.due_reminders(now.naive_local())? {
-                        match handle
-                            .notification()
-                            .builder()
-                            .title(&reminder.title)
-                            .body(&reminder.when)
-                            .show()
-                        {
-                            Ok(()) => {
-                                s.acknowledge_reminder(&reminder.event_id, &reminder.schedule_key)?
-                            }
-                            Err(error) => {
-                                health.insert("notificationError".into(), error.to_string());
-                            }
-                        }
-                    }
-                }
+                let health = backup_health(s, now)?;
                 Ok(health)
             });
             let health = match result {

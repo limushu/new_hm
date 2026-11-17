@@ -17,6 +17,7 @@ pub fn resume_runtime(app: tauri::AppHandle) {
 }
 
 pub fn resume(app: &tauri::AppHandle) {
+    super::agenda::changed(app);
     let Some(permit) = app.state::<MobileState>().maintenance.try_enter() else {
         return;
     };

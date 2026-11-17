@@ -12,6 +12,7 @@ mod people;
 mod records;
 mod relations;
 mod reminders;
+pub use reminders::{reminder_timing, ReminderTiming};
 mod representation;
 mod schedule;
 mod stages;

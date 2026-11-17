@@ -1,4 +1,5 @@
 //! Composition root for host services. Business commands continue to use hm-core.
+pub mod agenda;
 pub mod backup;
 pub mod documents;
 mod health;
@@ -27,6 +28,7 @@ pub struct RuntimeState {
 pub fn configure(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wry> {
     #[cfg(target_os = "ios")]
     let builder = builder
+        .plugin(tauri_plugin_hm_agenda::init())
         .plugin(tauri_plugin_hm_recording::init())
         .plugin(tauri_plugin_hm_documents::init())
         .plugin(tauri_plugin_hm_speech::init())

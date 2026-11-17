@@ -1,3 +1,4 @@
+import type { AgendaStatus, DeviceAuthorization, CalendarTarget, CalendarLink } from './agenda';
 import type { ResourceMetadata, ResourceRelation } from '../case-system/contracts';
 import type { CloudWorkspace, SyncStatus } from './sync';
 export interface OperationError {
@@ -427,6 +428,14 @@ export interface Commands {
   acknowledge_reminder: { args: { eventId: string; key: string }; result: null };
   choose_backup_directory: { args: Record<string, never>; result: string | null };
   run_backup: { args: Record<string, never>; result: BackupInfo };
+  agenda_status: { args: Record<string, never>; result: AgendaStatus };
+  agenda_refresh: { args: Record<string, never>; result: AgendaStatus };
+  agenda_request_notifications: { args: Record<string, never>; result: DeviceAuthorization };
+  agenda_notification_settings: { args: Record<string, never>; result: null };
+  agenda_calendar_targets: { args: Record<string, never>; result: CalendarTarget[] };
+  agenda_calendar_link: { args: { eventId: string }; result: CalendarLink | null };
+  agenda_calendar_attach: { args: { eventId: string; targetId: string }; result: CalendarLink };
+  agenda_calendar_detach: { args: { eventId: string }; result: null };
   native_sync_provider: { args: Record<string, never>; result: string | null };
   sync_status: { args: Record<string, never>; result: SyncStatus };
   sync_workspaces: { args: Record<string, never>; result: CloudWorkspace[] };

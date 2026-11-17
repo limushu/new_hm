@@ -6,6 +6,10 @@
   <false/>
   <key>NSMicrophoneUsageDescription</key>
   <string>用于在你点击开始录音后录制案件音频，并保存到本机案件材料。</string>
+  <key>NSCalendarsUsageDescription</key>
+  <string>用于将你选择的案笺日程添加到系统日历，并在改期或删除后维护对应副本；不会将其他个人日历内容导入案笺。</string>
+  <key>NSCalendarsFullAccessUsageDescription</key>
+  <string>用于维护你主动关联的系统日历副本，包括改期和删除；不会将其他个人日历内容导入案笺。</string>
   <key>NSSpeechRecognitionUsageDescription</key>
   <string>用于在你点击转成文字后，将所选录音在设备内识别为可编辑的案件文字材料。</string>
 </dict>

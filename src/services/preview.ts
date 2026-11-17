@@ -1089,6 +1089,37 @@ export async function previewCommand<K extends keyof Commands>(
       }
       break;
     }
+    case 'agenda_status':
+    case 'agenda_refresh':
+      result = {
+        notifications: {
+          installed: true,
+          authorization: 'granted',
+          enabled: settings.notifications !== 'false',
+          scheduled: 0,
+          deferred: 0,
+          errorCode: null,
+        },
+        calendar: {
+          installed: false,
+          authorization: 'unavailable',
+          linked: 0,
+          failed: 0,
+          errorCode: null,
+        },
+      };
+      break;
+    case 'agenda_request_notifications':
+      result = 'granted';
+      break;
+    case 'agenda_calendar_link':
+      result = null;
+      break;
+    case 'agenda_calendar_targets':
+    case 'agenda_calendar_attach':
+    case 'agenda_calendar_detach':
+    case 'agenda_notification_settings':
+      throw new Error('界面预览不执行真实系统日历或通知操作');
     case 'native_sync_provider':
       result = null;
       break;

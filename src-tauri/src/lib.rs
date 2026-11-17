@@ -1,14 +1,14 @@
 mod ipc;
 mod platforms;
 mod subsystems;
+use hm_application::workspace::WorkspaceCell;
 use hm_core::{
     AddTask, CalendarEvent, Case, CaseHeader, CreateCase, StorageLocation, Store, UpdateCase,
     UpdateProceeding, Workspace,
 };
-use std::sync::Mutex;
 use tauri::{Manager, State};
 
-pub(crate) struct AppState(Mutex<Store>);
+pub(crate) struct AppState(WorkspaceCell);
 pub(crate) fn access<T>(
     state: &AppState,
     action: impl FnOnce(&mut Store) -> hm_core::Result<T>,
@@ -150,7 +150,10 @@ pub fn run() {
                     &location.data_directory.join("backups").to_string_lossy(),
                 )?;
             }
-            app.manage(AppState(Mutex::new(store)));
+            let changes = app.handle().clone();
+            app.manage(AppState(WorkspaceCell::new(store, move || {
+                subsystems::agenda::changed(&changes)
+            })));
             app.manage(hm_application::case_system::CaseSystem::default());
             app.manage(location.clone());
             #[cfg(target_os = "windows")]
@@ -173,6 +176,14 @@ pub fn run() {
             ipc::case_system::save_resource_relations,
             ipc::case_system::delete_resource_relation,
             subsystems::subsystem_manifest,
+            subsystems::agenda::agenda_status,
+            subsystems::agenda::agenda_refresh,
+            subsystems::agenda::agenda_request_notifications,
+            subsystems::agenda::agenda_notification_settings,
+            subsystems::agenda::agenda_calendar_targets,
+            subsystems::agenda::agenda_calendar_link,
+            subsystems::agenda::agenda_calendar_attach,
+            subsystems::agenda::agenda_calendar_detach,
             subsystems::recording::native_recording_support,
             subsystems::recording::start_native_recording,
             subsystems::recording::pause_native_recording,

@@ -1,4 +1,5 @@
 pub mod documents;
+pub mod notifications;
 #[cfg(windows)]
 pub(crate) mod windows_icon;
 use hm_runtime::platform::{

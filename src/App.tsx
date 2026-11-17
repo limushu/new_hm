@@ -10,6 +10,7 @@ import Notifications from './components/Notifications';
 import Trash from './components/Trash';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useCloudSync } from './platform/SyncProvider';
+import { useDeviceAgendaActions } from './platform/DeviceAgendaProvider';
 import { CalendarDays, Folder, Settings, Trash2, Users, Search, Bell } from 'lucide-react';
 import { command, nativeRuntime, previewMode } from './services/repository';
 import { emptyWorkspace } from './domain/types';
@@ -59,6 +60,7 @@ export default function App() {
   const [storage, setStorage] = useState<Commands['storage_info']['result'] | null>(null);
   const [syncGeneration, setSyncGeneration] = useState(0);
   const { register: registerSync } = useCloudSync();
+  const { afterSave: afterAgendaSave } = useDeviceAgendaActions();
   const syncBlocked = useRef(true);
   syncBlocked.current = loading || !!draft || welcome;
   const refresh = useCallback(async () => {
@@ -110,6 +112,7 @@ export default function App() {
   const save: SaveAction = useCallback(
     async <K extends keyof Commands>(name: K, args: Commands[K]['args']) => {
       const result = await command(name, args);
+      await afterAgendaSave(name, args);
       if (name === 'update_case' || name === 'set_case_status') {
         setData((data) => mergeCaseHeader(data, result as CaseHeader));
       } else if (name === 'save_case_status') {
@@ -117,7 +120,7 @@ export default function App() {
       } else await refresh();
       return result;
     },
-    [refresh],
+    [refresh, afterAgendaSave],
   );
   function create(statusId = 'not_started') {
     setInitialTab('overview');

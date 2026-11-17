@@ -142,7 +142,11 @@ pub fn restore_backup_archive(
         .0
         .lock()
         .map_err(|_| DriverError::invalid_state("storage_unavailable"))?;
-    service.restore(&mut store, &token, confirmed)
+    let result = service.restore(&mut store, &token, confirmed);
+    if result.is_ok() {
+        store.mark_changed();
+    }
+    result
 }
 #[tauri::command(async)]
 pub fn apply_restore_backup(
@@ -156,5 +160,9 @@ pub fn apply_restore_backup(
     if confirmed {
         super::sync::pause(&app, true)?;
     }
-    Ok(access(&state, |s| s.restore_backup(&path, confirmed))?)
+    let result = access(&state, |s| s.restore_backup(&path, confirmed));
+    if result.is_ok() {
+        super::agenda::changed(&app);
+    }
+    Ok(result?)
 }

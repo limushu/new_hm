@@ -13,6 +13,7 @@ export default function Dialog({
   secondaryAction,
   showFooter = true,
   cancelAction,
+  submitDisabled = false,
 }: {
   title: string;
   children: ReactNode;
@@ -21,6 +22,7 @@ export default function Dialog({
   secondaryAction?: { label: string; run: () => Promise<void | false> };
   showFooter?: boolean;
   cancelAction?: () => void;
+  submitDisabled?: boolean;
   submitLabel?: string;
   danger?: boolean;
   className?: string;
@@ -109,7 +111,11 @@ export default function Dialog({
                     {secondaryAction.label}
                   </Button>
                 )}
-                <Button variant={danger ? 'danger' : 'primary'} disabled={busy} type="submit">
+                <Button
+                  variant={danger ? 'danger' : 'primary'}
+                  disabled={busy || submitDisabled}
+                  type="submit"
+                >
                   {busy ? '处理中…' : submitLabel}
                 </Button>
               </>

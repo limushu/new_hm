@@ -9,3 +9,6 @@ pub mod errors;
 
 pub mod case_system;
 pub mod identity;
+
+pub mod agenda;
+pub mod workspace;
