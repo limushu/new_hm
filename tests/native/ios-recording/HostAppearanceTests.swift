@@ -20,7 +20,7 @@ final class HostAppearanceTests: XCTestCase {
       <style>
       html,body {margin:0} * {box-sizing:border-box}
       #page {height:100dvh;padding-top:env(safe-area-inset-top)}
-      #footer {position:fixed;bottom:0;width:100%;padding-bottom:env(safe-area-inset-bottom)}
+      #footer {display:flex;position:fixed;bottom:0;width:100%;padding-bottom:env(safe-area-inset-bottom)}
       #action {height:44px}
       </style></head><body><main id="page"><footer id="footer"><button id="action">Create</button></footer></main></body></html>
       """,baseURL:nil)
