@@ -2,6 +2,7 @@ import { cpSync, mkdtempSync, mkdirSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { setTimeout as delay } from 'node:timers/promises';
 
 // Runs the production Swift driver inside a scene-based iOS XCTest host. This
 // creates only a CI-owned app/device; no production test command is registered.
@@ -155,6 +156,12 @@ try {
     'microphone',
     'com.limushu.hm.recordingtests',
   ]);
+  // Viewport-fit changes are committed by WebKit's compositor. Like the native
+  // screenshot flow, attach a real Simulator display on otherwise headless CI.
+  // Restart only the GUI; all simulator devices and their data stay intact.
+  spawnSync('killall', ['Simulator'], { stdio: 'ignore' });
+  run('open', ['-a', 'Simulator', '--args', '-CurrentDeviceUDID', device]);
+  await delay(3000);
   run('xcodebuild', [
     ...argumentsForBuild,
     '-test-timeouts-enabled',
