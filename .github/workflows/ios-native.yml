@@ -1,0 +1,36 @@
+name: iOS native driver checks
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-drivers:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Resolve the production Tauri SDK
+        run: cargo metadata --locked --format-version 1 --filter-platform aarch64-apple-ios-sim > /dev/null
+      - name: Ensure Xcode project tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: command -v xcodegen >/dev/null || brew install xcodegen
+      - name: Test native drivers and full-screen geometry
+        shell: bash
+        run: |
+          simulator_id="$(xcrun simctl create Anjian-Native-CI com.apple.CoreSimulator.SimDeviceType.iPhone-16)"
+          trap 'xcrun simctl shutdown "$simulator_id" >/dev/null 2>&1 || true; xcrun simctl delete "$simulator_id" >/dev/null 2>&1 || true' EXIT
+          xcrun simctl boot "$simulator_id"
+          xcrun simctl bootstatus "$simulator_id" -b
+          node scripts/test-ios-recording.mjs "$simulator_id"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-native-${{ github.run_id }}
+          path: artifacts/ios/simulator/native-recording.xcresult
+          if-no-files-found: warn
+          retention-days: 7

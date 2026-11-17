@@ -14,10 +14,30 @@ final class HostAppearanceTests: XCTestCase {
     HostAppearance.configure(webview)
     XCTAssertEqual(webview.bounds.width,window.bounds.width,accuracy:1)
     XCTAssertEqual(webview.bounds.height,window.bounds.height,accuracy:1)
-    webview.loadHTMLString("<html><head><meta name='viewport' content='width=device-width,initial-scale=1,viewport-fit=cover'></head><body style='margin:0'><div id='safe' style='padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)'></div></body></html>",baseURL:nil)
+    webview.loadHTMLString("""
+      <!doctype html><html><head>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+      <style>
+      html,body {margin:0} * {box-sizing:border-box}
+      #page {height:100dvh;padding-top:env(safe-area-inset-top)}
+      #footer {position:fixed;bottom:0;width:100%;padding-bottom:env(safe-area-inset-bottom)}
+      #action {height:44px}
+      </style></head><body><main id="page"><footer id="footer"><button id="action">Create</button></footer></main></body></html>
+      """,baseURL:nil)
+    let measure = """
+      (() => {
+        const page=document.getElementById('page'), footer=document.getElementById('footer'), action=document.getElementById('action');
+        if (!page || !footer || !action) return null;
+        const rect=page.getBoundingClientRect();
+        return {width:rect.width,height:rect.height,footerBottom:footer.getBoundingClientRect().bottom,
+          actionBottom:action.getBoundingClientRect().bottom,
+          top:parseFloat(getComputedStyle(page).paddingTop),bottom:parseFloat(getComputedStyle(footer).paddingBottom),
+          innerHeight:innerHeight,visualHeight:visualViewport.height};
+      })()
+      """
     var metrics: [String:Double]?
     for _ in 0..<100 {
-      if let value = try? await webview.evaluateJavaScript("document.getElementById('safe') ? ({width:innerWidth,height:innerHeight,top:parseFloat(getComputedStyle(document.getElementById('safe')).paddingTop),bottom:parseFloat(getComputedStyle(document.getElementById('safe')).paddingBottom)}) : null") as? [String:Double] {
+      if let value = try? await webview.evaluateJavaScript(measure) as? [String:Double] {
         metrics=value
         if abs((value["height"] ?? 0)-Double(window.bounds.height)) < 1 && abs((value["top"] ?? 0)-Double(webview.safeAreaInsets.top)) < 1 {break}
       }
@@ -25,8 +45,12 @@ final class HostAppearanceTests: XCTestCase {
     }
     let actual = try XCTUnwrap(metrics)
     print("Host viewport: window=\(window.bounds), webview=\(webview.frame), safe=\(webview.safeAreaInsets), CSS=\(actual)")
+    // Measure rendered full-screen content and the pinned action, rather than
+    // innerHeight (WebKit can report its unobscured viewport for that property).
     XCTAssertEqual(actual["width"]!,Double(window.bounds.width),accuracy:1)
     XCTAssertEqual(actual["height"]!,Double(window.bounds.height),accuracy:1)
+    XCTAssertEqual(actual["footerBottom"]!,Double(window.bounds.height),accuracy:1)
+    XCTAssertEqual(actual["actionBottom"]!,Double(window.bounds.height-webview.safeAreaInsets.bottom),accuracy:1)
     XCTAssertEqual(actual["top"]!,Double(webview.safeAreaInsets.top),accuracy:1)
     XCTAssertEqual(actual["bottom"]!,Double(webview.safeAreaInsets.bottom),accuracy:1)
     XCTAssertEqual(webview.scrollView.contentInsetAdjustmentBehavior,.never)
