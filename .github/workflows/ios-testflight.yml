@@ -24,7 +24,8 @@ concurrency:
 jobs:
   archive:
     if: github.ref == 'refs/heads/main'
-    runs-on: macos-15
+    # The ARM pool cancelled the signed archive before starting due to capacity.
+    runs-on: macos-15-intel
     timeout-minutes: 45
     environment: ios-testflight
     steps:
