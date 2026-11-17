@@ -106,7 +106,7 @@ try {
     const manifest = JSON.parse(readFileSync(join(attachments, 'manifest.json'), 'utf8'));
     function collect(value) {
       if (!value || typeof value !== 'object') return;
-      const name = value.suggestedHumanReadableName?.match(/^anjian-viewport-([\w-]+)/)?.[1];
+      const name = value.suggestedHumanReadableName?.match(/anjian-viewport-([\w-]+)/)?.[1];
       if (name && typeof value.exportedFileName === 'string') {
         const source = resolve(attachments, value.exportedFileName);
         if (!source.startsWith(resolve(attachments) + '/'))

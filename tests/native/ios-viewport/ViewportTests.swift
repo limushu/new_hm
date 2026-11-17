@@ -7,10 +7,13 @@ final class ViewportTests: XCTestCase {
   private let app = XCUIApplication(bundleIdentifier: "com.limushu.hm")
 
   private func tap(_ name: String) {
-    let control=app.buttons.matching(NSPredicate(format:"label == %@",name)).firstMatch
-    XCTAssertTrue(control.waitForExistence(timeout:15),"Missing control: \(name)")
-    XCTAssertTrue(control.isHittable,"Hidden control: \(name)")
-    control.tap()
+    let predicate=NSPredicate(format:"label == %@",name)
+    let button=app.buttons.matching(predicate).firstMatch
+    if button.waitForExistence(timeout:5) && button.isHittable {button.tap();return}
+    for control in app.descendants(matching:.any).matching(predicate).allElementsBoundByIndex where control.isHittable {
+      control.tap();return
+    }
+    XCTFail("No visible control: \(name)\n\(app.debugDescription)")
   }
   private func capture(_ name:String) {
     let image=XCTAttachment(screenshot:XCUIScreen.main.screenshot())
