@@ -1,6 +1,18 @@
 # App Store 首发准备
 
-## 当前外观与全屏内测：1.8.3（35.1）
+## 当前备份与图标修复内测：1.8.4（37.2）
+
+修复 iOS 更新后遗留旧沙盒绝对路径导致的自动/手动备份权限错误。公共应用层按当前工作区解析托管目标，桌面自选备份位置仍受尊重；成功日期仅在完整快照完成后更新。数据、材料和历史备份保持原位，见[备份子系统](../backup-subsystem.md)。实际 AppIcon 已换为仓库的 HM 品牌素材；手写 8 仍为[设计预览](../design/current/brand-8-concept-2026-11-17.png)，未进入这个安装包。保留前版的全屏、贴底操作栏和自选强调色。
+
+2026-11-17，[签名与上传第 2 次尝试](https://github.com/limushu/new_hm/actions/runs/44049974928/attempts/2)于 09:13:01 UTC 明确确认 `UPLOAD SUCCEEDED with no errors`；[独立状态查询](https://github.com/limushu/new_hm/actions/runs/44054213570)于 09:17:35 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`。构建 ID `7ff0fefe-4511-448e-b349-6ed01baa6882`，内部测试员可更新；没有重新提交 App Review 或发布 App Store。
+
+实际 IPA 源码 `5a92f3ec74d325bec46413095d226a089d02849c`，版本 1.8.4 / 37.2，Xcode 26.3（17C529）/ SDK 26.2。已下载核对包名、启动屏、麦克风/识别/日历用途说明、根隐私清单及实际 Mach-O 分发权限，CloudKit 保持 `Production`。解码实际 iPhone/iPad AppIcon PNG，确认不含透明像素，品牌像素比较误差均为 0；所有生成目录槽位（包括 1024px 商店图）在构建前转换为无 Alpha 通道的 RGB。IPA SHA-256：`c36ad5436c7d61c6429faa4c2ba4caf0b3602a558bb2446055d92a98995f9159`。
+
+[同一源码应用检查](https://github.com/limushu/new_hm/actions/runs/44049973907)通过 Rust/Clippy、Windows 构建、87 项前端单元测试、144 项 Chromium 和 35 项 WebKit 回归；[移动检查](https://github.com/limushu/new_hm/actions/runs/44049973910)通过 Android 编译、iOS 升级工作区持久化、旧备份地址修复及快照 SHA-256 检查、实际 App 四标签贴底验收和 34 项原生测试。模拟器窗口 414×896pt，创建按钮距底部 34pt；这些结果不替代用户真机升级后的实际备份验收。
+
+早先 36.1 的上传被 Apple 因图标 Alpha 通道拒绝，不能安装；后续补充 RGB 格式检查及明确上传成功回执校验。37.1 在签名导出时遇到 Apple SSL 错误，同一源码重试形成上述 37.2。以独立 Apple 状态和实际 IPA 为交付依据。
+
+## 前一外观与全屏内测：1.8.3（35.1）
 
 案件“录音 / 创建 / 查找”操作栏保持贴底，短内容不再上浮；背景覆盖完整窗口，控件按设备安全区避让。设置 → 外观 → 强调色支持六种预设、自选颜色和恢复默认，并自动调整深浅主题的可读性。实现边界见[外观与全屏布局](../design/appearance-layout.md)。
 
@@ -10,7 +22,7 @@
 
 [归档源应用检查](https://github.com/limushu/new_hm/actions/runs/44037946001)通过 Rust、Windows、82 项前端单元测试、144 项 Chromium 和 35 项 WebKit 回归。初版原生 UI 探针误读测试运行器自身的兼容屏幕尺寸，随后仅修正验收代码：[正式 App 复测](https://github.com/limushu/new_hm/actions/runs/44040310007)在产品源码一致性检查后复用同一模拟器应用，实测窗口 414×896pt，四个案件标签下创建按钮距底部均为 34pt；5 张原生截图已逐张查看。另有[原生驱动检查](https://github.com/limushu/new_hm/actions/runs/44040314416)通过 34 项 SDK 测试。截图使用隔离虚构数据，不作为真机验收或审核视频。
 
-已确认的后续修复：35.1 实际仍打包了 Tauri 默认图标；iOS 旧沙盒绝对备份路径也可能在更新后失效。1.8.4 候选正在接入 HM AppIcon 并修复托管备份目标，不能把 35.1 视为包含这两项修复。
+35.1 实际仍打包了 Tauri 默认图标；iOS 旧沙盒绝对备份路径也可能在更新后失效。这两项已由上方 1.8.4（37.2）修复，不能把 35.1 视为包含这些修复。
 
 ## 前一正文语音输入内测候选：1.8.2（34.1）
 
