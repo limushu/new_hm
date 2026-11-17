@@ -22,7 +22,14 @@ jobs:
       - name: Test native drivers and full-screen geometry
         shell: bash
         run: |
-          simulator_id="$(xcrun simctl create Anjian-Native-CI com.apple.CoreSimulator.SimDeviceType.iPhone-16)"
+          simulator_runtime="$(node --input-type=module -e '
+            import {execFileSync} from "node:child_process";
+            import {selectSimulatorRuntime} from "./scripts/ios-simulator-config.mjs";
+            const sdk=execFileSync("xcrun",["--sdk","iphonesimulator","--show-sdk-version"],{encoding:"utf8"}).trim();
+            const runtimes=JSON.parse(execFileSync("xcrun",["simctl","list","runtimes","-j"],{encoding:"utf8"})).runtimes;
+            process.stdout.write(selectSimulatorRuntime(runtimes,sdk).identifier);
+          ')"
+          simulator_id="$(xcrun simctl create Anjian-Native-CI com.apple.CoreSimulator.SimDeviceType.iPhone-16 "$simulator_runtime")"
           trap 'xcrun simctl shutdown "$simulator_id" >/dev/null 2>&1 || true; xcrun simctl delete "$simulator_id" >/dev/null 2>&1 || true' EXIT
           xcrun simctl boot "$simulator_id"
           xcrun simctl bootstatus "$simulator_id" -b
