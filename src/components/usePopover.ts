@@ -7,15 +7,36 @@ export function usePopover(open: boolean, close: () => void, minWidth = 180) {
   useLayoutEffect(() => {
     if (!open || !anchor.current || !popup.current) return;
     const panel = popup.current;
+    const probe = document.createElement('div');
+    probe.setAttribute('aria-hidden', 'true');
+    Object.assign(probe.style, {
+      position: 'fixed',
+      visibility: 'hidden',
+      pointerEvents: 'none',
+      width: '0',
+      height: '0',
+      padding: 'var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left)',
+    });
+    document.body.append(probe);
     panel.showPopover();
     function position() {
       if (!anchor.current) return;
       const rect = anchor.current.getBoundingClientRect();
       const viewport = window.visualViewport;
-      const left = (viewport?.offsetLeft ?? 0) + 12;
-      const top = (viewport?.offsetTop ?? 0) + 12;
-      const right = left + (viewport?.width ?? window.innerWidth) - 24;
-      const bottom = top + (viewport?.height ?? window.innerHeight) - 24;
+      const safe = getComputedStyle(probe);
+      const inset = (value: string) => parseFloat(value) || 0;
+      const left = (viewport?.offsetLeft ?? 0) + 12 + inset(safe.paddingLeft);
+      const top = (viewport?.offsetTop ?? 0) + 12 + inset(safe.paddingTop);
+      const right =
+        (viewport?.offsetLeft ?? 0) +
+        (viewport?.width ?? window.innerWidth) -
+        12 -
+        inset(safe.paddingRight);
+      const bottom =
+        (viewport?.offsetTop ?? 0) +
+        (viewport?.height ?? window.innerHeight) -
+        12 -
+        inset(safe.paddingBottom);
       const width = Math.min(Math.max(rect.width, minWidth), right - left);
       // The anchor can leave the visible area during scrolling or keyboard resize.
       const anchorTop = Math.max(top, Math.min(rect.top, bottom));
@@ -56,6 +77,7 @@ export function usePopover(open: boolean, close: () => void, minWidth = 180) {
     resize.observe(panel);
     return () => {
       panel.hidePopover();
+      probe.remove();
       document.removeEventListener('pointerdown', outside, true);
       document.removeEventListener('keydown', escape, true);
       window.removeEventListener('resize', position);

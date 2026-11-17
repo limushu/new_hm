@@ -365,6 +365,13 @@ h3 {
   pointer-events: none;
   z-index: 12;
 }
+/* Top-layer panels use the same safe rectangle as the page controls. */
+.workspace-dialog,
+.material-preview {
+  inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 16px);
+  max-height: min(90dvh, calc(100dvh - var(--safe-top) - var(--safe-bottom) - 24px));
+}
 .case-toolbar {
   display: flex;
   flex-shrink: 0;
@@ -687,6 +694,13 @@ h3 {
   }
 }
 @media (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
+  .event-editor {
+    inset: auto max(10px, var(--safe-right)) calc(74px + var(--safe-bottom))
+      max(10px, var(--safe-left));
+    width: auto;
+    max-width: none;
+    max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 95px);
+  }
   .sidebar {
     inset: auto 0 0;
     width: 100%;

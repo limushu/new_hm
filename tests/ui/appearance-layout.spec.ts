@@ -100,6 +100,21 @@ test('全屏背景覆盖视口，安全区留给状态与手势，横屏仍为�
   const field = await page.getByLabel('案件名称', { exact: true }).boundingBox();
   expect(field!.x).toBeGreaterThanOrEqual(59);
   expect(field!.x + field!.width).toBeLessThanOrEqual(852 - 59);
+  await page.getByRole('combobox', { name: '案件状态', exact: true }).click();
+  const menu = page.getByRole('listbox');
+  await expect(menu).toBeVisible();
+  const popup = await menu.boundingBox();
+  expect(popup!.x).toBeGreaterThanOrEqual(59);
+  expect(popup!.x + popup!.width).toBeLessThanOrEqual(852 - 59);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: '创建', exact: true }).click();
+  await page.getByRole('button', { name: /工作记录/ }).click();
+  const modal = page.getByRole('dialog', { name: '添加工作记录', exact: true });
+  const bounds = await modal.boundingBox();
+  expect(bounds!.x).toBeGreaterThanOrEqual(59);
+  expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(852 - 59);
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(393 - 21);
+  await modal.getByRole('button', { name: '取消', exact: true }).click();
   await page.getByRole('button', { name: '返回看板', exact: true }).click();
   await expect(page.locator('.mobile-case-workspace')).toBeVisible();
 });
@@ -132,8 +147,9 @@ test('预设、自选强调色全局生效且重启保留，取消和恢复默�
   await page.getByRole('button', { name: '自选颜色', exact: true }).click();
   await page.getByLabel('强调色代码', { exact: true }).fill('#fff300');
   await page.getByRole('button', { name: '应用颜色', exact: true }).click();
-  expect(await readFill()).not.toBe(blue);
+  await expect.poll(readFill).not.toBe(blue);
   await page.getByRole('button', { name: '浅色', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
   const yellowLight = await readFill();
   await page.getByRole('button', { name: '今天', exact: true }).click();
   const primary = page.getByRole('button', { name: '新建日程', exact: true });
@@ -144,6 +160,7 @@ test('预设、自选强调色全局生效且重启保留，取消和恢复默�
   expect(styles.fill).not.toBe(styles.text);
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByRole('button', { name: '深色', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   expect(await readFill()).not.toBe(yellowLight);
   await page.getByRole('button', { name: '恢复默认', exact: true }).click();
   await expect(page.getByRole('button', { name: '青绿', exact: true })).toHaveAttribute(

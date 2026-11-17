@@ -26,7 +26,7 @@ impl HostDriver for IosHost {
             .run_mobile_plugin("setTheme", serde_json::json!({"theme":theme}))
             .map_err(|_| DriverError::invalid_state("host_theme_failed"))?;
         if let Some(code) = reply.error {
-            return Err(DriverError::invalid_state(code));
+            return Err(DriverError::invalid_state(&code));
         }
         Ok(())
     }
