@@ -61,6 +61,10 @@ export default function DeviceAgendaProvider({ children }: { children: ReactNode
       const event = (args as { input?: { reminderMinutes?: number | null } }).input;
       if (event?.reminderMinutes == null) return;
       try {
+        if (current.current?.notifications.installed && !current.current.notifications.enabled) {
+          setNotice('日程已保存，系统提醒已暂停。可在设置中重新开启。');
+          return;
+        }
         const permission = current.current?.notifications.authorization;
         if (permission === 'not-determined') {
           if ((await requestNotifications()) !== 'granted')

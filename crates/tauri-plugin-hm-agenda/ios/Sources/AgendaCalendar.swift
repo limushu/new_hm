@@ -38,7 +38,7 @@ final class AppleAgendaCalendar: AgendaCalendarStore {
     if let external = external {
       guard let existing = store.event(withIdentifier: external) else {throw AgendaFailure.code("calendar_copy_missing")}
       try agendaRequireCalendarOwnership(copy.eventId, actual: existing.url)
-      guard existing.calendar.calendarIdentifier == target else {throw AgendaFailure.code("calendar_copy_moved")}
+      guard existing.calendar?.calendarIdentifier == target else {throw AgendaFailure.code("calendar_copy_moved")}
       event = existing
     } else {
       // Best-effort deduplication inside the explicitly selected calendar only.

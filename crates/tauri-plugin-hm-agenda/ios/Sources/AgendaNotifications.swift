@@ -49,4 +49,11 @@ final class AppleAgendaNotifications: NSObject, AgendaNotificationCenter, UNUser
     else if let previous = previousDelegate, previous.responds(to: #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:willPresent:withCompletionHandler:))) {previous.userNotificationCenter?(center, willPresent: notification, withCompletionHandler: done)}
     else {done([])}
   }
+  func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse, withCompletionHandler done: @escaping () -> Void) {
+    if !agendaOwnsNotification(response.notification.request.identifier), let previous = previousDelegate,
+       previous.responds(to: #selector(UNUserNotificationCenterDelegate.userNotificationCenter(_:didReceive:withCompletionHandler:))) {
+      previous.userNotificationCenter?(center, didReceive: response, withCompletionHandler: done)
+    } else {done()}
+  }
+
 }
