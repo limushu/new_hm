@@ -1,6 +1,18 @@
 # App Store 首发准备
 
-## 当前主页页头统一内测：1.8.5（38.1）
+## 当前银灰图标内测：1.8.6（41.1）
+
+用户确认将银灰 8 / H / M 组合字形更新到应用。采用石墨黑满版背景与银灰明暗渐变，取消独立尾状收笔和旧图标的透明留白。应用内标识、欢迎页、网页图标及 iOS / Android / Windows / macOS 导出资源统一到同一母版；见[品牌母版与尺寸对照](../design/brand.md)。本次不更改数据库与业务行为。
+
+2026-11-17，[签名与上传](https://github.com/limushu/new_hm/actions/runs/44088115310)于 13:20:20 UTC 确认 `UPLOAD SUCCEEDED with no errors`；[独立 Apple 状态检查](https://github.com/limushu/new_hm/actions/runs/44092202013)于 13:23:22 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`。构建 ID `3ba1c738-36e1-48d8-87db-aff9e4c45eaa`，内部测试员可更新；未重新提交 App Review 或发布 App Store。
+
+实际 IPA 源码 `d8b1ac3ff2726284bc8339476da486a7672af106`，版本 1.8.6 / 41.1，Intel 构建机器、Xcode 26.3（17C529）/ SDK 26.2。已下载核对包名、启动屏、麦克风/识别/日历用途说明、根隐私清单和实际 Mach-O 分发权限，CloudKit 保持 `Production`。解码并查看签名 IPA 内的 iPhone/iPad 图标，确认不透明、深色满版无白边，品牌像素误差均为 0；[实际图标](../design/current/brand-1.8.6-compiled-ios.png)不是手机桌面截图。IPA SHA-256：`a0b39d8d0f60291c2b8763b7c3604bdd94e5b1597f20123b757144a6a6d5d378`。
+
+[同一归档源码应用检查](https://github.com/limushu/new_hm/actions/runs/44088113204)通过 Rust/Clippy、Windows 构建、88 项单元测试、144 项 Chromium 和 35 项 WebKit 回归；[同源移动检查](https://github.com/limushu/new_hm/actions/runs/44088113176)通过 Android 编译、iOS 构建/启动/持久化、实际应用四标签贴底检查及 34 项原生测试。新构建检查覆盖母版与全部 iOS 图标的透明度、四边背景，以及透明边和白色衬边拒绝。模拟器实测窗口 414×896pt，案件创建按钮距底部 34pt；这些结果不替代用户签名真机体验。
+
+首轮 39.1 因 GitHub ARM 构建机器容量不足，在未启动任何步骤前被取消。40.1 改用 Intel 后，完整 1024px 图标像素测试耗时约 26 秒，超过原 20 秒时限，因此在签名前停止；41.1 将此项时限调整为 60 秒并保留所有像素与格式断言。前两轮均未上传安装包，以本节的 41.1 为交付构建。
+
+## 前一主页页头统一内测：1.8.5（38.1）
 
 今天、案件、联系对象、回收站共用同一个纯文字页头，设置页也同步接入；统一顶部起点、24px 手机标题、字重、行高和说明文字。三个新建主按钮均为 112×44px，按标题行居中，不再被说明文字高度带偏。清单日期的星期移到辅助说明行，窄屏保留完整月份日期与操作按钮。页面不再分别覆盖顶部内边距和标题样式，见[公共页头规范与四页对照](../design/visual-principles.md)。
 
