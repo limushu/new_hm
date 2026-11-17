@@ -6,9 +6,18 @@ final class HostAppearanceTests: XCTestCase {
   @MainActor func testWebViewCoversWindowWhileCSSReceivesSafeAreaInsets() async throws {
     guard let scene = UIApplication.shared.connectedScenes.compactMap({$0 as? UIWindowScene}).first,
           let window = scene.windows.first(where: {$0.isKeyWindow}),
-          let webview = window.rootViewController?.view as? WKWebView else {XCTFail("Missing test host window");return}
-    // Exercise the host's actual root WebView. Nesting another WKWebView inside
-    // it gives WebKit a scroll-container viewport, not the app window viewport.
+          let previous = window.rootViewController else {XCTFail("Missing test host window");return}
+    // Tauri embeds its WKWebView in Tao's UIView; it is not the controller's
+    // root view. Match that production hierarchy when measuring the viewport.
+    let controller = UIViewController()
+    controller.view = UIView(frame: window.bounds)
+    let webview = WKWebView(frame: window.bounds)
+    webview.autoresizingMask = [.flexibleWidth,.flexibleHeight]
+    webview.scrollView.bounces = false
+    controller.view.addSubview(webview)
+    window.rootViewController = controller
+    window.makeKeyAndVisible()
+    defer {window.rootViewController = previous}
     window.layoutIfNeeded()
     webview.layoutIfNeeded()
     HostAppearance.configure(webview)
