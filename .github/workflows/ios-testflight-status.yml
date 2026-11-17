@@ -1,0 +1,41 @@
+name: Inspect TestFlight availability
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Exact app version already uploaded to Apple'
+        required: true
+        type: string
+      build_number:
+        description: 'Exact uploaded Apple build number'
+        required: true
+        type: string
+permissions:
+  contents: read
+jobs:
+  inspect:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    environment: ios-testflight
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read Apple processing and internal testing state
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+          APPLE_API_PRIVATE_KEY: ${{ secrets.APPLE_API_PRIVATE_KEY }}
+          INSPECT_VERSION: ${{ inputs.version }}
+          INSPECT_BUILD: ${{ inputs.build_number }}
+        run: |
+          node --input-type=module <<'JS'
+          import {testFlightStatus} from './scripts/ios-testflight-status.mjs';
+          const version=process.env.INSPECT_VERSION,buildNumber=process.env.INSPECT_BUILD;
+          if(!/^\d+\.\d+\.\d+$/.test(version)||!/^\d+(?:\.\d+){0,2}$/.test(buildNumber))throw new Error('Invalid version/build number');
+          const status=await testFlightStatus({keyId:process.env.APPLE_API_KEY,issuer:process.env.APPLE_API_ISSUER,privateKey:process.env.APPLE_API_PRIVATE_KEY},{bundleId:'com.limushu.hm',version,buildNumber});
+          console.log(JSON.stringify({version,buildNumber,...status}));
+          if(!status.readyForInternalTesting)process.exitCode=1;
+          JS
