@@ -5,13 +5,15 @@ import XCTest
 final class HostAppearanceTests: XCTestCase {
   @MainActor func testWebViewCoversWindowWhileCSSReceivesSafeAreaInsets() async throws {
     guard let scene = UIApplication.shared.connectedScenes.compactMap({$0 as? UIWindowScene}).first,
-          let window = scene.windows.first(where: {$0.isKeyWindow}), let parent = window.rootViewController?.view else {XCTFail("Missing test host window");return}
-    let webview = WKWebView(frame: parent.bounds)
-    parent.addSubview(webview)
-    parent.layoutIfNeeded()
+          let window = scene.windows.first(where: {$0.isKeyWindow}),
+          let webview = window.rootViewController?.view as? WKWebView else {XCTFail("Missing test host window");return}
+    // Exercise the host's actual root WebView. Nesting another WKWebView inside
+    // it gives WebKit a scroll-container viewport, not the app window viewport.
+    window.layoutIfNeeded()
     webview.layoutIfNeeded()
-    defer {webview.removeFromSuperview()}
     HostAppearance.configure(webview)
+    XCTAssertEqual(webview.bounds.width,window.bounds.width,accuracy:1)
+    XCTAssertEqual(webview.bounds.height,window.bounds.height,accuracy:1)
     webview.loadHTMLString("<html><head><meta name='viewport' content='width=device-width,initial-scale=1,viewport-fit=cover'></head><body style='margin:0'><div id='safe' style='padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom)'></div></body></html>",baseURL:nil)
     var metrics: [String:Double]?
     for _ in 0..<100 {
@@ -22,6 +24,7 @@ final class HostAppearanceTests: XCTestCase {
       try await Task.sleep(nanoseconds:50_000_000)
     }
     let actual = try XCTUnwrap(metrics)
+    print("Host viewport: window=\(window.bounds), webview=\(webview.frame), safe=\(webview.safeAreaInsets), CSS=\(actual)")
     XCTAssertEqual(actual["width"]!,Double(window.bounds.width),accuracy:1)
     XCTAssertEqual(actual["height"]!,Double(window.bounds.height),accuracy:1)
     XCTAssertEqual(actual["top"]!,Double(webview.safeAreaInsets.top),accuracy:1)
