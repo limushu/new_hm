@@ -28,6 +28,8 @@
 
 ## 自动部署与签名核验
 
-[生产配置工作流](../.github/workflows/cloudkit.yml)首先读取 App ID 能力；选择部署时从 GitHub Secret `CLOUDKIT_MANAGEMENT_TOKEN` 读取管理令牌，导入[审核过的 schema](../cloudkit/schema.ckdb)，部署并导出生产 schema 校验。该令牌不打入客户端。CloudKit Console 的账户菜单可创建 Management Token；只填 GitHub Secret，不发送聊天。
+[生产配置工作流](../.github/workflows/cloudkit.yml)首先读取 App ID 能力；选择部署时从 GitHub Secret `CLOUDKIT_MANAGEMENT_TOKEN` 读取管理令牌，使用已安装 `cktool import-schema` 分别导入[审核过的 schema](../cloudkit/schema.ckdb)至开发与生产环境，并导出生产 schema 校验。容器含其他自定义记录类型时停止导入，要求先合并 schema。该令牌不打入客户端。CloudKit Console 的账户菜单可创建 Management Token；只填 GitHub Secret，不发送聊天。
 
 [签名脚本](../scripts/ios-cloudkit-signing.mjs)匹配现有发行证书，必要时为同一 App ID 创建更新后的 profile，不撤销证书。启用 CloudKit 的发行构建先验证生产 schema 和 profile，才给临时 Xcode 模板写入容器与 Production entitlement；导出 IPA 后再次检查实际签名。默认模拟器和普通构建不添加激活标记。`ios-testflight.yml` 的 `cloudkit` 参数默认关闭，必须明确开启才生成同步候选。
+
+同步快照缓存使用 Rust `Instant` 测量应用内经过时间；iOS 隐私清单以 SystemBootTime `35F9.1` 声明此用途，不向账号或云服务发送设备启动时间。发行包检查仍报告实际相关符号，并继续拒绝未声明的磁盘空间、UserDefaults 等候选 API。

@@ -8,7 +8,7 @@ function cktool(args) {
   const result = spawnSync('xcrun', ['cktool', ...args], { encoding: 'utf8', timeout: 120000 });
   if (result.error || result.status !== 0) {
     const token = process.env.CKTOOL_MANAGEMENT_TOKEN;
-    const detail = String(result.stderr || result.error?.message || '')
+    const detail = String(result.stderr || result.stdout || result.error?.message || '')
       .split(token || '\0')
       .join('[redacted]')
       .slice(0, 900);

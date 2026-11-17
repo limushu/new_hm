@@ -41,6 +41,8 @@ categories = {
 }
 assert categories == {
     "NSPrivacyAccessedAPICategoryFileTimestamp": {"C617.1", "3B52.1"},
+    # Rust Instant measures snapshot cache age; no boot time is transmitted.
+    "NSPrivacyAccessedAPICategorySystemBootTime": {"35F9.1"},
 }
 
 
@@ -85,8 +87,9 @@ if bundle:
         found_symbols, found_libraries = imports(binary)
         symbols.update(found_symbols)
         libraries.update(found_libraries)
-    blocked = symbols & {"_statfs", "_fstatfs", "_statvfs", "_fstatvfs", "_mach_absolute_time", "_OBJC_CLASS_$_NSUserDefaults"}
-    report["requiredReasonApiCandidates"] = sorted(blocked)
+    blocked = symbols & {"_statfs", "_fstatfs", "_statvfs", "_fstatvfs", "_OBJC_CLASS_$_NSUserDefaults"}
+    report["requiredReasonApiCandidates"] = sorted(blocked | (symbols & {"_mach_absolute_time"}))
+    # Elapsed-time access is declared as 35F9.1 above; keep it visible in the audit.
     # Unoptimized simulator binaries retain unused dependency functions. Keep
     # those candidates visible, and enforce their audit on the release IPA.
     if blocked and "--debug" not in sys.argv:

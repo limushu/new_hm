@@ -37,3 +37,40 @@ describe('CloudKit release gate', () => {
     expect(() => verifyCloudSchema(schema.replace('AnjianSyncHead', 'OtherHead'))).toThrow();
   });
 });
+
+it('selects the exact App ID from prefix matches and does not pass unsupported relationship pagination', async () => {
+  const { generateKeyPairSync } = await import('node:crypto');
+  const { cloudSigning } = await import('./ios-cloudkit-signing.mjs');
+  const { privateKey } = generateKeyPairSync('ec', {
+    namedCurve: 'prime256v1',
+    privateKeyEncoding: { type: 'pkcs8', format: 'pem' },
+    publicKeyEncoding: { type: 'spki', format: 'pem' },
+  });
+  const calls = [];
+  const result = await cloudSigning(
+    { keyId: 'ABCDEFGHIJ', issuer: '00000000-0000-0000-0000-000000000001', privateKey },
+    {
+      fetch: async (url) => {
+        calls.push(url);
+        if (url.includes('/bundleIdCapabilities')) {
+          expect(url).toBe(
+            'https://api.appstoreconnect.apple.com/v1/bundleIds/app-id/bundleIdCapabilities',
+          );
+          return new Response(
+            JSON.stringify({ data: [{ attributes: { capabilityType: 'ICLOUD' } }] }),
+          );
+        }
+        return new Response(
+          JSON.stringify({
+            data: [
+              { id: 'service', attributes: { identifier: 'com.limushu.hm.auth' } },
+              { id: 'app-id', attributes: { identifier: 'com.limushu.hm' } },
+            ],
+          }),
+        );
+      },
+    },
+  );
+  expect(result).toEqual({ capability: 'ICLOUD', profileReady: false });
+  expect(calls).toHaveLength(2);
+});
