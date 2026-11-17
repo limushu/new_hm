@@ -1,10 +1,10 @@
 [workspace]
-members = ["crates/hm-core", "crates/hm-runtime", "crates/hm-application", "crates/tauri-plugin-hm-recording", "crates/tauri-plugin-hm-documents", "crates/tauri-plugin-hm-speech", "crates/tauri-plugin-hm-cloudkit", "crates/tauri-plugin-hm-identity", "crates/tauri-plugin-hm-agenda", "src-tauri"]
+members = ["crates/hm-core", "crates/hm-runtime", "crates/hm-application", "crates/tauri-plugin-hm-recording", "crates/tauri-plugin-hm-documents", "crates/tauri-plugin-hm-speech", "crates/tauri-plugin-hm-cloudkit", "crates/tauri-plugin-hm-identity", "crates/tauri-plugin-hm-agenda", "crates/tauri-plugin-hm-host", "src-tauri"]
 default-members = ["crates/hm-core", "crates/hm-runtime", "crates/hm-application"]
 resolver = "2"
 
 [workspace.package]
-version = "1.8.2"
+version = "1.8.3"
 edition = "2021"
 license = "UNLICENSED"
 rust-version = "1.90"

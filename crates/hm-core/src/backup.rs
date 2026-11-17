@@ -316,6 +316,7 @@ impl Store {
             "onboarding_done",
             "update_endpoint",
             "theme",
+            "accent_color",
         ];
         let device_settings = self.settings()?;
         let device_deliveries = if portable {

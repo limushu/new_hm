@@ -38,6 +38,14 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         #[allow(unused_mut)]
         let mut manifest = RuntimeManifest::mobile();
         #[cfg(target_os = "ios")]
+        if let Some(host) = manifest
+            .subsystems
+            .iter_mut()
+            .find(|s| s.id == hm_runtime::SubsystemId::Host)
+        {
+            host.capabilities.push(hm_runtime::Capability::WindowTheme);
+        }
+        #[cfg(target_os = "ios")]
         if let Some(identity) = manifest
             .subsystems
             .iter_mut()
@@ -91,6 +99,9 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(mobile)]
     #[allow(unused_mut)]
     let mut drivers = NativeDrivers {
+        #[cfg(target_os = "ios")]
+        host: tauri_plugin_hm_host::driver(app.handle()),
+        #[cfg(not(target_os = "ios"))]
         host: Box::new(mobile::SandboxPlatform),
         external_open: Box::new(mobile::SandboxPlatform),
         local_filesystem: Box::new(mobile::SandboxPlatform),

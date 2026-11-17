@@ -29,6 +29,7 @@ pub struct RuntimeState {
 pub fn configure(builder: tauri::Builder<tauri::Wry>) -> tauri::Builder<tauri::Wry> {
     #[cfg(target_os = "ios")]
     let builder = builder
+        .plugin(tauri_plugin_hm_host::init())
         .plugin(tauri_plugin_hm_agenda::init())
         .plugin(tauri_plugin_hm_recording::init())
         .plugin(tauri_plugin_hm_documents::init())

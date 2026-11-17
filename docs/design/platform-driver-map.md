@@ -4,6 +4,7 @@
 
 | 能力 | 接口 / 用例 | iOS / iPadOS 驱动 | 桌面 / 其他平台 |
 | --- | --- | --- | --- |
+| 窗口外观与安全区 | [HostDriver](../../crates/hm-runtime/src/platform/ports.rs)、[主题 Provider](../../src/components/ThemeProvider.tsx)、[颜色规则](../../src/domain/accent.ts) | [Rust 桥](../../crates/tauri-plugin-hm-host/src/ios.rs) → [UIKit / WebView](../../crates/tauri-plugin-hm-host/ios/Sources/HostPlugin.swift)，原生背景与 CSS 安全区各自明确负责 | 桌面沿用窗口驱动；Android 仍为不可用宿主外观驱动，前端颜色可独立使用 |
 | 录音 | [RecordingDriver](../../crates/hm-runtime/src/platform/recording.rs)、[RecordingService](../../crates/hm-application/src/recording.rs) | [Rust 桥](../../crates/tauri-plugin-hm-recording/src/ios.rs) → [Swift AVFoundation](../../crates/tauri-plugin-hm-recording/ios/Sources/RecordingPlugin.swift) | 桌面保留 WebView 后端；Android 未接原生录音 |
 | 文件 | [DocumentDriver](../../crates/hm-runtime/src/platform/documents.rs) | [Rust 桥](../../crates/tauri-plugin-hm-documents/src/ios.rs) → [Swift 系统文件](../../crates/tauri-plugin-hm-documents/ios/Sources/DocumentsPlugin.swift) | [桌面文件驱动](../../src-tauri/src/platforms/desktop/documents.rs)；Android 未接 |
 | 转文字 | [SpeechDriver](../../crates/hm-runtime/src/platform/speech.rs)、[SpeechService](../../crates/hm-application/src/speech.rs) | [Rust 桥](../../crates/tauri-plugin-hm-speech/src/ios.rs) → [Apple Speech](../../crates/tauri-plugin-hm-speech/ios/Sources/SpeechEngine.swift) | 当前未安装相应驱动 |

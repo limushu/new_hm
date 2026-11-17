@@ -13,6 +13,7 @@ import BackupFiles from './BackupFiles';
 import AccountSettings from './AccountSettings';
 import SyncSettings from './SyncSettings';
 import DeviceAgendaSettings from './DeviceAgendaSettings';
+import AccentPicker from './AccentPicker';
 import { useAction } from '../../components/useAction';
 import metadata from '../../../package.json';
 import { useTheme } from '../../components/ThemeProvider';
@@ -146,6 +147,7 @@ export default function Settings({
             重播欢迎动画
           </button>
         </div>
+        <AccentPicker />
       </section>
       <section className="settings-section">
         <h2>本地数据</h2>

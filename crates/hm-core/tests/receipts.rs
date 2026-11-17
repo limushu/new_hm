@@ -120,8 +120,20 @@ fn theme_is_a_validated_workspace_preference() {
     let path = dir.path().join("workspace.sqlite3");
     let s = Store::open(&path).unwrap();
     s.set_setting("theme", "light").unwrap();
+    s.set_setting("accent_color", "#AbC123").unwrap();
+    for invalid in ["red", "#fff", "#12345678", "#12345z", "url(a)"] {
+        assert!(s.set_setting("accent_color", invalid).is_err());
+    }
     assert!(s.set_setting("theme", "unknown").is_err());
     drop(s);
+    assert_eq!(
+        Store::open(&path)
+            .unwrap()
+            .setting("accent_color")
+            .unwrap()
+            .as_deref(),
+        Some("#AbC123")
+    );
     assert_eq!(
         Store::open(&path)
             .unwrap()

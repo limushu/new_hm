@@ -1,3 +1,4 @@
+import { compactViewport } from './platform/layout';
 import BrandMark from './components/BrandMark';
 import RetainedView from './components/RetainedView';
 import Welcome from './components/Welcome';
@@ -33,9 +34,9 @@ import { dateKey } from './domain/calendar';
 export default function App() {
   const [data, setData] = useState<Workspace>(emptyWorkspace);
   const [page, setPage] = useState('today');
-  const [compact, setCompact] = useState(() => matchMedia('(max-width: 760px)').matches);
+  const [compact, setCompact] = useState(() => matchMedia(compactViewport).matches);
   useEffect(() => {
-    const query = matchMedia('(max-width: 760px)');
+    const query = matchMedia(compactViewport);
     const update = () => setCompact(query.matches);
     query.addEventListener('change', update);
     update();
@@ -44,7 +45,7 @@ export default function App() {
   const [calendarDate, setCalendarDate] = useState(() => dateKey(new Date()));
   const [todayRequest, setTodayRequest] = useState(0);
   const [calendarView, setCalendarView] = useState<'week' | 'day' | 'month' | 'agenda'>(() =>
-    matchMedia('(max-width: 760px)').matches ? 'agenda' : 'week',
+    matchMedia(compactViewport).matches ? 'agenda' : 'week',
   );
   const [query, setQuery] = useState('');
   const [opened, setOpened] = useState<string | null>(null);

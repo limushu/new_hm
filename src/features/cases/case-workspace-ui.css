@@ -11,9 +11,11 @@
   max-width: 1020px;
   margin: 0 auto;
   width: 100%;
+  flex: 1 0 auto;
 }
 .case-redesigned .case-body .case-tabs {
   margin-bottom: 30px;
+  top: var(--safe-top);
 }
 .case-redesigned .case-tabs .save-state {
   margin-left: auto;

@@ -292,6 +292,7 @@ impl Store {
             "onboarding_done",
             "update_endpoint",
             "theme",
+            "accent_color",
         ]
         .contains(&key)
             || value.len() > 4096
@@ -314,6 +315,13 @@ impl Store {
         }
         if key == "theme" && !["dark", "light", "system"].contains(&value) {
             return Err(Error::Validation("外观主题无效".into()));
+        }
+        if key == "accent_color"
+            && !(value.len() == 7
+                && value.starts_with('#')
+                && value.as_bytes()[1..].iter().all(u8::is_ascii_hexdigit))
+        {
+            return Err(Error::Validation("强调色须为 #RRGGBB 颜色代码".into()));
         }
         self.connection.execute("INSERT INTO settings(key,value) VALUES(?1,?2) ON CONFLICT(key) DO UPDATE SET value=excluded.value",params![key,value])?;
         Ok(())

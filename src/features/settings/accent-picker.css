@@ -1,0 +1,52 @@
+.accent-picker {
+  margin-top: 24px;
+  display: grid;
+  gap: 12px;
+}
+.accent-picker > h3 {
+  font-size: var(--text-base);
+  font-weight: var(--weight-medium);
+}
+.accent-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.accent-options > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--button-radius);
+  font-size: var(--text-base);
+  color: var(--text);
+}
+.accent-options > button[aria-pressed='true'] {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+}
+.accent-options > button:hover {
+  background: var(--hover);
+}
+.accent-options svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent-text);
+}
+.accent-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+}
+.accent-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.workspace-dialog input[type='color'] {
+  min-height: 44px;
+  padding: 4px;
+}

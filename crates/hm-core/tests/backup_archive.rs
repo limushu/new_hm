@@ -42,6 +42,7 @@ fn portable_round_trip_preserves_workspace_bytes_and_destination_settings_with_r
         .set_setting("backup_directory", "/another-device/backups")
         .unwrap();
     source.set_setting("theme", "dark").unwrap();
+    source.set_setting("accent_color", "#5b7896").unwrap();
     let expected = serde_json::to_value(source.workspace().unwrap()).unwrap();
     let archive = source.create_backup_archive().unwrap();
     let prepared = PreparedBackup::read(&mut archive.open().unwrap()).unwrap();
@@ -53,6 +54,7 @@ fn portable_round_trip_preserves_workspace_bytes_and_destination_settings_with_r
         .set_setting("backup_directory", &local_backup.to_string_lossy())
         .unwrap();
     destination.set_setting("theme", "light").unwrap();
+    destination.set_setting("accent_color", "#97774f").unwrap();
     assert!(prepared.restore(&mut destination, false).is_err());
     assert_eq!(destination.workspace().unwrap().cases[0].id, old_case);
     let recovery = prepared.restore(&mut destination, true).unwrap();
@@ -71,6 +73,10 @@ fn portable_round_trip_preserves_workspace_bytes_and_destination_settings_with_r
     assert_eq!(
         destination.setting("theme").unwrap().as_deref(),
         Some("light")
+    );
+    assert_eq!(
+        destination.setting("accent_color").unwrap().as_deref(),
+        Some("#97774f")
     );
     assert_eq!(
         destination.setting("backup_directory").unwrap().unwrap(),

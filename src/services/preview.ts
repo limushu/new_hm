@@ -18,6 +18,7 @@ import type {
 } from '../domain/types';
 import type { MaterialTarget, RecordInput } from '../domain/types';
 import { dateKey } from '../domain/calendar';
+import { validAccent } from '../domain/accent';
 
 const previewFiles = new Map<string, { name: string; url: string; size: number }>();
 export function registerPreviewFiles(files: File[]) {
@@ -28,6 +29,13 @@ export function registerPreviewFiles(files: File[]) {
   });
 }
 const settings: Record<string, string> = { close_to_tray: 'true', notifications: 'true' };
+// Cosmetic preferences already have a browser cache; business fixtures still reset.
+try {
+  const accent = localStorage.getItem('hm-accent-color');
+  if (validAccent(accent)) settings.accent_color = accent;
+} catch {
+  /* Preview also works without browser storage. */
+}
 const now = new Date().toISOString();
 const data: Workspace = {
   resourceMetadata: [],
