@@ -12,6 +12,7 @@ import { join, resolve } from 'node:path';
 import { testFlightStatus } from './ios-testflight-status.mjs';
 import { exportCloudSchema } from './cloudkit-schema.mjs';
 import { syncIosIcons, verifyIosIcons } from './ios-icons.mjs';
+import { requireSuccessfulIosUpload } from './ios-upload.mjs';
 import {
   cloudContainer,
   cloudSigning,
@@ -173,18 +174,27 @@ try {
   copyFileSync(ipas[0], destination);
   report.status = 'signed-and-verified';
   if (settings.upload) {
-    run('xcrun', [
-      'altool',
-      '--upload-app',
-      '--type',
-      'ios',
-      '--file',
-      destination,
-      '--apiKey',
-      settings.keyId,
-      '--apiIssuer',
-      settings.issuer,
-    ]);
+    report.upload = 'attempted';
+    const upload = spawnSync(
+      'xcrun',
+      [
+        'altool',
+        '--upload-app',
+        '--type',
+        'ios',
+        '--file',
+        destination,
+        '--apiKey',
+        settings.keyId,
+        '--apiIssuer',
+        settings.issuer,
+      ],
+      { cwd: root, encoding: 'utf8' },
+    );
+    for (const line of `${upload.stdout ?? ''}\n${upload.stderr ?? ''}`.split('\n'))
+      if (/UPLOAD (SUCCEEDED|FAILED)|Validation failed|Failed to upload package/i.test(line))
+        console.log(line);
+    requireSuccessfulIosUpload(upload);
     report.upload = 'accepted-for-processing';
     report.testFlight = await testFlightStatus(
       { keyId: settings.keyId, issuer: settings.issuer, privateKey: readFileSync(keyPath, 'utf8') },
@@ -195,6 +205,7 @@ try {
       throw new Error('Apple rejected the uploaded build during processing');
   }
 } catch (error) {
+  if (report.upload === 'attempted') report.upload = 'failed';
   report.status = 'failed';
   report.error = String(error);
   throw error;

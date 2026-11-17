@@ -28,6 +28,15 @@ export function syncIosIcons(root) {
     return { file, destination: join(catalog, name) };
   });
   for (const icon of icons) copyFileSync(icon.file, icon.destination);
+  const normalized = spawnSync(
+    'python3',
+    [join(import.meta.dirname, 'verify-ios-icons.py'), '--prepare', catalog],
+    { encoding: 'utf8' },
+  );
+  if (normalized.error || normalized.status !== 0)
+    throw new Error(
+      `Cannot prepare opaque RGB AppIcon images: ${normalized.stderr ?? normalized.error}`,
+    );
   return icons.length;
 }
 

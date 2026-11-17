@@ -31,12 +31,20 @@ describe('iOS branding delivery', () => {
         writeFileSync(join(catalog, filename), 'template');
       }
       expect(syncIosIcons(root)).toBe(2);
-      for (const { filename } of images)
-        expect(readFileSync(join(catalog, filename))).toEqual(readFileSync(join(source, filename)));
+      for (const { filename } of images) {
+        const bytes = readFileSync(join(catalog, filename));
+        expect(bytes[bytes.indexOf(Buffer.from('IHDR')) + 13]).toBe(2);
+      }
+      const checked = spawnSync(
+        'python3',
+        [resolve('scripts/verify-ios-icons.py'), catalog, source, join(root, 'verified.png')],
+        { encoding: 'utf8' },
+      );
+      expect(checked.status, checked.stderr).toBe(0);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  });
+  }, 20000);
   it('stops before building if a referenced slot has no product artwork', () => {
     const { root, catalog } = fixture();
     try {

@@ -68,24 +68,50 @@ def read_png(path):
     return width, height, bytes(pixels)
 
 
-def write_png(path, width, height, pixels):
+def opaque_pixels(pixels):
+    result = bytearray()
+    for index in range(0, len(pixels), 4):
+        r,g,b,alpha = pixels[index:index+4]
+        result.extend(((value*alpha+255*(255-alpha)+127)//255 for value in (r,g,b)))
+        result.append(255)
+    return bytes(result)
+
+
+def write_png(path, width, height, pixels, rgb=False):
     def chunk(kind, value):
         return struct.pack('>I',len(value))+kind+value+struct.pack('>I',zlib.crc32(kind+value))
-    rows = b''.join(b'\0'+pixels[y*width*4:(y+1)*width*4] for y in range(height))
-    pathlib.Path(path).write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',width,height,8,6,0,0,0))+chunk(b'IDAT',zlib.compress(rows))+chunk(b'IEND',b''))
+    if rgb:
+        pixels = bytes(value for index,value in enumerate(pixels) if index % 4 != 3)
+    stride = width*(3 if rgb else 4)
+    rows = b''.join(b'\0'+pixels[y*stride:(y+1)*stride] for y in range(height))
+    pathlib.Path(path).write_bytes(b'\x89PNG\r\n\x1a\n'+chunk(b'IHDR',struct.pack('>IIBBBBB',width,height,8,2 if rgb else 6,0,0,0))+chunk(b'IDAT',zlib.compress(rows))+chunk(b'IEND',b''))
+
+
+def prepare(catalog):
+    files = list(pathlib.Path(catalog).glob('*.png'))
+    if not files:
+        raise ValueError('No AppIcon images to prepare')
+    for path in files:
+        width,height,pixels = read_png(path)
+        write_png(path,width,height,opaque_pixels(pixels),rgb=True)
+        data = path.read_bytes()
+        if data[data.index(b'IHDR')+13] != 2:
+            raise ValueError('AppIcon must be RGB without an alpha channel')
 
 
 def verify(app, sources, output):
     expected = {}
     for path in pathlib.Path(sources).glob('*.png'):
         w,h,pixels = read_png(path)
-        expected.setdefault((w,h),[]).append((path.name,pixels))
+        expected.setdefault((w,h),[]).append((path.name,opaque_pixels(pixels)))
     actual = sorted(p for p in pathlib.Path(app).glob('*.png') if p.name.lower().startswith('appicon'))
     if not actual:
         raise ValueError('No compiled primary AppIcon PNGs in application')
     checked = []
     for path in actual:
         w,h,pixels = read_png(path)
+        if any(pixels[index] != 255 for index in range(3,len(pixels),4)):
+            raise ValueError(f'Compiled app icon contains transparency: {path.name}')
         candidates = expected.get((w,h),[])
         if not candidates:
             raise ValueError(f'No HM source for compiled icon {path.name}: {w}x{h}')
@@ -100,4 +126,7 @@ def verify(app, sources, output):
 
 
 if __name__ == '__main__':
-    verify(*sys.argv[1:])
+    if sys.argv[1] == '--prepare':
+        prepare(sys.argv[2])
+    else:
+        verify(*sys.argv[1:])
