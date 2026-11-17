@@ -2,7 +2,9 @@ use crate::platforms::NativeDrivers;
 use hm_runtime::platform::DriverError;
 use tauri::State;
 
-#[tauri::command]
+// Native iOS appearance completes on UIKit's main queue. Keep the bridge wait
+// off that queue, as with recording and speech commands.
+#[tauri::command(async)]
 pub fn set_window_theme(
     platform: State<'_, NativeDrivers>,
     theme: String,
