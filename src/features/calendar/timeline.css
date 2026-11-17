@@ -101,11 +101,6 @@
 .calendar-view-week,
 .calendar-view-day {
   max-width: none;
-  padding: 28px 24px 24px;
-}
-.calendar-view-week .calendar-header,
-.calendar-view-day .calendar-header {
-  margin-bottom: 18px;
 }
 .time-grid {
   --hour-size: 60px;

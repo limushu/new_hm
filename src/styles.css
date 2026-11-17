@@ -245,18 +245,6 @@ h3 {
   overflow: auto;
   min-height: calc(100dvh - var(--safe-top));
 }
-.cases-page h1,
-.simple-page h1 {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-.cases-page h1 svg,
-.simple-page h1 svg {
-  width: 26px;
-  height: 26px;
-  color: var(--blue-text);
-}
 .icon-button {
   display: inline-flex;
   align-items: center;
@@ -276,7 +264,6 @@ h3 {
   height: 14px;
 }
 .simple-page {
-  padding: 76px 54px;
   max-width: 1100px;
 }
 .page-description {
@@ -686,9 +673,6 @@ h3 {
 }
 
 @media (max-width: 1100px) {
-  .simple-page {
-    padding: 50px 30px;
-  }
   .case-body {
     padding: 35px 35px 50px;
   }
@@ -737,9 +721,6 @@ h3 {
   .main-content {
     margin: 0;
     padding-bottom: calc(70px + var(--safe-bottom));
-  }
-  .simple-page {
-    padding: 34px 22px;
   }
   .case-page,
   .case-page.expanded {

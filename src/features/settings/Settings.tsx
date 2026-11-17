@@ -1,6 +1,7 @@
 import Button from '../../components/Button';
+import PageHeader from '../../components/PageHeader';
 import { useEffect, useState } from 'react';
-import { Settings as SettingsIcon, Download, FolderOpen, RotateCcw, Check } from 'lucide-react';
+import { Download, FolderOpen, RotateCcw, Check } from 'lucide-react';
 import { watchMaintenance } from '../../platform/maintenance';
 import { watchUpdates } from '../../platform/updates';
 import type { BackupInfo, Commands, SaveAction } from '../../domain/types';
@@ -110,11 +111,8 @@ export default function Settings({
     });
   }
   return (
-    <div className="simple-page settings-page">
-      <h1>
-        <SettingsIcon />
-        设置
-      </h1>
+    <div className="simple-page settings-page workspace-page">
+      <PageHeader title="设置" />
       {(error || subsystemError) && (
         <p className="error-message" role="alert">
           {error || subsystemError}

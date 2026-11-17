@@ -9,6 +9,7 @@ import DeviceAgendaProvider from './platform/DeviceAgendaProvider';
 import './styles.css';
 import './themes.css';
 import './components/buttons.css';
+import './components/page-header.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

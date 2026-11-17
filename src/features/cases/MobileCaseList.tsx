@@ -2,6 +2,7 @@ import { useState, type ReactNode } from 'react';
 import { ChevronRight, MoreHorizontal, Plus, Search, Settings2, X } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import Button from '../../components/Button';
+import PageHeader from '../../components/PageHeader';
 import { statusPalette } from '../../domain/statusPalette';
 import type { CaseFile, CaseStatus } from '../../domain/types';
 import './mobile-cases.css';
@@ -41,22 +42,20 @@ export default function MobileCaseList({
   const statusFor = (item: CaseFile) => statuses.find((status) => status.id === item.statusId);
   return (
     <div className="mobile-case-workspace">
-      <header className="mobile-cases-heading">
-        <div>
-          <h1>案件</h1>
-          <p>
-            {cases.length} 个{query.trim() ? '匹配的' : ''}案件
-          </p>
-        </div>
-        <Button
-          variant="primary"
-          icon={Plus}
-          className="mobile-create-case"
-          onClick={() => onCreate(selected ?? statuses[0]?.id ?? 'not_started')}
-        >
-          新建案件
-        </Button>
-      </header>
+      <PageHeader
+        title="案件"
+        description={`${cases.length} 个${query.trim() ? '匹配的' : ''}案件`}
+        actions={
+          <Button
+            variant="primary"
+            icon={Plus}
+            className="mobile-create-case"
+            onClick={() => onCreate(selected ?? statuses[0]?.id ?? 'not_started')}
+          >
+            新建案件
+          </Button>
+        }
+      />
       {onboarding}
       <label className="mobile-case-search">
         <Search aria-hidden="true" />

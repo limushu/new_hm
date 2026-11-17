@@ -1,0 +1,63 @@
+:root {
+  --page-padding-top: 40px;
+  --page-padding-inline: 38px;
+  --page-title-size: var(--text-display);
+  --page-header-gap: 24px;
+}
+
+.workspace-page {
+  padding: var(--page-padding-top) var(--page-padding-inline) 48px;
+}
+.page-header {
+  margin-bottom: var(--page-header-gap);
+}
+.page-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: var(--button-height);
+}
+.page-header .page-header-title {
+  display: block;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--page-title-size);
+  font-weight: var(--weight-strong);
+  line-height: 1.25;
+  letter-spacing: -0.5px;
+  overflow-wrap: anywhere;
+}
+.page-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.page-header-description {
+  margin: 8px 0 0;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  line-height: 1.7;
+}
+
+@media (max-width: 1100px) {
+  :root {
+    --page-padding-top: 32px;
+    --page-padding-inline: 25px;
+  }
+}
+@media (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
+  :root {
+    --page-padding-top: 16px;
+    --page-padding-inline: 18px;
+    --page-title-size: var(--text-display-mobile);
+    --page-header-gap: 20px;
+  }
+  .workspace-page {
+    padding-bottom: 30px;
+  }
+  .page-header-row {
+    gap: 12px;
+  }
+}

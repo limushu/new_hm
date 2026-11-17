@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Plus, Users, ArrowUpRight, Search, Network } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import Button from '../../components/Button';
+import PageHeader from '../../components/PageHeader';
 import RelationGraph from './RelationGraph';
 import DeleteContact from './DeleteContact';
 import type { Contact, SaveAction, Workspace } from '../../domain/types';
@@ -40,21 +41,16 @@ export default function Contacts({
         .includes(query.toLowerCase()),
   );
   return (
-    <div className="simple-page contacts-page">
-      <div className="contacts-heading">
-        <div>
-          <h1>
-            <Users />
-            联系对象
-          </h1>
-        </div>
-        <div className="contacts-actions">
+    <div className="simple-page contacts-page workspace-page">
+      <PageHeader
+        title="联系对象"
+        description="集中管理案件中的人员与机构，查看他们之间的联系。"
+        actions={
           <Button variant="primary" icon={Plus} onClick={() => setEdit(emptyContact())}>
             新建对象
           </Button>
-        </div>
-      </div>
-      <p className="contacts-intro">集中管理案件中的人员与机构，查看他们之间的联系。</p>
+        }
+      />
       <div className="contacts-tools">
         <div className="contact-search">
           <Search />

@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { Folder, FileText, RotateCcw, Trash2 } from 'lucide-react';
+import { Folder, FileText, RotateCcw } from 'lucide-react';
 import Dialog from './Dialog';
+import PageHeader from './PageHeader';
 import { useAction } from './useAction';
 import type { SaveAction, Workspace } from '../domain/types';
 export default function Trash({ data, save }: { data: Workspace; save: SaveAction }) {
@@ -33,14 +34,11 @@ export default function Trash({ data, save }: { data: Workspace; save: SaveActio
     }));
   const rows = [...cases, ...materials, ...records];
   return (
-    <div className="simple-page">
-      <h1>
-        <Trash2 />
-        回收站
-      </h1>
-      <p className="page-description">
-        案件、材料和工作记录可以恢复。案件恢复后，其原有程序与关联信息一起保留。
-      </p>
+    <div className="simple-page workspace-page">
+      <PageHeader
+        title="回收站"
+        description="案件、材料和工作记录可以恢复。案件恢复后，其原有程序与关联信息一起保留。"
+      />
       {error && (
         <p role="alert" className="error-message">
           {error}

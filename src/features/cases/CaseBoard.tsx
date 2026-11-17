@@ -1,6 +1,7 @@
 import { currentStage, proceedingName } from '../../domain/proceedings';
 import Dialog from '../../components/Dialog';
 import Button from '../../components/Button';
+import PageHeader from '../../components/PageHeader';
 import { statusPalette } from '../../domain/statusPalette';
 import { useId, useRef, useState, useMemo } from 'react';
 import {
@@ -221,13 +222,8 @@ export default function CaseBoard({
     </p>
   );
   return (
-    <div className="cases-page">
-      {!compact && (
-        <h1>
-          <Folder />
-          案件
-        </h1>
-      )}
+    <div className="cases-page workspace-page">
+      {!compact && <PageHeader title="案件" />}
       {!compact && onboarding}
       {!compact && (
         <div className="board-toolbar">

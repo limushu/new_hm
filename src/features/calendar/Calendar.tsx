@@ -1,5 +1,6 @@
 import Select from '../../components/Select';
 import Button from '../../components/Button';
+import PageHeader from '../../components/PageHeader';
 import { useEffect, useRef, useState } from 'react';
 import {
   ChevronLeft,
@@ -77,6 +78,7 @@ export default function Calendar({
   );
   const undated = tasks.filter((task) => !task.dueDate);
   const today = dateKey(new Date());
+  const selectedDate = parseDate(selected);
   const caseTitle = (id: string | null) => activeCases.find((item) => item.id === id)?.title;
 
   function select(date: string) {
@@ -106,60 +108,24 @@ export default function Calendar({
   }
 
   return (
-    <div className={`calendar-page calendar-view-${view}`}>
-      <header className="calendar-header">
-        <div className="calendar-heading">
-          <span className="calendar-eyebrow">日历</span>
-          <h1>
-            {view === 'agenda' ? (
-              displayDate(selected)
-            ) : (
-              <>
-                {month.getFullYear()}年 <span>{month.getMonth() + 1}月</span>
-              </>
-            )}
-          </h1>
-        </div>
-        {view !== 'agenda' && (
-          <div className="calendar-navigation">
-            <Button
-              className="calendar-today"
-              onClick={() => {
-                select(dateKey(new Date()));
-                setFocusToday((value) => value + 1);
-              }}
-            >
-              今天
-            </Button>
-            <Button
-              variant="ghost"
-              icon={ChevronLeft}
-              aria-label={view === 'month' ? '上个月' : view === 'week' ? '上一周' : '上一天'}
-              onClick={() => changeMonth(-1)}
-            />
-            <Button
-              variant="ghost"
-              icon={ChevronRight}
-              aria-label={view === 'month' ? '下个月' : view === 'week' ? '下一周' : '下一天'}
-              onClick={() => changeMonth(1)}
-            />
-          </div>
-        )}
-        <div className="calendar-actions">
-          <div className="calendar-extra-actions">
-            <Button variant="ghost" icon={Search} className="calendar-search" onClick={findCases}>
-              <span>查找案件</span>
-            </Button>
-            <Button
-              variant="ghost"
-              icon={Folder}
-              className="calendar-new-case"
-              disabled={loading || !data.statuses.length}
-              onClick={newCase}
-            >
-              <span>新建案件</span>
-            </Button>
-          </div>
+    <div className={`calendar-page workspace-page calendar-view-${view}`}>
+      <PageHeader
+        className="calendar-header"
+        title={
+          view === 'agenda' ? (
+            <time dateTime={selected}>
+              {selectedDate.getMonth() + 1}月{selectedDate.getDate()}日
+            </time>
+          ) : (
+            `${month.getFullYear()}年 ${month.getMonth() + 1}月`
+          )
+        }
+        description={
+          view === 'agenda'
+            ? new Intl.DateTimeFormat('zh-CN', { weekday: 'long' }).format(selectedDate)
+            : undefined
+        }
+        actions={
           <Button
             variant="primary"
             icon={Plus}
@@ -169,8 +135,50 @@ export default function Calendar({
           >
             新建日程
           </Button>
-        </div>
-      </header>
+        }
+      >
+        {view !== 'agenda' && (
+          <div className="calendar-header-tools">
+            <div className="calendar-navigation">
+              <Button
+                className="calendar-today"
+                onClick={() => {
+                  select(dateKey(new Date()));
+                  setFocusToday((value) => value + 1);
+                }}
+              >
+                今天
+              </Button>
+              <Button
+                variant="ghost"
+                icon={ChevronLeft}
+                aria-label={view === 'month' ? '上个月' : view === 'week' ? '上一周' : '上一天'}
+                onClick={() => changeMonth(-1)}
+              />
+              <Button
+                variant="ghost"
+                icon={ChevronRight}
+                aria-label={view === 'month' ? '下个月' : view === 'week' ? '下一周' : '下一天'}
+                onClick={() => changeMonth(1)}
+              />
+            </div>
+            <div className="calendar-extra-actions">
+              <Button variant="ghost" icon={Search} className="calendar-search" onClick={findCases}>
+                <span>查找案件</span>
+              </Button>
+              <Button
+                variant="ghost"
+                icon={Folder}
+                className="calendar-new-case"
+                disabled={loading || !data.statuses.length}
+                onClick={newCase}
+              >
+                <span>新建案件</span>
+              </Button>
+            </div>
+          </div>
+        )}
+      </PageHeader>
       <div className="calendar-toolbar">
         <div className="calendar-filters" aria-label="日历内容">
           {(
