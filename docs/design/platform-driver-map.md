@@ -19,7 +19,7 @@
 - 通用用例：基于一致版本接续，复用未变的附件块，云端条件更新防止覆盖，并发修改暂停并保留可恢复版本。当前是快照版本原型，尚未实现对象字段级自动合并。
 - iOS 驱动：CloudKit 私有数据库、账号绑定检查、record change tag 条件写入、16 MiB 附件分块与校验。Swift 文件包括真实 CloudKit API，测试另外注入内存数据库验证边界；不以模拟账号冒充真实云账号。
 - 托管账号：[Supabase 部署与接入](../managed-identity.md)。目录和删除函数已真实部署；新增账号设置 UI、通用用例与 iOS 安全驱动。Apple OAuth 与删除授权撤销凭据已配置，Google/Microsoft 未配置；真实登录与云存储授权未验收。
-- 激活：当前安装包没有 `AnjianCloudKitContainer` 配置及 iCloud 发行权限。插件加载不访问 CKContainer；发起连接时返回 `cloud_not_configured`，不宣告可同步。
+- 激活：1.8.0（32.1）已在实际 IPA 核验 `AnjianCloudKitContainer` 和 CloudKit Production 权限；默认模拟器/普通构建仍不激活。插件加载和配置查询不访问 CKContainer，用户须单独开启同步。
 
 iPadOS 复用 iOS 驱动。Mac 虽然也有 CloudKit SDK，Tauri 的 iOS Swift 插件桥不能直接当作 Mac 接入，仍需自己的桥接、装配、签名和验收。Windows 后续通过统一端口接 OneDrive/Google Drive 或适用的 CloudKit Web 授权方案，不会自动读取 Apple 私有容器。
 
@@ -32,3 +32,11 @@ CloudKit 测试编译真实 SDK 代码，但数据库通过测试适配器替换
 账号后端于 2026-11-16 部署到用户提供的 Supabase 项目，权限及原生回调验证见[线上记录](../managed-identity.md#线上部署与验证记录)。账号客户端是此后的改动，不能沿用上面的旧源码 CI 作为其原生验证证据；也不改变 28.1 仍为本机/手动备份版本的事实。
 
 后续账号验证见[原生任务](https://github.com/limushu/new_hm/actions/runs/43979143545)：源码 `bfe8e63` 通过全部 26 项原生测试，包含钥匙串真实读写、项目隔离和清除，以及授权 URL 与迟到回调隔离。同一源码已生成 **1.7.7（31.1）** 并由 Apple 确认为 `VALID` / `IN_BETA_TESTING`。该版本可验收 Apple 账号入口，自动 CloudKit 同步仍未开放，真实登录/删除与跨设备使用需要分别验收。
+
+## 2026-11-17 自动同步候选验证
+
+[宿主同步编排](../../src-tauri/src/subsystems/sync/mod.rs)、[前台调度](../../src/platform/SyncProvider.tsx)和[工作区目录](../../crates/hm-application/src/identity/catalog.rs)现已接通。前台/保存后检查，下载先暂存；没有未保存编辑和未处理音频任务时才应用，并复核本机指纹。退出、恢复备份和退后台使旧同步租约失效。并发修改按整份工作区版本处理，保留双方版本，当前没有字段级自动合并。
+
+客户端/隐私清单源码 `a3d2686` 的[移动检查](https://github.com/limushu/new_hm/actions/runs/43991968234)通过 Android 编译、iOS 构建/启动/持久化和 **27 项原生测试**，其中 CloudKit 5 项。相关[应用检查](https://github.com/limushu/new_hm/actions/runs/43993510190)通过前端、Rust/Clippy 与 Windows 构建。之后的改动为部署/签名工具与文档，不改变被测 Swift 驱动和客户端代码。
+
+用户在 Console 发布 schema 后，[生产配置检查](https://github.com/limushu/new_hm/actions/runs/43994282858)于 01:16:35 UTC 确认 CloudKit Production 的三种记录类型及字段齐全。此检查仅管理数据结构，不读取用户案件，也不替代真实 iCloud 账号的双设备数据往返。1.8.0（32.1）随后通过实际 IPA 权限核验，并由 Apple 确认为 `VALID` / `IN_BETA_TESTING`；真实双设备 QA 仍待验收，见[发布记录](../app-store/README.md)。

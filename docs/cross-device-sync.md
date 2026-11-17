@@ -2,7 +2,7 @@
 
 2026-11-17。第一期按用户选择使用统一案笺身份和用户自己的 CloudKit 私有空间，先接 iPhone / iPad。Windows、Mac、Google Drive 和 OneDrive 尚未接入。
 
-**交付状态：客户端自动同步流程已接通，正在验证生产配置。** 最新已交付 TestFlight 为 1.7.7（31.1），包含可选 Apple 登录和文件备份，不包含自动同步。用户已确认 App ID `com.limushu.hm` 关联 `iCloud.com.limushu.hm`；仍需核验发行 profile、部署 CloudKit Production schema、完成新签名构建和真实双设备往返。不能把单元测试通过写成真实 iCloud 验收通过。
+**交付状态：1.8.0（32.1）已上传并由 Apple 确认为内部可测试。** 已核验 CloudKit Production schema、实际 IPA 的容器/生产权限、分发签名和隐私清单，详见[发布记录](app-store/README.md)。首次开放 iPhone / iPad 的可选前台自动同步；真实个人 iCloud 账号传输和双设备往返仍需在此候选上验收。不能把隔离驱动测试通过写成真实跨设备验收通过。
 
 ## 第一期开启方式
 

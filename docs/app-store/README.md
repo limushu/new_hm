@@ -1,6 +1,18 @@
 # App Store 首发准备
 
-## 当前账号内测候选：1.7.7（31.1）
+## 当前 iCloud 内测候选：1.8.0（32.1）
+
+2026-11-17，[签名与上传](https://github.com/limushu/new_hm/actions/runs/43994035376)成功，01:26:40 UTC Apple 确认 `UPLOAD SUCCEEDED with no errors`。[独立只读状态检查](https://github.com/limushu/new_hm/actions/runs/43996117624)于 01:30:53 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`；构建 ID `1f280fd7-e3aa-432f-b6c1-2e14bce7f848`，可供当前内部测试员安装。没有重新提交 App Review 或发布 App Store。
+
+产物源码 `947631f41410e404c51b66480235eddcbfe615c4`，Xcode 26.3（17C529）/ iOS SDK 26.2。已下载 ZIP/IPA，核对 `com.limushu.hm`、版本 1.8.0、构建 32.1、Info.plist 中容器，以及 Mach-O 实际签名 entitlement：`application-identifier=UN356US9WL.com.limushu.hm`、容器 `iCloud.com.limushu.hm`、服务 `[CloudKit]`、环境 `Production`、`get-task-allow=false`。CI 另通过严格分发签名和包根隐私清单检查；发行二进制未发现未声明的受检 API 候选。IPA SHA-256：`dc7d275e19f24ca1a303327c53cbd891d066a6a75df6d58a720c12bae2f5fea3`。
+
+新增可选 iCloud 自动同步：先在“设置 → 案笺账号”登录，再单独点击“开启 iCloud 同步”。首期用于同一案笺身份和同一系统 iCloud 账号的 iPhone / iPad；前台启动、保存后及周期检查同步案件、人员、关系、日程、收支、材料和录音。离线保留本机修改；编辑、录音或转写尚未处理时等待接收；并发修改保留双方完整版本并由用户选择，当前没有字段级自动合并。暂停、退出账号和恢复备份会停止后续自动同步。后台、锁屏和强制退出不保证即时传输，Windows / Mac 云驱动未开放。
+
+[移动检查](https://github.com/limushu/new_hm/actions/runs/43991968234)通过对应客户端/Swift 驱动的 iOS 构建、启动、持久化和 27 项原生测试（CloudKit 5 项），以及 Android 编译；[发行源码应用检查](https://github.com/limushu/new_hm/actions/runs/43993510190)通过前端、Rust/Clippy 和 Windows 构建。[CloudKit Production schema](https://github.com/limushu/new_hm/actions/runs/43994282858)已经导出验证。真实 Apple 登录、个人 iCloud 传输与双设备数据往返仍需用户在签名候选上验收；模拟器和隔离数据库测试不替代这些实测。
+
+建议使用虚构案件在两台设备测试：第一台开启并等待“已同步”，第二台以相同两个账号开启，检查案件、人员、收支和附件；再测试一项编辑、一份录音和断网补传。若第二台已有不同内容，应显示版本选择，不应直接覆盖。同步规则与分层见[跨设备同步](../cross-device-sync.md)。
+
+## 前一账号内测候选：1.7.7（31.1）
 
 新增「设置 → 案笺账号」，通过通用账号用例与 iOS 系统授权窗口/钥匙串接入托管身份；本项目当前已配置 Apple 登录，Google/Microsoft 尚未配置。登录、绑定、解绑、退出及显式确认删除都有客户端入口；真实 Apple 登录与删除仍需用户在 iPhone 上验收。本机案件可继续离线使用，自动 iCloud 同步尚未开放。
 
