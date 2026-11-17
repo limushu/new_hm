@@ -1,6 +1,18 @@
 # App Store 首发准备
 
-## 当前设备日程内测候选：1.8.1（33.1）
+## 当前正文语音输入内测候选：1.8.2（34.1）
+
+工作记录的记录内容、新建文档正文，以及关键事件/节点的说明增加共用“语音输入”入口：说完点击“结束并转文字”，普通话设备内识别完成后追加到最新草稿，再核对并保存。识别期间的手动编辑保留；部分识别和超出字段限制的文字先供用户核对或精简。临时录音不创建案件材料，保存后的正文沿用原有业务和同步规则。录音与识别由公共用例组合，复用现有 iOS 驱动，操作细节见[语音输入与转写](../speech-transcription.md)。
+
+2026-11-17，[签名与上传](https://github.com/limushu/new_hm/actions/runs/44020194318)成功，05:03:30 UTC Apple 确认 `UPLOAD SUCCEEDED with no errors`。第一次状态查询未成功，[独立只读检查](https://github.com/limushu/new_hm/actions/runs/44021476933)于 05:04:59 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`；构建 ID `f8b09e57-d654-4f2e-93f4-9d1001de1609`，当前内部测试员可安装。没有重新提交 App Review 或发布 App Store。
+
+实际 IPA 源码 `6691007c94d51443460aedb8d86aa464cb1ab441`，Xcode 26.3（17C529）/ iOS SDK 26.2。已下载并核对包名、1.8.2 / 34.1、麦克风与识别用途说明中的正文草稿用途、日历用途说明及包根隐私清单。实际 Mach-O 签名包含 `application-identifier=UN356US9WL.com.limushu.hm`、容器 `iCloud.com.limushu.hm`、服务 `[CloudKit]`、环境 `Production`、`get-task-allow=false`；保留 iCloud 同步能力。CI 严格分发签名、生产 schema 和发行隐私 API 检查通过。IPA SHA-256：`1b020ce0d02b131173002a74dcf71895c441835ddc71bee426a27e9986eba4aa`。
+
+[同一源码应用检查](https://github.com/limushu/new_hm/actions/runs/44020185347)通过 Rust 测试/Clippy、Windows 构建、80 项前端单元测试、141 项 Chromium 与 32 项 WebKit 回归；[移动检查](https://github.com/limushu/new_hm/actions/runs/44020185601)通过 Android 编译、iOS 构建/启动/工作区持久化和 31 项原生测试。公共层新增 6 项语音输入测试，覆盖资源交接、失败重试、拒绝授权、识别槽位互斥和迟到清理。界面桥接测试验证追加最新草稿、保存前不建业务记录或材料、部分采用、长度限制及三个正文入口复用。
+
+真实麦克风/语音授权、普通话识别质量、较长输入与后台中断仍需在签名 iPhone 上验收；隔离驱动和模拟桥输出不替代实际 Apple 模型。建议先用虚构工作记录说十几秒，核对追加、修改和保存，再测试取消及权限拒绝。
+
+## 前一设备日程内测候选：1.8.1（33.1）
 
 新增按需授权的 iOS 系统提醒，以及已保存日程的“添加到系统日历”入口。用户选择目标日历后维护单向副本，案笺内改期/删除会协调更新；系统日历修改暂不回传。拒绝权限仍保存业务日程。清单选中日期的主题底色改为数字后的 32×32 圆角块，星期留在上方，保留整格点击区域。原有可选 iCloud 同步保留。
 
