@@ -38,7 +38,7 @@ export function deployCloudSchema(team, schemaFile) {
     const allowed = new Set(['Users', 'AnjianSyncHead', 'AnjianSyncIndex', 'AnjianSyncChunk']);
     if ([...existing.matchAll(/RECORD TYPE\s+(\w+)/g)].some((match) => !allowed.has(match[1])))
       throw new Error('Container has additional record types; merge its schema before importing');
-    for (const environment of ['development', 'production']) {
+    for (const environment of ['development']) {
       cktool([
         'import-schema',
         ...authorization(team),
@@ -50,7 +50,13 @@ export function deployCloudSchema(team, schemaFile) {
       ]);
       console.log(`CloudKit ${environment} schema imported`);
     }
-    verifyCloudSchema(exportCloudSchema(team, 'production', join(temporary, 'production.ckdb')));
+    try {
+      verifyCloudSchema(exportCloudSchema(team, 'production', join(temporary, 'production.ckdb')));
+    } catch {
+      throw new Error(
+        'Development schema is ready. In CloudKit Console choose Deploy Schema Changes, then rerun Production verification. Apple cktool cannot publish schema to Production.',
+      );
+    }
     console.log('CloudKit Production schema verified');
   } finally {
     rmSync(temporary, { recursive: true, force: true });

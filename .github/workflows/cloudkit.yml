@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       deploy_schema:
-        description: 'Import and deploy the reviewed Anjian record schema to CloudKit Production'
+        description: 'Import reviewed Development schema and verify Production after Console deployment'
         type: boolean
         required: true
         default: false
