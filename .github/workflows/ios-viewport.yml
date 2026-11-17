@@ -1,0 +1,46 @@
+name: iOS installed app viewport checks
+on:
+  workflow_dispatch:
+    inputs:
+      simulator_run_id:
+        description: Run with a built simulator app that passed launch and persistence checks
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  viewport:
+    runs-on: macos-15
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: ios-simulator-${{ runner.arch }}
+      - name: Ensure Xcode project tools
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: '1'
+        run: command -v xcodegen >/dev/null || brew install xcodegen
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.simulator_run_id }}
+          pattern: ios-simulator-*
+          merge-multiple: true
+          path: artifacts/ios/source
+      - name: Retest the actual application with identical product sources
+        run: node scripts/retest-ios-viewport.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-viewport-${{ github.run_id }}
+          path: artifacts/ios/simulator/
+          if-no-files-found: warn
+          retention-days: 7

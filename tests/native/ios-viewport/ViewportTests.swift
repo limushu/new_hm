@@ -27,9 +27,13 @@ final class ViewportTests: XCTestCase {
     app.activate()
     XCTAssertTrue(app.wait(for:.runningForeground,timeout:30))
     XCTAssertTrue(app.buttons["案件"].firstMatch.waitForExistence(timeout:30))
-    let screen=UIScreen.main.bounds
-    XCTAssertEqual(app.frame.width,screen.width,accuracy:1)
-    XCTAssertEqual(app.frame.height,screen.height,accuracy:1)
+    // UITest Runner's UIScreen can report its own compatibility dimensions.
+    // Compare the tested app's window to the physical screenshot instead.
+    let screen=app.frame
+    let pixels=XCUIScreen.main.screenshot().image.size
+    XCTAssertEqual(screen.minX,0,accuracy:1)
+    XCTAssertEqual(screen.minY,0,accuracy:1)
+    XCTAssertEqual(screen.width/screen.height,pixels.width/pixels.height,accuracy:0.001)
     capture("today")
     tap("案件")
     tap("SQLite upgrade fixture (fictional)")
