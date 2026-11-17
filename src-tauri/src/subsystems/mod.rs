@@ -1,6 +1,7 @@
 //! Composition root for host services. Business commands continue to use hm-core.
 pub mod agenda;
 pub mod backup;
+pub mod dictation;
 pub mod documents;
 mod health;
 #[cfg(desktop)]

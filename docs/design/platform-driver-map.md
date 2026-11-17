@@ -17,6 +17,8 @@
 
 系统提醒与日历也在同一装配边界注册。公共 [WorkspaceCell](../../crates/hm-application/src/workspace.rs) 在持久化业务变更后释放 Store 锁，再通知[设备日程协调器](../../src-tauri/src/subsystems/agenda/mod.rs)；页面保存、云端应用和备份恢复使用同一机制。授权状态、系统副本 ID 与排程状态留在设备本地。接口和操作边界见[设备日历与通知](../device-calendar-reminders.md)；持续开发须遵循根目录 [AGENTS.md](../../AGENTS.md) 的抽象框架原则。
 
+正文语音输入由公共 [DictationService](../../crates/hm-application/src/dictation.rs) 组合现有 RecordingService 与 SpeechService，复用表中录音及识别驱动。临时音频直接作为流交给识别驱动，不经过材料归档，也不新增平台专属业务逻辑；同一控件用于工作记录、文档和事件说明。生命周期、草稿与平台支持边界见[语音输入与转写](../speech-transcription.md)。
+
 ## 同步分层的当前状态
 
 - 核心：[一致快照与逻辑指纹](../../crates/hm-core/src/backup/sync.rs)，不把 SQLite/WAL 放到云盘；本机设置和提醒送达状态不随工作数据同步。

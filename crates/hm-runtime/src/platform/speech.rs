@@ -1,5 +1,6 @@
-//! File transcription port. Drivers own recognition and temporary audio resources;
-//! the application owns job identity, case authorization and explicit archiving.
+//! Audio transcription port. Drivers stage a borrowed source before returning;
+//! they own recognition resources, while the application owns source retention,
+//! job identity, case authorization and explicit archiving.
 use super::{Document, DriverError, DriverResult};
 use serde::{Deserialize, Serialize};
 
@@ -79,7 +80,7 @@ pub trait SpeechDriver: Send + Sync {
     fn start(
         &self,
         id: &str,
-        audio: Box<dyn Document>,
+        audio: &mut dyn Document,
         language: &str,
     ) -> DriverResult<Box<dyn SpeechJob>>;
 }
@@ -93,7 +94,7 @@ impl SpeechDriver for UnavailableSpeech {
             authorization: "unavailable".into(),
         })
     }
-    fn start(&self, _: &str, _: Box<dyn Document>, _: &str) -> DriverResult<Box<dyn SpeechJob>> {
+    fn start(&self, _: &str, _: &mut dyn Document, _: &str) -> DriverResult<Box<dyn SpeechJob>> {
         Err(DriverError::unsupported("speech_transcription"))
     }
 }

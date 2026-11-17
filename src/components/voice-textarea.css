@@ -1,0 +1,41 @@
+.voice-text-field {
+  display: grid;
+  gap: 7px;
+  min-width: 0;
+}
+.voice-text-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+}
+.voice-text-heading > label {
+  font-size: var(--text-sm);
+  color: var(--muted);
+}
+.voice-text-field > textarea {
+  width: 100%;
+  min-width: 0;
+}
+.voice-input-panel {
+  display: grid;
+  gap: 9px;
+  padding: 12px 0 4px;
+  border-top: 1px solid var(--line);
+}
+.voice-input-status {
+  font-size: var(--text-sm);
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+.voice-input-panel progress {
+  width: 100%;
+  height: 4px;
+  accent-color: var(--primary);
+}
+.voice-input-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}

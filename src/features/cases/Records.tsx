@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Plus, Paperclip, NotebookPen } from 'lucide-react';
 import Dialog from '../../components/Dialog';
+import VoiceTextArea from '../../components/VoiceTextArea';
 import Materials from '../materials/Materials';
 import type { RecordInput, SaveAction, Workspace, WorkRecord, WorkScope } from '../../domain/types';
 import { caseScope, resourceInScope, resourceLinks } from '../../domain/workspace';
@@ -105,30 +106,31 @@ export function RecordForm({
   scope: WorkScope;
 }) {
   const [body, setBody] = useState(value.body);
+  const [voiceActive, setVoiceActive] = useState(false);
   const [context, setContext] = useState(scope);
   return (
     <Dialog
       title={value.body ? '编辑工作记录' : '添加工作记录'}
       onClose={onClose}
       submitLabel="保存记录"
+      submitDisabled={voiceActive}
       onSubmit={async () => {
         await save('save_work_record', { input: { ...value, body }, ...context });
       }}
     >
       {properties}
-      <label>
-        记录内容
-        <textarea
-          aria-label="工作记录内容"
-          autoFocus
-          required
-          rows={6}
-          maxLength={20000}
-          placeholder="记录沟通、进展或下一步安排…"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-        />
-      </label>
+      <VoiceTextArea
+        label="记录内容"
+        aria-label="工作记录内容"
+        autoFocus
+        required
+        rows={6}
+        maxLength={20000}
+        placeholder="记录沟通、进展或下一步安排…"
+        value={body}
+        onValueChange={setBody}
+        onVoiceActivity={setVoiceActive}
+      />
       {!properties && (
         <WorkScopeField caseId={value.caseId} data={data} value={context} onChange={setContext} />
       )}

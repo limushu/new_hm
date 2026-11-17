@@ -198,6 +198,11 @@ pub fn run() {
             subsystems::speech::cancel_transcription,
             subsystems::speech::discard_transcription,
             subsystems::speech::save_transcription,
+            subsystems::dictation::start_dictation,
+            subsystems::dictation::finish_dictation,
+            subsystems::dictation::dictation_state,
+            subsystems::dictation::stop_dictation_transcription,
+            subsystems::dictation::discard_dictation,
             ipc::host::set_window_theme,
             #[cfg(mobile)]
             subsystems::mobile::resume_runtime,

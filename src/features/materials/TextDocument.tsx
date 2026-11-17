@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { useRef, useState } from 'react';
 import Dialog from '../../components/Dialog';
+import VoiceTextArea from '../../components/VoiceTextArea';
 import type { MaterialTarget, SaveAction } from '../../domain/types';
 
 export default function TextDocument({
@@ -16,6 +17,7 @@ export default function TextDocument({
 }) {
   const [name, setName] = useState(`文档 ${new Date().toLocaleDateString('sv-SE')}`);
   const [body, setBody] = useState('');
+  const [voiceActive, setVoiceActive] = useState(false);
   const [discard, setDiscard] = useState(false);
   const saved = useRef(false);
   return (
@@ -23,8 +25,9 @@ export default function TextDocument({
       <Dialog
         title="新建文档"
         submitLabel="保存文档"
+        submitDisabled={voiceActive}
         className="text-document-dialog"
-        onClose={() => (body && !saved.current ? setDiscard(true) : onClose())}
+        onClose={() => ((body || voiceActive) && !saved.current ? setDiscard(true) : onClose())}
         onSubmit={async () => {
           const title = name.trim();
           if (!title || /[\\/:*?"<>|\u0000-\u001f]/.test(title))
@@ -52,18 +55,17 @@ export default function TextDocument({
             onChange={(e) => setName(e.target.value)}
           />
         </label>
-        <label>
-          正文
-          <textarea
-            aria-label="文档正文"
-            className="text-document-body"
-            required
-            rows={12}
-            value={body}
-            onChange={(e) => setBody(e.target.value)}
-            placeholder="在这里撰写沟通纪要、办案思路或材料清单…"
-          />
-        </label>
+        <VoiceTextArea
+          label="正文"
+          aria-label="文档正文"
+          className="text-document-body"
+          required
+          rows={12}
+          value={body}
+          onValueChange={setBody}
+          onVoiceActivity={setVoiceActive}
+          placeholder="在这里撰写沟通纪要、办案思路或材料清单…"
+        />
         <p className="field-hint">以本地 Markdown（.md）文本保存。保存前关闭可选择继续编辑。</p>
       </Dialog>
       {discard && (

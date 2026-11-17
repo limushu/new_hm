@@ -12,6 +12,7 @@ import { EntryForm } from '../finance/Finance';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Mic, Plus, Search, FileText, Flag, NotebookPen, ArrowUpRight } from 'lucide-react';
 import Dialog from '../../components/Dialog';
+import VoiceTextArea from '../../components/VoiceTextArea';
 import DateField from '../../components/DateField';
 import Select from '../../components/Select';
 import Recorder from '../materials/Recorder';
@@ -57,10 +58,12 @@ export function MilestoneEditor({
   nodeMode?: boolean;
 }) {
   const [input, setInput] = useState(value);
+  const [voiceActive, setVoiceActive] = useState(false);
   return (
     <Dialog
       title={nodeMode ? '关键节点' : '关键事件'}
       submitLabel={nodeMode ? '保存节点' : '保存事件'}
+      submitDisabled={voiceActive}
       onClose={onClose}
       onSubmit={async () => {
         await save('save_case_event', { input });
@@ -104,15 +107,15 @@ export function MilestoneEditor({
           </Select>
         </label>
       )}
-      <label>
-        说明与依据
-        <textarea
-          aria-label="事件说明"
-          rows={5}
-          value={input.notes}
-          onChange={(e) => setInput({ ...input, notes: e.target.value })}
-        />
-      </label>
+      <VoiceTextArea
+        label="说明与依据"
+        aria-label="事件说明"
+        rows={5}
+        maxLength={20000}
+        value={input.notes}
+        onValueChange={(notes) => setInput((current) => ({ ...current, notes }))}
+        onVoiceActivity={setVoiceActive}
+      />
       <p className="field-hint">
         请按实际情况填写。将来的日期显示为计划，文件归档时间不会自动当作事实发生日期。
       </p>

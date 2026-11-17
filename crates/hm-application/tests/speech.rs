@@ -29,7 +29,7 @@ impl SpeechDriver for FakeDriver {
     fn start(
         &self,
         _: &str,
-        mut audio: Box<dyn Document>,
+        audio: &mut dyn Document,
         _: &str,
     ) -> DriverResult<Box<dyn SpeechJob>> {
         let mut bytes = Vec::new();

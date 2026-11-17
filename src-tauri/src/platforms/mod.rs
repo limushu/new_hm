@@ -146,6 +146,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(crate::subsystems::speech::SpeechState(
         std::sync::Mutex::new(hm_application::speech::SpeechService::new(speech)),
     ));
+    app.manage(crate::subsystems::dictation::DictationState::default());
     let backup: Box<dyn hm_runtime::platform::BackupDriver> = if drivers
         .manifest
         .require(hm_runtime::Capability::BackupFiles)

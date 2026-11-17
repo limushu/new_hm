@@ -3,6 +3,7 @@ use hm_runtime::platform::{
     SpeechSupport,
 };
 use serde::Deserialize;
+use std::io::Read;
 use tauri::{plugin::PluginHandle, Manager};
 
 tauri::ios_plugin_binding!(init_plugin_hm_speech);
@@ -61,7 +62,7 @@ impl SpeechDriver for IosSpeech {
     fn start(
         &self,
         id: &str,
-        mut audio: Box<dyn Document>,
+        audio: &mut dyn Document,
         language: &str,
     ) -> DriverResult<Box<dyn SpeechJob>> {
         let directory = tempfile::Builder::new().prefix("hm-speech-").tempdir()?;
@@ -79,7 +80,10 @@ impl SpeechDriver for IosSpeech {
         }
         let path = directory.path().join(format!("source.{extension}"));
         let mut output = std::fs::File::create(&path)?;
-        std::io::copy(&mut audio.open()?, &mut output)?;
+        let size = std::io::copy(&mut audio.open()?.take(512 * 1024 * 1024 + 1), &mut output)?;
+        if size == 0 || size > 512 * 1024 * 1024 {
+            return Err(DriverError::invalid_state("speech_audio_invalid"));
+        }
         output.sync_all()?;
         self.call(
             "start",
