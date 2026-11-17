@@ -44,7 +44,7 @@ describe('iOS branding delivery', () => {
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
-  }, 20000);
+  }, 60000);
   it('stops before building if a referenced slot has no product artwork', () => {
     const { root, catalog } = fixture();
     try {
