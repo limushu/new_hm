@@ -1,6 +1,18 @@
 # App Store 首发准备
 
-## 当前 iCloud 内测候选：1.8.0（32.1）
+## 当前设备日程内测候选：1.8.1（33.1）
+
+新增按需授权的 iOS 系统提醒，以及已保存日程的“添加到系统日历”入口。用户选择目标日历后维护单向副本，案笺内改期/删除会协调更新；系统日历修改暂不回传。拒绝权限仍保存业务日程。清单选中日期的主题底色改为数字后的 32×32 圆角块，星期留在上方，保留整格点击区域。原有可选 iCloud 同步保留。
+
+2026-11-17，[签名与上传](https://github.com/limushu/new_hm/actions/runs/44008057160)成功，03:16:21 UTC Apple 确认 `UPLOAD SUCCEEDED with no errors`。归档后的第一次状态查询未成功，[独立只读检查](https://github.com/limushu/new_hm/actions/runs/44009195927)于 03:18:11 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`；构建 ID `c90946b0-7776-45d4-9f12-488e097f5ebe`，当前内部测试员可安装。没有重新提交 App Review 或发布 App Store。
+
+产物源码 `e5bb72eda19a22b673d3009d996e5de331ee526f`，Xcode 26.3（17C529）/ iOS SDK 26.2。已下载实际 IPA，核对包名、1.8.1 / 33.1、两项日历用途说明、包根隐私清单与 Mach-O 签名权限：`application-identifier=UN356US9WL.com.limushu.hm`、容器 `iCloud.com.limushu.hm`、服务 `[CloudKit]`、环境 `Production`、`get-task-allow=false`。CI 严格分发签名、生产 schema 和发行隐私 API 检查通过；IPA SHA-256：`d0a41c42e0e12b1261fb8903a5bbe5f9aad94c1c7b58cba1471018c44c15ce92`。
+
+[同一源码应用检查](https://github.com/limushu/new_hm/actions/runs/44006712139)通过公共 Rust 测试/Clippy、Windows 构建、77 项前端单元测试、135 项 Chromium 与 26 项 WebKit 回归；[移动检查](https://github.com/limushu/new_hm/actions/runs/44006712127)通过 Android 编译、iOS 构建/启动/持久化和 31 项原生测试。日期布局另核对四档宽度、深浅主题共 8 组，无页面横向溢出。真实锁屏提醒、系统日历写入与权限切换仍需在签名真机验收；原生测试使用隔离适配器，不替代这些实测。
+
+公共规则与驱动边界见[设备日历与通知](../device-calendar-reminders.md)、[平台驱动表](../design/platform-driver-map.md)；长期抽象原则已写入根目录 [AGENTS.md](../../AGENTS.md)。桌面到期通知也复用公共用例，Windows/Mac/Android 系统日历驱动尚未接入。系统副本标识和权限保留本机，不加入案件同步或备份。
+
+## 前一 iCloud 内测候选：1.8.0（32.1）
 
 2026-11-17，[签名与上传](https://github.com/limushu/new_hm/actions/runs/43994035376)成功，01:26:40 UTC Apple 确认 `UPLOAD SUCCEEDED with no errors`。[独立只读状态检查](https://github.com/limushu/new_hm/actions/runs/43996117624)于 01:30:53 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`；构建 ID `1f280fd7-e3aa-432f-b6c1-2e14bce7f848`，可供当前内部测试员安装。没有重新提交 App Review 或发布 App Store。
 
