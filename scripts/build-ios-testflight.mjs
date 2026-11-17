@@ -11,6 +11,7 @@ import {
 import { join, resolve } from 'node:path';
 import { testFlightStatus } from './ios-testflight-status.mjs';
 import { exportCloudSchema } from './cloudkit-schema.mjs';
+import { syncIosIcons, verifyIosIcons } from './ios-icons.mjs';
 import {
   cloudContainer,
   cloudSigning,
@@ -105,6 +106,7 @@ try {
   report.sdk = run('xcrun', ['--sdk', 'iphoneos', '--show-sdk-version'], true);
   checkSubmissionToolchain(report.xcode, report.sdk);
   run('npx', ['tauri', 'ios', 'init', '--ci', '--skip-targets-install', '--config', configPath]);
+  syncIosIcons(root);
   run('npx', [
     'tauri',
     'ios',
@@ -126,6 +128,8 @@ try {
   const app = join(unpacked, 'Payload', apps[0]);
   run('python3', [join(root, 'scripts/verify-ios-privacy.py'), app]);
   report.privacyManifest = 'verified-at-bundle-root';
+  verifyIosIcons(app, root, join(output, 'compiled-app-icon.png'));
+  report.branding = 'compiled-HM-icons-verified';
   run('codesign', ['--verify', '--deep', '--strict', app]);
   const signing = spawnSync('codesign', ['-d', '--verbose=4', app], { encoding: 'utf8' });
   if (signing.status !== 0 || !signing.stderr.includes(`TeamIdentifier=${settings.team}`))

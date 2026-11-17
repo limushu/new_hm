@@ -82,6 +82,7 @@ pub async fn install_update(
     state: State<'_, UpdateState>,
     store: State<'_, AppState>,
     location: State<'_, hm_core::StorageLocation>,
+    local_backup: State<'_, hm_application::backup::LocalBackupTarget>,
     confirmed: bool,
 ) -> Result<(), String> {
     if !confirmed {
@@ -91,19 +92,12 @@ pub async fn install_update(
         return Err("历史绿色模式请先备份，安装新版后恢复备份；安装版随后支持在线更新。".into());
     }
     // Make a recoverable checkpoint before the installer replaces application files.
-    access(&store, |s| {
-        let settings = s.settings()?;
-        let path = settings
-            .get("backup_directory")
-            .map(std::path::PathBuf::from)
-            .unwrap_or(
-                app.path()
-                    .app_local_data_dir()
-                    .map_err(|e| hm_core::Error::Validation(e.to_string()))?
-                    .join("backups"),
-            );
-        s.create_backup(&path, true).map(|_| ())
-    })?;
+    {
+        let workspace = store.0.lock().map_err(|_| "数据库暂时不可用")?;
+        local_backup
+            .create(&workspace, true)
+            .map_err(|error| error.detail.unwrap_or(error.code))?;
+    }
     let update = state
         .pending
         .lock()

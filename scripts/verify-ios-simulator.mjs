@@ -4,6 +4,7 @@ import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
 import { selectSimulatorRuntime } from './ios-simulator-config.mjs';
+import { syncIosIcons, verifyIosIcons } from './ios-icons.mjs';
 
 if (process.platform !== 'darwin') {
   throw new Error(
@@ -51,7 +52,7 @@ const plist = (path, key) =>
 
 // All database access is to a newly created CI simulator, never a personal device.
 const databaseCheck = String.raw`
-import sqlite3, json, sys, pathlib
+import sqlite3, json, sys, pathlib, hashlib
 root = pathlib.Path(sys.argv[1])
 databases = [p for p in root.rglob('workspace.sqlite3') if not {'backups', 'recovery'}.intersection(p.relative_to(root).parts)]
 if len(databases) != 1: raise RuntimeError('Expected exactly one private workspace database')
@@ -75,6 +76,16 @@ else:
     assert item, 'Archived material did not survive upgrade'
     assert (path.parent / 'materials' / item[0] / material_id / item[1]).read_bytes() == b'bundled-to-system-sqlite-fixture'
     assert db.execute("SELECT title FROM cases WHERE id=?", (item[0],)).fetchone()[0] == 'SQLite upgrade fixture (fictional)'
+    backup_root = path.parent / 'backups'
+    assert pathlib.Path(settings['backup_directory']).resolve() == backup_root.resolve(), 'Managed backup still targets a prior sandbox'
+    assert settings['last_backup_date'] != '2000-01-01', 'Reopened app has not completed the repaired backup'
+    relative = f'materials/{item[0]}/{material_id}/{item[1]}'
+    manifests = [(p.parent, json.loads(p.read_text())) for p in backup_root.glob('*/manifest.json')]
+    complete = [(folder, manifest) for folder, manifest in manifests if relative in manifest['files']]
+    assert complete, 'No completed backup contains the upgraded material'
+    folder, manifest = complete[-1]
+    for name, digest in manifest['files'].items():
+        assert hashlib.sha256((folder / name).read_bytes()).hexdigest() == digest, 'Repaired backup failed checksum'
 print(json.dumps({'schema': 9, 'integrity': 'ok', 'privateDatabase': str(path.relative_to(root)), 'backupDate': settings['last_backup_date']}))
 db.close()
 `;
@@ -92,6 +103,7 @@ try {
     bundle: { iOS: { template: join(root, 'src-tauri/ios-project.yml') } },
   });
   run('npx', ['tauri', 'ios', 'init', '--ci', '--skip-targets-install', '--config', config]);
+  syncIosIcons(root);
   run('npx', [
     'tauri',
     'ios',
@@ -117,6 +129,8 @@ try {
   const app = candidates[0];
   run('python3', [join(root, 'scripts/verify-ios-privacy.py'), app, '--debug']);
   report.checks.push('privacy-manifest-at-bundle-root');
+  verifyIosIcons(app, root, join(output, 'compiled-app-icon.png'));
+  report.checks.push('compiled-HM-app-icons');
   bundle = plist(join(app, 'Info.plist'), 'CFBundleIdentifier');
   if (bundle !== 'com.limushu.hm') throw new Error(`Unexpected bundle identifier: ${bundle}`);
   report.bundle = bundle;
@@ -234,6 +248,7 @@ try {
   }
   if (!retained) throw new Error('Bundled-to-system SQLite workspace upgrade failed');
   report.checks.push('bundled-to-system-sqlite-workspace-and-material-retained');
+  report.checks.push('stale-sandbox-backup-target-repaired-and-checksummed');
   run('xcrun', ['simctl', 'io', device, 'screenshot', join(output, 'reopened-workspace.png')]);
   report.checks.push('restart-private-workspace-retained');
   run('node', [join(root, 'scripts/test-ios-viewport.mjs'), device]);

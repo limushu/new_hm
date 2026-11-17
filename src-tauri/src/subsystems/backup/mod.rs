@@ -1,6 +1,8 @@
 use crate::platforms::NativeDrivers;
 use crate::{access, AppState};
-use hm_application::backup::{BackupCandidate, BackupExport, BackupService, BackupSummary};
+use hm_application::backup::{
+    BackupCandidate, BackupExport, BackupService, BackupSummary, LocalBackupTarget,
+};
 use hm_core::BackupInfo;
 use hm_runtime::platform::DriverError;
 use hm_runtime::Capability;
@@ -27,24 +29,14 @@ pub fn choose_backup_directory(
 pub fn run_backup(
     platform: State<'_, NativeDrivers>,
     state: State<'_, AppState>,
+    local_backup: State<'_, LocalBackupTarget>,
 ) -> Result<BackupInfo, DriverError> {
     platform.manifest().require(Capability::LocalBackup)?;
     let store = state
         .0
         .lock()
         .map_err(|_| DriverError::invalid_state("storage_unavailable"))?;
-    let directory = store
-        .setting("backup_directory")
-        .map_err(hm_application::errors::core_error)?
-        .ok_or_else(|| DriverError::invalid_state("backup_directory_missing"))?;
-    let info = BackupService::create_local(&store, &PathBuf::from(directory), true)?;
-    store
-        .set_setting(
-            "last_backup_date",
-            &chrono::Local::now().format("%Y-%m-%d").to_string(),
-        )
-        .map_err(hm_application::errors::core_error)?;
-    Ok(info)
+    local_backup.run_now(&store, chrono::Local::now().date_naive())
 }
 
 #[tauri::command(async)]

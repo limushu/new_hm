@@ -207,7 +207,8 @@ export default function Settings({
           )}
         </div>
         <p className="field-hint">
-          最近自动备份：{settings.last_backup_date ?? health.lastBackup ?? '尚未完成'}
+          最近自动备份：
+          {health.lastBackupDate ?? settings.last_backup_date ?? health.lastBackup ?? '尚未完成'}
         </p>
         {health.backupError && (
           <p role="alert" className="error-message">
@@ -231,6 +232,7 @@ export default function Settings({
                 setHealth((h) => {
                   const next = { ...h };
                   delete next.backupError;
+                  next.lastBackupDate = new Date().toLocaleDateString('sv-SE');
                   return next;
                 });
                 setSettings((s) => ({

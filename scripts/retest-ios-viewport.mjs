@@ -59,6 +59,13 @@ try {
     'package.json',
     'package-lock.json',
     'index.html',
+    'public',
+    'vite.config.ts',
+    'tsconfig*.json',
+    'scripts/copy-pdf-assets.mjs',
+    'scripts/ios-icons.mjs',
+    'scripts/build-ios-testflight.mjs',
+    'scripts/verify-ios-simulator.mjs',
   ]);
   run('ditto', ['-x', '-k', join(source, 'anjian-simulator.app.zip'), temporary]);
   const apps = files(temporary, (p, e) => e.isDirectory() && p.endsWith('.app'));

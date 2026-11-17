@@ -19,3 +19,9 @@ Windows 同时配置可执行文件资源图标、窗口图标和安装器快捷
 安装器沿用 Tauri 模板并固定旧注册表身份，见 [installer.nsi](../../src-tauri/windows/installer.nsi)。模板源码来自 [Tauri 官方仓库](https://github.com/tauri-apps/tauri/blob/dev/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi)，更新 CLI 时应核对上游模板变化。启动项也沿用原身份，避免改名造成重复自启动。
 
 1.2.0 补充 Windows Shell 缓存同步：窗口图标与 Shell 任务栏分组图标是不同来源。启动时在独立 COM 线程中定向通知本安装 exe、branding/hm-mark.ico 及图标资源属于本安装的已存在快捷方式，保留全部快捷方式属性。仅在旧图像资源位置非空时使用其实际位置与索引更新图像项；资源解析返回的 Windows verbatim 路径先恢复普通 UTF-16 Shell 路径。后台状态分别报告窗口和缓存错误，不把 exe 资源检查当成实际任务栏验收。
+
+## iOS 实际打包资源核对
+
+2026-11-17 用户截图及 1.8.3（35.1）实际 IPA 确认：iOS 仍显示 Tauri 默认图标。仓库 HM 素材虽然存在，但 `tauri ios init` 生成的 AppIcon 目录没有被覆盖；此前检查素材和侧栏不足以证明已正确交付。
+
+1.8.4 候选在模拟器及签名构建初始化后，通过 [图标装配](../../scripts/ios-icons.mjs) 将每个 AppIcon 目录槽位替换为已提交的 iOS HM 素材，包含商店 1024px 图。构建后使用[像素校验](../../scripts/verify-ios-icons.py)解码实际应用内的 PNG（包括 Apple CgBI 优化），与同尺寸品牌素材比较；不一致即终止，不能进入上传。另导出实际编译图标供查看。已用旧版签名 IPA 验证此检查会拒绝默认图标；新候选的成品核对结果待签名构建完成后记录。

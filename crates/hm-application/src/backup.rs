@@ -3,6 +3,76 @@ use crate::errors::core_error;
 use hm_core::{BackupArchive, BackupInfo, PreparedBackup, Store};
 use hm_runtime::platform::{BackupDriver, DriverError, DriverResult};
 use serde::Serialize;
+use std::path::PathBuf;
+
+/// The host supplies the current workspace root and its folder-selection policy.
+/// Managed locations never trust a cached absolute sandbox path from a prior install.
+#[derive(Clone)]
+pub struct LocalBackupTarget {
+    workspace: PathBuf,
+    custom_folders: bool,
+}
+impl LocalBackupTarget {
+    pub fn managed(workspace: PathBuf) -> Self {
+        Self {
+            workspace,
+            custom_folders: false,
+        }
+    }
+    pub fn configurable(workspace: PathBuf) -> Self {
+        Self {
+            workspace,
+            custom_folders: true,
+        }
+    }
+    pub fn directory(&self, store: &Store) -> DriverResult<PathBuf> {
+        let configured = store.setting("backup_directory").map_err(core_error)?;
+        let directory = if self.custom_folders {
+            configured
+                .as_deref()
+                .filter(|value| !value.is_empty())
+                .map(PathBuf::from)
+                .unwrap_or_else(|| self.workspace.join("backups"))
+        } else {
+            self.workspace.join("backups")
+        };
+        let display = directory.to_string_lossy();
+        if configured.as_deref() != Some(display.as_ref()) {
+            // Compatibility display cache only: managed operations always derive
+            // the actual target from the live workspace, including after restore.
+            store
+                .set_setting("backup_directory", &display)
+                .map_err(core_error)?;
+        }
+        Ok(directory)
+    }
+    pub fn create(&self, store: &Store, retain: bool) -> DriverResult<BackupInfo> {
+        BackupService::create_local(store, &self.directory(store)?, retain)
+    }
+    pub fn run_now(&self, store: &Store, today: chrono::NaiveDate) -> DriverResult<BackupInfo> {
+        let info = self.create(store, true)?;
+        store
+            .set_setting("last_backup_date", &today.to_string())
+            .map_err(core_error)?;
+        Ok(info)
+    }
+    pub fn run_daily(
+        &self,
+        store: &Store,
+        today: chrono::NaiveDate,
+    ) -> DriverResult<Option<BackupInfo>> {
+        self.directory(store)?;
+        if store
+            .setting("last_backup_date")
+            .map_err(core_error)?
+            .as_deref()
+            == Some(today.to_string().as_str())
+        {
+            return Ok(None);
+        }
+        self.run_now(store, today).map(Some)
+    }
+}
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]

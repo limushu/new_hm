@@ -1,6 +1,18 @@
 # App Store 首发准备
 
-## 当前正文语音输入内测候选：1.8.2（34.1）
+## 当前外观与全屏内测：1.8.3（35.1）
+
+案件“录音 / 创建 / 查找”操作栏保持贴底，短内容不再上浮；背景覆盖完整窗口，控件按设备安全区避让。设置 → 外观 → 强调色支持六种预设、自选颜色和恢复默认，并自动调整深浅主题的可读性。实现边界见[外观与全屏布局](../design/appearance-layout.md)。
+
+2026-11-17，[签名与上传](https://github.com/limushu/new_hm/actions/runs/44038105739)于 07:29:32 UTC 确认 `UPLOAD SUCCEEDED`；[独立状态检查](https://github.com/limushu/new_hm/actions/runs/44039430780)于 07:32:20 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`。构建 ID `5ee95bc0-dd50-4376-a4ab-45a172b4cbf3`，内部测试员可安装；未重新提交 App Review 或发布 App Store。
+
+实际 IPA 源码 `96f8db3c3e730d87ddaa230b0256f4b94a86b917`，Xcode 26.3（17C529）/ SDK 26.2。已下载核对 1.8.3 / 35.1、启动屏、麦克风/识别/日历用途说明、根隐私清单及实际 Mach-O 分发权限，CloudKit 保持 `Production`。IPA SHA-256：`5a6dc29c8740ffa43db392aacf898bae339d676f3a11b31da46566e3b533218c`。
+
+[归档源应用检查](https://github.com/limushu/new_hm/actions/runs/44037946001)通过 Rust、Windows、82 项前端单元测试、144 项 Chromium 和 35 项 WebKit 回归。初版原生 UI 探针误读测试运行器自身的兼容屏幕尺寸，随后仅修正验收代码：[正式 App 复测](https://github.com/limushu/new_hm/actions/runs/44040310007)在产品源码一致性检查后复用同一模拟器应用，实测窗口 414×896pt，四个案件标签下创建按钮距底部均为 34pt；5 张原生截图已逐张查看。另有[原生驱动检查](https://github.com/limushu/new_hm/actions/runs/44040314416)通过 34 项 SDK 测试。截图使用隔离虚构数据，不作为真机验收或审核视频。
+
+已确认的后续修复：35.1 实际仍打包了 Tauri 默认图标；iOS 旧沙盒绝对备份路径也可能在更新后失效。1.8.4 候选正在接入 HM AppIcon 并修复托管备份目标，不能把 35.1 视为包含这两项修复。
+
+## 前一正文语音输入内测候选：1.8.2（34.1）
 
 工作记录的记录内容、新建文档正文，以及关键事件/节点的说明增加共用“语音输入”入口：说完点击“结束并转文字”，普通话设备内识别完成后追加到最新草稿，再核对并保存。识别期间的手动编辑保留；部分识别和超出字段限制的文字先供用户核对或精简。临时录音不创建案件材料，保存后的正文沿用原有业务和同步规则。录音与识别由公共用例组合，复用现有 iOS 驱动，操作细节见[语音输入与转写](../speech-transcription.md)。
 

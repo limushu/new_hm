@@ -24,9 +24,10 @@ pub(super) fn setup(
         std::time::Duration::from_secs(60),
         move || {
             super::agenda::changed(&handle);
+            let target = handle.state::<hm_application::backup::LocalBackupTarget>();
             let result = access(&handle.state::<AppState>(), |s| {
                 let now = chrono::Local::now();
-                let health = backup_health(s, now)?;
+                let health = backup_health(s, now, &target);
                 Ok(health)
             });
             let health = match result {
@@ -45,36 +46,30 @@ pub(super) fn setup(
 fn backup_health(
     s: &hm_core::Store,
     now: chrono::DateTime<chrono::Local>,
-) -> hm_core::Result<BTreeMap<String, String>> {
-    let settings = s.settings()?;
-    let today = now.format("%Y-%m-%d").to_string();
+    target: &hm_application::backup::LocalBackupTarget,
+) -> BTreeMap<String, String> {
     let mut health = BTreeMap::from([("maintenanceError".into(), String::new())]);
-    if settings.get("last_backup_date") == Some(&today) {
-        health.insert("backupError".into(), String::new());
-        return Ok(health);
-    }
-    if let Some(directory) = settings.get("backup_directory") {
-        match hm_application::backup::BackupService::create_local(
-            s,
-            std::path::Path::new(directory),
-            true,
-        ) {
-            Ok(info) => {
-                s.set_setting("last_backup_date", &today)?;
-                health.insert("lastBackup".into(), info.created_at);
-                health.insert("backupError".into(), String::new());
-            }
-            Err(error) => {
-                health.insert("backupError".into(), error.detail.unwrap_or(error.code));
-            }
+    match target.run_daily(s, now.date_naive()) {
+        Ok(Some(info)) => {
+            health.insert("lastBackup".into(), info.created_at);
+            health.insert("lastBackupDate".into(), now.date_naive().to_string());
+            health.insert("backupError".into(), String::new());
+        }
+        Ok(None) => {
+            health.insert("lastBackupDate".into(), now.date_naive().to_string());
+            health.insert("backupError".into(), String::new());
+        }
+        Err(error) => {
+            health.insert("backupError".into(), error.detail.unwrap_or(error.code));
         }
     }
-    Ok(health)
+    health
 }
 
 #[cfg(mobile)]
 pub(super) fn backup_once(app: &tauri::AppHandle) -> Result<BTreeMap<String, String>, String> {
+    let target = app.state::<hm_application::backup::LocalBackupTarget>();
     access(&app.state::<AppState>(), |s| {
-        backup_health(s, chrono::Local::now())
+        Ok(backup_health(s, chrono::Local::now(), &target))
     })
 }

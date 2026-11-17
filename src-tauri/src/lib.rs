@@ -144,12 +144,15 @@ pub fn run() {
             #[cfg(mobile)]
             let location = StorageLocation::sandbox(&app.path().app_local_data_dir()?);
             let store = Store::open(&location.data_directory.join("workspace.sqlite3"))?;
-            if store.setting("backup_directory")?.is_none() {
-                store.set_setting(
-                    "backup_directory",
-                    &location.data_directory.join("backups").to_string_lossy(),
-                )?;
-            }
+            #[cfg(desktop)]
+            let local_backup = hm_application::backup::LocalBackupTarget::configurable(
+                location.data_directory.clone(),
+            );
+            #[cfg(mobile)]
+            let local_backup =
+                hm_application::backup::LocalBackupTarget::managed(location.data_directory.clone());
+            local_backup.directory(&store)?;
+            app.manage(local_backup);
             let changes = app.handle().clone();
             app.manage(AppState(WorkspaceCell::new(store, move || {
                 subsystems::agenda::changed(&changes)

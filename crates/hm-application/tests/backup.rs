@@ -99,3 +99,120 @@ fn transport_can_be_replaced_without_snapshot_rules_and_restore_requires_valid_t
         "backup_export_incomplete"
     );
 }
+
+#[test]
+fn managed_backup_follows_relocated_workspace_preserves_history_and_only_marks_success() {
+    use hm_application::backup::LocalBackupTarget;
+    use hm_core::MaterialTarget;
+    let root = tempfile::tempdir().unwrap();
+    let original = root.path().join("old-container");
+    std::fs::create_dir(&original).unwrap();
+    let mut store = Store::open(&original.join("workspace.sqlite3")).unwrap();
+    let case = store
+        .create_case(CreateCase {
+            id: uuid::Uuid::new_v4().to_string(),
+            title: "Relocated workspace fixture".into(),
+            case_type: "other".into(),
+            status_id: "in_progress".into(),
+            tags: None,
+        })
+        .unwrap();
+    store
+        .import_reader(
+            &MaterialTarget {
+                case_id: case.id,
+                proceeding_id: None,
+                stage_id: None,
+                parent_id: None,
+                record_id: None,
+            },
+            "evidence.txt",
+            &mut Cursor::new(b"preserved evidence"),
+        )
+        .unwrap();
+    let day = chrono::NaiveDate::from_ymd_opt(2026, 11, 13).unwrap();
+    let info = LocalBackupTarget::managed(original.clone())
+        .run_now(&store, day)
+        .unwrap();
+    let historical = std::path::Path::new(&info.directory)
+        .strip_prefix(&original)
+        .unwrap()
+        .to_path_buf();
+    drop(store);
+    let current = root.path().join("current-container");
+    std::fs::rename(&original, &current).unwrap();
+    // The old location cannot be used as a directory. A stale persisted path
+    // would fail here, as inaccessible old sandbox paths do on a device.
+    std::fs::write(&original, b"old location is unavailable").unwrap();
+    let store = Store::open(&current.join("workspace.sqlite3")).unwrap();
+    assert!(store
+        .setting("backup_directory")
+        .unwrap()
+        .unwrap()
+        .starts_with(original.to_str().unwrap()));
+    let target = LocalBackupTarget::managed(current.clone());
+    let today = chrono::NaiveDate::from_ymd_opt(2026, 11, 17).unwrap();
+    let backup = target.run_daily(&store, today).unwrap().unwrap();
+    assert_eq!(
+        std::path::Path::new(&backup.directory).parent().unwrap(),
+        current.join("backups")
+    );
+    assert_eq!(
+        store.setting("backup_directory").unwrap().unwrap(),
+        current.join("backups").to_string_lossy()
+    );
+    assert_eq!(
+        store.setting("last_backup_date").unwrap().as_deref(),
+        Some("2026-11-17")
+    );
+    assert_eq!(
+        Store::inspect_backup(&current.join(historical))
+            .unwrap()
+            .file_count,
+        1
+    );
+    let inspected = Store::inspect_backup(std::path::Path::new(&backup.directory)).unwrap();
+    assert_eq!((inspected.case_count, inspected.file_count), (1, 1));
+    assert!(target.run_daily(&store, today).unwrap().is_none());
+    assert_eq!(
+        std::fs::read(&original).unwrap(),
+        b"old location is unavailable"
+    );
+}
+
+#[test]
+fn configurable_backup_keeps_selected_folder_and_never_falls_back_or_marks_failed_write() {
+    use hm_application::backup::LocalBackupTarget;
+    let root = tempfile::tempdir().unwrap();
+    let app = root.path().join("workspace");
+    std::fs::create_dir(&app).unwrap();
+    let store = Store::open(&app.join("workspace.sqlite3")).unwrap();
+    let external = root.path().join("selected-folder");
+    store
+        .set_setting("backup_directory", external.to_str().unwrap())
+        .unwrap();
+    let target = LocalBackupTarget::configurable(app.clone());
+    let day = chrono::NaiveDate::from_ymd_opt(2026, 11, 13).unwrap();
+    let backup = target.run_now(&store, day).unwrap();
+    assert_eq!(
+        std::path::Path::new(&backup.directory).parent().unwrap(),
+        external
+    );
+    let blocked = root.path().join("blocked");
+    std::fs::write(&blocked, b"unavailable volume").unwrap();
+    let missing = blocked.join("backups");
+    store
+        .set_setting("backup_directory", missing.to_str().unwrap())
+        .unwrap();
+    let today = chrono::NaiveDate::from_ymd_opt(2026, 11, 17).unwrap();
+    assert!(target.run_daily(&store, today).is_err());
+    assert_eq!(
+        store.setting("last_backup_date").unwrap().as_deref(),
+        Some("2026-11-13")
+    );
+    assert_eq!(
+        store.setting("backup_directory").unwrap().unwrap(),
+        missing.to_string_lossy()
+    );
+    assert!(!app.join("backups").exists());
+}

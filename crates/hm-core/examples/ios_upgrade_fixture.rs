@@ -30,6 +30,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &mut Cursor::new(b"bundled-to-system-sqlite-fixture"),
     )?;
     store.set_setting("onboarding_done", &edition)?;
+    // An update can move the sandbox while retaining settings from the old
+    // container. The application must repair this target before daily backup.
+    store.set_setting("backup_directory", "/private/var/mobile/Containers/Data/Application/11111111-1111-4111-8111-111111111111/Library/Application Support/com.limushu.hm/backups")?;
+    store.set_setting("last_backup_date", "2000-01-01")?;
     println!(
         "{}",
         serde_json::json!({"sourceSqlite": rusqlite::version(), "schema": 9, "materialId": material})
