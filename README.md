@@ -66,7 +66,7 @@ npm run artifacts:release
 | docs/design/archive/、docs/design/prototypes/ | 历史评审及独立 HTML 原型 |
 | artifacts/、.local/ | 本地交付与调试文件，不提交 |
 
-[架构](docs/architecture.md) · [需求](docs/requirements.md) · [进度](docs/progress.md) · [验收清单](docs/v1.0-checklist.md)。node_modules、dist、target、PDF 自动生成资源、测试报告均不提交。用户数据位于系统应用数据目录，不进入源码或安装包。
+[架构](docs/architecture.md) · [需求](docs/requirements.md) · [进度](docs/progress.md) · [同步框架与待办](docs/cross-device-sync.md) · [验收清单](docs/v1.0-checklist.md)。node_modules、dist、target、PDF 自动生成资源、测试报告均不提交。用户数据位于系统应用数据目录，不进入源码或安装包。
 
 保留 DESIGN-NOTION-COLOR 和 DESIGN-NOTION-DETAIL：配色、圆角、字体与图标继续打磨。历史效果图和 HTML 是设计依据，当前能力以实际应用与验收说明为准。
 
