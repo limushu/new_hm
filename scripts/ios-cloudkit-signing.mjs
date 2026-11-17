@@ -56,9 +56,22 @@ export async function cloudSigning(
     if (!response.ok) throw new Error(`Apple signing request failed (HTTP ${response.status})`);
     return response.json();
   }
-  const bundles = await api(
+  let bundles = await api(
     `bundleIds?${new URLSearchParams({ 'filter[identifier]': 'com.limushu.hm', limit: '2' })}`,
   );
+  if (bundles.data?.length !== 1) {
+    const all = await api('bundleIds?limit=200');
+    bundles = { data: all.data?.filter((row) => row.attributes?.identifier === 'com.limushu.hm') };
+    if (bundles.data?.length !== 1)
+      throw new Error(
+        `Registered App ID lookup returned ${bundles.data?.length ?? 0} matches; available identifiers: ${
+          (all.data ?? [])
+            .map((row) => row.attributes?.identifier)
+            .filter(Boolean)
+            .join(', ') || 'none'
+        }`,
+      );
+  }
   if (bundles.data?.length !== 1) throw new Error('Expected one registered Anjian App ID');
   const bundle = bundles.data[0].id;
   const capabilities = await api(`bundleIds/${bundle}/bundleIdCapabilities?limit=200`);
