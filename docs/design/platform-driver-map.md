@@ -10,8 +10,12 @@
 | 备份文件 | [BackupDriver](../../crates/hm-runtime/src/platform/backup.rs)、[BackupService](../../crates/hm-application/src/backup.rs) | 复用系统文件驱动，可主动选择 iCloud 云盘 | 桌面复用文件对话框；不是自动同步 |
 | 账号登录 | [IdentityDriver](../../crates/hm-runtime/src/platform/identity.rs)、[IdentityService](../../crates/hm-application/src/identity.rs) | [Rust 桥](../../crates/tauri-plugin-hm-identity/src/ios.rs) → [系统授权窗口](../../crates/tauri-plugin-hm-identity/ios/Sources/IdentityPlugin.swift) / [本机钥匙串](../../crates/tauri-plugin-hm-identity/ios/Sources/IdentityCredentials.swift) | 桌面与 Android 暂为 `UnavailableIdentity`，相应驱动待接入 |
 | 持续同步 | [SyncDriver / SyncSession](../../crates/hm-runtime/src/platform/sync.rs)、[SyncService](../../crates/hm-application/src/sync.rs) | 新增 [CloudKit Rust 驱动](../../crates/tauri-plugin-hm-cloudkit/src/ios.rs) → [CloudKit 数据库适配](../../crates/tauri-plugin-hm-cloudkit/ios/Sources/CloudDatabase.swift) | 当前使用 `UnavailableSync`；Mac、Windows、Google Drive、OneDrive 驱动待接 |
+| 系统通知 | [NotificationDriver](../../crates/hm-runtime/src/platform/agenda.rs)、[NotificationService](../../crates/hm-application/src/agenda/notifications.rs) | [Rust 桥](../../crates/tauri-plugin-hm-agenda/src/ios.rs) → [UserNotifications](../../crates/tauri-plugin-hm-agenda/ios/Sources/AgendaNotifications.swift)，未来通知由系统排程 | [桌面通知驱动](../../src-tauri/src/platforms/desktop/notifications.rs)使用同一用例处理到期即时提醒；Android 未接 |
+| 系统日历 | [CalendarDriver](../../crates/hm-runtime/src/platform/agenda.rs)、[CalendarService](../../crates/hm-application/src/agenda/calendar.rs) | 同一 Rust 桥 → [EventKit](../../crates/tauri-plugin-hm-agenda/ios/Sources/AgendaCalendar.swift)，用户选择日程与目标日历后维护单向副本 | 返回不可用；Windows / Mac / Android 日历驱动待接 |
 
 新 CloudKit 插件由 [subsystems/mod.rs](../../src-tauri/src/subsystems/mod.rs) 注册，在平台装配中注入 `NativeDrivers.sync`。查询 `native_sync_provider` 只返回已安装的驱动名称，**不代表容器、登录或同步已可用**。驱动存在、服务已装配、具备发行权限和真实账号验收分别记录。
+
+系统提醒与日历也在同一装配边界注册。公共 [WorkspaceCell](../../crates/hm-application/src/workspace.rs) 在持久化业务变更后释放 Store 锁，再通知[设备日程协调器](../../src-tauri/src/subsystems/agenda/mod.rs)；页面保存、云端应用和备份恢复使用同一机制。授权状态、系统副本 ID 与排程状态留在设备本地。接口和操作边界见[设备日历与通知](../device-calendar-reminders.md)；持续开发须遵循根目录 [AGENTS.md](../../AGENTS.md) 的抽象框架原则。
 
 ## 同步分层的当前状态
 
