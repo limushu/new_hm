@@ -15,7 +15,7 @@ function fixture() {
   return { root, catalog, source };
 }
 describe('iOS branding delivery', () => {
-  it('replaces template slots including the store icon from the committed HM sources', () => {
+  it('replaces template slots including the store icon from the committed brand sources', () => {
     const { root, catalog, source } = fixture();
     try {
       const images = [
@@ -53,6 +53,47 @@ describe('iOS branding delivery', () => {
         JSON.stringify({ images: [{ size: '60x60', scale: '2x', filename: 'missing.png' }] }),
       );
       expect(() => syncIosIcons(root)).toThrow();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+  it('rejects transparent and white rims instead of baking a border into the app icon', () => {
+    const { root, catalog, source } = fixture();
+    try {
+      const filename = 'AppIcon-20x20@1x.png';
+      writeFileSync(
+        join(catalog, 'Contents.json'),
+        JSON.stringify({ images: [{ size: '20x20', scale: '1x', filename }] }),
+      );
+      for (const rim of ['transparent', 'white']) {
+        const prepared = spawnSync(
+          'python3',
+          [
+            '-B',
+            '-c',
+            `import importlib.util, pathlib, sys
+spec = importlib.util.spec_from_file_location('icons', sys.argv[1])
+icons = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(icons)
+background = icons.brand_background()
+pixels = bytearray()
+for y in range(20):
+    for x in range(20):
+        edge = x in (0,19) or y in (0,19)
+        pixel = (255,255,255,255) if edge and sys.argv[3] == 'white' else (*background,0 if edge else 255)
+        pixels.extend(pixel)
+icons.write_png(pathlib.Path(sys.argv[2]),20,20,bytes(pixels))`,
+            resolve('scripts/verify-ios-icons.py'),
+            join(source, filename),
+            rim,
+          ],
+          { encoding: 'utf8' },
+        );
+        expect(prepared.status, prepared.stderr).toBe(0);
+        expect(() => syncIosIcons(root)).toThrow(
+          rim === 'transparent' ? /transparency/ : /full-bleed background/,
+        );
+      }
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

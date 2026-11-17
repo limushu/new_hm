@@ -48,7 +48,7 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
         <div className="welcome-art" aria-hidden="true">
           <span className="welcome-orbit orbit-one" />
           <span className="welcome-orbit orbit-two" />
-          <img src="/app-icon.svg" alt="" width="112" height="112" />
+          <img src="/app-icon.png" alt="" width="112" height="112" />
           <i className="welcome-spark spark-one" />
           <i className="welcome-spark spark-two" />
           <i className="welcome-spark spark-three" />

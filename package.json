@@ -1,10 +1,12 @@
 {
   "name": "hm-workspace",
   "private": true,
-  "version": "1.8.5",
+  "version": "1.8.6",
   "type": "module",
   "scripts": {
     "tauri": "tauri",
+    "icons:generate": "tauri icon public/app-icon.json --output src-tauri/icons",
+    "icons:check": "python3 scripts/verify-ios-icons.py --assets",
     "dev": "vite --host 127.0.0.1",
     "build": "node scripts/copy-pdf-assets.mjs && tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",

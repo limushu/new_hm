@@ -130,7 +130,7 @@ try {
   run('python3', [join(root, 'scripts/verify-ios-privacy.py'), app, '--debug']);
   report.checks.push('privacy-manifest-at-bundle-root');
   verifyIosIcons(app, root, join(output, 'compiled-app-icon.png'));
-  report.checks.push('compiled-HM-app-icons');
+  report.checks.push('compiled-brand-app-icons');
   bundle = plist(join(app, 'Info.plist'), 'CFBundleIdentifier');
   if (bundle !== 'com.limushu.hm') throw new Error(`Unexpected bundle identifier: ${bundle}`);
   report.bundle = bundle;

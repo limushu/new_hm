@@ -1,4 +1,4 @@
-"""Verify actual compiled PNGs, including Apple's CgBI optimization, against HM assets."""
+"""Check full-bleed brand sources and actual compiled PNGs, including Apple CgBI."""
 import hashlib
 import json
 import pathlib
@@ -68,13 +68,47 @@ def read_png(path):
     return width, height, bytes(pixels)
 
 
-def opaque_pixels(pixels):
-    result = bytearray()
-    for index in range(0, len(pixels), 4):
-        r,g,b,alpha = pixels[index:index+4]
-        result.extend(((value*alpha+255*(255-alpha)+127)//255 for value in (r,g,b)))
-        result.append(255)
-    return bytes(result)
+def require_opaque(pixels, path):
+    if any(pixels[index] != 255 for index in range(3,len(pixels),4)):
+        raise ValueError(f'Brand icon contains transparency: {path.name}')
+
+
+def brand_background():
+    root = pathlib.Path(__file__).resolve().parents[1]
+    manifest = json.loads((root/'public/app-icon.json').read_text())
+    colour = manifest['bg_color']
+    if len(colour) != 7 or colour[0] != '#':
+        raise ValueError('Brand background must be #RRGGBB')
+    return tuple(bytes.fromhex(colour[1:]))
+
+
+def require_full_bleed(width, height, pixels, path, background):
+    require_opaque(pixels,path)
+    edge = set(range(width)) | set(range((height-1)*width,height*width))
+    edge.update(y*width for y in range(height))
+    edge.update(y*width+width-1 for y in range(height))
+    # The supplied artwork has a subtly varying graphite surface. Permit its
+    # small tonal range, but reject white mattes, borders and transparent rims.
+    if any(abs(pixels[4*index+channel]-background[channel]) > 16 for index in edge for channel in range(3)):
+        raise ValueError(f'Brand icon edge differs from full-bleed background: {path.name}')
+
+
+def check_assets():
+    root = pathlib.Path(__file__).resolve().parents[1]
+    master = root/'public/app-icon.png'
+    width,height,pixels = read_png(master)
+    if width != height or width < 1024:
+        raise ValueError('Brand master must be a square PNG of at least 1024px')
+    background = brand_background()
+    require_full_bleed(width,height,pixels,master,background)
+    assets = list((root/'src-tauri/icons/ios').glob('*.png'))
+    if not assets:
+        raise ValueError('Missing iOS brand assets')
+    assets.append(root/'src-tauri/icons/icon.png')
+    for path in assets:
+        w,h,pixels = read_png(path)
+        require_full_bleed(w,h,pixels,path,background)
+    print(json.dumps({'fullBleedBrandAssets':len(assets)+1,'background':background}))
 
 
 def write_png(path, width, height, pixels, rgb=False):
@@ -93,7 +127,8 @@ def prepare(catalog):
         raise ValueError('No AppIcon images to prepare')
     for path in files:
         width,height,pixels = read_png(path)
-        write_png(path,width,height,opaque_pixels(pixels),rgb=True)
+        require_full_bleed(width,height,pixels,path,brand_background())
+        write_png(path,width,height,pixels,rgb=True)
         data = path.read_bytes()
         if data[data.index(b'IHDR')+13] != 2:
             raise ValueError('AppIcon must be RGB without an alpha channel')
@@ -103,7 +138,8 @@ def verify(app, sources, output):
     expected = {}
     for path in pathlib.Path(sources).glob('*.png'):
         w,h,pixels = read_png(path)
-        expected.setdefault((w,h),[]).append((path.name,opaque_pixels(pixels)))
+        require_opaque(pixels,path)
+        expected.setdefault((w,h),[]).append((path.name,pixels))
     actual = sorted(p for p in pathlib.Path(app).glob('*.png') if p.name.lower().startswith('appicon'))
     if not actual:
         raise ValueError('No compiled primary AppIcon PNGs in application')
@@ -114,19 +150,21 @@ def verify(app, sources, output):
             raise ValueError(f'Compiled app icon contains transparency: {path.name}')
         candidates = expected.get((w,h),[])
         if not candidates:
-            raise ValueError(f'No HM source for compiled icon {path.name}: {w}x{h}')
+            raise ValueError(f'No brand source for compiled icon {path.name}: {w}x{h}')
         scores = [(sum(abs(a-b) for a,b in zip(pixels,reference))/len(pixels),name) for name,reference in candidates]
         error, source = min(scores)
         if error > 1:
-            raise ValueError(f'Compiled app icon differs from HM branding: {path.name}, mean error {error:.3f}')
+            raise ValueError(f'Compiled app icon differs from brand source: {path.name}, mean error {error:.3f}')
         checked.append({'file':path.name,'source':source,'meanError':error,'pixelsSha256':hashlib.sha256(pixels).hexdigest()})
         if len(checked) == 1:
             write_png(output,w,h,pixels)
-    print(json.dumps({'compiledHMIcons':checked}))
+    print(json.dumps({'compiledBrandIcons':checked}))
 
 
 if __name__ == '__main__':
-    if sys.argv[1] == '--prepare':
+    if sys.argv[1] == '--assets':
+        check_assets()
+    elif sys.argv[1] == '--prepare':
         prepare(sys.argv[2])
     else:
         verify(*sys.argv[1:])

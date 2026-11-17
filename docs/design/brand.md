@@ -2,6 +2,16 @@
 
 2026-10-18 用户选定名称。案件为本，笺记工作：覆盖案件、日程、对象、材料和工作记录，保持个人本地软件的轻量感。
 
+## 当前图标：1.8.6 银灰 8 / H / M
+
+2026-11-17 用户确认将银灰组合字形更新到版本中。[正式母版](../../public/app-icon.png)采用石墨黑满版背景与银灰明暗渐变，H / M 共用笔画，外侧上下回环带出 8；右下收笔已融入下环，去掉此前独立的尾状装饰。配色参考用户提出的中性银灰方向，字形沿用案笺自己的组合设计。
+
+母版是 1254×1254px 的不透明 PNG；iOS、Android、Windows 与 macOS 资源使用 `npm run icons:generate` 从同一[导出配置](../../public/app-icon.json)生成。应用内标识、欢迎页及网页图标同样使用该母版。平台标识、签名与安装升级路径保持兼容。
+
+`npm run icons:check` 检查母版、桌面主图及全部 iOS 尺寸的透明度和四边背景。iOS 装配也执行相同检查，拒绝透明边及白色衬边，再编码为无 Alpha 通道的 RGB，不再用白底补全透明空隙。实际编译图标继续做解码后像素比较；导出配置也统一 Android 自适应图标背景。签名测试包及可安装状态见[交付记录](../app-store/README.md)。
+
+下方为旧品牌与本次设计迭代的历史记录。
+
 1.1.4 按用户指定改为手写花体 HM：H 对应用户、M 对应其妻子的名字首字母。两个字母共用中间的倾斜笔画，以细连笔、较厚下行笔画和自然收笔组成一体的签名字形。按用户建议参考无边记的自由形状与层叠思路，采用黑色 `#08090b` 底层、不规则深灰内层，以及从青色 `#a4eee5`、蓝色 `#92bdf7` 到淡紫 `#c6a0ef` 的连续字形渐变。两个字母共用同一个渐变，不分别切色。参考来源为 [Apple 无边记](https://support.apple.com/guide/freeform/welcome/mac)，本图标保留自绘 HM 字形与轮廓。
 
 字形由贝塞尔矢量路径直接绘制，不调用或分发额外手写字体。细线适当加重以适配小图标；[尺寸预览](current/brand-1.1.4.png)按实际 16、20、24、32、48px 渲染，小尺寸会减少书写细节，完整连笔在 24px 及以上更清楚。1.1.1 的几何 HM、AJ 与折页纸张均属于历史标志，普通文件图标继续使用统一的线性图标。
@@ -14,7 +24,7 @@ Windows 同时配置可执行文件资源图标、窗口图标和安装器快捷
 
 本项目锁定的 Tauri 2.12 / tao 路径中，set_icon 仅设置 Windows ICON_SMALL。额外通过 [windows_icon.rs](../../src-tauri/src/platforms/desktop/windows_icon.rs) 在 UI 线程设置 ICON_BIG，持有独立 CopyIcon 副本并在退出时释放，避免任务栏仍显示通用文件图标。原生验收分别读取 exe 资源、窗口小图标和大图标，不只检查侧栏图片。
 
-矢量源为 [app-icon.svg](../../public/app-icon.svg)，Windows、macOS 和移动平台图标由 `npx tauri icon public/app-icon.svg --output src-tauri/icons` 生成。品牌仅改变显示名称，应用标识、升级公钥、本地数据位置与旧安装注册标识保持兼容。
+1.1.4 的[旧 HM 矢量源](current/brand-hm-1.1.4.svg)已归档；当时通过 Tauri icon 命令生成各平台资源。1.8.6 起使用上方 PNG 母版与统一导出配置。品牌调整保持应用标识、升级公钥、本地数据位置与旧安装注册标识兼容。
 
 安装器沿用 Tauri 模板并固定旧注册表身份，见 [installer.nsi](../../src-tauri/windows/installer.nsi)。模板源码来自 [Tauri 官方仓库](https://github.com/tauri-apps/tauri/blob/dev/crates/tauri-bundler/src/bundle/windows/nsis/installer.nsi)，更新 CLI 时应核对上游模板变化。启动项也沿用原身份，避免改名造成重复自启动。
 

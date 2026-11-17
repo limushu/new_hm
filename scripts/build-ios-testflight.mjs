@@ -130,7 +130,7 @@ try {
   run('python3', [join(root, 'scripts/verify-ios-privacy.py'), app]);
   report.privacyManifest = 'verified-at-bundle-root';
   verifyIosIcons(app, root, join(output, 'compiled-app-icon.png'));
-  report.branding = 'compiled-HM-icons-verified';
+  report.branding = 'compiled-brand-icons-verified';
   run('codesign', ['--verify', '--deep', '--strict', app]);
   const signing = spawnSync('codesign', ['-d', '--verbose=4', app], { encoding: 'utf8' });
   if (signing.status !== 0 || !signing.stderr.includes(`TeamIdentifier=${settings.team}`))
