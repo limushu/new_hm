@@ -52,11 +52,19 @@ export default function SyncProvider({ children }: { children: ReactNode }) {
           canApplyIncoming(document)
         ) {
           const thaw = freezeWorkspace(document);
+          let safeToResume = true;
           try {
             next = await command('sync_apply_pending', { token: next.incoming.token });
-            if (next.phase === 'synced') await workspace.current.applied();
           } finally {
-            thaw();
+            // A native error may happen after committing data (for example
+            // persisting the new baseline). Always re-read before editing again.
+            try {
+              await workspace.current.applied();
+            } catch {
+              safeToResume = false;
+              location.reload();
+            }
+            if (safeToResume) thaw();
           }
         } else if (!next.conflict && !next.incoming) {
           next = await command('sync_tick', {});

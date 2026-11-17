@@ -131,8 +131,14 @@ impl SyncState {
         status.configured = support.configured;
         Ok(support)
     }
-    fn remember_report(&self, report: SyncReport, current: bool) -> DriverResult<SyncStatus> {
+    fn remember_report(
+        &self,
+        lease: u64,
+        report: SyncReport,
+        current: bool,
+    ) -> DriverResult<SyncStatus> {
         let mut status = self.status.lock().map_err(|_| unavailable())?;
+        self.check(lease)?;
         status.phase = match report.phase {
             "current" | "uploaded" | "downloaded" if current => "synced",
             "current" | "uploaded" | "downloaded" | "retry" => "pending",
@@ -154,19 +160,25 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
         .data_directory
         .join("sync-private");
     let path = directory.join("sync-preferences.json");
-    let preferences: Preferences = if path.exists() {
+    // Damaged optional cloud configuration must never prevent offline launch.
+    let loaded = (|| -> DriverResult<Preferences> {
+        if !path.exists() {
+            return Ok(Preferences::default());
+        }
         if std::fs::metadata(&path)?.len() > 4096 {
-            return Err("Invalid sync configuration".into());
+            return Err(unavailable());
         }
-        let value: Preferences = serde_json::from_slice(&std::fs::read(path)?)?;
+        let value: Preferences =
+            serde_json::from_slice(&std::fs::read(path)?).map_err(|_| unavailable())?;
         if value.format != 1 {
-            return Err("Unsupported sync configuration".into());
+            return Err(unavailable());
         }
-        value
-    } else {
-        Preferences::default()
-    };
+        Ok(value)
+    })();
+    let damaged = loaded.is_err();
+    let preferences = loaded.unwrap_or_default();
     let status = SyncStatus {
+        error_code: damaged.then(|| "sync_configuration_invalid".into()),
         enabled: preferences.enabled,
         phase: if preferences.enabled {
             "pending"
@@ -351,6 +363,7 @@ fn perform(app: &AppHandle, state: &SyncState, action: Action) -> DriverResult<S
         work.lease = lease;
         work.snapshot = None;
         let mut status = state.status.lock().map_err(|_| unavailable())?;
+        state.check(lease)?;
         status.enabled = true;
         status.workspace_label = Some(label);
         status.phase = "pending".into();
@@ -412,7 +425,7 @@ fn perform(app: &AppHandle, state: &SyncState, action: Action) -> DriverResult<S
             .map(|s| s.sync_generation() == cache.generation)
             .unwrap_or(false)
     });
-    state.remember_report(report, current)
+    state.remember_report(lease, report, current)
 }
 enum Action {
     Enable(Option<String>),
@@ -429,6 +442,7 @@ async fn run(app: AppHandle, action: Action) -> DriverResult<SyncStatus> {
             Err(error) => {
                 if state.epoch.current() == lease {
                     let mut status = state.status.lock().map_err(|_| unavailable())?;
+                    state.epoch.check(lease)?;
                     if ["sync_local_changed", "sync_incoming_expired"]
                         .contains(&error.code.as_str())
                     {

@@ -80,12 +80,13 @@ pub struct SyncSnapshot {
     pub manifest: SyncSnapshotManifest,
     pub pristine: bool,
 }
-/// Capture SQLite and file handles under the workspace lock; copy large files
+/// Capture SQLite and validated paths under the workspace lock; copy large files
 /// after releasing it. The host rechecks generation before using the result.
 pub struct PreparedSyncSnapshot {
     directory: tempfile::TempDir,
     manifest: Manifest,
-    sources: Vec<(String, File)>,
+    sources: Vec<(String, PathBuf)>,
+    material_root: PathBuf,
     pub generation: u64,
 }
 impl PreparedSyncSnapshot {
@@ -94,6 +95,7 @@ impl PreparedSyncSnapshot {
             directory,
             mut manifest,
             sources,
+            material_root,
             ..
         } = self;
         let root = directory.path().canonicalize()?;
@@ -105,7 +107,17 @@ impl PreparedSyncSnapshot {
         manifest
             .files
             .insert("workspace.sqlite3".into(), hash(&path)?);
-        for (relative, mut source) in sources {
+        for (relative, source) in sources {
+            // Open one attachment at a time. Holding every file descriptor from
+            // preparation can exhaust the much smaller iOS descriptor limit.
+            let source = source.canonicalize()?;
+            if !source.starts_with(&material_root) {
+                return Err(invalid());
+            }
+            let mut source = File::open(source)?;
+            if !source.metadata()?.is_file() {
+                return Err(invalid());
+            }
             let target = root.join(&relative);
             std::fs::create_dir_all(target.parent().ok_or_else(invalid)?)?;
             let mut output = File::create(&target)?;
@@ -283,7 +295,7 @@ impl Store {
             if !path.starts_with(&materials) {
                 return Err(invalid());
             }
-            sources.push((format!("materials/{case}/{id}/{name}"), File::open(path)?));
+            sources.push((format!("materials/{case}/{id}/{name}"), path));
         }
         let manifest = Manifest {
             application: "com.limushu.hm".into(),
@@ -303,6 +315,7 @@ impl Store {
             directory,
             manifest,
             sources,
+            material_root: materials,
             generation: self.sync_generation(),
         })
     }

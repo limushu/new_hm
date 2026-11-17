@@ -35,6 +35,8 @@ export const operationMessages: Record<string, string> = {
   cloud_request_failed: 'iCloud 请求未完成，稍后会自动重试',
   cloud_timed_out: 'iCloud 连接超时，本机修改已保留，稍后会重试',
   sync_unavailable: '同步服务暂不可用，请重新启动应用',
+  sync_configuration_invalid:
+    '本机同步设置无法读取，已暂停同步。本机案件仍可正常使用，请重新开启同步',
   sync_busy: '同步正在进行，请稍后重试',
   sync_interrupted: '同步已暂停，返回应用后会重试',
   sync_disabled: '请先开启同步',

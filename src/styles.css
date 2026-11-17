@@ -821,3 +821,20 @@ time,
 .ledger-row > span {
   font-variant-numeric: tabular-nums;
 }
+
+body[data-sync-applying='true']::after {
+  content: '正在接收云端更新…';
+  position: fixed;
+  top: max(18px, env(safe-area-inset-top));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2147483647;
+  padding: 10px 16px;
+  border-radius: 12px;
+  background: var(--bg, #fff);
+  color: var(--text, #222);
+  box-shadow: 0 3px 18px #0002;
+  font-size: 14px;
+  white-space: nowrap;
+  pointer-events: none;
+}

@@ -53,12 +53,24 @@ export async function cloudSigning(
     } catch {
       throw new Error('Apple signing API unavailable');
     }
-    if (!response.ok) throw new Error(`Apple signing request failed (HTTP ${response.status})`);
+    if (!response.ok) {
+      const issue = await response.json().catch(() => ({}));
+      const detail = (issue.errors ?? [])
+        .map((error) => [error.code, error.title, error.detail].filter(Boolean).join(': '))
+        .join('; ')
+        .slice(0, 700);
+      throw new Error(
+        `Apple signing request ${path.split('?')[0]} failed (HTTP ${response.status}): ${detail}`,
+      );
+    }
     return response.json();
   }
   let bundles = await api(
     `bundleIds?${new URLSearchParams({ 'filter[identifier]': 'com.limushu.hm', limit: '2' })}`,
   );
+  bundles = {
+    data: bundles.data?.filter((row) => row.attributes?.identifier === 'com.limushu.hm'),
+  };
   if (bundles.data?.length !== 1) {
     const all = await api('bundleIds?limit=200');
     bundles = { data: all.data?.filter((row) => row.attributes?.identifier === 'com.limushu.hm') };

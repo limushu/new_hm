@@ -36,6 +36,7 @@ jobs:
           console.log(JSON.stringify({capability:result.capability,existingProfileReady:result.profileReady}));
           JS
       - name: Inspect installed CloudKit command interface
+        if: always()
         run: |
           xcrun cktool --help
           xcrun cktool import-schema --help
