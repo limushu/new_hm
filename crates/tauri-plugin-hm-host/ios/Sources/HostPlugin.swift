@@ -34,12 +34,30 @@ enum HostAppearance {
   }
 }
 private struct HostOptions: Decodable {var theme: String?}
-private struct HostReply: Encodable {var error: String?}
+// A foreground scene remains usable while an iOS permission/system sheet is
+// temporarily inactive. A different scene must never determine this window's state.
+enum HostActivity {
+  static func foreground(scene: UIScene.ActivationState?, application: UIApplication.State) -> Bool {
+    if let scene = scene {
+      return scene == .foregroundActive || scene == .foregroundInactive
+    }
+    return application == .active || application == .inactive
+  }
+}
+private struct HostReply: Encodable {var error: String?; var foreground: Bool?}
 final class HostPlugin: Plugin {
   private weak var webview: WKWebView?
   override func load(webview: WKWebView) {
     self.webview = webview
     HostAppearance.configure(webview)
+  }
+  @objc func foreground(_ invoke: Invoke) throws {
+    DispatchQueue.main.async {
+      guard let webview = self.webview else {invoke.resolve(HostReply(error:"host_state_failed"));return}
+      invoke.resolve(HostReply(foreground:HostActivity.foreground(
+        scene:webview.window?.windowScene?.activationState,
+        application:UIApplication.shared.applicationState)))
+    }
   }
   @objc func setTheme(_ invoke: Invoke) throws {
     let args = try invoke.parseArgs(HostOptions.self)

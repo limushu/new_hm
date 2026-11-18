@@ -19,7 +19,7 @@ const phases: Record<string, string> = {
   error: '同步暂未完成',
 };
 export default function SyncSettings() {
-  const { status, refresh } = useCloudSync();
+  const { status, refresh, refreshForeground } = useCloudSync();
   const { busy, error, run } = useAction();
   const [dialog, setDialog] = useState<'enable' | 'conflict' | null>(null);
   const [workspaces, setWorkspaces] = useState<CloudWorkspace[]>([]);
@@ -68,6 +68,7 @@ export default function SyncSettings() {
                   disabled={busy}
                   onClick={() =>
                     void run(async () => {
+                      await refreshForeground();
                       await command('sync_tick', {});
                       await refresh();
                       window.dispatchEvent(new Event(workspaceChanged));
@@ -124,6 +125,7 @@ export default function SyncSettings() {
           onClose={() => setDialog(null)}
           submitLabel={workspaces.length ? '开启同步' : '继续'}
           onSubmit={async () => {
+            await refreshForeground();
             if (!workspaces.length) {
               const available = await command('sync_workspaces', {});
               if (available.length === 1) {
@@ -167,6 +169,7 @@ export default function SyncSettings() {
           onClose={() => setDialog(null)}
           submitLabel="确认使用"
           onSubmit={async () => {
+            await refreshForeground();
             const token = status.conflict!.token;
             const thaw = freezeWorkspace(document);
             try {

@@ -441,7 +441,7 @@ export interface Commands {
   sync_workspaces: { args: Record<string, never>; result: CloudWorkspace[] };
   sync_enable: { args: { workspaceId: string | null }; result: SyncStatus };
   sync_disable: { args: Record<string, never>; result: SyncStatus };
-  sync_presence: { args: { foreground: boolean }; result: null };
+  sync_presence: { args: { foreground: boolean }; result: boolean };
   sync_tick: { args: Record<string, never>; result: SyncStatus };
   sync_apply_pending: { args: { token: string }; result: SyncStatus };
   sync_resolve: { args: { token: string; useLocal: boolean }; result: SyncStatus };

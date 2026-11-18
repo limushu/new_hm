@@ -504,3 +504,110 @@ fn cancellation_stops_existing_reads_and_publishing_and_a_new_lease_can_resume()
     assert!(epoch.guard(Arc::new(cloud.clone())).open(&account).is_ok());
     assert!(cloud.0.lock().unwrap().head.is_none());
 }
+
+#[derive(Clone)]
+struct TestHost(Arc<std::sync::atomic::AtomicI8>);
+impl TestHost {
+    fn new(state: i8) -> Self {
+        Self(Arc::new(std::sync::atomic::AtomicI8::new(state)))
+    }
+    fn set(&self, state: i8) {
+        self.0.store(state, std::sync::atomic::Ordering::Release);
+    }
+}
+impl hm_runtime::platform::HostDriver for TestHost {
+    fn set_theme(&self, _: Option<&str>) -> DriverResult<()> {
+        Ok(())
+    }
+    fn foreground(&self) -> DriverResult<Option<bool>> {
+        match self.0.load(std::sync::atomic::Ordering::Acquire) {
+            -1 => Ok(None),
+            0 => Ok(Some(false)),
+            1 => Ok(Some(true)),
+            _ => Err(DriverError::invalid_state("host_state_failed")),
+        }
+    }
+}
+#[test]
+fn native_foreground_overrides_stale_webview_hints_but_never_revives_cancelled_work() {
+    use hm_application::sync::SyncActivity;
+    let host = TestHost::new(1);
+    let activity = SyncActivity::new(Arc::new(host.clone()));
+    let cloud = MemoryCloud(Arc::new(Mutex::new(Cloud::default())));
+    let account = cloud.0.lock().unwrap().account.clone();
+    let lease = activity.current();
+    assert!(activity.refresh(Some(false)).unwrap());
+    activity.check(lease).unwrap();
+    let guarded = activity.guard(Arc::new(cloud.clone()), lease);
+    let mut session = guarded.open(&account).unwrap();
+    // No WebView event is delivered. A native background transition still
+    // prevents the next cloud publication and invalidates all existing work.
+    host.set(0);
+    assert_eq!(
+        session.publish(None, "stale").unwrap_err().code,
+        "sync_interrupted"
+    );
+    assert!(cloud.0.lock().unwrap().head.is_none());
+    host.set(1);
+    assert!(activity.refresh(Some(false)).unwrap());
+    assert!(session.publish(None, "stale").is_err());
+    assert!(guarded.open(&account).is_err());
+    // Capturing a newer epoch in guard() would wrongly revive the old operation.
+    assert!(activity
+        .guard(Arc::new(cloud.clone()), lease)
+        .open(&account)
+        .is_err());
+    let mut resumed = activity
+        .guard(Arc::new(cloud.clone()), activity.current())
+        .open(&account)
+        .unwrap();
+    assert!(resumed.publish(None, "resumed").unwrap().is_some());
+    activity.invalidate(); // explicit disable/logout while still foreground
+    assert!(resumed.head().is_err());
+}
+#[test]
+fn hosts_without_native_visibility_use_hints_and_native_failures_do_not_fake_success() {
+    use hm_application::sync::SyncActivity;
+    let host = TestHost::new(-1);
+    let activity = SyncActivity::new(Arc::new(host.clone()));
+    let lease = activity.current();
+    assert!(!activity.refresh(Some(false)).unwrap());
+    assert!(activity.check(lease).is_err());
+    assert!(activity.refresh(Some(true)).unwrap());
+    activity.check(activity.current()).unwrap();
+    assert!(activity.check(lease).is_err());
+    host.set(2);
+    assert_eq!(
+        activity.refresh(Some(true)).unwrap_err().code,
+        "host_state_failed"
+    );
+    host.set(1);
+    assert!(activity.refresh(Some(false)).unwrap());
+}
+#[test]
+fn background_during_native_open_does_not_return_a_usable_session() {
+    use hm_application::sync::SyncActivity;
+    struct BackgroundOnOpen {
+        cloud: MemoryCloud,
+        host: TestHost,
+    }
+    impl SyncDriver for BackgroundOnOpen {
+        fn open(&self, identity: &ReplicaIdentity) -> DriverResult<Box<dyn SyncSession>> {
+            let session = self.cloud.open(identity)?;
+            self.host.set(0);
+            Ok(session)
+        }
+    }
+    let host = TestHost::new(1);
+    let activity = SyncActivity::new(Arc::new(host.clone()));
+    let cloud = MemoryCloud(Arc::new(Mutex::new(Cloud::default())));
+    let identity = cloud.0.lock().unwrap().account.clone();
+    let driver = activity.guard(
+        Arc::new(BackgroundOnOpen { cloud, host }),
+        activity.current(),
+    );
+    assert_eq!(
+        driver.open(&identity).err().unwrap().code,
+        "sync_interrupted"
+    );
+}

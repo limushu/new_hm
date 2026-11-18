@@ -7,6 +7,7 @@ struct IosHost(PluginHandle<tauri::Wry>);
 #[derive(Deserialize)]
 struct Reply {
     error: Option<String>,
+    foreground: Option<bool>,
 }
 pub fn init() -> tauri::plugin::TauriPlugin<tauri::Wry> {
     tauri::plugin::Builder::new("hm-host")
@@ -20,6 +21,19 @@ pub fn driver(app: &tauri::AppHandle) -> Box<dyn HostDriver> {
     Box::new(app.state::<IosHost>().inner().clone())
 }
 impl HostDriver for IosHost {
+    fn foreground(&self) -> DriverResult<Option<bool>> {
+        let reply: Reply = self
+            .0
+            .run_mobile_plugin("foreground", serde_json::json!({}))
+            .map_err(|_| DriverError::invalid_state("host_state_failed"))?;
+        if let Some(code) = reply.error {
+            return Err(DriverError::invalid_state(&code));
+        }
+        reply
+            .foreground
+            .map(Some)
+            .ok_or_else(|| DriverError::invalid_state("host_state_failed"))
+    }
     fn set_theme(&self, theme: Option<&str>) -> DriverResult<()> {
         let reply: Reply = self
             .0

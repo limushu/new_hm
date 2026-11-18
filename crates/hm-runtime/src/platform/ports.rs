@@ -5,6 +5,11 @@ use std::path::{Path, PathBuf};
 
 pub trait HostDriver: Send + Sync {
     fn set_theme(&self, theme: Option<&str>) -> DriverResult<()>;
+    /// Authoritative state of this app window. None means the host cannot
+    /// observe it; callers may then use their WebView lifecycle hint.
+    fn foreground(&self) -> DriverResult<Option<bool>> {
+        Ok(None)
+    }
 }
 pub trait ExternalOpenDriver: Send + Sync {
     fn open_file(&self, path: &Path) -> DriverResult<()>;

@@ -55,7 +55,8 @@ export const operationMessages: Record<string, string> = {
   sync_configuration_invalid:
     '本机同步设置无法读取，已暂停同步。本机案件仍可正常使用，请重新开启同步',
   sync_busy: '同步正在进行，请稍后重试',
-  sync_interrupted: '同步已暂停，返回应用后会重试',
+  sync_interrupted: '同步操作已中断，请返回案笺后重试',
+  host_state_failed: '暂时无法确认应用状态，请返回案笺后重试',
   sync_disabled: '请先开启同步',
   sync_local_changed: '本机内容有新修改，稍后会重新同步',
   sync_workspace_busy: '请先保存或放弃当前录音和转写稿，再接收云端更新',

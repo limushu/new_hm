@@ -1146,7 +1146,7 @@ export async function previewCommand<K extends keyof Commands>(
       };
       break;
     case 'sync_presence':
-      result = null;
+      result = (a as unknown as Commands['sync_presence']['args']).foreground;
       break;
     case 'sync_enable':
     case 'sync_disable':

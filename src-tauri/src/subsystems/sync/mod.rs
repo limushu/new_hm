@@ -3,7 +3,7 @@ use crate::{platforms::NativeDrivers, AppState};
 use hm_application::{
     errors::core_error,
     identity::CloudWorkspace,
-    sync::{IncomingVersion, SyncConflict, SyncEpoch, SyncReport, SyncService},
+    sync::{IncomingVersion, SyncActivity, SyncConflict, SyncReport, SyncService},
 };
 use hm_core::{StorageLocation, SyncSnapshot};
 use hm_runtime::platform::{DriverError, DriverResult, ReplicaIdentity, SyncDriver, SyncSupport};
@@ -11,10 +11,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     io::Write,
     path::PathBuf,
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc, Mutex,
-    },
+    sync::{Arc, Mutex},
     time::{Duration, Instant},
 };
 use tauri::{AppHandle, Manager, State};
@@ -78,8 +75,7 @@ struct Work {
 pub struct SyncState {
     directory: PathBuf,
     driver: Arc<dyn SyncDriver>,
-    epoch: SyncEpoch,
-    foreground: AtomicBool,
+    activity: SyncActivity,
     preferences: Mutex<Preferences>,
     status: Mutex<SyncStatus>,
     work: Mutex<Work>,
@@ -118,11 +114,7 @@ impl SyncState {
         Ok(())
     }
     fn check(&self, lease: u64) -> DriverResult<()> {
-        self.epoch.check(lease)?;
-        if !self.foreground.load(Ordering::Acquire) {
-            return Err(DriverError::invalid_state("sync_interrupted"));
-        }
-        Ok(())
+        self.activity.check(lease)
     }
     fn support(&self) -> DriverResult<SyncSupport> {
         let support = self.driver.support()?;
@@ -191,18 +183,17 @@ pub fn setup(app: &tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     app.manage(SyncState {
         directory,
         driver: app.state::<NativeDrivers>().sync.clone(),
-        epoch: SyncEpoch::default(),
-        foreground: AtomicBool::new(true),
+        activity: SyncActivity::new(app.state::<NativeDrivers>().host.clone()),
         preferences: Mutex::new(preferences),
         status: Mutex::new(status),
         work: Mutex::new(Work::default()),
     });
     Ok(())
 }
-/// Logout/restore/background invalidates existing transport leases immediately.
+/// Logout/restore/disable invalidates existing transport leases immediately.
 pub(crate) fn pause(app: &AppHandle, reconcile: bool) -> DriverResult<()> {
     let state = app.state::<SyncState>();
-    state.epoch.invalidate();
+    state.activity.invalidate();
     let persisted = state.change_preferences(|p| {
         p.enabled = false;
         p.reconcile |= reconcile;
@@ -218,8 +209,12 @@ fn context(
     app: &AppHandle,
     state: &SyncState,
     workspace: Option<&str>,
+    lease: u64,
 ) -> DriverResult<(ReplicaIdentity, String)> {
-    let storage = state.driver.storage_account()?;
+    let storage = state
+        .activity
+        .guard(state.driver.clone(), lease)
+        .storage_account()?;
     super::identity::verified(app, |service| {
         let user = service.verified_user_id()?;
         // Never bind a previous user's local dataset to a newly signed-in user.
@@ -231,6 +226,7 @@ fn context(
             return Err(DriverError::invalid_state("sync_account_changed"));
         }
         let catalog = service.cloud_workspaces(&storage)?;
+        state.check(lease)?;
         let selected = workspace.or_else(|| stored.as_ref().map(|old| old.workspace_id.as_str()));
         let chosen = match selected {
             Some(id) => catalog
@@ -259,9 +255,16 @@ fn verify_current(
     app: &AppHandle,
     state: &SyncState,
     identity: &ReplicaIdentity,
+    lease: u64,
 ) -> DriverResult<()> {
     let user = super::identity::verified(app, |s| s.verified_user_id())?;
-    if user != identity.user_id || state.driver.storage_account()? != identity.storage {
+    if user != identity.user_id
+        || state
+            .activity
+            .guard(state.driver.clone(), lease)
+            .storage_account()?
+            != identity.storage
+    {
         return Err(DriverError::invalid_state("sync_account_changed"));
     }
     Ok(())
@@ -297,6 +300,7 @@ fn apply(
     snapshot: &SyncSnapshot,
     expected: &str,
 ) -> DriverResult<()> {
+    state.activity.refresh(None)?;
     state.check(lease)?;
     // Same ordering as restore: recording -> transcription -> business store.
     let recording = app.state::<super::recording::RecordingState>();
@@ -319,13 +323,18 @@ fn apply(
     store.mark_changed();
     Ok(())
 }
-fn perform(app: &AppHandle, state: &SyncState, action: Action) -> DriverResult<SyncStatus> {
+fn perform(
+    app: &AppHandle,
+    state: &SyncState,
+    action: Action,
+    lease: u64,
+) -> DriverResult<SyncStatus> {
     let mut work = match state.work.try_lock() {
         Ok(work) => work,
         Err(_) if matches!(action, Action::Tick) => return state.status(),
         Err(_) => return Err(DriverError::invalid_state("sync_busy")),
     };
-    let lease = state.epoch.current();
+    state.activity.refresh(None)?;
     state.check(lease)?;
     let enabling = matches!(action, Action::Enable(_));
     if !enabling && !state.preferences()?.enabled {
@@ -340,10 +349,10 @@ fn perform(app: &AppHandle, state: &SyncState, action: Action) -> DriverResult<S
             Action::Enable(id) => id.as_deref(),
             _ => None,
         };
-        let (identity, label) = context(app, state, selected)?;
+        let (identity, label) = context(app, state, selected, lease)?;
         state.check(lease)?;
         let mut service = SyncService::open(
-            state.epoch.guard(state.driver.clone()),
+            state.activity.guard(state.driver.clone(), lease),
             &state.directory,
             identity.clone(),
         )?;
@@ -373,7 +382,12 @@ fn perform(app: &AppHandle, state: &SyncState, action: Action) -> DriverResult<S
             return Ok(status.clone());
         }
     }
-    verify_current(app, state, work.identity.as_ref().ok_or_else(unavailable)?)?;
+    verify_current(
+        app,
+        state,
+        work.identity.as_ref().ok_or_else(unavailable)?,
+        lease,
+    )?;
     state.check(lease)?;
     if matches!(action, Action::Tick) && state.status()?.conflict.is_some() {
         return state.status();
@@ -437,13 +451,13 @@ enum Action {
 async fn run(app: AppHandle, action: Action) -> DriverResult<SyncStatus> {
     tauri::async_runtime::spawn_blocking(move || {
         let state = app.state::<SyncState>();
-        let lease = state.epoch.current();
-        match perform(&app, &state, action) {
+        let lease = state.activity.current();
+        match perform(&app, &state, action, lease) {
             Ok(status) => Ok(status),
             Err(error) => {
-                if state.epoch.current() == lease {
+                if state.activity.current() == lease {
                     let mut status = state.status.lock().map_err(|_| unavailable())?;
-                    state.epoch.check(lease)?;
+                    state.activity.check(lease)?;
                     if ["sync_local_changed", "sync_incoming_expired"]
                         .contains(&error.code.as_str())
                     {
@@ -488,7 +502,12 @@ pub async fn sync_workspaces(app: AppHandle) -> DriverResult<Vec<CloudWorkspace>
         if !state.support()?.configured {
             return Err(DriverError::invalid_state("cloud_not_configured"));
         }
-        let storage = state.driver.storage_account()?;
+        let lease = state.activity.current();
+        state.activity.refresh(None)?;
+        let storage = state
+            .activity
+            .guard(state.driver.clone(), lease)
+            .storage_account()?;
         super::identity::verified(&app, |service| {
             let user = service.verified_user_id()?;
             if SyncService::stored_identity(&state.directory)?
@@ -496,7 +515,10 @@ pub async fn sync_workspaces(app: AppHandle) -> DriverResult<Vec<CloudWorkspace>
             {
                 return Err(DriverError::invalid_state("sync_account_changed"));
             }
-            Ok(service.cloud_workspaces(&storage)?.workspaces)
+            let workspaces = service.cloud_workspaces(&storage)?.workspaces;
+            state.activity.refresh(None)?;
+            state.check(lease)?;
+            Ok(workspaces)
         })
     })
     .await
@@ -506,17 +528,19 @@ pub async fn sync_workspaces(app: AppHandle) -> DriverResult<Vec<CloudWorkspace>
 pub async fn sync_enable(app: AppHandle, workspace_id: Option<String>) -> DriverResult<SyncStatus> {
     run(app, Action::Enable(workspace_id)).await
 }
-#[tauri::command]
+#[tauri::command(async)]
 pub fn sync_disable(app: AppHandle) -> DriverResult<SyncStatus> {
     pause(&app, false)?;
     app.state::<SyncState>().status()
 }
 #[tauri::command]
-pub fn sync_presence(app: AppHandle, foreground: bool) {
-    let state = app.state::<SyncState>();
-    if state.foreground.swap(foreground, Ordering::AcqRel) && !foreground {
-        state.epoch.invalidate();
-    }
+pub async fn sync_presence(app: AppHandle, foreground: bool) -> DriverResult<bool> {
+    // UIKit answers on the main queue; never wait for it from that queue.
+    tauri::async_runtime::spawn_blocking(move || {
+        app.state::<SyncState>().activity.refresh(Some(foreground))
+    })
+    .await
+    .map_err(|_| unavailable())?
 }
 #[tauri::command]
 pub async fn sync_tick(app: AppHandle) -> DriverResult<SyncStatus> {

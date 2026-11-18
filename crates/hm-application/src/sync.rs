@@ -5,7 +5,7 @@ use hm_core::{SyncSnapshot, SyncSnapshotManifest};
 use hm_runtime::platform::{
     DriverError, DriverResult, ReplicaIdentity, SyncDriver, SyncHead, SyncSession,
 };
-pub use lease::SyncEpoch;
+pub use lease::{SyncActivity, SyncEpoch};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 use std::{

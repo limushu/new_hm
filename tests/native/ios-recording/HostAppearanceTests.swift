@@ -1,8 +1,48 @@
+import Tauri
 import UIKit
 import WebKit
 import XCTest
 
 final class HostAppearanceTests: XCTestCase {
+  @MainActor private func foreground(_ plugin: HostPlugin) async throws -> [String:Any] {
+    try await withCheckedThrowingContinuation { continuation in
+      let invoke = Invoke(command:"foreground",callback:1,error:2,sendResponse:{id,json in
+        guard id == 1, let bytes = json?.data(using:.utf8),
+              let response = try? JSONSerialization.jsonObject(with:bytes) as? [String:Any]
+        else {continuation.resume(throwing:NSError(domain:"host_test_failed",code:1));return}
+        continuation.resume(returning:response)
+      },sendChannelData:{_,_ in},data:"{}")
+      do {try plugin.foreground(invoke)} catch {continuation.resume(throwing:error)}
+    }
+  }
+  @MainActor func testNativeForegroundCommandResolvesFromTheLoadedWindow() async throws {
+    let window = try XCTUnwrap(UIApplication.shared.connectedScenes.compactMap({$0 as? UIWindowScene})
+      .flatMap({$0.windows}).first(where:{$0.isKeyWindow}))
+    let webview = WKWebView(frame:window.bounds)
+    window.addSubview(webview)
+    defer {webview.removeFromSuperview()}
+    let plugin = HostPlugin()
+    plugin.load(webview:webview)
+    let response = try await foreground(plugin)
+    XCTAssertNil(response["error"])
+    XCTAssertEqual(response["foreground"] as? Bool,true)
+  }
+  @MainActor func testMissingWebviewReportsFailureInsteadOfForegroundSuccess() async throws {
+    let response = try await foreground(HostPlugin())
+    XCTAssertEqual(response["error"] as? String,"host_state_failed")
+    XCTAssertNil(response["foreground"])
+  }
+  func testForegroundSceneOverridesStaleApplicationState() {
+    XCTAssertTrue(HostActivity.foreground(scene:.foregroundActive,application:.background))
+    XCTAssertTrue(HostActivity.foreground(scene:.foregroundInactive,application:.background))
+    XCTAssertFalse(HostActivity.foreground(scene:.background,application:.active))
+    XCTAssertFalse(HostActivity.foreground(scene:.unattached,application:.active))
+  }
+  func testUnscenedHostUsesApplicationStateAndAllowsTemporarySystemSheets() {
+    XCTAssertTrue(HostActivity.foreground(scene:nil,application:.active))
+    XCTAssertTrue(HostActivity.foreground(scene:nil,application:.inactive))
+    XCTAssertFalse(HostActivity.foreground(scene:nil,application:.background))
+  }
   @MainActor func testNativeContainerCoversWindowWithoutAutomaticScrollInsets() throws {
     guard let scene = UIApplication.shared.connectedScenes.compactMap({$0 as? UIWindowScene}).first,
           let window = scene.windows.first(where: {$0.isKeyWindow}),

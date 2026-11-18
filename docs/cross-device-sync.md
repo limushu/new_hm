@@ -1,6 +1,6 @@
 # 跨设备同步
 
-2026-11-17。第一期按用户选择使用统一案笺身份和用户自己的 CloudKit 私有空间，先接 iPhone / iPad。Windows、Mac、Google Drive 和 OneDrive 尚未接入。
+2026-11-18。第一期按用户选择使用统一案笺身份和用户自己的 CloudKit 私有空间，先接 iPhone / iPad。Windows、Mac、Google Drive 和 OneDrive 尚未接入。
 
 **交付状态：1.8.0（32.1）已上传并由 Apple 确认为内部可测试。** 已核验 CloudKit Production schema、实际 IPA 的容器/生产权限、分发签名和隐私清单，详见[发布记录](app-store/README.md)。首次开放 iPhone / iPad 的可选前台自动同步；真实个人 iCloud 账号传输和双设备往返仍需在此候选上验收。不能把隔离驱动测试通过写成真实跨设备验收通过。
 
@@ -16,6 +16,7 @@
 - [SyncService](../crates/hm-application/src/sync.rs)：版本基线、SHA-256 内容寻址、上传/下载、并发检测、保留双方版本和延迟应用。
 - [工作区目录](../crates/hm-application/src/identity/catalog.rs)：先请求账号服务器验证用户，再从带 RLS 的目录取得工作区。Supabase 只保存身份和目录，不保存案件、录音和材料。
 - [核心快照](../crates/hm-core/src/backup/sync.rs)：复制一致的 SQLite，校验材料，去除设备设置和提醒送达记录，计算逻辑指纹。网络阶段不持有业务 Store 锁。
+- [前台租约](../crates/hm-application/src/sync/lease.rs)：公共 `SyncActivity` 通过宿主端口核对窗口状态，原生结果优先于网页提示；每次云端请求前后复核，退后台使旧租约失效，恢复时重新建立租约。WebView 更新串行执行，并在返回页面、恢复焦点和周期检查时重新读取；手动暂停不会被恢复事件重新开启。iOS 仅在宿主驱动中读取当前窗口的 UIKit 场景状态；系统临时弹层不作为退后台。原生查询不在业务数据库锁内执行。
 - [宿主编排](../src-tauri/src/subsystems/sync/mod.rs)：前台租约、状态、缓存、准备快照、校验账号、提交应用；恢复备份后清除同步基线，重新协调。
 - [客户端调度](../src/platform/SyncProvider.tsx)：前台/联网/保存后检查；编辑器、弹窗、业务请求尚未完成时等待。应用远端数据前同步冻结交互，刷新后解除；录音或转写未处理时原生层也拒绝替换。
 - [Apple 驱动](icloud-driver.md)：唯一当前接入的实际云传输实现；其他平台报告不可用，不伪装成已支持。

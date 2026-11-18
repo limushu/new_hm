@@ -9,14 +9,21 @@ import {
 } from 'react';
 import { command, nativeRuntime } from '../services/repository';
 import type { SyncStatus } from '../domain/sync';
+import { createSyncPresence } from './syncPresence';
 import { canApplyIncoming, freezeWorkspace, workspaceChanged } from './syncActivity';
 
 type Workspace = { blocked: () => boolean; applied: () => Promise<void> };
 const Context = createContext<{
   status: SyncStatus | null;
   refresh: () => Promise<void>;
+  refreshForeground: () => Promise<boolean>;
   register: (workspace: Workspace) => () => void;
-}>({ status: null, refresh: async () => {}, register: () => () => {} });
+}>({
+  status: null,
+  refresh: async () => {},
+  refreshForeground: async () => false,
+  register: () => () => {},
+});
 export const useCloudSync = () => useContext(Context);
 export default function SyncProvider({ children }: { children: ReactNode }) {
   const [status, setStatus] = useState<SyncStatus | null>(null);
@@ -24,6 +31,13 @@ export default function SyncProvider({ children }: { children: ReactNode }) {
   current.current = status;
   const workspace = useRef<Workspace | null>(null);
   const running = useRef(false);
+  const presence = useRef(
+    createSyncPresence(
+      (foreground) => command('sync_presence', { foreground }),
+      () => document.visibilityState !== 'hidden',
+    ),
+  );
+  const refreshForeground = useCallback(() => presence.current(), []);
   const refresh = useCallback(async () => {
     setStatus(await command('sync_status', {}));
   }, []);
@@ -38,9 +52,11 @@ export default function SyncProvider({ children }: { children: ReactNode }) {
     let active = true;
     let debounce: ReturnType<typeof setTimeout> | undefined;
     async function pump() {
-      if (!active || running.current || document.visibilityState === 'hidden') return;
+      if (!active || running.current) return;
       running.current = true;
       try {
+        const foreground = await refreshForeground();
+        if (!active || !foreground) return;
         let next = await command('sync_status', {});
         if (!active) return;
         setStatus(next);
@@ -49,7 +65,7 @@ export default function SyncProvider({ children }: { children: ReactNode }) {
           next.incoming &&
           workspace.current &&
           !workspace.current.blocked() &&
-          canApplyIncoming(document)
+          canApplyIncoming(document, foreground)
         ) {
           const thaw = freezeWorkspace(document);
           let safeToResume = true;
@@ -87,21 +103,22 @@ export default function SyncProvider({ children }: { children: ReactNode }) {
       clearTimeout(debounce);
       debounce = setTimeout(() => void pump(), 1200);
     };
-    const presence = () => {
-      const foreground = document.visibilityState !== 'hidden';
-      void command('sync_presence', { foreground })
-        .then(() => {
-          if (foreground) schedule();
+    const updatePresence = () => {
+      void refreshForeground()
+        .then((foreground) => {
+          if (active && foreground) schedule();
         })
         .catch(() => {});
     };
-    presence();
+    updatePresence();
     const interval = setInterval(() => void pump(), 15000);
     const applyInterval = setInterval(() => {
       if (current.current?.incoming) void pump();
     }, 1500);
     window.addEventListener(workspaceChanged, schedule);
-    document.addEventListener('visibilitychange', presence);
+    document.addEventListener('visibilitychange', updatePresence);
+    window.addEventListener('pageshow', updatePresence);
+    window.addEventListener('focus', updatePresence);
     window.addEventListener('online', schedule);
     return () => {
       active = false;
@@ -109,9 +126,15 @@ export default function SyncProvider({ children }: { children: ReactNode }) {
       clearInterval(interval);
       clearInterval(applyInterval);
       window.removeEventListener(workspaceChanged, schedule);
-      document.removeEventListener('visibilitychange', presence);
+      document.removeEventListener('visibilitychange', updatePresence);
+      window.removeEventListener('pageshow', updatePresence);
+      window.removeEventListener('focus', updatePresence);
       window.removeEventListener('online', schedule);
     };
-  }, []);
-  return <Context.Provider value={{ status, refresh, register }}>{children}</Context.Provider>;
+  }, [refreshForeground]);
+  return (
+    <Context.Provider value={{ status, refresh, refreshForeground, register }}>
+      {children}
+    </Context.Provider>
+  );
 }

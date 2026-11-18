@@ -8,7 +8,7 @@ use hm_runtime::RuntimeManifest;
 use std::sync::Arc;
 
 pub struct NativeDrivers {
-    pub host: Box<dyn HostDriver>,
+    pub host: Arc<dyn HostDriver>,
     pub external_open: Box<dyn ExternalOpenDriver>,
     pub local_filesystem: Box<dyn LocalFilesystemDriver>,
     pub documents: Arc<dyn DocumentDriver>,
@@ -26,7 +26,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(desktop)]
     #[allow(unused_mut)]
     let mut drivers = NativeDrivers {
-        host: Box::new(desktop::DesktopPlatform(app.handle().clone())),
+        host: Arc::new(desktop::DesktopPlatform(app.handle().clone())),
         external_open: Box::new(desktop::DesktopPlatform(app.handle().clone())),
         local_filesystem: Box::new(desktop::DesktopPlatform(app.handle().clone())),
         documents: Arc::new(desktop::documents::DesktopDocuments(app.handle().clone())),
@@ -100,9 +100,9 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     #[allow(unused_mut)]
     let mut drivers = NativeDrivers {
         #[cfg(target_os = "ios")]
-        host: tauri_plugin_hm_host::driver(app.handle()),
+        host: Arc::from(tauri_plugin_hm_host::driver(app.handle())),
         #[cfg(not(target_os = "ios"))]
-        host: Box::new(mobile::SandboxPlatform),
+        host: Arc::new(mobile::SandboxPlatform),
         external_open: Box::new(mobile::SandboxPlatform),
         local_filesystem: Box::new(mobile::SandboxPlatform),
         #[cfg(target_os = "ios")]

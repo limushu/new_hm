@@ -17,8 +17,11 @@ export function isBusinessMutation(name: string) {
     ) || name === 'apply_restore_backup'
   );
 }
-export function canApplyIncoming(document: Document): boolean {
-  if (businessPending() || document.visibilityState === 'hidden') return false;
+export function canApplyIncoming(
+  document: Document,
+  foreground = document.visibilityState !== 'hidden',
+): boolean {
+  if (businessPending() || !foreground) return false;
   const visible = (element: HTMLElement) =>
     element.getClientRects().length > 0 &&
     getComputedStyle(element).visibility !== 'hidden' &&
