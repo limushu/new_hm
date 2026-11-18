@@ -1,6 +1,16 @@
 # App Store 首发准备
 
-## 当前银灰图标内测：1.8.6（41.1）
+## 当前 iCloud 同步修复内测：1.8.7（42.1）
+
+修复 WebView 前后台提示滞留、更新乱序后，开启 iCloud 同步反复提示“已暂停”的问题。公共 `SyncActivity` 通过宿主端口核对窗口状态，iOS 驱动读取当前窗口场景；自动检查、手动重试和返回应用共用这条路径。临时系统弹层允许同步，真正退后台、暂停、退出账号或恢复备份仍使旧租约失效。保留原有未保存编辑保护和版本冲突规则，不迁移或清空业务数据，见[跨设备同步](../cross-device-sync.md)。
+
+2026-11-18，[签名与上传](https://github.com/limushu/new_hm/actions/runs/44267395058)于 08:48:40 UTC 确认 `UPLOAD SUCCEEDED with no errors, 1 warning`。08:56:58 UTC 的第一次独立查询尚未找到可安装构建；[第二次只读查询](https://github.com/limushu/new_hm/actions/runs/44270798418/attempts/2)于 08:58:19 UTC 确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`。Apple 构建 ID `8d248319-f201-46d7-9653-100f7fe677fe`，内部测试员可更新。未提交 App Review 或发布 App Store。
+
+实际 IPA 源码 `544d42562378924b9e8efe8c620fd8a3dd97ccb9`，版本 1.8.7 / 42.1，Xcode 26.3（17C529）/ SDK 26.2。已下载核对包名、启动屏、麦克风/识别/日历用途说明、根隐私清单及实际 Mach-O 分发权限，CloudKit 保持 `Production`。实际 iPhone/iPad 图标与银灰品牌资源的像素误差均为 0。IPA SHA-256：`53ffa58a38510f0cf65d224a03bd1bfa582ce3ca833b78f144c90711042b1709`。
+
+[同源应用检查](https://github.com/limushu/new_hm/actions/runs/44267365226)通过 90 项单元测试、145 项 Chromium、36 项 WebKit 回归、Rust 测试/Clippy 与 Windows 构建；[同源移动检查](https://github.com/limushu/new_hm/actions/runs/44267365222)通过 Android 编译、iOS 实际应用构建/启动/持久化和 38 项原生测试。新增回归覆盖状态滞留、失败重试、返回应用、手动暂停、旧租约隔离和原生前台接口；模拟器未登录个人 iCloud，个人账号双设备往返仍需真机验收。
+
+## 前一银灰图标内测：1.8.6（41.1）
 
 用户确认将银灰 8 / H / M 组合字形更新到应用。采用石墨黑满版背景与银灰明暗渐变，取消独立尾状收笔和旧图标的透明留白。应用内标识、欢迎页、网页图标及 iOS / Android / Windows / macOS 导出资源统一到同一母版；见[品牌母版与尺寸对照](../design/brand.md)。本次不更改数据库与业务行为。
 
