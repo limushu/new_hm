@@ -247,63 +247,63 @@ export default function CaseQuickActions({
       {panel === 'create' && (
         <Dialog title={relatedFrom ? '新建并关联' : '创建到当前案件'} onClose={closePanel}>
           <div className="case-create-options">
-            <button onClick={() => create('person')}>
+            <button aria-label="人物或机构" onClick={() => create('person')}>
               <Users />
               <span>
                 <strong>人物或机构</strong>
                 <small>律师、法官、当事人、法院或其他机构</small>
               </span>
             </button>
-            <button onClick={() => create('schedule')}>
+            <button aria-label="新建日程" onClick={() => create('schedule')}>
               <CalendarDays />
               <span>
                 <strong>新建日程</strong>
                 <small>安排开庭、会面等具体时间</small>
               </span>
             </button>
-            <button onClick={() => create('node')}>
+            <button aria-label="关键节点" onClick={() => create('node')}>
               <Flag />
               <span>
                 <strong>关键节点</strong>
                 <small>例如一审、二审、立案或开庭，可自由命名</small>
               </span>
             </button>
-            <button onClick={() => create('import')}>
+            <button aria-label="导入本地材料" onClick={() => create('import')}>
               <FileText />
               <span>
                 <strong>导入本地材料</strong>
                 <small>归档已有文件，并设置公共属性</small>
               </span>
             </button>
-            <button onClick={() => create('ledger')}>
+            <button aria-label="记一笔收支" onClick={() => create('ledger')}>
               <FileText />
               <span>
                 <strong>记一笔收支</strong>
                 <small>关联本案账目与凭据</small>
               </span>
             </button>
-            <button onClick={() => create('event')}>
+            <button aria-label="关键事件" onClick={() => create('event')}>
               <Flag />
               <span>
                 <strong>关键事件</strong>
                 <small>记录事实或重要的办理节点</small>
               </span>
             </button>
-            <button onClick={() => create('record')}>
+            <button aria-label="工作记录" onClick={() => create('record')}>
               <NotebookPen />
               <span>
                 <strong>工作记录</strong>
                 <small>记下沟通、进展与办案思路</small>
               </span>
             </button>
-            <button onClick={() => create('document')}>
+            <button aria-label="新建文档" onClick={() => create('document')}>
               <FileText />
               <span>
                 <strong>新建文档</strong>
                 <small>撰写并保存为本地文档</small>
               </span>
             </button>
-            <button onClick={() => create('task')}>
+            <button aria-label="添加待办" onClick={() => create('task')}>
               <Plus />
               <span>
                 <strong>添加待办</strong>

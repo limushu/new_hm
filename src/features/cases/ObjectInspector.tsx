@@ -80,6 +80,40 @@ export default function ObjectInspector({
       key={`${key}:${editingInfo ? 'info' : 'details'}`}
       title={node ? '节点详情' : '对象详情'}
       className="object-inspector"
+      headerActions={
+        !editingInfo && (
+          <div className="object-heading-actions">
+            <button
+              type="button"
+              className="icon-button"
+              aria-label={item.importance === 'important' ? '取消重要标记' : '标为重要'}
+              aria-pressed={item.importance === 'important'}
+              disabled={busy}
+              onClick={() =>
+                void run(() =>
+                  save('save_resource_metadata', {
+                    input: {
+                      caseId,
+                      resource: current,
+                      importance: item.importance === 'important' ? 'normal' : 'important',
+                      tags: item.tags,
+                    },
+                  }),
+                )
+              }
+            >
+              <Star className={item.importance === 'important' ? 'important' : ''} />
+            </button>
+            <ObjectActionMenu
+              entry={item}
+              save={save}
+              label="对象操作"
+              onEditInfo={editInfo}
+              onRemoved={onClose}
+            />
+          </div>
+        )
+      }
       showFooter={editingInfo}
       cancelAction={() => setView('details')}
       onClose={onClose}
@@ -118,39 +152,7 @@ export default function ObjectInspector({
         </button>
       )}
       <div className="object-heading">
-        <h3>{item.title}</h3>
-        {!editingInfo && (
-          <div className="object-heading-actions">
-            <button
-              type="button"
-              className="icon-button"
-              aria-label={item.importance === 'important' ? '取消重要标记' : '标为重要'}
-              aria-pressed={item.importance === 'important'}
-              disabled={busy}
-              onClick={() =>
-                void run(() =>
-                  save('save_resource_metadata', {
-                    input: {
-                      caseId,
-                      resource: current,
-                      importance: item.importance === 'important' ? 'normal' : 'important',
-                      tags: item.tags,
-                    },
-                  }),
-                )
-              }
-            >
-              <Star className={item.importance === 'important' ? 'important' : ''} />
-            </button>
-            <ObjectActionMenu
-              entry={item}
-              save={save}
-              label="对象操作"
-              onEditInfo={editInfo}
-              onRemoved={onClose}
-            />
-          </div>
-        )}
+        <h3>{current.kind === 'record' ? '工作记录' : item.title}</h3>
       </div>
       <p className="object-summary">
         {typeLabel}

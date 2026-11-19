@@ -2,7 +2,6 @@ import ObjectInspector from './ObjectInspector';
 import { materialIcon } from '../materials/Materials';
 import { useMemo, useState } from 'react';
 import {
-  ArrowUpRight,
   CalendarDays,
   CheckSquare,
   Files,
@@ -85,6 +84,10 @@ export default function CaseTimeline({
       entry.resource.kind === 'ledger'
         ? data.ledgerEntries.find((e) => e.id === entry.resource.id)
         : null;
+    const excerpt =
+      entry.type === 'record' && entry.body.startsWith(entry.title)
+        ? entry.body.slice(entry.title.length).trim()
+        : entry.body;
     const done =
       entry.resource.kind === 'task' &&
       data.tasks.some((t) => t.id === entry.resource.id && t.completed);
@@ -92,7 +95,7 @@ export default function CaseTimeline({
       <li key={entry.id} className="chronicle-entry" data-resource={entry.id}>
         <div className="chronicle-date">
           <time>{entry.date || '日期未设置'}</time>
-          <small>{timelineDateLabels[entry.dateRole]}</small>
+          {entry.date && <small>{timelineDateLabels[entry.dateRole]}</small>}
         </div>
         <span className="chronicle-marker">
           <Icon />
@@ -102,7 +105,6 @@ export default function CaseTimeline({
             <button className="chronicle-entry-title" onClick={() => open(entry)}>
               {entry.importance === 'important' && <Star aria-label="重要" />}
               {entry.title || labels.get(entry.type) || entry.type}
-              <ArrowUpRight />
             </button>
             <ObjectActionMenu
               entry={entry}
@@ -123,9 +125,7 @@ export default function CaseTimeline({
               {cash.kind === 'income' ? '收入' : '支出'} ¥ {money(cash.amountCents)}
             </strong>
           )}
-          {entry.body && entry.body !== entry.title && (
-            <p className="chronicle-excerpt">{entry.body}</p>
-          )}
+          {excerpt && excerpt !== entry.title && <p className="chronicle-excerpt">{excerpt}</p>}
           {!!entry.tags.length && (
             <div className="timeline-tags">
               {entry.tags.map((tag) => (

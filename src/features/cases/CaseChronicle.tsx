@@ -59,10 +59,37 @@ export default function CaseChronicle({
   return (
     <div className="case-chronicle">
       <section className="case-focus-panel" aria-label="当前关注与下一步">
-        <div className="case-focus-caption">
-          <span>当前关注</span>
+        <div className="case-focus-row">
+          {focus ? (
+            <button
+              type="button"
+              className="case-focus-main"
+              onClick={() => setSelected(focus.resource)}
+            >
+              <GitBranch className="case-focus-icon" aria-hidden="true" />
+              <span className="case-focus-content">
+                <small>当前关注</small>
+                <strong>{focus.title}</strong>
+                {focus.properties
+                  .filter((p) => p.value !== null && p.kind !== 'relation')
+                  .slice(0, 2)
+                  .map((p) => (
+                    <small key={p.id}>
+                      {p.name}：{Array.isArray(p.value) ? p.value.join('、') : String(p.value)}
+                    </small>
+                  ))}
+              </span>
+              <ChevronRight />
+            </button>
+          ) : (
+            <div className="case-focus-empty">
+              <span>当前关注</span>
+              <p>选择节点，集中查看当前工作</p>
+            </div>
+          )}
           <button
             type="button"
+            className="case-focus-switch"
             aria-label={focus ? '切换当前关注节点' : '选择节点'}
             onClick={() => {
               setFocusKey(focus ? resourceKey(focus.resource) : '');
@@ -73,31 +100,6 @@ export default function CaseChronicle({
             <ChevronDown />
           </button>
         </div>
-        {focus ? (
-          <button
-            type="button"
-            className="case-focus-main"
-            onClick={() => setSelected(focus.resource)}
-          >
-            <GitBranch className="case-focus-icon" aria-hidden="true" />
-            <span className="case-focus-content">
-              <strong>{focus.title}</strong>
-              <small>
-                {focus.properties
-                  .filter((p) => p.value !== null && p.kind !== 'relation')
-                  .slice(0, 2)
-                  .map(
-                    (p) =>
-                      `${p.name}：${Array.isArray(p.value) ? p.value.join('、') : String(p.value)}`,
-                  )
-                  .join(' · ') || '查看节点与关联对象'}
-              </small>
-            </span>
-            <ChevronRight />
-          </button>
-        ) : (
-          <p className="field-hint">选择一个节点，集中查看当前工作。</p>
-        )}
         {next && (
           <div className="case-next-action">
             <span className="case-focus-caption">接下来</span>

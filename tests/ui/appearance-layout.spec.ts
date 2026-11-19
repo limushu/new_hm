@@ -113,7 +113,12 @@ test('全屏背景覆盖视口，安全区留给状态与手势，横屏仍为�
   const bounds = await modal.boundingBox();
   expect(bounds!.x).toBeGreaterThanOrEqual(59);
   expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(852 - 59);
-  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(393 - 21);
+  // The sheet background reaches the screen edge; actions avoid the gesture area.
+  expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(393);
+  const saveRecord = await modal
+    .getByRole('button', { name: '保存记录', exact: true })
+    .boundingBox();
+  expect(saveRecord!.y + saveRecord!.height).toBeLessThanOrEqual(393 - 21);
   await modal.getByRole('button', { name: '取消', exact: true }).click();
   await page.getByRole('button', { name: '返回看板', exact: true }).click();
   await expect(page.locator('.mobile-case-workspace')).toBeVisible();

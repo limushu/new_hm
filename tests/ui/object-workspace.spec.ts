@@ -33,7 +33,10 @@ test('节点的自定义属性与值可编辑，能从节点直接新建律师�
   await form.getByLabel('对象名称', { exact: true }).fill('周律师');
   await form.getByLabel('本案身份', { exact: true }).fill('我方代理律师');
   await form.getByRole('button', { name: '新建并添加', exact: true }).click();
-  await expect(node).not.toContainText('周律师');
+  // The previous reader is retained but only the active editor is exposed.
+  const retainedNode = page.locator('dialog[aria-label="节点详情"]');
+  await expect(retainedNode).toBeHidden();
+  await expect(retainedNode).not.toContainText('周律师');
   await association.getByRole('button', { name: '保存关联', exact: true }).click();
   await expect(node.locator('.resource-related-object')).toContainText(['周律师']);
   await node.getByRole('button', { name: '关闭', exact: true }).last().click();

@@ -349,11 +349,16 @@ export default function Calendar({
               {view === 'agenda' ? '当天安排' : displayDate(selected)}
               {view !== 'agenda' && selected === today && <span>今天</span>}
             </h2>
-            <p>
-              {dayEvents.length + dayTasks.length
-                ? `${dayEvents.length} 项日程 · ${dayTasks.length} 项待办`
-                : '留一点时间，安排重要的事。'}
-            </p>
+            {!!(dayEvents.length + dayTasks.length) && (
+              <p>
+                {[
+                  dayEvents.length ? `${dayEvents.length} 项日程` : '',
+                  dayTasks.length ? `${dayTasks.length} 项待办` : '',
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </p>
+            )}
           </div>
           <button
             className="agenda-add icon-button"

@@ -3,33 +3,114 @@
   --chronicle-accent: var(--accent);
   --chronicle-wash: var(--surface-soft);
 }
-.case-redesigned .case-body {
-  padding-bottom: 44px;
+
+.case-focus-panel {
+  margin: 0 0 24px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--line);
 }
-.case-redesigned .case-title-row {
+.case-focus-row {
+  display: flex;
+  align-items: center;
   gap: 12px;
 }
-.case-redesigned .case-page-icon {
+.case-focus-main {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  gap: 12px;
+  min-height: 64px;
+  padding: 8px 0;
+  text-align: left;
+  min-width: 0;
+}
+.case-focus-icon {
+  width: 18px;
+  height: 18px;
+  color: var(--accent);
+}
+.case-focus-content {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  gap: 3px;
+}
+.case-focus-content strong {
+  font-size: var(--text-heading);
+  font-weight: var(--weight-medium);
+  overflow-wrap: anywhere;
+}
+.case-focus-content small,
+.case-focus-empty > span {
+  font-size: var(--text-xs);
   color: var(--muted);
-  fill: none;
-  width: 24px;
-  height: 24px;
+  overflow-wrap: anywhere;
 }
-.case-redesigned .case-body .case-tabs {
-  gap: 12px;
-  padding: 8px 0 0;
-  margin-bottom: 32px;
+.case-focus-main > svg:last-child {
+  width: 14px;
+  color: var(--muted);
 }
-.case-redesigned .case-body .case-tabs > button {
-  border-radius: 0;
-  padding: 12px 6px;
-  border-bottom: 2px solid transparent;
+.case-focus-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 44px;
+  color: var(--muted);
+  font-size: var(--text-sm);
 }
-.case-redesigned .case-body .case-tabs > button.active {
-  color: var(--text);
-  background: transparent;
-  box-shadow: none;
-  border-bottom-color: var(--chronicle-accent);
+.case-focus-switch svg {
+  width: 14px;
+  height: 14px;
+}
+.case-focus-empty {
+  flex: 1;
+  padding: 8px 0;
+  min-width: 0;
+}
+.case-focus-empty p {
+  font-size: var(--text-sm);
+  color: var(--muted);
+  margin-top: 4px;
+}
+.case-focus-caption {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+.case-next-action {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 3px 12px;
+  margin-top: 8px;
+  padding: 12px 0 0;
+  border-top: 1px solid var(--line);
+}
+.case-next-action > span {
+  align-self: center;
+}
+.case-next-action > div {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  min-width: 0;
+}
+.case-next-action input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+  accent-color: var(--accent);
+  flex: none;
+}
+.case-next-action button {
+  text-align: left;
+  min-height: 44px;
+  overflow-wrap: anywhere;
+  font-size: var(--text-base);
+}
+.case-next-action > small {
+  grid-column: 2;
+  padding-left: 28px;
+  color: var(--muted);
+  font-size: var(--text-xs);
 }
 .case-chronicle {
   min-width: 0;
@@ -48,13 +129,20 @@
   color: var(--muted);
 }
 .case-timeline .chronicle-heading {
-  margin-bottom: 24px;
+  margin-bottom: 16px;
 }
 .timeline-entry-heading {
+  position: relative;
+  padding-right: 40px;
   display: flex;
   justify-content: space-between;
   align-items: start;
   gap: 8px;
+}
+.timeline-entry-heading .object-action-anchor {
+  position: absolute;
+  right: -6px;
+  top: -10px;
 }
 .timeline-entry-settings {
   min-width: 44px;
@@ -289,7 +377,7 @@
   grid-template-columns: 94px 24px minmax(0, 1fr);
   column-gap: 12px;
   position: relative;
-  padding-bottom: 38px;
+  padding-bottom: 24px;
 }
 .chronicle-date {
   display: flex;
@@ -317,7 +405,7 @@
   position: absolute;
   width: 1px;
   top: 26px;
-  bottom: -34px;
+  bottom: -20px;
   background: var(--line);
 }
 .chronicle-entry:last-child .chronicle-marker::after {
@@ -335,7 +423,8 @@
 }
 .chronicle-entry-title {
   text-align: left;
-  padding: 0;
+  padding: 10px 0;
+  margin: -10px 0;
   font-size: var(--text-body);
   line-height: 1.6;
   display: inline-flex;
@@ -487,20 +576,21 @@
 }
 .case-create-options {
   display: grid;
-  gap: 10px;
+  gap: 0;
 }
 .case-create-options > button {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 12px;
   width: 100%;
+  min-height: 48px;
   text-align: left;
-  padding: 17px 10px;
+  padding: 10px 0;
   border-bottom: 1px solid var(--line);
 }
 .case-create-options svg {
-  width: 21px;
-  height: 21px;
+  width: 18px;
+  height: 18px;
   color: var(--muted);
   flex: none;
 }
@@ -509,11 +599,12 @@
   display: block;
 }
 .case-create-options strong {
-  font-size: var(--text-body);
+  font-size: var(--text-base);
   font-weight: 500;
 }
 .case-create-options small {
-  margin-top: 5px;
+  display: none;
+  margin-top: 2px;
   color: var(--muted);
   font-size: var(--text-sm);
 }
@@ -674,27 +765,6 @@
   width: min(1100px, 95vw);
 }
 @media (max-width: 760px) {
-  .case-redesigned .case-toolbar {
-    min-height: 44px;
-  }
-  .case-redesigned .case-body {
-    padding: 14px 24px 36px;
-  }
-  .case-redesigned .case-body .case-properties {
-    margin: 14px 0 20px;
-    gap: 12px;
-  }
-  .case-redesigned .case-properties > div > span {
-    display: none;
-  }
-  .case-redesigned .case-body .case-tabs {
-    margin-bottom: 28px;
-  }
-  .case-redesigned .case-body .case-tabs > button {
-    min-height: 44px;
-    gap: 5px;
-    padding: 12px 4px;
-  }
   .chronicle-context {
     gap: 10px;
   }
@@ -706,19 +776,43 @@
     padding: 14px 16px;
   }
   .chronicle-entry {
-    grid-template-columns: 78px 18px minmax(0, 1fr);
-    column-gap: 9px;
-    padding-bottom: 34px;
+    grid-template-columns: 20px minmax(0, 1fr);
+    column-gap: 12px;
+    padding-bottom: 24px;
+  }
+  .chronicle-date {
+    grid-column: 2;
+    display: flex;
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+    padding: 0;
   }
   .chronicle-date time {
     font-size: var(--text-xs);
-    overflow-wrap: anywhere;
+  }
+  .chronicle-date small {
+    color: var(--quiet);
+  }
+  .chronicle-marker {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    padding-top: 2px;
+  }
+  .chronicle-marker::after {
+    bottom: -20px;
+  }
+  .chronicle-entry article {
+    grid-column: 2;
+  }
+  .timeline-entry-type {
+    margin-top: 0;
   }
   .chronicle-file-chips > button {
     min-height: 44px;
   }
   .chronicle-load-more {
-    margin-left: 104px;
+    margin-left: 32px;
   }
   .case-quick-actions {
     padding-left: 20px;

@@ -65,12 +65,7 @@ function RecordEditor({ resource, data, save, onClose }: ResourceDetailsProps) {
 }
 function TaskBody({ resource, data }: ResourceDetailsProps) {
   const task = data.tasks.find((t) => t.id === resource.id);
-  return task ? (
-    <p className="field-hint">
-      {task.completed ? '已完成' : '待完成'}
-      {task.dueDate ? ` · ${task.dueDate} 截止` : ''}
-    </p>
-  ) : null;
+  return task ? <p className="field-hint">{task.completed ? '已完成' : '待完成'}</p> : null;
 }
 function TaskEditor({ resource, data, save, onClose }: ResourceDetailsProps) {
   const task = data.tasks.find((t) => t.id === resource.id);

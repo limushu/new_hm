@@ -100,7 +100,7 @@ export default function EventEditor({
     <>
       <dialog
         ref={dialog}
-        className="event-editor"
+        className="workspace-dialog event-editor"
         aria-labelledby="event-editor-heading"
         onCancel={(e) => {
           e.preventDefault();
@@ -114,10 +114,10 @@ export default function EventEditor({
           }}
         >
           <header>
-            <span id="event-editor-heading">{existing ? '编辑日程' : '新建日程'}</span>
+            <h2 id="event-editor-heading">{existing ? '编辑日程' : '新建日程'}</h2>
             <button
               type="button"
-              className="icon-button"
+              className="icon-button dialog-close"
               aria-label="关闭日程"
               onClick={onClose}
               disabled={busy}
@@ -125,148 +125,155 @@ export default function EventEditor({
               <X />
             </button>
           </header>
-          <fieldset disabled={busy}>
-            <input
-              ref={title}
-              className="event-title-input"
-              aria-label="日程名称"
-              placeholder="添加日程名称"
-              value={value.title}
-              maxLength={200}
-              onChange={(e) => update({ title: e.target.value })}
-              required
-            />
-            <label className="all-day-switch">
-              <Clock3 />
-              <span>全天</span>
+          <div className="dialog-body">
+            <fieldset disabled={busy}>
               <input
-                type="checkbox"
-                aria-label="全天日程"
-                checked={value.startTime === null}
-                onChange={(e) =>
-                  update(
-                    e.target.checked
-                      ? { startTime: null, endTime: null }
-                      : { startTime: '09:00', endTime: '09:30' },
-                  )
-                }
+                ref={title}
+                className="event-title-input"
+                aria-label="日程名称"
+                placeholder="添加日程名称"
+                value={value.title}
+                maxLength={200}
+                onChange={(e) => update({ title: e.target.value })}
+                required
               />
-            </label>
-            <div className="event-date-fields">
-              <CalendarDays />
-              <div>
-                <label>
-                  <span>开始</span>
-                  <DateField
-                    aria-label="开始日期"
-                    value={value.startDate}
-                    required
-                    onValueChange={(date) =>
-                      update({
-                        startDate: date,
-                        endDate: value.endDate < date ? date : value.endDate,
-                      })
-                    }
-                  />
-                  {value.startTime !== null && (
-                    <input
-                      type="time"
-                      aria-label="开始时间"
-                      required
-                      value={value.startTime}
-                      onChange={(e) => update({ startTime: e.target.value })}
-                    />
-                  )}
-                </label>
-                <label>
-                  <span>结束</span>
-                  <DateField
-                    aria-label="结束日期"
-                    value={value.endDate}
-                    required
-                    min={value.startDate}
-                    onValueChange={(value) => update({ endDate: value })}
-                  />
-                  {value.endTime !== null && (
-                    <input
-                      type="time"
-                      aria-label="结束时间"
-                      required
-                      value={value.endTime}
-                      onChange={(e) => update({ endTime: e.target.value })}
-                    />
-                  )}
-                </label>
-              </div>
-            </div>
-            <label className="event-reminder-field">
-              提醒
-              <Select
-                aria-label="日程提醒时间"
-                value={value.reminderMinutes ?? 'none'}
-                onValueChange={(value) =>
-                  update({
-                    reminderMinutes: value === 'none' ? null : Number(value),
-                  })
-                }
-              >
-                <option value="none">不提醒</option>
-                <option value="0">开始时</option>
-                <option value="5">提前5分钟</option>
-                <option value="15">提前15分钟</option>
-                <option value="30">提前30分钟</option>
-                <option value="60">提前1小时</option>
-                <option value="1440">提前1天</option>
-                <option value="10080">提前1周</option>
-              </Select>
-              {value.startTime === null &&
-                value.reminderMinutes !== undefined &&
-                value.reminderMinutes !== null && <small>全天安排以当天09:00为提醒基准</small>}
-            </label>
-            <CaseAssociation
-              value={value.caseId}
-              cases={cases}
-              onChange={(caseId) => update({ caseId })}
-            />
-            {properties}
-            {!properties && data && value.caseId && (
-              <WorkScopeField caseId={value.caseId} data={data} value={scope} onChange={setScope} />
-            )}
-            <label className="event-property">
-              <MapPin />
-              <input
-                aria-label="地点"
-                placeholder="添加地点"
-                maxLength={500}
-                value={value.location}
-                onChange={(e) => update({ location: e.target.value })}
-              />
-            </label>
-            <textarea
-              aria-label="日程备注"
-              placeholder="添加备注…"
-              maxLength={20000}
-              rows={3}
-              value={value.notes}
-              onChange={(e) => update({ notes: e.target.value })}
-            />
-            {existing && supports(manifest, 'system-calendar') && (
-              <Button
-                variant="ghost"
-                disabled={busy}
-                onClick={() => {
-                  if (JSON.stringify(value) !== JSON.stringify(event)) {
-                    setError('请先保存本次修改，再添加到系统日历');
-                    return;
+              <label className="all-day-switch">
+                <Clock3 />
+                <span>全天</span>
+                <input
+                  type="checkbox"
+                  aria-label="全天日程"
+                  checked={value.startTime === null}
+                  onChange={(e) =>
+                    update(
+                      e.target.checked
+                        ? { startTime: null, endTime: null }
+                        : { startTime: '09:00', endTime: '09:30' },
+                    )
                   }
-                  setSystemCalendar(true);
-                }}
-              >
+                />
+              </label>
+              <div className="event-date-fields">
                 <CalendarDays />
-                添加到系统日历
-              </Button>
-            )}
-          </fieldset>
+                <div>
+                  <label>
+                    <span>开始</span>
+                    <DateField
+                      aria-label="开始日期"
+                      value={value.startDate}
+                      required
+                      onValueChange={(date) =>
+                        update({
+                          startDate: date,
+                          endDate: value.endDate < date ? date : value.endDate,
+                        })
+                      }
+                    />
+                    {value.startTime !== null && (
+                      <input
+                        type="time"
+                        aria-label="开始时间"
+                        required
+                        value={value.startTime}
+                        onChange={(e) => update({ startTime: e.target.value })}
+                      />
+                    )}
+                  </label>
+                  <label>
+                    <span>结束</span>
+                    <DateField
+                      aria-label="结束日期"
+                      value={value.endDate}
+                      required
+                      min={value.startDate}
+                      onValueChange={(value) => update({ endDate: value })}
+                    />
+                    {value.endTime !== null && (
+                      <input
+                        type="time"
+                        aria-label="结束时间"
+                        required
+                        value={value.endTime}
+                        onChange={(e) => update({ endTime: e.target.value })}
+                      />
+                    )}
+                  </label>
+                </div>
+              </div>
+              <label className="event-reminder-field">
+                提醒
+                <Select
+                  aria-label="日程提醒时间"
+                  value={value.reminderMinutes ?? 'none'}
+                  onValueChange={(value) =>
+                    update({
+                      reminderMinutes: value === 'none' ? null : Number(value),
+                    })
+                  }
+                >
+                  <option value="none">不提醒</option>
+                  <option value="0">开始时</option>
+                  <option value="5">提前5分钟</option>
+                  <option value="15">提前15分钟</option>
+                  <option value="30">提前30分钟</option>
+                  <option value="60">提前1小时</option>
+                  <option value="1440">提前1天</option>
+                  <option value="10080">提前1周</option>
+                </Select>
+                {value.startTime === null &&
+                  value.reminderMinutes !== undefined &&
+                  value.reminderMinutes !== null && <small>全天安排以当天09:00为提醒基准</small>}
+              </label>
+              <CaseAssociation
+                value={value.caseId}
+                cases={cases}
+                onChange={(caseId) => update({ caseId })}
+              />
+              {properties}
+              {!properties && data && value.caseId && (
+                <WorkScopeField
+                  caseId={value.caseId}
+                  data={data}
+                  value={scope}
+                  onChange={setScope}
+                />
+              )}
+              <label className="event-property">
+                <MapPin />
+                <input
+                  aria-label="地点"
+                  placeholder="添加地点"
+                  maxLength={500}
+                  value={value.location}
+                  onChange={(e) => update({ location: e.target.value })}
+                />
+              </label>
+              <textarea
+                aria-label="日程备注"
+                placeholder="添加备注…"
+                maxLength={20000}
+                rows={3}
+                value={value.notes}
+                onChange={(e) => update({ notes: e.target.value })}
+              />
+              {existing && supports(manifest, 'system-calendar') && (
+                <Button
+                  variant="ghost"
+                  disabled={busy}
+                  onClick={() => {
+                    if (JSON.stringify(value) !== JSON.stringify(event)) {
+                      setError('请先保存本次修改，再添加到系统日历');
+                      return;
+                    }
+                    setSystemCalendar(true);
+                  }}
+                >
+                  <CalendarDays />
+                  添加到系统日历
+                </Button>
+              )}
+            </fieldset>
+          </div>
           {error && (
             <p className="error-message" role="alert">
               {error}

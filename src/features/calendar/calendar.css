@@ -42,8 +42,9 @@
 .calendar-filters button {
   font-size: var(--text-sm);
   color: var(--muted);
-  padding: 5px 10px;
-  border-radius: 5px;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: var(--button-radius);
 }
 .calendar-filters button[aria-pressed='true'] {
   background: var(--control);
@@ -268,6 +269,7 @@
   font-size: var(--text-xs);
 }
 .agenda-event-main {
+  display: block;
   min-width: 0;
   text-align: left;
   padding-left: 12px;
@@ -380,38 +382,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.event-editor {
-  position: fixed;
-  inset: 90px 24px auto auto;
-  width: 374px;
-  max-width: calc(100vw - 32px);
-  max-height: calc(100dvh - 114px);
-  margin: 0;
-  padding: 0;
-  overflow: auto;
-  color: var(--text);
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  box-shadow: 0 16px 64px var(--shadow-color);
-}
-.event-editor::backdrop {
-  background: var(--backdrop);
-}
-.event-editor form > header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 17px 5px;
-  font-size: var(--text-xs);
-  color: var(--muted);
-}
-.event-editor fieldset {
-  min-width: 0;
-  margin: 0;
-  padding: 10px 20px 15px;
-  border: 0;
-}
+
 .event-editor input,
 .event-editor select,
 .event-editor textarea {
@@ -427,7 +398,7 @@
   background: var(--control);
 }
 .event-editor .event-title-input {
-  font-size: 21px;
+  font-size: var(--text-title-sm);
   font-weight: 500;
   padding: 7px 0 15px;
   width: 100%;
@@ -517,21 +488,7 @@
   padding: 12px 0;
   line-height: 1.7;
 }
-.event-editor form > .error-message {
-  margin: 0 20px 12px;
-  font-size: var(--text-sm);
-}
-.event-editor footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 9px;
-  border-top: 1px solid var(--line);
-  padding: 13px 20px;
-}
-.event-editor footer button {
-  font-size: var(--text-sm);
-}
+
 .event-cancel {
   color: var(--muted);
   padding: 6px;
@@ -633,13 +590,6 @@
     margin-left: 54px;
     font-size: var(--text-xs);
   }
-  .event-editor {
-    inset: auto 10px 74px;
-    width: auto;
-    max-width: none;
-    max-height: calc(100dvh - 95px);
-    border-radius: 12px;
-  }
 }
 @media (hover: none) {
   .day-create.icon-button {
@@ -649,9 +599,9 @@
 .agenda-week-strip {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-  margin: 6px 0 22px;
-  padding-bottom: 20px;
+  gap: 4px;
+  margin: 8px 0 24px;
+  padding: 8px 0 16px;
   border-bottom: 1px solid var(--line);
 }
 .agenda-week-strip button {

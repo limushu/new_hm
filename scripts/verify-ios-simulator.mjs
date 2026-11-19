@@ -183,6 +183,13 @@ try {
   );
   report.runtime = runtime.version;
   report.device = type.name;
+  run('defaults', [
+    'write',
+    'com.apple.iphonesimulator',
+    'ConnectHardwareKeyboard',
+    '-bool',
+    'false',
+  ]);
   run('xcrun', ['simctl', 'boot', device]);
   run('xcrun', ['simctl', 'bootstatus', device, '-b']);
   run('xcrun', ['simctl', 'install', device, app]);

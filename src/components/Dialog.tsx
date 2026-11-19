@@ -5,6 +5,7 @@ import Button from './Button';
 export default function Dialog({
   title,
   children,
+  headerActions,
   onClose,
   onSubmit,
   submitLabel = '保存',
@@ -17,6 +18,7 @@ export default function Dialog({
 }: {
   title: string;
   children: ReactNode;
+  headerActions?: ReactNode;
   onClose: () => void;
   onSubmit?: () => Promise<void | false>;
   secondaryAction?: { label: string; run: () => Promise<void | false> };
@@ -77,17 +79,22 @@ export default function Dialog({
           <h2 ref={heading} tabIndex={-1} className="dialog-heading">
             {title}
           </h2>
-          <button
-            type="button"
-            className="icon-button dialog-close"
-            aria-label="关闭"
-            disabled={busy}
-            onClick={onClose}
-          >
-            <X />
-          </button>
+          <div className="dialog-header-actions">
+            {headerActions}
+            <button
+              type="button"
+              className="icon-button dialog-close"
+              aria-label="关闭"
+              disabled={busy}
+              onClick={onClose}
+            >
+              <X />
+            </button>
+          </div>
         </header>
-        <fieldset disabled={busy}>{children}</fieldset>
+        <div className="dialog-body">
+          <fieldset disabled={busy}>{children}</fieldset>
+        </div>
         {error && (
           <p role="alert" className="error-message">
             {error}

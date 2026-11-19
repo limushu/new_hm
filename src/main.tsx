@@ -1,4 +1,3 @@
-import './components/workspace.css';
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
@@ -8,6 +7,7 @@ import SyncProvider from './platform/SyncProvider';
 import DeviceAgendaProvider from './platform/DeviceAgendaProvider';
 import './styles.css';
 import './themes.css';
+import './components/workspace.css';
 import './components/buttons.css';
 import './components/page-header.css';
 

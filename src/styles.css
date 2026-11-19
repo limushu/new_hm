@@ -40,7 +40,16 @@
   --muted: #9c9c97;
   --quiet: #747474;
   --calendar-now: #ff0000;
-  --radius: 7px;
+  --radius: 8px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --panel-radius: 12px;
+  --sheet-padding: 24px;
+  --sheet-shadow: 0 16px 64px var(--shadow-color);
 }
 * {
   box-sizing: border-box;
@@ -68,7 +77,7 @@ button {
  * Keep user pinch zoom available; only prevent this automatic form zoom. */
 @media (hover: none) and (pointer: coarse) {
   input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.page-title-input),
-  textarea,
+  textarea:not(.page-title-input),
   select {
     font-size: max(16px, 1em) !important;
   }
@@ -678,13 +687,6 @@ h3 {
   }
 }
 @media (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
-  .event-editor {
-    inset: auto max(10px, var(--safe-right)) calc(74px + var(--safe-bottom))
-      max(10px, var(--safe-left));
-    width: auto;
-    max-width: none;
-    max-height: calc(100dvh - var(--safe-top) - var(--safe-bottom) - 95px);
-  }
   .sidebar {
     inset: auto 0 0;
     width: 100%;

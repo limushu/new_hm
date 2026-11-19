@@ -1,31 +1,16 @@
-.object-inspector > form {
-  display: flex;
-  flex-direction: column;
-  max-height: 88dvh;
-}
-.object-inspector > form > header,
-.object-inspector > form > footer {
-  flex-shrink: 0;
-}
-.object-inspector > form > fieldset {
-  min-height: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
-  gap: 14px;
-}
 .object-inspector .object-heading {
+  display: block;
   margin: 0;
-  align-items: flex-start;
 }
 .object-inspector .object-heading h3 {
-  font-size: var(--text-title-sm);
+  font-size: 22px;
   line-height: 1.5;
-  flex: 1;
-  min-width: 0;
+  font-weight: var(--weight-strong);
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 .object-heading-actions {
   display: flex;
-  flex: none;
   align-items: center;
 }
 .object-heading-actions .icon-button,
@@ -36,6 +21,10 @@
 .object-heading-actions .icon-button > svg {
   width: 18px;
   height: 18px;
+}
+.object-heading-actions .important {
+  color: var(--accent);
+  fill: var(--accent-soft);
 }
 .object-summary {
   color: var(--muted);
@@ -48,11 +37,11 @@
   color: var(--muted);
   font-size: var(--text-sm);
   border-top: 1px solid var(--line);
-  padding-top: 10px;
+  padding-top: 12px;
 }
 .object-info-heading button {
   min-height: 44px;
-  color: var(--primary);
+  color: var(--accent);
   font-size: var(--text-base);
 }
 .object-inspector .object-properties,
@@ -66,7 +55,7 @@
 .object-inspector .resource-relations {
   margin-top: 6px;
   border-top: 1px solid var(--line);
-  padding-top: 10px;
+  padding-top: 12px;
 }
 .object-inspector .resource-relations .section-title {
   margin: 0 0 8px;

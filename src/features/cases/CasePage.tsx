@@ -29,13 +29,13 @@ import './work-area.css';
 import './case-chronicle.css';
 import './case-workspace-ui.css';
 import Materials from '../materials/Materials';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import {
   BookOpen,
   CircleDot,
   Tag,
   ChevronRight,
-  ChevronsRight,
+  ChevronLeft,
   Expand,
   Plus,
   X,
@@ -98,7 +98,7 @@ export default function CasePage({
   const inFlight = useRef<Promise<boolean> | null>(null);
   const pendingAction = useRef<Promise<boolean> | null>(null);
   const section = useRef<HTMLElement>(null);
-  const titleInput = useRef<HTMLInputElement>(null);
+  const titleInput = useRef<HTMLTextAreaElement>(null);
   const programs = data.proceedings.filter((p) => p.caseId === item.id);
   const program =
     programs.find((p) => p.id === viewedId) ??
@@ -132,6 +132,24 @@ export default function CasePage({
   useEffect(() => {
     if (draft) titleInput.current?.focus();
   }, [draft]);
+  useLayoutEffect(() => {
+    const field = titleInput.current;
+    if (!field) return;
+    const resize = () => {
+      field.style.height = '0px';
+      field.style.height = `${field.scrollHeight}px`;
+    };
+    resize();
+    let width = field.clientWidth;
+    const observer = new ResizeObserver(() => {
+      if (field.clientWidth !== width) {
+        width = field.clientWidth;
+        resize();
+      }
+    });
+    observer.observe(field);
+    return () => observer.disconnect();
+  }, [title]);
   useEffect(() => {
     setSaved(!draft);
   }, [draft]);
@@ -238,7 +256,7 @@ export default function CasePage({
       >
         <div className="case-toolbar">
           <button className="icon-button" title="返回看板" onClick={onClose}>
-            <ChevronsRight />
+            <ChevronLeft />
           </button>
           <span>案件 / {draft ? '新建案件' : item.title}</span>
           <button className="expand-action" onClick={() => setExpanded(!expanded)}>
@@ -258,8 +276,9 @@ export default function CasePage({
         <div className="case-body">
           <div className="case-title-row">
             <BookOpen className="case-page-icon" aria-hidden="true" />
-            <input
+            <textarea
               ref={titleInput}
+              rows={1}
               aria-label="案件名称"
               className="page-title-input"
               placeholder="新建案件"
@@ -267,7 +286,10 @@ export default function CasePage({
               maxLength={120}
               onChange={(e) => setTitle(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.nativeEvent.isComposing) void commit();
+                if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                  e.preventDefault();
+                  void commit();
+                }
               }}
             />
           </div>

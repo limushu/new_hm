@@ -1,3 +1,4 @@
+import { observeViewport } from './platform/viewport';
 import { compactViewport } from './platform/layout';
 import BrandMark from './components/BrandMark';
 import RetainedView from './components/RetainedView';
@@ -32,6 +33,7 @@ import MiniCalendar from './features/calendar/MiniCalendar';
 import { dateKey } from './domain/calendar';
 
 export default function App() {
+  useEffect(() => observeViewport(window, document.documentElement), []);
   const [data, setData] = useState<Workspace>(emptyWorkspace);
   const [page, setPage] = useState('today');
   const [compact, setCompact] = useState(() => matchMedia(compactViewport).matches);

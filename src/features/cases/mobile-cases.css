@@ -9,7 +9,7 @@
   padding: 0 14px;
   border: 1px solid var(--line);
   background: var(--surface);
-  border-radius: 13px;
+  border-radius: var(--panel-radius);
   color: var(--muted);
 }
 .mobile-case-search input {
@@ -48,7 +48,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  min-height: 40px;
+  min-height: 44px;
   padding: 8px;
   font-size: 13px;
   flex: none;
@@ -74,8 +74,8 @@
 }
 .mobile-manage-status {
   min-width: 40px;
-  min-height: 40px;
-  border-radius: 10px;
+  min-height: 44px;
+  border-radius: var(--button-radius);
   color: var(--muted);
 }
 .mobile-case-list {
@@ -83,85 +83,76 @@
   gap: 12px;
 }
 .mobile-case-item {
-  background: linear-gradient(
-    120deg,
-    color-mix(in srgb, var(--status-dot) 6%, var(--surface)),
-    color-mix(in srgb, var(--status-dot) 1%, var(--surface)) 75%
-  );
-  border: 1px solid var(--line);
-  border-radius: 12px;
+  position: relative;
+  background: color-mix(in srgb, var(--status-dot) 3%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--status-dot) 18%, var(--line));
+  border-radius: var(--panel-radius);
   overflow: hidden;
-  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--status-dot) 65%, var(--surface));
 }
-.mobile-case-item-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 52px 0 16px;
-}
-.mobile-case-item .board-status-pill {
-  padding: 4px 9px;
-  font-size: 12px;
-  line-height: 17px;
+.mobile-case-item-actions {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  z-index: 1;
 }
 .mobile-case-more {
-  position: absolute;
-  top: 3px;
-  right: 6px;
-  z-index: 1;
   display: grid;
   place-items: center;
-  min-width: 44px;
-  min-height: 44px;
+  width: 44px;
+  height: 44px;
   color: var(--muted);
 }
 .mobile-case-item .mobile-case-card {
   position: relative;
   background: transparent;
   border: 0;
-  padding: 7px 42px 12px 16px;
+  padding: 14px 42px 14px 16px;
   border-radius: 0;
   min-height: 0;
-  gap: 7px;
+  gap: 10px;
   touch-action: manipulation;
 }
 .mobile-case-item .case-card-title {
   padding: 0;
   font-size: 17px;
   line-height: 1.5;
-  font-weight: 600;
+  font-weight: var(--weight-strong);
   letter-spacing: -0.2px;
 }
 .mobile-case-item .case-card-title > svg {
   display: none;
 }
 .mobile-case-item .case-card-meta {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px 8px;
   padding-left: 0;
-  font-size: 14px;
+  font-size: var(--text-sm);
   line-height: 1.5;
 }
+.mobile-case-item .board-status-pill {
+  padding: 2px 6px;
+  font-size: 11px;
+  line-height: 17px;
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--status-dot) 10%, var(--surface));
+  color: var(--muted);
+}
 .mobile-case-item .case-card > time {
-  border-top: 1px solid color-mix(in srgb, var(--status-dot) 15%, var(--line));
-  padding-top: 10px;
-  margin-top: 3px;
+  border: 0;
+  padding: 0;
+  margin: 0;
   width: 100%;
+  font-size: var(--text-xs);
+  line-height: 1.6;
+  color: var(--muted);
 }
 .mobile-case-item .case-card-tags {
   padding-left: 0;
 }
-.mobile-case-item .case-card > time {
-  padding-left: 0;
-  font-size: 13px;
-  line-height: 1.5;
-  margin-top: 1px;
-}
 .mobile-case-arrow {
-  position: absolute;
-  right: 16px;
-  top: 18px;
-  color: var(--quiet);
-  width: 17px;
-  height: 17px;
+  display: none;
 }
 .mobile-cases-empty {
   text-align: center;

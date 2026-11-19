@@ -164,7 +164,7 @@ export default function CaseBoard({
   const dragItem = drag ? activeCases.find((item) => item.id === drag.id) : null;
   const overName = data.statuses.find((status) => status.id === drag?.over)?.name;
 
-  function content(item: CaseFile) {
+  function content(item: CaseFile, status?: CaseStatus) {
     const program = summaries.programs.get(item.currentProceedingId ?? '');
     const { next, tags } = summaries.byCase.get(item.id)!;
     return (
@@ -174,14 +174,22 @@ export default function CaseBoard({
           <span>{item.title}</span>
         </span>
         <span className="case-card-meta">
-          {summaries.focused.get(item.id) ? (
-            `关注 ${summaries.focused.get(item.id)}`
-          ) : (
-            <>
-              {program ? '关注 ' + proceedingName(program, data.proceedings) : '案件档案'}
-              {program ? ` · ${currentStage(data, program)}` : ' · 未指定关注流程'}
-            </>
+          {status && (
+            <span className="board-status-pill">
+              <i />
+              {status.name}
+            </span>
           )}
+          <span>
+            {summaries.focused.get(item.id) ? (
+              `关注 ${summaries.focused.get(item.id)}`
+            ) : (
+              <>
+                {program ? '关注 ' + proceedingName(program, data.proceedings) : '案件档案'}
+                {program ? ` · ${currentStage(data, program)}` : ' · 未指定关注流程'}
+              </>
+            )}
+          </span>
         </span>
         {tags.length > 0 && (
           <span className="case-card-tags">

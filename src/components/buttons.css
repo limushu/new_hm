@@ -46,10 +46,12 @@ button.ui-button--primary {
   color: var(--on-primary);
   background: var(--primary);
 }
-button.primary-action:hover,
-button.ui-button--primary:hover {
-  color: var(--on-primary);
-  background: var(--primary-hover);
+@media (hover: hover) and (pointer: fine) {
+  button.primary-action:hover,
+  button.ui-button--primary:hover {
+    color: var(--on-primary);
+    background: var(--primary-hover);
+  }
 }
 button.ui-button--secondary {
   color: var(--text);
@@ -60,10 +62,18 @@ button.ui-button--ghost {
   color: var(--muted);
   background: transparent;
 }
-button.ui-button--secondary:hover,
-button.ui-button--ghost:hover {
-  color: var(--text);
+@media (hover: hover) and (pointer: fine) {
+  button.ui-button--secondary:hover,
+  button.ui-button--ghost:hover {
+    color: var(--text);
+    background: var(--hover);
+  }
+}
+button.ui-button:active {
   background: var(--hover);
+}
+button.ui-button--primary:active {
+  background: var(--primary-hover);
 }
 button.ui-button--danger {
   color: var(--on-primary);

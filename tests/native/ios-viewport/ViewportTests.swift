@@ -37,7 +37,9 @@ final class ViewportTests: XCTestCase {
     capture("today")
     tap("案件")
     tap("SQLite upgrade fixture (fictional)")
-    XCTAssertTrue(app.textFields["案件名称"].firstMatch.waitForExistence(timeout:15))
+    let title=app.textViews["案件名称"].firstMatch
+    XCTAssertTrue(title.waitForExistence(timeout:15))
+    XCTAssertGreaterThanOrEqual(title.frame.height,30)
     for (index,name) in ["脉络","材料","人员","费用"].enumerated() {
       tap(name)
       let create=app.buttons.matching(NSPredicate(format:"label == %@","创建")).firstMatch
@@ -53,5 +55,23 @@ final class ViewportTests: XCTestCase {
       XCTAssertLessThanOrEqual(create.frame.maxX,screen.maxX)
       capture("\(index)-case")
     }
+
+    tap("脉络")
+    tap("创建")
+    let record=app.buttons.matching(NSPredicate(format:"label BEGINSWITH %@","工作记录")).firstMatch
+    XCTAssertTrue(record.waitForExistence(timeout:10))
+    record.tap()
+    let content=app.textViews["工作记录内容"].firstMatch
+    XCTAssertTrue(content.waitForExistence(timeout:10))
+    content.tap()
+    content.typeText("Fictional keyboard layout check")
+    let keyboard=app.keyboards.firstMatch
+    XCTAssertTrue(keyboard.waitForExistence(timeout:10))
+    let save=app.buttons["保存记录"].firstMatch
+    XCTAssertTrue(save.isHittable)
+    XCTAssertLessThanOrEqual(save.frame.maxY,keyboard.frame.minY+1)
+    print("Installed app keyboard: keyboard=\(keyboard.frame), save=\(save.frame)")
+    capture("keyboard-record-editor")
+    tap("取消")
   }
 }

@@ -30,7 +30,7 @@ export default function MobileCaseList({
   onMove: (id: string, statusId: string) => Promise<void>;
   onDelete: (item: CaseFile) => void;
   onEditStatus: (status: CaseStatus) => void;
-  content: (item: CaseFile) => ReactNode;
+  content: (item: CaseFile, status?: CaseStatus) => ReactNode;
   busy: boolean;
   onboarding?: ReactNode;
 }) {
@@ -104,11 +104,7 @@ export default function MobileCaseList({
             key={item.id}
             style={statusPalette(statusFor(item))}
           >
-            <div className="mobile-case-item-top">
-              <span className="board-status-pill">
-                <i />
-                {statusFor(item)?.name ?? '未分类'}
-              </span>
+            <div className="mobile-case-item-actions">
               <button
                 className="mobile-case-more"
                 aria-label={`案件操作「${item.title}」`}
@@ -124,7 +120,7 @@ export default function MobileCaseList({
               aria-label={item.title}
               onClick={() => onOpen(item.id)}
             >
-              {content(item)}
+              {content(item, statusFor(item))}
               <ChevronRight className="mobile-case-arrow" aria-hidden="true" />
             </button>
           </article>

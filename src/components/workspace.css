@@ -1,38 +1,57 @@
 .workspace-dialog {
+  --sheet-max-height: min(
+    90dvh,
+    calc(var(--viewport-height, 100dvh) - var(--safe-top) - var(--safe-bottom) - 24px)
+  );
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 12px;
+  border-radius: var(--panel-radius);
   padding: 0;
   width: min(560px, calc(100vw - 32px));
-  max-height: 90dvh;
-  box-shadow: 0 24px 80px var(--shadow-color);
+  inset: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  max-width: calc(100vw - var(--safe-left) - var(--safe-right) - 24px);
+  max-height: var(--sheet-max-height);
+  overflow: hidden;
+  box-shadow: var(--sheet-shadow);
 }
 .workspace-dialog::backdrop {
   background: var(--backdrop);
 }
-.workspace-dialog form {
-  padding: 22px;
+.workspace-dialog > form {
+  display: flex;
+  flex-direction: column;
+  max-height: calc(var(--sheet-max-height) - 2px);
+  padding: 0;
+  min-height: 0;
 }
-.workspace-dialog header {
+.workspace-dialog > form > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
-  gap: 16px;
+  flex-shrink: 0;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--sheet-padding);
+  margin: 0;
 }
 .workspace-dialog h2 {
-  font-size: var(--text-title-sm);
-  font-weight: 500;
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--muted);
 }
 .workspace-dialog .dialog-heading:focus {
   outline: none;
+}
+.dialog-header-actions {
+  display: flex;
+  align-items: center;
+  flex: none;
 }
 .workspace-dialog .dialog-close {
   border: 0;
   box-shadow: none;
   background: transparent;
-  border-radius: 50%;
+  border-radius: var(--button-radius);
   width: 44px;
   height: 44px;
 }
@@ -40,18 +59,28 @@
   width: 18px;
   height: 18px;
 }
-.workspace-dialog fieldset {
+.workspace-dialog > form > .dialog-body {
+  border: 0;
+  padding: 4px var(--sheet-padding) var(--space-6);
+  margin: 0;
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.workspace-dialog .dialog-body > fieldset {
+  display: grid;
+  align-content: start;
+  gap: var(--space-4);
   border: 0;
   padding: 0;
   margin: 0;
-  display: grid;
-  gap: 15px;
   min-width: 0;
 }
 .workspace-dialog label,
 .feature-form label {
   display: grid;
-  gap: 7px;
+  gap: var(--space-2);
   font-size: var(--text-sm);
   color: var(--muted);
 }
@@ -64,12 +93,54 @@
 .workspace-dialog input[type='checkbox'] {
   width: auto;
 }
-.workspace-dialog footer {
+.workspace-dialog > form > footer {
   display: flex;
+  flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 22px;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3) var(--sheet-padding);
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.workspace-dialog > form > .error-message {
+  margin: 0 var(--sheet-padding) var(--space-3);
+  flex-shrink: 0;
+}
+/* Only the active sheet is visible; cancelling returns to its intact context. */
+.workspace-dialog[open]:has(~ .workspace-dialog[open]) {
+  visibility: hidden;
+}
+.workspace-dialog[open]:has(~ .workspace-dialog[open])::backdrop {
+  background: transparent;
+}
+@media (max-width: 760px), (pointer: coarse) and (max-height: 500px) {
+  :root {
+    --sheet-padding: 20px;
+  }
+  .workspace-dialog {
+    --sheet-max-height: calc(var(--viewport-height, 100dvh) - var(--safe-top) - 12px);
+    inset: auto var(--safe-right) var(--viewport-bottom, 0px) var(--safe-left);
+    margin: 0 auto;
+    width: calc(100vw - var(--safe-left) - var(--safe-right));
+    max-width: none;
+    max-height: var(--sheet-max-height);
+    border-radius: 16px 16px 0 0;
+    border-bottom: 0;
+  }
+  .workspace-dialog > form {
+    max-height: calc(var(--sheet-max-height) - 1px);
+  }
+  :root[data-keyboard-open] .workspace-dialog > form > footer {
+    padding-bottom: 12px;
+  }
+  .workspace-dialog > form > footer {
+    padding-bottom: max(12px, var(--safe-bottom));
+  }
+  .workspace-dialog > form > .dialog-body:last-child {
+    padding-bottom: max(24px, var(--safe-bottom));
+  }
 }
 .danger-button {
   background: var(--red-strong);
@@ -191,9 +262,7 @@
   .form-columns {
     grid-template-columns: 1fr;
   }
-  .workspace-dialog form {
-    padding: 18px;
-  }
+
   .feature-row {
     gap: 8px;
   }

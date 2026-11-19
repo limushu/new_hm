@@ -43,7 +43,7 @@ final class StoreScreenshots: XCTestCase {
     XCTAssertTrue(app.buttons["示例 · 借款合同纠纷"].firstMatch.waitForExistence(timeout: 15))
     capture("01-cases")
     tap("示例 · 借款合同纠纷")
-    XCTAssertTrue(app.textFields["案件名称"].firstMatch.waitForExistence(timeout: 15))
+    XCTAssertTrue(app.textViews["案件名称"].firstMatch.waitForExistence(timeout: 15))
     XCTAssertTrue(app.staticTexts["案件时间轴"].firstMatch.waitForExistence(timeout: 10))
     capture("02-timeline")
     tap("材料")
