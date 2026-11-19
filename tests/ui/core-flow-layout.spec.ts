@@ -13,16 +13,20 @@ test('案件长名称完整换行，状态标签、时间轴和同级操作在�
   for (const width of [320, 390, 430, 760, 1280]) {
     await page.setViewportSize({ width, height: 844 });
     const title = page.getByLabel('案件名称', { exact: true });
-    const geometry = await title.evaluate((element: HTMLTextAreaElement) => ({
-      height: element.clientHeight,
-      content: element.scrollHeight,
-      width: element.clientWidth,
-      contentWidth: element.scrollWidth,
-      font: parseFloat(getComputedStyle(element).fontSize),
-    }));
-    expect(geometry.content).toBeLessThanOrEqual(geometry.height + 1);
-    expect(geometry.contentWidth).toBeLessThanOrEqual(geometry.width + 1);
-    expect(geometry.font).toBeGreaterThanOrEqual(24);
+    // ResizeObserver runs at the next rendering opportunity after a viewport
+    // change. Verify the settled result rather than the preceding frame.
+    await expect(async () => {
+      const geometry = await title.evaluate((element: HTMLTextAreaElement) => ({
+        height: element.clientHeight,
+        content: element.scrollHeight,
+        width: element.clientWidth,
+        contentWidth: element.scrollWidth,
+        font: parseFloat(getComputedStyle(element).fontSize),
+      }));
+      expect(geometry.content).toBeLessThanOrEqual(geometry.height + 1);
+      expect(geometry.contentWidth).toBeLessThanOrEqual(geometry.width + 1);
+      expect(geometry.font).toBeGreaterThanOrEqual(24);
+    }).toPass({ timeout: 5000 });
     const pane = page.getByRole('region', { name: '案件详情', exact: true });
     expect(
       await pane.evaluate((element) => element.scrollWidth - element.clientWidth),
