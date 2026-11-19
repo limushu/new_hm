@@ -76,3 +76,5 @@
 - 工作记录、关键节点、文档、待办及费用先展示主要内容，公共属性放在后方，折叠时只占一行。折叠指示器使用公共单色 CSS 形状，避免系统字体将默认三角渲染成彩色符号；触控区域仍至少 44px。案件卡片不显示空流程占位，保留实际节点、标签和待办。
 
 新增回归覆盖慢速连续写入、失败后继续保存、未确认名称保留、目录范围、取消原位新建、插件一次投影，以及组件标识和尺寸观察循环。[交互对照](current/interaction-1.8.9/overview.png)来自 WebKit 实际浏览器渲染，使用虚构工作区、390×844px 和 47/34px CSS 安全区模拟；深浅主题通过应用设置切换，不作为原生或商店截图。单页：[浅色关联](current/interaction-1.8.9/light-association.png) · [深色关联](current/interaction-1.8.9/dark-association.png) · [浅色记录](current/interaction-1.8.9/light-record.png) · [深色记录](current/interaction-1.8.9/dark-record.png)。
+
+另有安装应用的实际 iOS 模拟器验收：[时间轴](current/interaction-1.8.9/native-timeline.png) · [键盘下编辑记录](current/interaction-1.8.9/native-keyboard.png)。四个标签页的操作栏均避让底部 34pt 手势区，键盘场景确认正常字母键、已输入草稿及保存按钮可点击。模拟器验收从分发模板生成临时工程，并显式指定模拟器 SDK；签名分发继续使用原模板。验收边界及结果见[发布记录](../app-store/README.md)。

@@ -1,6 +1,20 @@
 # App Store 首发准备
 
-## 当前核心流程视觉统一内测：1.8.8（43.1）
+## 当前连续编辑与对象关联内测：1.8.9（44.1）
+
+标签、状态和明确确认的名称通过公共队列按顺序保存，连续编辑保留最新意图；失败不影响后续保存，也不顺带提交名称草稿。当前关注与时间轴共用一次对象投影，详情避免重复重建；修复重复组件标识与标题尺寸观察循环。关联先选范围、类型，再选择已有对象或新建；原位新建取消后保留查询、选择和关系说明。正文优先，公共属性按需展开，空流程占位不再占用卡片空间。见[交互规范与实际预览](../design/visual-principles.md)。不更改数据库结构、同步规则或平台驱动。
+
+2026-11-19，[签名与上传](https://github.com/limushu/new_hm/actions/runs/44540328882)于 14:27:34 UTC 确认 `UPLOAD SUCCEEDED with no errors, 1 warning`，14:30:08 UTC 确认可安装；[独立只读查询](https://github.com/limushu/new_hm/actions/runs/44544535148)于 14:30:54 UTC 再次确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`。Apple 构建 ID `d67a60c6-503e-41df-8529-bb37db8d03cd`，内部测试员可更新。未提交 App Review 或发布 App Store。
+
+实际 IPA 产品源码 `18a34c064dcca386bbbcabc5314d4277b5017769`，版本 1.8.9 / 44.1，Xcode 26.3（17C529）/ SDK 26.2。已下载核对包名、启动屏、麦克风/识别/日历用途说明、根隐私清单及实际 Mach-O 分发权限，CloudKit 保持 `Production`。实际 iPhone/iPad 银灰品牌图标的像素误差均为 0，无透明留白或白边。IPA SHA-256：`383aedfe032dd50eab828d0a10eb7a60ab1ba36f89928cc5f4214aba3de808ea`。
+
+[应用检查](https://github.com/limushu/new_hm/actions/runs/44543685717)通过 96 项单元测试、150 项 Chromium、46 项 WebKit 回归、Rust 测试/Clippy 与 Windows 构建；Android 编译通过。验收源码 `b34d7d0bb97075fd3219301a6627f26560e5800d` 与 IPA 的产品源码完全一致，差异仅为移动验收工作流、模拟器配置及其测试。新增验收覆盖慢速连续写入、失败后继续保存、未确认名称保留、目录范围与原位新建取消。WebKit 实测 320px 深浅主题的关联弹层及选择控件均无横向溢出。预览使用虚构工作区与 CSS 安全区模拟；个人 iCloud 双设备往返与签名真机操作手感仍需实测。
+
+[实际安装应用验收](https://github.com/limushu/new_hm/actions/runs/44543685772)于 14:51:15 UTC 通过原生窗口、四个案件标签页及正常键盘检查（85.195 秒、0 失败）。实测窗口 414×896pt，各页创建按钮距底部均为 34pt；系统字母键区域为 `(0,595,414,243)`，保存按钮为 `(309,450,84,45)`。已查看[原生时间轴](../design/current/interaction-1.8.9/native-timeline.png)及[正常键盘下的记录编辑](../design/current/interaction-1.8.9/native-keyboard.png)，使用隔离虚构工作区。该合并任务在后续 SDK 测试启动阶段达到 35 分钟上限，不能作为完整 SDK 套件通过的证据。
+
+[独立原生 SDK 验收](https://github.com/limushu/new_hm/actions/runs/44550941195)于 15:16:50 UTC 确认 38 项测试、0 失败，补齐录音、设备内转写、文件选择、身份、CloudKit、日程及宿主窗口等驱动覆盖。验收源码 `de94d0880193a29d7bee80f9282e652165a4cbcd` 与 IPA 的产品源码一致，仅增加验收配置修正。合并验收的冷构建时限已调整为 60 分钟并更新缓存代次，独立 SDK 任务使用实际宿主架构选择 SDK。原生界面与 SDK 的通过结果分别记录，不将超时任务包装为整体成功。
+
+## 前一核心流程视觉统一内测：1.8.8（43.1）
 
 打磨“今天 → 案件列表 → 案件时间轴 → 对象详情”：案件卡片以名称为先并收紧留白，长名称完整换行；状态与标签共用布局，当前关注改为紧凑节点入口，手机时间轴为内容留出完整宽度。详情、编辑和日程共用浮层，正文独立滚动，关闭、保存与取消保持可见；公共可见窗口协调处理系统键盘。保留对象关联、自定义属性、语音输入、费用图表、银灰品牌图标和 CloudKit 同步，无数据库迁移。见[视觉原则与四页对照](../design/visual-principles.md)。
 
