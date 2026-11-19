@@ -65,6 +65,7 @@ try {
   writeFileSync(join(temporary, 'project.json'), JSON.stringify(spec, null, 2));
   run('xcodegen', ['generate', '--spec', join(temporary, 'project.json')]);
   spawnSync('killall', ['Simulator'], { stdio: 'ignore' });
+  run('defaults', ['write', 'com.apple.iphonesimulator', 'ConnectHardwareKeyboard', '-bool', 'false']);
   run('open', ['-a', 'Simulator', '--args', '-CurrentDeviceUDID', device]);
   await delay(3000);
   const args = [

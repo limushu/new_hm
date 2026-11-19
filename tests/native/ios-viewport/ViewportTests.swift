@@ -64,9 +64,19 @@ final class ViewportTests: XCTestCase {
     let content=app.textViews["工作记录内容"].firstMatch
     XCTAssertTrue(content.waitForExistence(timeout:10))
     content.tap()
+    // A fresh simulator can show the system QuickPath introduction instead of
+    // letter keys. Dismiss it and require the real keyboard before measuring.
+    for host in [app, XCUIApplication(bundleIdentifier:"com.apple.springboard")] {
+      let introduction=host.buttons["Continue"].firstMatch
+      if introduction.waitForExistence(timeout:2) && introduction.isHittable {
+        introduction.tap()
+      }
+    }
     content.typeText("Fictional keyboard layout check")
     let keyboard=app.keyboards.firstMatch
     XCTAssertTrue(keyboard.waitForExistence(timeout:10))
+    XCTAssertGreaterThan(keyboard.keys.count,20,"Expected letter keys, not keyboard onboarding")
+    XCTAssertTrue((content.value as? String)?.contains("Fictional keyboard layout check") == true)
     let save=app.buttons["保存记录"].firstMatch
     XCTAssertTrue(save.isHittable)
     XCTAssertLessThanOrEqual(save.frame.maxY,keyboard.frame.minY+1)
