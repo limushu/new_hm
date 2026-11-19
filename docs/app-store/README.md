@@ -1,6 +1,18 @@
 # App Store 首发准备
 
-## 当前 iCloud 同步修复内测：1.8.7（42.1）
+## 当前核心流程视觉统一内测：1.8.8（43.1）
+
+打磨“今天 → 案件列表 → 案件时间轴 → 对象详情”：案件卡片以名称为先并收紧留白，长名称完整换行；状态与标签共用布局，当前关注改为紧凑节点入口，手机时间轴为内容留出完整宽度。详情、编辑和日程共用浮层，正文独立滚动，关闭、保存与取消保持可见；公共可见窗口协调处理系统键盘。保留对象关联、自定义属性、语音输入、费用图表、银灰品牌图标和 CloudKit 同步，无数据库迁移。见[视觉原则与四页对照](../design/visual-principles.md)。
+
+2026-11-19，[签名与上传](https://github.com/limushu/new_hm/actions/runs/44508440144)于 10:59:17 UTC 确认 `UPLOAD SUCCEEDED with no errors, 1 warning`。11:01:13 UTC 首次确认可安装；[独立只读查询](https://github.com/limushu/new_hm/actions/runs/44511216655)于 11:03:05 UTC 再次确认 `processingState=VALID`、`internalBuildState=IN_BETA_TESTING`、`readyForInternalTesting=true`。Apple 构建 ID `30a95ce5-faa5-493e-8ae0-20c95a543011`，内部测试员可更新。未提交 App Review 或发布 App Store。
+
+实际 IPA 源码 `82c08f0560b3b2de272b8c0de9c1d308df4ff936`，版本 1.8.8 / 43.1，Intel 构建机器、Xcode 26.3（17C529）/ SDK 26.2。下载核对包名、启动屏、麦克风/识别/日历用途说明、根隐私清单及实际 Mach-O 分发权限，CloudKit 保持 `Production`。实际 iPhone/iPad 图标与银灰品牌素材的像素误差均为 0，无白边或透明留白。IPA SHA-256：`1ce79aef96bc2dd338f9d5303dedf893c551d585b53b67b193b2d9e7175f4c52`。
+
+[应用检查](https://github.com/limushu/new_hm/actions/runs/44509324738)通过 90 项单元测试、148 项 Chromium、39 项 WebKit 回归、Rust 测试/Clippy 与 Windows 构建。检查源码 `722119cb56f55f39dca4f54ed3b1cd81f862686a` 相对 IPA 源码仅调整新增长标题测试的等待方式，产品源码完全一致。[同源移动检查](https://github.com/limushu/new_hm/actions/runs/44508424940)通过 Android 编译、iOS 实际应用构建/启动/SQLite 升级数据保留、备份及 38 项原生 SDK 测试。实际应用窗口 414×896pt，四个案件标签页创建按钮距底部均为 34pt；已查看导出的原生截图。浏览器预览使用虚构数据与安全区模拟；原生模拟器不替代用户签名真机的操作手感或个人 iCloud 双设备往返验收。
+
+[实际应用键盘补验](https://github.com/limushu/new_hm/actions/runs/44512389324)复用同一构建，先以 Git 比较确认产品源码一致；测试脚本关闭模拟器首次 QuickPath 提示，确认存在真实字母键、已输入草稿及可点击的保存按钮，11:18:58 UTC 通过（44.123 秒）。系统字母键区域为 `(0,595,414,243)`，上方为系统候选栏和 Done 工具栏；保存按钮为 `(309,428,84,44)`，未被遮挡。已查看[正常键盘截图](../design/current/core-flow-1.8.8/native-keyboard.png)、[原生今天页](../design/current/core-flow-1.8.8/native-today.png)与[原生时间轴](../design/current/core-flow-1.8.8/native-timeline.png)，均使用隔离虚构数据。补验只修改测试代码；随后的格式修正通过全量 Prettier 检查。
+
+## 前一 iCloud 同步修复内测：1.8.7（42.1）
 
 修复 WebView 前后台提示滞留、更新乱序后，开启 iCloud 同步反复提示“已暂停”的问题。公共 `SyncActivity` 通过宿主端口核对窗口状态，iOS 驱动读取当前窗口场景；自动检查、手动重试和返回应用共用这条路径。临时系统弹层允许同步，真正退后台、暂停、退出账号或恢复备份仍使旧租约失效。保留原有未保存编辑保护和版本冲突规则，不迁移或清空业务数据，见[跨设备同步](../cross-device-sync.md)。
 

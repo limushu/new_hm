@@ -64,3 +64,5 @@
 
 
 本轮 WebKit 390×844px 的实际渲染对照使用虚构工作区与 47/34px CSS 安全区模拟，包含预览说明，不作为原生截图或商店素材：[浅色四页](current/core-flow-1.8.8/overview-light.png) · [深色四页](current/core-flow-1.8.8/overview-dark.png)。单页：[今天](current/core-flow-1.8.8/light-today.png) · [案件](current/core-flow-1.8.8/light-cases.png) · [时间轴](current/core-flow-1.8.8/dark-timeline.png) · [对象详情](current/core-flow-1.8.8/light-object.png)。
+
+同源安装应用另有 iOS 模拟器实测截图，使用隔离虚构升级夹具：[今天](current/core-flow-1.8.8/native-today.png) · [时间轴](current/core-flow-1.8.8/native-timeline.png) · [正常键盘下编辑记录](current/core-flow-1.8.8/native-keyboard.png)。实际窗口 414×896pt，四个案件标签页操作栏均避让底部 34pt 手势区；键盘验收先关闭系统首次使用提示，再检查真实字母键、草稿内容与保存按钮。签名与安装状态见[发布记录](../app-store/README.md)。
