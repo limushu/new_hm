@@ -1,9 +1,17 @@
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  cpSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { resolve, join, dirname } from 'node:path';
 import { tmpdir } from 'node:os';
 import { setTimeout as delay } from 'node:timers/promises';
-import { selectSimulatorRuntime } from './ios-simulator-config.mjs';
+import { selectSimulatorRuntime, simulatorProjectTemplate } from './ios-simulator-config.mjs';
 import { syncIosIcons, verifyIosIcons } from './ios-icons.mjs';
 
 if (process.platform !== 'darwin') {
@@ -97,10 +105,15 @@ try {
   report.xcode = run('xcodebuild', ['-version'], { capture: true });
   report.arch = process.arch;
   const target = process.arch === 'arm64' ? 'aarch64-sim' : 'x86_64';
+  const templatePath = join(output, 'simulator-project.yml');
+  writeFileSync(
+    templatePath,
+    simulatorProjectTemplate(readFileSync(join(root, 'src-tauri/ios-project.yml'), 'utf8')),
+  );
   // The CLI reads custom templates relative to its working directory. Resolve
   // explicitly so generation works independently of nested xcodebuild commands.
   const config = JSON.stringify({
-    bundle: { iOS: { template: join(root, 'src-tauri/ios-project.yml') } },
+    bundle: { iOS: { template: templatePath } },
   });
   run('npx', ['tauri', 'ios', 'init', '--ci', '--skip-targets-install', '--config', config]);
   syncIosIcons(root);

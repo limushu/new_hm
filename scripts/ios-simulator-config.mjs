@@ -21,3 +21,16 @@ export function selectSimulatorRuntime(runtimes, sdkVersion) {
     throw new Error(`No iOS simulator runtime compatible with selected SDK ${sdkVersion}`);
   return selected;
 }
+
+/** Intel archives can otherwise resolve the generic destination to iphoneos,
+ * where x86_64 is excluded. Pin the disposable simulator project itself; the
+ * distribution template and signing configuration remain untouched. */
+export function simulatorProjectTemplate(template) {
+  const marker = '        ENABLE_BITCODE: false';
+  if (template.split(marker).length !== 2)
+    throw new Error('Expected one iOS application build-settings block');
+  return template.replace(
+    marker,
+    `${marker}\n        SDKROOT: iphonesimulator\n        SUPPORTED_PLATFORMS: iphonesimulator`,
+  );
+}

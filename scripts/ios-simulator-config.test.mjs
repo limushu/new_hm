@@ -1,5 +1,6 @@
 import { expect, test } from 'vitest';
-import { selectSimulatorRuntime } from './ios-simulator-config.mjs';
+import { readFileSync } from 'node:fs';
+import { selectSimulatorRuntime, simulatorProjectTemplate } from './ios-simulator-config.mjs';
 const runtime = (version, isAvailable = true) => ({
   version,
   isAvailable,
@@ -27,4 +28,27 @@ test('unsupported or missing runtime fails clearly instead of booting an incompa
   expect(() => selectSimulatorRuntime([runtime('18.5')], 'unavailable')).toThrow(
     'Cannot determine',
   );
+});
+
+test('simulator projects pin their SDK without changing the distribution template or resources', () => {
+  const template = readFileSync(new URL('../src-tauri/ios-project.yml', import.meta.url), 'utf8');
+  const simulator = simulatorProjectTemplate(template);
+  expect(simulator).toContain(
+    '        SDKROOT: iphonesimulator\n        SUPPORTED_PLATFORMS: iphonesimulator',
+  );
+  expect(
+    simulator.replace(
+      '\n        SDKROOT: iphonesimulator\n        SUPPORTED_PLATFORMS: iphonesimulator',
+      '',
+    ),
+  ).toBe(template);
+  expect(readFileSync(new URL('../src-tauri/ios-project.yml', import.meta.url), 'utf8')).toBe(
+    template,
+  );
+});
+test('a changed or ambiguous project template fails instead of silently testing the wrong SDK', () => {
+  expect(() => simulatorProjectTemplate('settings: {}')).toThrow('Expected one');
+  expect(() =>
+    simulatorProjectTemplate('        ENABLE_BITCODE: false\n        ENABLE_BITCODE: false'),
+  ).toThrow('Expected one');
 });
