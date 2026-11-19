@@ -4,6 +4,50 @@ import { createCaseSystem } from './modules';
 import { filterTimeline, isPlanned } from './timeline';
 import { workspaceGraph } from '../domain/relations';
 
+test('focus and timeline share one provider projection without retaining stale workspace data', () => {
+  const data = fixture();
+  let resourceReads = 0;
+  let timelineReads = 0;
+  const system = createCaseSystem([
+    {
+      id: 'extension.projection',
+      timelineTypes: [{ id: 'extension', label: '扩展对象' }],
+      resources: () => {
+        resourceReads++;
+        return [{ reference: { kind: 'extension', id: 'external' }, title: '扩展对象' }];
+      },
+      timeline: () => {
+        timelineReads++;
+        return [
+          {
+            resource: { kind: 'extension', id: 'external' },
+            type: 'extension',
+            title: '扩展对象',
+            body: '',
+            date: null,
+            dateRole: 'occurred',
+          },
+        ];
+      },
+    },
+  ]);
+  const first = system.project(data, 'one');
+  expect(resourceReads).toBe(1);
+  expect(timelineReads).toBe(1);
+  expect(first.objects.find((o) => o.id === 'extension:external')?.title).toBe('扩展对象');
+  data.tasks.push({
+    id: 'latest',
+    caseId: 'one',
+    title: '刚保存的待办',
+    dueDate: null,
+    completed: false,
+  });
+  const second = system.project(data, 'one');
+  expect(second.timeline.some((e) => e.resource.id === 'latest')).toBe(true);
+  expect(first.timeline.some((e) => e.resource.id === 'latest')).toBe(false);
+  expect(resourceReads).toBe(2);
+});
+
 function fixture(): Workspace {
   const file: Material = {
     id: 'file',

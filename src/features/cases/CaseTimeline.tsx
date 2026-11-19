@@ -1,6 +1,6 @@
 import ObjectInspector from './ObjectInspector';
 import { materialIcon } from '../materials/Materials';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   CalendarDays,
   CheckSquare,
@@ -42,17 +42,18 @@ export default function CaseTimeline({
   caseId,
   data,
   save,
+  entries,
 }: {
   caseId: string;
   data: Workspace;
   save: SaveAction;
+  entries: TimelineEntry[];
 }) {
   const [filter, setFilter] = useState<TimelineFilter>({});
   const [filterOpen, setFilterOpen] = useState(false);
   const [limit, setLimit] = useState(8);
   const [opened, setOpened] = useState<ResourceRef | null>(null);
   const [initialMode, setInitialMode] = useState<'details' | 'info'>('details');
-  const entries = useMemo(() => caseSystem.timeline(data, caseId), [data, caseId]);
   const today = dateKey(new Date());
   const filtered = filterTimeline(entries, filter);
   const visible = filtered.filter((e) => !isPlanned(e, today));

@@ -18,6 +18,25 @@
 .workspace-dialog::backdrop {
   background: var(--backdrop);
 }
+.workspace-dialog summary {
+  list-style: none;
+}
+.workspace-dialog summary::-webkit-details-marker {
+  display: none;
+}
+.workspace-dialog summary::before {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-inline-end: 8px;
+  vertical-align: 1px;
+  border-block: 4px solid transparent;
+  border-inline-start: 4px solid currentColor;
+}
+.workspace-dialog details[open] > summary::before {
+  transform: rotate(90deg);
+}
 .workspace-dialog > form {
   display: flex;
   flex-direction: column;

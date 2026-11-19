@@ -46,6 +46,7 @@ import {
   Wallet,
 } from 'lucide-react';
 import type { CaseFile, CaseInput, SaveAction, Workspace, WorkScope } from '../../domain/types';
+import { createCaseHeaderQueue } from '../../domain/caseHeaderQueue';
 
 interface Props {
   item: CaseFile;
@@ -88,6 +89,7 @@ export default function CasePage({
   const [peopleOpen, setPeopleOpen] = useState(false);
   const [moreOpen, setMoreOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [headerPending, setHeaderPending] = useState(0);
   const [localError, setLocalError] = useState('');
   const [programForm, setProgramForm] = useState(false);
   const [saved, setSaved] = useState(!draft);
@@ -99,6 +101,21 @@ export default function CasePage({
   const pendingAction = useRef<Promise<boolean> | null>(null);
   const section = useRef<HTMLElement>(null);
   const titleInput = useRef<HTMLTextAreaElement>(null);
+  const headerWrite = useRef(save);
+  headerWrite.current = save;
+  const [headerQueue] = useState(() =>
+    createCaseHeaderQueue({ ...item, tags }, (input) =>
+      headerWrite.current('update_case', { input }),
+    ),
+  );
+  const tagEdit = useRef(0);
+  const statusEdit = useRef(0);
+  useEffect(() => {
+    headerQueue.rebase({
+      ...item,
+      tags: data.caseTags.filter((tag) => tag.caseId === item.id).map((tag) => tag.tag),
+    });
+  }, [headerQueue, item, data.caseTags]);
   const programs = data.proceedings.filter((p) => p.caseId === item.id);
   const program =
     programs.find((p) => p.id === viewedId) ??
@@ -136,19 +153,24 @@ export default function CasePage({
     const field = titleInput.current;
     if (!field) return;
     const resize = () => {
-      field.style.height = '0px';
+      field.style.height = 'auto';
       field.style.height = `${field.scrollHeight}px`;
     };
     resize();
     let width = field.clientWidth;
+    let frame = 0;
     const observer = new ResizeObserver(() => {
       if (field.clientWidth !== width) {
         width = field.clientWidth;
-        resize();
+        cancelAnimationFrame(frame);
+        frame = requestAnimationFrame(resize);
       }
     });
     observer.observe(field);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    };
   }, [title]);
   useEffect(() => {
     setSaved(!draft);
@@ -196,32 +218,44 @@ export default function CasePage({
     return task;
   }
   function commit(overrides: Partial<CaseInput> = {}): Promise<boolean> {
+    if (saved) {
+      const patch = Object.keys(overrides).length ? overrides : { title: title.trim(), caseType };
+      if (patch.title !== undefined && !patch.title.trim()) return Promise.resolve(false);
+      const confirmed = headerQueue.snapshot();
+      if (
+        !headerPending &&
+        (patch.title === undefined || patch.title === confirmed.title) &&
+        (patch.caseType === undefined || patch.caseType === confirmed.caseType) &&
+        (patch.statusId === undefined || patch.statusId === confirmed.statusId) &&
+        (patch.tags === undefined ||
+          JSON.stringify([...patch.tags].sort()) ===
+            JSON.stringify([...(confirmed.tags ?? [])].sort()))
+      )
+        return Promise.resolve(true);
+      setLocalError('');
+      setHeaderPending((count) => count + 1);
+      return headerQueue.enqueue(patch).then(
+        () => {
+          setHeaderPending((count) => count - 1);
+          return true;
+        },
+        (error) => {
+          setLocalError(String(error));
+          setHeaderPending((count) => count - 1);
+          return false;
+        },
+      );
+    }
     if (inFlight.current) return inFlight.current;
     const value = { id: item.id, title: title.trim(), caseType, statusId, tags, ...overrides };
     if (!value.title) return Promise.resolve(false);
-    if (
-      saved &&
-      value.title === item.title &&
-      value.caseType === item.caseType &&
-      value.statusId === item.statusId &&
-      JSON.stringify([...value.tags].sort()) ===
-        JSON.stringify(
-          data.caseTags
-            .filter((t) => t.caseId === item.id)
-            .map((t) => t.tag)
-            .sort(),
-        )
-    )
-      return Promise.resolve(true);
     setLocalError('');
     setSaving(true);
     const promise = (async () => {
       try {
-        if (!saved) {
-          await save('create_case', { input: value });
-          setSaved(true);
-          created(item.id);
-        } else await save('update_case', { input: value });
+        await save('create_case', { input: value });
+        setSaved(true);
+        created(item.id);
         return true;
       } catch (error) {
         setLocalError(String(error));
@@ -235,8 +269,13 @@ export default function CasePage({
     return promise;
   }
   async function onClose() {
+    if (headerPending && !(await headerQueue.settled())) return;
     if (pendingAction.current && !(await pendingAction.current)) return;
-    if (title.trim() !== item.title && (saved || title.trim())) setLeaving(true);
+    if (
+      title.trim() !== (saved ? headerQueue.snapshot().title : item.title) &&
+      (saved || title.trim())
+    )
+      setLeaving(true);
     else close();
   }
 
@@ -298,14 +337,14 @@ export default function CasePage({
               <Button
                 type="button"
                 variant="primary"
-                disabled={saving || !title.trim()}
+                disabled={saving || !!headerPending || !title.trim()}
                 onClick={() => void commit()}
               >
                 {saved ? '保存名称' : '创建案件'}
               </Button>
               <button
                 type="button"
-                disabled={saving}
+                disabled={saving || !!headerPending}
                 onClick={() => {
                   if (!saved) close();
                   else setTitle(item.title);
@@ -325,16 +364,22 @@ export default function CasePage({
                 value={statusId}
                 statuses={data.statuses}
                 disabled={saving}
-                onChoose={async (status, create) =>
-                  act(async () => {
+                onChoose={async (status, create) => {
+                  try {
                     if (create) await save('save_case_status', { input: status });
+                    const version = ++statusEdit.current;
                     setStatusId(status.id);
-                    if (saved && !(await commit({ statusId: status.id, title: item.title }))) {
-                      setStatusId(item.statusId);
-                      throw new Error('案件状态尚未保存，请重试');
-                    }
-                  })
-                }
+                    if (saved)
+                      void commit({ statusId: status.id }).then((ok) => {
+                        if (!ok && statusEdit.current === version)
+                          setStatusId(headerQueue.snapshot().statusId);
+                      });
+                    return true;
+                  } catch (error) {
+                    setLocalError(String(error));
+                    return false;
+                  }
+                }}
               />
             </div>
             <div className="case-category">
@@ -347,11 +392,12 @@ export default function CasePage({
                 catalog={data.tagCatalog}
                 disabled={saving}
                 onChange={(value) => {
-                  const previous = tags;
+                  const version = ++tagEdit.current;
                   setTags(value);
                   if (saved)
-                    void commit({ tags: value, title: item.title }).then((ok) => {
-                      if (!ok) setTags(previous);
+                    void commit({ tags: value }).then((ok) => {
+                      if (!ok && tagEdit.current === version)
+                        setTags(headerQueue.snapshot().tags ?? []);
                     });
                 }}
               />
@@ -402,7 +448,7 @@ export default function CasePage({
               </button>
             ))}
             <span className="save-state" aria-live="polite">
-              {saving
+              {saving || headerPending
                 ? '保存中…'
                 : saved
                   ? title.trim() === item.title

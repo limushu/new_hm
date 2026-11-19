@@ -180,16 +180,13 @@ export default function CaseBoard({
               {status.name}
             </span>
           )}
-          <span>
-            {summaries.focused.get(item.id) ? (
-              `关注 ${summaries.focused.get(item.id)}`
-            ) : (
-              <>
-                {program ? '关注 ' + proceedingName(program, data.proceedings) : '案件档案'}
-                {program ? ` · ${currentStage(data, program)}` : ' · 未指定关注流程'}
-              </>
-            )}
-          </span>
+          {(summaries.focused.get(item.id) || program) && (
+            <span>
+              {summaries.focused.get(item.id)
+                ? `关注 ${summaries.focused.get(item.id)}`
+                : `关注 ${proceedingName(program!, data.proceedings)} · ${currentStage(data, program!)}`}
+            </span>
+          )}
         </span>
         {tags.length > 0 && (
           <span className="case-card-tags">

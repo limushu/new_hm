@@ -316,7 +316,6 @@ export function EntryForm({
         });
       }}
     >
-      {properties}
       <div className="form-columns">
         <label>
           类型
@@ -404,6 +403,7 @@ export function EntryForm({
           onChange={(e) => update({ notes: e.target.value })}
         />
       </label>
+      {properties}
       {onDelete && (
         <button type="button" className="inline-link danger" onClick={onDelete}>
           删除这笔收支

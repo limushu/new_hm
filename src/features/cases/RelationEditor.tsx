@@ -41,6 +41,7 @@ export default function RelationEditor({
         title="添加案件关联"
         className="relation-editor"
         submitLabel="保存关联"
+        submitDisabled={!from || !targets.length}
         onClose={onClose}
         onSubmit={async () => {
           if (!from) throw new Error('请选择关联起点');
@@ -90,18 +91,9 @@ export default function RelationEditor({
           kind={type}
           onKindChange={setType}
           allowedGroups={actorsOnly ? ['person', 'organization'] : undefined}
-        >
-          {group?.creator && (
-            <button
-              type="button"
-              className="object-edit-link"
-              disabled={!from}
-              onClick={() => setCreating(true)}
-            >
-              ＋ 新建{group.label}并关联
-            </button>
-          )}
-        </ResourcePicker>
+          onCreate={group?.creator && from ? () => setCreating(true) : undefined}
+          createLabel={`新建${group?.label}并关联`}
+        />
         {!!targets.length && (
           <label>
             关系含义（可选）

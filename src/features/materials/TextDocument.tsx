@@ -44,7 +44,6 @@ export default function TextDocument({
         }}
       >
         <p className="field-hint">保存到本案材料中，可继续查找、阅读和导出。</p>
-        {properties}
         <label>
           文档名称
           <input
@@ -67,6 +66,7 @@ export default function TextDocument({
           placeholder="在这里撰写沟通纪要、办案思路或材料清单…"
         />
         <p className="field-hint">以本地 Markdown（.md）文本保存。保存前关闭可选择继续编辑。</p>
+        {properties}
       </Dialog>
       {discard && (
         <Dialog

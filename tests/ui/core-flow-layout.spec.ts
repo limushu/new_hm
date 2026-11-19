@@ -5,6 +5,10 @@ const longTitle =
   '某科技公司与某贸易公司买卖合同纠纷、财产保全及相关款项争议案件（长名称阅读检查）';
 
 test('案件长名称完整换行，状态标签、时间轴和同级操作在窄屏保持可读', async ({ page }) => {
+  const resizeErrors: string[] = [];
+  page.on('pageerror', (error) => {
+    if (error.message.includes('ResizeObserver loop')) resizeErrors.push(error.message);
+  });
   await page.goto('/?preview=1');
   await page.getByRole('button', { name: '案件', exact: true }).tap();
   await page.locator('.case-card').first().tap();
@@ -38,6 +42,7 @@ test('案件长名称完整换行，状态标签、时间轴和同级操作在�
   await expect(page.locator('.mobile-case-item')).toContainText(longTitle);
   await expect(page.locator('.mobile-case-item')).toContainText('进行中');
   await expect(page.locator('.mobile-case-item')).toContainText('核对当事人提供的材料');
+  expect(resizeErrors).toEqual([]);
 });
 
 test('短视口中正文可滚动，编辑页的关闭和保存始终可见，取消回到原对象', async ({ page }) => {

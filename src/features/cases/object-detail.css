@@ -41,7 +41,7 @@
 }
 .object-info-heading button {
   min-height: 44px;
-  color: var(--accent);
+  color: var(--accent-text);
   font-size: var(--text-base);
 }
 .object-inspector .object-properties,

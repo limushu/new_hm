@@ -28,7 +28,7 @@ test('节点的自定义属性与值可编辑，能从节点直接新建律师�
   await node.getByRole('button', { name: '添加关联', exact: true }).click();
   const association = page.getByRole('dialog', { name: '添加案件关联', exact: true });
   await selectOption(page, association.getByLabel('关联对象类型', { exact: true }), 'person');
-  await association.getByRole('button', { name: '＋ 新建人物并关联', exact: true }).click();
+  await association.getByRole('button', { name: '新建人物并关联', exact: true }).click();
   form = page.getByRole('dialog', { name: '添加个人', exact: true });
   await form.getByLabel('对象名称', { exact: true }).fill('周律师');
   await form.getByLabel('本案身份', { exact: true }).fill('我方代理律师');

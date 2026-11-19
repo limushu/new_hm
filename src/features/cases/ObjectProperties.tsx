@@ -202,18 +202,9 @@ export default function ObjectProperties({
                 onChange={setRelated}
                 kind={group}
                 onKindChange={setGroup}
-              >
-                {creator && (
-                  <button
-                    type="button"
-                    className="object-edit-link"
-                    onClick={() => setCreating(true)}
-                  >
-                    <Plus />
-                    新建{resourceGroups.find((g) => g.id === group)?.label}
-                  </button>
-                )}
-              </ResourcePicker>
+                onCreate={creator ? () => setCreating(true) : undefined}
+                createLabel={`新建${resourceGroups.find((g) => g.id === group)?.label}`}
+              />
             </>
           ) : (
             <label>

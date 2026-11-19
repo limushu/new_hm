@@ -17,7 +17,8 @@ export default function CaseChronicle({
   data: Workspace;
   save: SaveAction;
 }) {
-  const objects = useMemo(() => caseSystem.objects(data, item.id), [data, item.id]);
+  const projection = useMemo(() => caseSystem.project(data, item.id), [data, item.id]);
+  const objects = projection.objects;
   const focusRelation = data.resourceRelations.find(
     (r) =>
       r.caseId === item.id &&
@@ -37,21 +38,18 @@ export default function CaseChronicle({
   const [focusKey, setFocusKey] = useState('');
   const [relationId] = useState(() => crypto.randomUUID());
   const { error, busy, run } = useAction();
+  const importantTasks = new Set(
+    data.resourceMetadata
+      .filter(
+        (m) => m.caseId === item.id && m.resource.kind === 'task' && m.importance === 'important',
+      )
+      .map((m) => m.resource.id),
+  );
   const pending = data.tasks
     .filter((t) => t.caseId === item.id && !t.completed)
     .sort((a, b) => {
-      const important = (id: string) =>
-        data.resourceMetadata.some(
-          (m) =>
-            m.caseId === item.id &&
-            m.resource.kind === 'task' &&
-            m.resource.id === id &&
-            m.importance === 'important',
-        )
-          ? 1
-          : 0;
       return (
-        important(b.id) - important(a.id) ||
+        Number(importantTasks.has(b.id)) - Number(importantTasks.has(a.id)) ||
         (a.dueDate ?? '9999').localeCompare(b.dueDate ?? '9999')
       );
     });
@@ -126,7 +124,7 @@ export default function CaseChronicle({
           </p>
         )}
       </section>
-      <CaseTimeline caseId={item.id} data={data} save={save} />
+      <CaseTimeline caseId={item.id} data={data} save={save} entries={projection.timeline} />
       {selected && (
         <ObjectInspector
           caseId={item.id}

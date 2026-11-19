@@ -152,7 +152,6 @@ export function WorkTaskEditor({
         });
       }}
     >
-      {properties}
       <label>
         待办内容
         <input
@@ -173,7 +172,9 @@ export function WorkTaskEditor({
           onValueChange={(v) => setValue({ ...value, dueDate: v || null })}
         />
       </label>
-      <WorkScopeField caseId={task.caseId} data={data} value={scope} onChange={setScope} />
+      {!properties && (
+        <WorkScopeField caseId={task.caseId} data={data} value={scope} onChange={setScope} />
+      )}
       <label>
         等待谁 / 什么（可选）
         <input
@@ -202,6 +203,7 @@ export function WorkTaskEditor({
           onChange={(e) => setOutcome(e.target.value)}
         />
       </label>
+      {properties}
     </Dialog>
   );
 }

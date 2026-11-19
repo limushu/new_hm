@@ -69,7 +69,6 @@ export function MilestoneEditor({
         await save('save_case_event', { input });
       }}
     >
-      {properties}
       <label>
         {nodeMode ? '节点名称' : '发生了什么'}
         <input
@@ -119,6 +118,7 @@ export function MilestoneEditor({
       <p className="field-hint">
         请按实际情况填写。将来的日期显示为计划，文件归档时间不会自动当作事实发生日期。
       </p>
+      {properties}
     </Dialog>
   );
 }
@@ -315,6 +315,7 @@ export default function CaseQuickActions({
       )}
       {(panel === 'person' || panel === 'organization') && (
         <CasePersonEditor
+          initialMode={initialKind ? 'new' : undefined}
           kind={
             panel === 'organization'
               ? 'organization'

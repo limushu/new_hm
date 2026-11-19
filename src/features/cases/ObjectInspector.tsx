@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ChevronLeft, Pencil, Star } from 'lucide-react';
 import Dialog from '../../components/Dialog';
 import Button from '../../components/Button';
@@ -32,7 +32,8 @@ export default function ObjectInspector({
   const [view, setView] = useState<'details' | 'info' | 'editor' | 'expanded'>(initialMode);
   const current = history[history.length - 1];
   const key = resourceKey(current);
-  const item = caseSystem.objects(data, caseId).find((o) => resourceKey(o.resource) === key);
+  const objects = useMemo(() => caseSystem.objects(data, caseId), [data, caseId]);
+  const item = objects.find((o) => resourceKey(o.resource) === key);
   const [important, setImportant] = useState(item?.importance === 'important');
   const [tags, setTags] = useState(item?.tags.join('，') ?? '');
   const { busy, error, run } = useAction();
@@ -185,7 +186,7 @@ export default function ObjectInspector({
         <>
           {Content && (
             <Content
-              key={key}
+              key={`content:${key}`}
               {...props}
               onExpand={Expanded ? () => setView('expanded') : undefined}
             />
@@ -213,7 +214,13 @@ export default function ObjectInspector({
               编辑信息
             </button>
           </div>
-          <ObjectProperties key={key} caseId={caseId} resource={current} data={data} save={save} />
+          <ObjectProperties
+            key={`properties:${key}`}
+            caseId={caseId}
+            resource={current}
+            data={data}
+            save={save}
+          />
           <ResourceRelations
             caseId={caseId}
             source={current}

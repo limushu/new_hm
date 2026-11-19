@@ -12,7 +12,9 @@ test.beforeEach(async ({ page }) => {
           if (name === 'subsystem_manifest') return { version: 1, subsystems: [] };
           if (name === 'load_workspace') w.workspaceReads++;
           if (name === 'update_case' && w.failHeader) throw 'Header save failed';
-          const { previewCommand } = await import('/src/services/preview.ts');
+          const { previewCommand } = await import(
+            new URL('/src/services/preview.ts', location.origin).href
+          );
           return previewCommand(name, args);
         },
       },

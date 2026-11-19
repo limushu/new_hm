@@ -23,6 +23,7 @@ export default function CasePersonEditor({
   onSaved,
   onContactSelected,
   kind,
+  initialMode,
 }: {
   caseId: string;
   data: Workspace;
@@ -32,10 +33,13 @@ export default function CasePersonEditor({
   onSaved?: (contact: Contact) => Promise<void>;
   onContactSelected?: (contact: Contact | null) => void;
   kind?: Contact['kind'];
+  initialMode?: 'existing' | 'new';
 }) {
   const [selectedKind, setSelectedKind] = useState<Contact['kind'] | null>(kind ?? null);
   const [draft, setDraft] = useState(() => emptyContact(kind));
-  const [mode, setMode] = useState<'existing' | 'new'>('new');
+  const [mode, setMode] = useState<'existing' | 'new'>(
+    () => initialMode ?? (kind && data.contacts.some((c) => c.kind === kind) ? 'existing' : 'new'),
+  );
   const [chosen, setChosen] = useState<Contact | null>(null);
   const [query, setQuery] = useState('');
   const [limit, setLimit] = useState(20);
@@ -78,6 +82,7 @@ export default function CasePersonEditor({
       className="case-contact-editor"
       onClose={onClose}
       submitLabel={mode === 'new' ? '新建并添加' : '添加到本案'}
+      submitDisabled={!!selectedKind && mode === 'existing' && !chosen}
       onSubmit={
         selectedKind
           ? async () => {

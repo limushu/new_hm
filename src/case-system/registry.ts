@@ -48,20 +48,28 @@ export class CaseSystem {
     }));
   }
   objects(data: Workspace, caseId: string): CaseObject[] {
-    const timeline = new Map(this.timeline(data, caseId).map((e) => [resourceKey(e.resource), e]));
+    return this.project(data, caseId).objects;
+  }
+  /** One read projection shared by the focus node and timeline. No cached copy
+   * of business state: each workspace receipt produces a fresh projection. */
+  project(data: Workspace, caseId: string) {
+    const resources = this.resources(data, caseId);
+    const relations = this.relations(data, caseId);
+    const entries = this.timelineFrom(data, caseId, resources, relations);
+    const timeline = new Map(entries.map((e) => [resourceKey(e.resource), e]));
     const metadata = new Map(
       data.resourceMetadata
         .filter((m) => m.caseId === caseId)
         .map((m) => [resourceKey(m.resource), m]),
     );
     const links = new Map<string, ReturnType<CaseSystem['relations']>>();
-    for (const relation of this.relations(data, caseId))
+    for (const relation of relations)
       for (const ref of [relation.source, relation.target]) {
         const key = resourceKey(ref);
         if (!links.has(key)) links.set(key, []);
         links.get(key)!.push(relation);
       }
-    return [...this.resources(data, caseId).values()].map((r) => {
+    const objects: CaseObject[] = [...resources.values()].map((r) => {
       const id = resourceKey(r.reference),
         entry = timeline.get(id),
         meta = metadata.get(id);
@@ -78,6 +86,7 @@ export class CaseSystem {
         relations: links.get(id) ?? [],
       };
     });
+    return { resources, relations, timeline: entries, objects };
   }
   resources(data: Workspace, caseId: string, includeDirectory = false) {
     const result = resourceIndex(data, caseId, includeDirectory);
@@ -91,17 +100,15 @@ export class CaseSystem {
   }
   relations(data: Workspace, caseId: string) {
     const result = [...data.resourceRelations.filter((r) => r.caseId === caseId)];
+    const nodeLinks = new Set(
+      result
+        .filter((r) => r.kind === 'in_node' && r.target.kind === 'proceeding')
+        .map((r) => JSON.stringify([r.source.kind, r.source.id, r.target.id])),
+    );
     for (const link of data.workLinks.filter((l) => l.caseId === caseId)) {
-      if (
-        !result.some(
-          (r) =>
-            r.kind === 'in_node' &&
-            r.source.kind === link.kind &&
-            r.source.id === link.resourceId &&
-            r.target.kind === 'proceeding' &&
-            r.target.id === link.proceedingId,
-        )
-      )
+      const key = JSON.stringify([link.kind, link.resourceId, link.proceedingId]);
+      if (!nodeLinks.has(key)) {
+        nodeLinks.add(key);
         result.push({
           id: `legacy:${link.id}`,
           caseId,
@@ -110,6 +117,7 @@ export class CaseSystem {
           kind: 'in_node',
           label: link.label,
         });
+      }
     }
     for (const event of data.caseEvents.filter((e) => e.caseId === caseId && e.proceedingId))
       result.push({
@@ -123,14 +131,26 @@ export class CaseSystem {
     return result;
   }
   timeline(data: Workspace, caseId: string): TimelineEntry[] {
+    return this.timelineFrom(
+      data,
+      caseId,
+      this.resources(data, caseId),
+      this.relations(data, caseId),
+    );
+  }
+  private timelineFrom(
+    data: Workspace,
+    caseId: string,
+    resources: Map<string, CaseResource>,
+    caseRelations: ReturnType<CaseSystem['relations']>,
+  ): TimelineEntry[] {
     if (!data.cases.some((c) => c.id === caseId && !c.deletedAt)) return [];
-    const resources = this.resources(data, caseId);
     const metadata = new Map(
       data.resourceMetadata
         .filter((m) => m.caseId === caseId)
         .map((m) => [resourceKey(m.resource), m]),
     );
-    const relations = this.relations(data, caseId).filter(
+    const relations = caseRelations.filter(
       (r) =>
         r.caseId === caseId &&
         resources.has(resourceKey(r.source)) &&

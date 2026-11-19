@@ -21,8 +21,10 @@ test('人物和部门关系可在本案建立，并进入关系图', async ({ pa
   await page.getByRole('tab', { name: '人员', exact: true }).click();
   await page.getByText('编辑人物与机构之间的关系', { exact: true }).click();
   await page.getByRole('button', { name: '添加关联', exact: true }).click();
+  await selectOption(page, page.getByLabel('关联起点范围', { exact: true }), 'directory');
   await selectOption(page, page.getByLabel('关联起点类型', { exact: true }), 'person');
-  await page.getByRole('checkbox', { name: '选择 示例客户', exact: true }).check();
+  await page.getByRole('radio', { name: '选择 示例客户', exact: true }).check();
+  await selectOption(page, page.getByLabel('关联对象范围', { exact: true }), 'directory');
   await selectOption(page, page.getByLabel('关联对象类型', { exact: true }), 'organization');
   await page.getByRole('checkbox', { name: '选择 示例公司部门', exact: true }).check();
   await page.getByText('更多关系设置', { exact: true }).click();

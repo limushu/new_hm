@@ -66,3 +66,13 @@
 本轮 WebKit 390×844px 的实际渲染对照使用虚构工作区与 47/34px CSS 安全区模拟，包含预览说明，不作为原生截图或商店素材：[浅色四页](current/core-flow-1.8.8/overview-light.png) · [深色四页](current/core-flow-1.8.8/overview-dark.png)。单页：[今天](current/core-flow-1.8.8/light-today.png) · [案件](current/core-flow-1.8.8/light-cases.png) · [时间轴](current/core-flow-1.8.8/dark-timeline.png) · [对象详情](current/core-flow-1.8.8/light-object.png)。
 
 同源安装应用另有 iOS 模拟器实测截图，使用隔离虚构升级夹具：[今天](current/core-flow-1.8.8/native-today.png) · [时间轴](current/core-flow-1.8.8/native-timeline.png) · [正常键盘下编辑记录](current/core-flow-1.8.8/native-keyboard.png)。实际窗口 414×896pt，四个案件标签页操作栏均避让底部 34pt 手势区；键盘验收先关闭系统首次使用提示，再检查真实字母键、草稿内容与保存按钮。签名与安装状态见[发布记录](../app-store/README.md)。
+
+## 连续编辑与对象关联（1.8.9）
+
+- 标签、状态和明确确认的名称使用[公共保存队列](../../src/domain/caseHeaderQueue.ts)，每次修改在上一份实际回执上合并；快速连续修改按顺序写入，失败不成为下一次写入的基线。未确认的名称不随属性修改保存，失败时仅回退没有被更新编辑取代的字段。案件关闭等待提交完成，云端应用仍遵循原有公共编辑保护。
+- [对象框架](../../src/case-system/registry.ts)以一次投影提供当前关注、对象及时间轴；旧归档关系查重改为索引，详情只在工作区变化时重新投影。继续使用同一业务状态和服务，页面不直接调用平台 SDK，不增加另一份同步数据或长期业务缓存。
+- 关联先选择查找范围，再选择对象类型；当前案件提供本案对象，全部联系对象库提供可复用的人物、法官、法院与机构。材料等对象继续按案件归属选择；后台重新检查所有权。检索支持联系对象的名称、电话和地址，列表分批显示，选择起点使用单选、关联目标支持多选。
+- 已有对象与新建入口在同一区域。新建界面取消后恢复原有检索、选择与说明；创建成功只补充选择，关系在点击“保存关联”后生效。独立对象一经保存会保留，关联表单说明这一点。关联属性复用同一选择器。
+- 工作记录、关键节点、文档、待办及费用先展示主要内容，公共属性放在后方，折叠时只占一行。折叠指示器使用公共单色 CSS 形状，避免系统字体将默认三角渲染成彩色符号；触控区域仍至少 44px。案件卡片不显示空流程占位，保留实际节点、标签和待办。
+
+新增回归覆盖慢速连续写入、失败后继续保存、未确认名称保留、目录范围、取消原位新建、插件一次投影，以及组件标识和尺寸观察循环。[交互对照](current/interaction-1.8.9/overview.png)来自 WebKit 实际浏览器渲染，使用虚构工作区、390×844px 和 47/34px CSS 安全区模拟；深浅主题通过应用设置切换，不作为原生或商店截图。单页：[浅色关联](current/interaction-1.8.9/light-association.png) · [深色关联](current/interaction-1.8.9/dark-association.png) · [浅色记录](current/interaction-1.8.9/light-record.png) · [深色记录](current/interaction-1.8.9/dark-record.png)。

@@ -118,7 +118,6 @@ export function RecordForm({
         await save('save_work_record', { input: { ...value, body }, ...context });
       }}
     >
-      {properties}
       <VoiceTextArea
         label="记录内容"
         aria-label="工作记录内容"
@@ -134,6 +133,7 @@ export function RecordForm({
       {!properties && (
         <WorkScopeField caseId={value.caseId} data={data} value={context} onChange={setContext} />
       )}
+      {properties}
     </Dialog>
   );
 }
