@@ -75,7 +75,9 @@ jobs:
       - run: npm run check:mobile-boundaries
       - run: cargo check --locked -p hm-app --lib --target aarch64-linux-android
   ios-app:
-    runs-on: macos-15
+    # The default Mac pool remained queued; use the available signing pool.
+    # The verifier selects the simulator target for the runner architecture.
+    runs-on: macos-15-intel
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
