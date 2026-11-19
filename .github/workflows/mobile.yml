@@ -78,7 +78,8 @@ jobs:
     # The default Mac pool remained queued; use the available signing pool.
     # The verifier selects the simulator target for the runner architecture.
     runs-on: macos-15-intel
-    timeout-minutes: 35
+    # Cold Intel application + XCTest builds exceeded the shared 35m budget.
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -90,7 +91,8 @@ jobs:
           targets: aarch64-apple-ios-sim,x86_64-apple-ios
       - uses: Swatinem/rust-cache@v2
         with:
-          key: ios-simulator-${{ runner.arch }}
+          # Retire the empty cache saved before the simulator SDK was pinned.
+          key: ios-simulator-v2-${{ runner.arch }}
           cache-on-failure: true
       - name: Ensure Xcode project tools
         env:

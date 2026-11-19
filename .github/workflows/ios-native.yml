@@ -5,8 +5,8 @@ permissions:
   contents: read
 jobs:
   native-drivers:
-    runs-on: macos-15
-    timeout-minutes: 20
+    runs-on: macos-15-intel
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -14,7 +14,9 @@ jobs:
           node-version: '22'
       - uses: dtolnay/rust-toolchain@stable
       - name: Resolve the production Tauri SDK
-        run: cargo metadata --locked --format-version 1 --filter-platform aarch64-apple-ios-sim > /dev/null
+        run: |
+          native_triple="$(node -p 'process.arch === "arm64" ? "aarch64-apple-ios-sim" : "x86_64-apple-ios"')"
+          cargo metadata --locked --format-version 1 --filter-platform "$native_triple" > /dev/null
       - name: Ensure Xcode project tools
         env:
           HOMEBREW_NO_AUTO_UPDATE: '1'
