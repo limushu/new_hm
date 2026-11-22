@@ -12,7 +12,7 @@ import {
   readdirSync,
   writeFileSync,
 } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import { createServer } from 'node:net';
 import { spawn, spawnSync } from 'node:child_process';
 
@@ -23,7 +23,9 @@ const output = resolve('artifacts/windows-verification');
 mkdirSync(output, { recursive: true });
 mkdirSync(resolve('.local'), { recursive: true });
 const root = mkdtempSync(resolve('.local/windows-release-'));
-const executable = join(root, '案笺.exe');
+const executable = join(root, `anjian-native-${crypto.randomUUID()}.exe`);
+const browserPolicy =
+  'HKCU\\Software\\Policies\\Microsoft\\Edge\\WebView2\\AdditionalBrowserArguments';
 copyFileSync(resolve(process.argv[2] ?? 'target/release/hm-app.exe'), executable);
 mkdirSync(join(root, 'branding'));
 copyFileSync('src-tauri/icons/icon.ico', join(root, 'branding/hm-mark.ico'));
@@ -106,6 +108,18 @@ async function start() {
   await new Promise((done) => server.listen(0, '127.0.0.1', done));
   const port = server.address().port;
   await new Promise((done) => server.close(done));
+  const browserArgs = `--remote-debugging-port=${port} --remote-debugging-address=127.0.0.1 --use-fake-device-for-media-stream --use-fake-ui-for-media-stream`;
+  // WebView2's documented per-application policy is scoped to a unique test
+  // filename. Never change wildcard policy or the installed application's ID.
+  const configured = spawnSync(
+    'reg.exe',
+    ['ADD', browserPolicy, '/v', basename(executable), '/t', 'REG_SZ', '/d', browserArgs, '/f'],
+    { encoding: 'utf8', windowsHide: true },
+  );
+  if (configured.status !== 0) throw new Error(configured.stderr || configured.stdout);
+  const environment = { ...process.env };
+  for (const key of Object.keys(environment))
+    if (key.toUpperCase() === 'WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS') delete environment[key];
   const stdout = openSync(join(root, `launch-${launches}.stdout.log`), 'w');
   const stderr = openSync(join(root, `launch-${launches}.stderr.log`), 'w');
   try {
@@ -115,10 +129,7 @@ async function start() {
       cwd: root,
       windowsHide: true,
       stdio: ['ignore', stdout, stderr],
-      env: {
-        ...process.env,
-        WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port} --remote-debugging-address=127.0.0.1 --use-fake-device-for-media-stream --use-fake-ui-for-media-stream`,
-      },
+      env: environment,
     });
     await new Promise((done, reject) => {
       child.once('spawn', done);
@@ -383,4 +394,7 @@ try {
   report.pageErrors = errors;
   writeFileSync(join(output, 'verification.json'), JSON.stringify(report, null, 2) + '\n');
   await stop();
+  spawnSync('reg.exe', ['DELETE', browserPolicy, '/v', basename(executable), '/f'], {
+    windowsHide: true,
+  });
 }
