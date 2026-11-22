@@ -3,16 +3,18 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import {
   copyFileSync,
+  closeSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
+  openSync,
   readFileSync,
   readdirSync,
   writeFileSync,
 } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { createServer } from 'node:net';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 
 // Exercise the bundled production frontend and real Windows IPC/SQLite, without
 // replacing providers or touching an installed user's workspace.
@@ -68,7 +70,7 @@ assert.equal(legacy.prepare('PRAGMA user_version').get().user_version, 7);
 assert.deepEqual(legacy.prepare('PRAGMA foreign_key_check').all(), []);
 legacy.close();
 
-let pid, browser, page;
+let pid, browser, page, child;
 let launches = 0;
 const errors = [];
 const report = {
@@ -104,23 +106,29 @@ async function start() {
   await new Promise((done) => server.listen(0, '127.0.0.1', done));
   const port = server.address().port;
   await new Promise((done) => server.close(done));
-  pid = Number(
-    powershell(
-      'tests/native/start-hidden.ps1',
-      [
-        '-Executable',
-        executable,
-        '-TaskDirectory',
-        root,
-        '-LogPrefix',
-        join(root, `launch-${launches}`),
-      ],
-      {
+  const stdout = openSync(join(root, `launch-${launches}.stdout.log`), 'w');
+  const stderr = openSync(join(root, `launch-${launches}.stderr.log`), 'w');
+  try {
+    // Launch directly: a shell can replace inherited WebView2 options or keep
+    // redirected streams alive while waiting for a long-running GUI process.
+    child = spawn(executable, [], {
+      cwd: root,
+      windowsHide: true,
+      stdio: ['ignore', stdout, stderr],
+      env: {
         ...process.env,
         WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port} --remote-debugging-address=127.0.0.1 --use-fake-device-for-media-stream --use-fake-ui-for-media-stream`,
       },
-    ),
-  );
+    });
+    await new Promise((done, reject) => {
+      child.once('spawn', done);
+      child.once('error', reject);
+    });
+    pid = child.pid;
+  } finally {
+    closeSync(stdout);
+    closeSync(stderr);
+  }
   console.log(`Started isolated Windows process ${pid}, launch ${launches}`);
   await expect(async () => {
     const endpoint = await fetch(`http://127.0.0.1:${port}/json/version`).then((r) => r.json());
@@ -337,6 +345,7 @@ try {
   console.log(JSON.stringify(report, null, 2));
 } catch (error) {
   report.error = String(error);
+  report.processExitCode = child?.exitCode ?? null;
   for (let launch = 1; launch <= launches; launch++) {
     for (const kind of ['stdout', 'stderr']) {
       const path = join(root, `launch-${launch}.${kind}.log`);
