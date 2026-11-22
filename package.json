@@ -34,6 +34,7 @@
     "artifacts:portable": "node scripts/collect-portable.mjs",
     "postinstall": "node scripts/copy-pdf-assets.mjs",
     "test:native": "node --no-warnings tests/native/workspace.mjs",
+    "test:native:release": "node --no-warnings tests/native/windows-release.mjs",
     "release:verify": "node scripts/verify-release.mjs"
   },
   "dependencies": {

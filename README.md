@@ -4,15 +4,15 @@
 
 面向独立执业律师的本地工作应用：案件、办理流程、材料归档、日程、联系人和简单收支。无需登录，离线使用。技术栈为 Tauri 2、React/TypeScript、Rust、SQLite。
 
-Windows 初期交付为 **1.4.0，x64 安装版**。当前 iOS 功能候选 **1.7.7（28.1）** 增加[完整备份文件与 iCloud 云盘导出](docs/backup-subsystem.md)，统一[对象详情与内容展示](docs/object-details.md)，并包含[设备内录音转文字](docs/speech-transcription.md)，TestFlight 与审核准备状态见 [App Store 发布记录](docs/app-store/README.md)。macOS、Android 尚未做发布验收。
+当前共用功能版本为 **1.8.9**。iOS **1.8.9（44.1）** 已可供 TestFlight 内部测试员安装；Windows 正在准备 [1.8.9 x64 测试安装包](docs/windows-release.md)，上次公开安装版为 1.4.3。对象、属性、关联、费用和界面改动共用代码；平台驱动能力分别说明。macOS、Android 尚未做发布验收。
 
-账号与云同步正在单独准备，尚未在测试版开放。平台接入位置见[驱动地图](docs/design/platform-driver-map.md)，托管账号见[Supabase 准备说明](docs/managed-identity.md)。代码中的 CloudKit 驱动不代表生产容器、账号登录或多设备验收已完成。
+iOS 已提供可选 Apple 登录与前台 CloudKit 同步，真实个人账号双设备往返仍待验收；Windows 的登录、云同步、语音识别及系统日历驱动尚未接入。平台接入位置见[驱动地图](docs/design/platform-driver-map.md)，托管账号见[Supabase 准备说明](docs/managed-identity.md)，签名包与验证证据见 [App Store 发布记录](docs/app-store/README.md)。
 
 ## 使用与验收
 
-安装包、签名与更新清单位于本地 artifacts/windows/1.4.0/；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
+Windows 安装包、签名与更新清单位于 `artifacts/windows/<版本>/`；公开分发见 [GitHub Releases](https://github.com/limushu/new_hm/releases)，手动构建的测试产物位于 `Windows release` 工作流。安装包不含个人数据。Node 与 Rust 只在开发和构建时需要。
 
-详见[1.0 使用与验收](docs/v1.0-acceptance.md)：功能检查、数据位置、备份、提醒与升级边界。软件尚无 Windows 发布者代码签名证书，在线升级使用独立签名验证。
+详见 [Windows 当前使用与验收](docs/windows-release.md)：功能检查、数据位置、备份、提醒与升级边界。[旧版验收](docs/v1.0-acceptance.md)保留作历史记录。软件尚无 Windows 发布者代码签名证书，在线升级使用独立签名验证。
 
 - 案件：Notion 式侧页新建、跨状态拖拽、自定义状态、自定义诉讼/非诉流程与阶段、事件、待办及工作记录。
 - 材料：复制导入、拖入、同名保留、文件夹、程序归属、PDF/图片预览、音频播放、系统打开、导出、回收站。

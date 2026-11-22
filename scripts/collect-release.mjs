@@ -8,6 +8,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { join, resolve } from 'node:path';
 import { verifyRelease } from './verify-release.mjs';
 
@@ -30,7 +31,7 @@ writeFileSync(
   JSON.stringify(
     {
       version,
-      notes: readFileSync('docs/release-notes.md', 'utf8').trim(),
+      notes: readFileSync('docs/windows-release-notes.md', 'utf8').trim(),
       pub_date: new Date().toISOString(),
       platforms: { 'windows-x86_64': { signature, url: `${base}/${assetName}` } },
     },
@@ -38,7 +39,17 @@ writeFileSync(
     2,
   ) + '\n',
 );
-copyFileSync('docs/v1.0-acceptance.md', join(out, 'README.zh-CN.md'));
+// Bundled documentation is read outside the repository; keep its links usable
+// and tied to the exact source that produced this installer.
+const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { encoding: 'utf8' }).trim();
+const docBase = `https://github.com/limushu/new_hm/blob/${sourceCommit}/docs/`;
+writeFileSync(
+  join(out, 'README.zh-CN.md'),
+  readFileSync('docs/windows-release.md', 'utf8').replace(
+    /\]\((?!https?:\/\/|#)([^)]+)\)/g,
+    (_, path) => `](${new URL(path, docBase).href})`,
+  ),
+);
 const hashes = [];
 for (const name of [assetName, `${assetName}.sig`, 'latest.json', 'README.zh-CN.md']) {
   const hash = createHash('sha256');

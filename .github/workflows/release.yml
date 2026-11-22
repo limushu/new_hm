@@ -8,6 +8,7 @@ permissions:
 jobs:
   release:
     runs-on: windows-latest
+    timeout-minutes: 60
     concurrency:
       group: windows-release-${{ github.ref }}
       cancel-in-progress: false
@@ -18,11 +19,15 @@ jobs:
           node-version: '22'
           cache: npm
       - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: windows-release
       - run: npm ci
       - run: npm run check
       - run: npm run format:check
       - run: npm run docs:check
-      - run: cargo test --locked -p hm-core
+      - run: npm run icons:check
+      - run: cargo test --locked -p hm-core -p hm-runtime -p hm-application
       - run: npm test
       - name: Build signed updater and installer
         run: npm run desktop:build -- --ci
@@ -30,6 +35,15 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       - run: npm run artifacts:release
+      - name: Verify the production Windows app in an isolated workspace
+        run: npm run test:native:release
+        timeout-minutes: 10
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-verification
+          path: artifacts/windows-verification/*
+          if-no-files-found: ignore
       - uses: actions/upload-artifact@v4
         with:
           name: windows-release
@@ -46,7 +60,7 @@ jobs:
           if ($LASTEXITCODE -eq 0) {
             Write-Host 'Release already exists; preserve its verified published assets.'
           } else {
-            gh release create $env:GITHUB_REF_NAME artifacts/windows/$version/* --title "案笺 $version" --notes-file docs/release-notes.md --verify-tag
+            gh release create $env:GITHUB_REF_NAME artifacts/windows/$version/* --title "案笺 $version" --notes-file docs/windows-release-notes.md --verify-tag
             if ($LASTEXITCODE -ne 0) { throw 'Release publication failed' }
           }
           exit 0
