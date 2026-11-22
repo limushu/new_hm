@@ -167,7 +167,7 @@ async function checkRetained() {
     ),
   );
   assert.equal(workspace.materials.filter((m) => m.name === '验收证据.txt').length, 1);
-  for (const tag of ['Windows', '连续编辑'])
+  for (const tag of ['windows', '连续编辑'])
     assert.ok(workspace.caseTags.some((t) => t.tag === tag));
   assert.equal(workspace.cases.find((c) => c.id === ids.case)?.statusId, 'in_progress');
 }
