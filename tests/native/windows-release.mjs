@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
 import {
   copyFileSync,
+  existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
@@ -68,6 +69,7 @@ assert.deepEqual(legacy.prepare('PRAGMA foreign_key_check').all(), []);
 legacy.close();
 
 let pid, browser, page;
+let launches = 0;
 const errors = [];
 const report = {
   version: JSON.parse(readFileSync('package.json')).version,
@@ -94,6 +96,7 @@ function powershell(script, args = [], env = process.env) {
   return result.stdout.trim();
 }
 async function start() {
+  launches++;
   const server = createServer();
   await new Promise((done) => server.listen(0, '127.0.0.1', done));
   const port = server.address().port;
@@ -101,13 +104,21 @@ async function start() {
   pid = Number(
     powershell(
       'tests/native/start-hidden.ps1',
-      ['-Executable', executable, '-TaskDirectory', root],
+      [
+        '-Executable',
+        executable,
+        '-TaskDirectory',
+        root,
+        '-LogPrefix',
+        join(root, `launch-${launches}`),
+      ],
       {
         ...process.env,
         WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS: `--remote-debugging-port=${port} --remote-debugging-address=127.0.0.1 --use-fake-device-for-media-stream --use-fake-ui-for-media-stream`,
       },
     ),
   );
+  console.log(`Started isolated Windows process ${pid}, launch ${launches}`);
   await expect(async () => {
     const endpoint = await fetch(`http://127.0.0.1:${port}/json/version`).then((r) => r.json());
     assert.ok(endpoint.webSocketDebuggerUrl);
@@ -323,6 +334,19 @@ try {
   console.log(JSON.stringify(report, null, 2));
 } catch (error) {
   report.error = String(error);
+  for (let launch = 1; launch <= launches; launch++) {
+    for (const kind of ['stdout', 'stderr']) {
+      const path = join(root, `launch-${launch}.${kind}.log`);
+      if (existsSync(path)) {
+        const message = readFileSync(path, 'utf8');
+        console.log(`Launch ${launch} ${kind}:`, message);
+        writeFileSync(join(output, `launch-${launch}.${kind}.log`), message);
+      }
+    }
+  }
+  const current = new DatabaseSync(dbPath, { readOnly: true });
+  report.startupSchema = current.prepare('PRAGMA user_version').get().user_version;
+  current.close();
   try {
     await page?.screenshot({ path: join(output, 'failure.png') });
   } catch {}

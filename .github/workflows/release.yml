@@ -22,6 +22,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
         with:
           key: windows-release
+          cache-on-failure: true
       - run: npm ci
       - run: npm run check
       - run: npm run format:check
@@ -35,6 +36,24 @@ jobs:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
       - run: npm run artifacts:release
+      - name: Preserve the signed build separately from native verification
+        shell: pwsh
+        run: |
+          @{
+            source = $env:GITHUB_SHA
+            version = (Get-Content package.json | ConvertFrom-Json).version
+            binarySha256 = (Get-FileHash target/release/hm-app.exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          } | ConvertTo-Json | Set-Content artifacts/windows-candidate.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-candidate
+          path: |
+            target/release/hm-app.exe
+            artifacts/windows-candidate.json
+            artifacts/windows/*/*
+      - name: Prepare WebView2 for direct executable verification
+        shell: pwsh
+        run: ./scripts/setup-webview2.ps1
       - name: Verify the production Windows app in an isolated workspace
         run: npm run test:native:release
         timeout-minutes: 10
