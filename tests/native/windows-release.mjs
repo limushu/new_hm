@@ -210,6 +210,9 @@ try {
   assert.equal((await invoke('agenda_status')).calendar.installed, false);
   report.checks.push('installed-drivers-and-unavailable-services-reported-truthfully');
 
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('button', { name: '深色', exact: true }).click();
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await openCase();
   const name = page.getByLabel('案件名称', { exact: true });
   await name.fill('尚未确认的名称');
@@ -306,7 +309,7 @@ try {
   await invoke('set_setting', { key: 'backup_directory', value: join(root, 'backups') });
   const backup = await invoke('run_backup');
   await invoke('trash_case', { id: ids.case });
-  assert.equal((await invoke('load_workspace')).cases.length, 0);
+  assert.equal((await invoke('load_workspace')).cases.filter((c) => !c.deletedAt).length, 0);
   await invoke('apply_restore_backup', { path: backup.directory, confirmed: true });
   await checkRetained();
   await stop();
