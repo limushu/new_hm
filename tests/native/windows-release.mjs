@@ -346,6 +346,22 @@ try {
 } catch (error) {
   report.error = String(error);
   report.processExitCode = child?.exitCode ?? null;
+  if (pid) {
+    try {
+      console.log(
+        powershell('tests/native/inspect-startup.ps1', [
+          '-TaskPid',
+          String(pid),
+          '-ExpectedExecutable',
+          executable,
+          '-OutputDirectory',
+          output,
+        ]),
+      );
+    } catch (diagnosticError) {
+      console.log('Startup inspection:', String(diagnosticError));
+    }
+  }
   for (let launch = 1; launch <= launches; launch++) {
     for (const kind of ['stdout', 'stderr']) {
       const path = join(root, `launch-${launch}.${kind}.log`);
