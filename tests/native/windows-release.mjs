@@ -1,31 +1,28 @@
-import { chromium, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { DatabaseSync } from 'node:sqlite';
+import { createHash } from 'node:crypto';
+import { spawn, spawnSync } from 'node:child_process';
 import {
-  copyFileSync,
   closeSync,
+  copyFileSync,
   existsSync,
   mkdirSync,
   mkdtempSync,
   openSync,
   readFileSync,
   readdirSync,
+  renameSync,
   writeFileSync,
 } from 'node:fs';
-import { basename, join, resolve } from 'node:path';
-import { createServer } from 'node:net';
-import { spawn, spawnSync } from 'node:child_process';
+import { join, resolve } from 'node:path';
 
-// Exercise the bundled production frontend and real Windows IPC/SQLite, without
-// replacing providers or touching an installed user's workspace.
 if (process.platform !== 'win32') throw new Error('Windows native verification requires Windows');
 const output = resolve('artifacts/windows-verification');
 mkdirSync(output, { recursive: true });
 mkdirSync(resolve('.local'), { recursive: true });
-const root = mkdtempSync(resolve('.local/windows-release-'));
+const root = mkdtempSync(resolve('.local/windows-sdk-'));
 const executable = join(root, `anjian-native-${crypto.randomUUID()}.exe`);
-const browserPolicy =
-  'HKCU\\Software\\Policies\\Microsoft\\Edge\\WebView2\\AdditionalBrowserArguments';
 copyFileSync(resolve(process.argv[2] ?? 'target/release/hm-app.exe'), executable);
 mkdirSync(join(root, 'branding'));
 copyFileSync('src-tauri/icons/icon.ico', join(root, 'branding/hm-mark.ico'));
@@ -38,9 +35,16 @@ const ids = {
   flow: '22222222-2222-4222-8222-222222222222',
   task: '33333333-3333-4333-8333-333333333333',
   contact: '44444444-4444-4444-8444-444444444444',
+  material: '55555555-5555-4555-8555-555555555555',
+  record: '66666666-6666-4666-8666-666666666666',
 };
 const title = 'Windows 升级验收案件（虚构）';
-// These are the unchanged schema 1–7 migrations shipped in Windows 1.4.3.
+const body = '虚构工作记录：核对材料并联系当事人。';
+const evidence = '虚构证据原件，升级与备份应保留这些字节。';
+const archived = join(data, 'materials', ids.case, ids.material, 'evidence.txt');
+mkdirSync(join(data, 'materials', ids.case, ids.material), { recursive: true });
+writeFileSync(archived, evidence);
+// Build the actual schema shipped in Windows 1.4.3; never downgrade a newer DB.
 const legacy = new DatabaseSync(dbPath);
 for (const name of readdirSync('crates/hm-core/migrations').sort()) {
   if (Number(name.slice(0, 3)) <= 7)
@@ -61,340 +65,219 @@ legacy
   .prepare('INSERT INTO contacts(id,name,kind,phone) VALUES(?,?,?,?)')
   .run(ids.contact, '存量王律师（虚构）', 'person', '13800001234');
 legacy
+  .prepare('INSERT INTO contact_links(id,contact_id,case_id,role) VALUES(?,?,?,?)')
+  .run(crypto.randomUUID(), ids.contact, ids.case, '代理律师');
+legacy
   .prepare(
     'INSERT INTO ledger_entries(id,case_id,kind,amount_cents,entry_date,category) VALUES(?,?,?,?,?,?)',
   )
   .run(crypto.randomUUID(), ids.case, 'expense', 12850, '2026-11-22', '差旅费');
+legacy
+  .prepare('INSERT INTO work_records(id,case_id,body) VALUES(?,?,?)')
+  .run(ids.record, ids.case, body);
+legacy
+  .prepare(
+    'INSERT INTO materials(id,case_id,record_id,name,kind,storage_name,size) VALUES(?,?,?,?,?,?,?)',
+  )
+  .run(
+    ids.material,
+    ids.case,
+    ids.record,
+    '升级证据.txt',
+    'file',
+    'evidence.txt',
+    Buffer.byteLength(evidence),
+  );
+legacy
+  .prepare('INSERT INTO calendar_events(id,title,start_date,end_date,case_id) VALUES(?,?,?,?,?)')
+  .run(crypto.randomUUID(), '虚构开庭安排', '2026-12-01', '2026-12-01', ids.case);
 legacy.exec(
-  "INSERT INTO settings VALUES('onboarding_done','hm-welcome-1'),('notifications','false');",
+  "INSERT INTO settings VALUES('onboarding_done','hm-welcome-1'),('notifications','false'),('close_to_tray','false');",
 );
 assert.equal(legacy.prepare('PRAGMA user_version').get().user_version, 7);
 assert.deepEqual(legacy.prepare('PRAGMA foreign_key_check').all(), []);
 legacy.close();
 
-let pid, browser, page, child;
+let child;
 let launches = 0;
-const errors = [];
 const report = {
-  version: JSON.parse(readFileSync('package.json')).version,
+  version: JSON.parse(readFileSync('package.json', 'utf8')).version,
   source: process.env.GITHUB_SHA ?? null,
   binarySource: existsSync('artifacts/windows-candidate.json')
     ? JSON.parse(readFileSync('artifacts/windows-candidate.json', 'utf8')).source
     : (process.env.GITHUB_SHA ?? null),
+  mode: 'windows-sdk-startup-and-persistence',
   checks: [],
   ok: false,
+  limitations: [
+    'Full native UI interaction automation is not covered; release WebView2 ignores the attempted debugger configuration. Shared browser interaction and Windows core suites are separate checks.',
+  ],
 };
-const invoke = (name, args = {}) =>
-  page.evaluate(
-    ([command, args]) => window.__TAURI_INTERNALS__.invoke(command, args),
-    [name, args],
-  );
-function powershell(script, args = [], env = process.env) {
+function checked(name) {
+  report.checks.push(name);
+  console.log(`PASS: ${name}`);
+}
+function powershell(script, args) {
   const result = spawnSync(
     'pwsh',
     ['-NoProfile', '-NonInteractive', '-File', resolve(script), ...args],
     {
-      env,
       encoding: 'utf8',
       windowsHide: true,
+      timeout: 30000,
     },
   );
-  if (result.status !== 0) throw new Error(result.stderr || result.stdout);
+  if (result.status !== 0) throw new Error(result.stderr || result.stdout || String(result.error));
   return result.stdout.trim();
+}
+function verifyData(path, version) {
+  const db = new DatabaseSync(path, { readOnly: true });
+  try {
+    assert.equal(db.prepare('PRAGMA user_version').get().user_version, version);
+    assert.equal(db.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
+    assert.deepEqual(db.prepare('PRAGMA foreign_key_check').all(), []);
+    assert.equal(db.prepare('SELECT title FROM cases WHERE id=?').get(ids.case).title, title);
+    assert.equal(db.prepare('SELECT name FROM proceedings WHERE id=?').get(ids.flow).name, '一审');
+    assert.equal(
+      db.prepare('SELECT title FROM tasks WHERE id=?').get(ids.task).title,
+      '旧版待办保留',
+    );
+    assert.equal(db.prepare('SELECT body FROM work_records WHERE id=?').get(ids.record).body, body);
+    assert.equal(db.prepare('SELECT amount_cents FROM ledger_entries').get().amount_cents, 12850);
+    assert.equal(
+      db.prepare('SELECT name FROM contacts WHERE id=?').get(ids.contact).name,
+      '存量王律师（虚构）',
+    );
+    assert.equal(db.prepare('SELECT COUNT(*) AS n FROM calendar_events').get().n, 1);
+    assert.equal(
+      db.prepare('SELECT storage_name FROM materials WHERE id=?').get(ids.material).storage_name,
+      'evidence.txt',
+    );
+  } finally {
+    db.close();
+  }
 }
 async function start() {
   launches++;
-  const server = createServer();
-  await new Promise((done) => server.listen(0, '127.0.0.1', done));
-  const port = server.address().port;
-  await new Promise((done) => server.close(done));
-  const browserArgs = `--remote-debugging-port=${port} --remote-debugging-address=127.0.0.1 --use-fake-device-for-media-stream --use-fake-ui-for-media-stream`;
-  // WebView2's documented per-application policy is scoped to a unique test
-  // filename. Never change wildcard policy or the installed application's ID.
-  const configured = spawnSync(
-    'reg.exe',
-    ['ADD', browserPolicy, '/v', basename(executable), '/t', 'REG_SZ', '/d', browserArgs, '/f'],
-    { encoding: 'utf8', windowsHide: true },
-  );
-  if (configured.status !== 0) throw new Error(configured.stderr || configured.stdout);
-  const environment = { ...process.env };
-  for (const key of Object.keys(environment))
-    if (key.toUpperCase() === 'WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS') delete environment[key];
-  const stdout = openSync(join(root, `launch-${launches}.stdout.log`), 'w');
-  const stderr = openSync(join(root, `launch-${launches}.stderr.log`), 'w');
+  const stdout = openSync(join(output, `launch-${launches}.stdout.log`), 'w');
+  const stderr = openSync(join(output, `launch-${launches}.stderr.log`), 'w');
   try {
-    // Launch directly: a shell can replace inherited WebView2 options or keep
-    // redirected streams alive while waiting for a long-running GUI process.
-    child = spawn(executable, [], {
-      cwd: root,
-      windowsHide: true,
-      stdio: ['ignore', stdout, stderr],
-      env: environment,
-    });
+    child = spawn(executable, [], { cwd: root, stdio: ['ignore', stdout, stderr] });
     await new Promise((done, reject) => {
       child.once('spawn', done);
       child.once('error', reject);
     });
-    pid = child.pid;
   } finally {
     closeSync(stdout);
     closeSync(stderr);
   }
-  console.log(`Started isolated Windows process ${pid}, launch ${launches}`);
+  console.log(`Started owned release process ${child.pid}`);
   await expect(async () => {
-    const endpoint = await fetch(`http://127.0.0.1:${port}/json/version`).then((r) => r.json());
-    assert.ok(endpoint.webSocketDebuggerUrl);
-  }).toPass({ timeout: 30000 });
-  browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
-  page = browser.contexts()[0].pages()[0];
-  page.on('pageerror', (error) => errors.push(error.message));
-  page.on('console', (message) => {
-    if (message.type() === 'error' && message.text().includes('same key'))
-      errors.push(message.text());
-  });
-  await page.getByRole('button', { name: '案件', exact: true }).waitFor();
+    assert.equal(child.exitCode, null, 'Release process exited during startup');
+    verifyData(dbPath, 9);
+    const db = new DatabaseSync(dbPath, { readOnly: true });
+    try {
+      assert.ok(db.prepare("SELECT value FROM settings WHERE key='last_backup_date'").get()?.value);
+    } finally {
+      db.close();
+    }
+  }).toPass({ timeout: 45000 });
 }
 async function stop() {
-  if (pid) {
-    try {
-      await invoke('quit_app');
-    } catch {}
+  if (child?.pid && child.exitCode === null) {
     powershell('tests/native/stop-hidden.ps1', [
       '-TaskPid',
-      String(pid),
+      String(child.pid),
       '-ExpectedExecutable',
       executable,
     ]);
-    pid = null;
+    await expect.poll(() => child.exitCode).not.toBeNull();
+    assert.equal(child.exitCode, 0, 'Owned app did not exit cleanly');
   }
-  await browser?.close();
-  browser = null;
 }
-async function openCase() {
-  await page.getByRole('button', { name: '案件', exact: true }).click();
-  await page.locator('.case-card').filter({ hasText: title }).click();
-  await expect(page.getByLabel('案件名称', { exact: true })).toHaveValue(title);
-}
-async function select(field, value) {
-  const name = await field.getAttribute('aria-label');
-  await field.click();
-  await page
-    .getByRole('listbox', { name: `${name}选项`, exact: true })
-    .locator(`[role="option"][data-value="${value}"]`)
-    .click();
-  await expect(page.getByRole('listbox', { name: `${name}选项`, exact: true })).toHaveCount(0);
-}
-async function checkRetained() {
-  const workspace = await invoke('load_workspace');
-  assert.equal(workspace.cases.find((c) => c.id === ids.case)?.title, title);
-  assert.equal(workspace.tasks.find((t) => t.id === ids.task)?.title, '旧版待办保留');
-  assert.equal(workspace.ledgerEntries[0]?.amountCents, 12850);
+function inspectWindow(label) {
+  powershell('tests/native/inspect-startup.ps1', [
+    '-TaskPid',
+    String(child.pid),
+    '-ExpectedExecutable',
+    executable,
+    '-OutputDirectory',
+    output,
+  ]);
+  const state = JSON.parse(
+    readFileSync(join(output, 'startup-processes.json'), 'utf8').replace(/^\uFEFF/, ''),
+  );
+  assert.ok(state.mainWindow.includes('案笺'));
   assert.ok(
-    workspace.resourceMetadata.some((m) =>
-      m.properties.some((p) => p.name === '审理结果' && p.value === '保留旧案，准备补充证据'),
+    state.processes.some(
+      (p) => p.Name === 'msedgewebview2.exe' && p.CommandLine.includes('--type=renderer'),
     ),
   );
-  assert.ok(
-    workspace.resourceRelations.some(
-      (r) => r.source.id === ids.flow && r.target.id === ids.contact,
-    ),
-  );
-  assert.equal(workspace.materials.filter((m) => m.name === '验收证据.txt').length, 1);
-  for (const tag of ['windows', '连续编辑'])
-    assert.ok(workspace.caseTags.some((t) => t.tag === tag));
-  assert.equal(workspace.cases.find((c) => c.id === ids.case)?.statusId, 'in_progress');
+  assert.ok(existsSync(join(output, 'startup-window.png')));
+  assert.ok(state.windowImage?.renderedColors > 10, 'Native WebView has no rendered content');
+  if (label === 'native-800') {
+    assert.equal(state.windowImage.clientWidth, 800);
+    assert.equal(state.windowImage.clientHeight, 600);
+  }
+  renameSync(join(output, 'startup-window.png'), join(output, `${label}.png`));
+  renameSync(join(output, 'startup-processes.json'), join(output, `${label}.json`));
 }
 try {
   await start();
-  let workspace = await invoke('load_workspace');
-  assert.equal(workspace.cases[0].title, title);
-  assert.equal(workspace.tasks[0].id, ids.task);
-  const upgraded = new DatabaseSync(dbPath, { readOnly: true });
-  assert.equal(upgraded.prepare('PRAGMA user_version').get().user_version, 9);
-  assert.equal(upgraded.prepare('PRAGMA integrity_check').get().integrity_check, 'ok');
-  assert.deepEqual(upgraded.prepare('PRAGMA foreign_key_check').all(), []);
-  upgraded.close();
-  const backups = readdirSync(join(data, 'migration-backups'));
-  assert.ok(backups.length > 0);
-  const original = new DatabaseSync(join(data, 'migration-backups', backups[0]), {
-    readOnly: true,
-  });
-  assert.equal(original.prepare('PRAGMA user_version').get().user_version, 7);
-  assert.equal(original.prepare('SELECT title FROM cases WHERE id=?').get(ids.case).title, title);
-  original.close();
-  report.checks.push('real-schema-7-to-9-upgrade-and-original-backup');
-
-  const manifest = await invoke('subsystem_manifest');
-  const capabilities = manifest.subsystems.flatMap((s) =>
-    s.state === 'ready' ? s.capabilities : [],
+  checked('real-release-startup-schema-7-to-9-and-all-legacy-business-data');
+  const original = readdirSync(join(data, 'migration-backups')).find((name) =>
+    name.endsWith('.sqlite3'),
   );
-  for (const capability of [
-    'tray',
-    'signed-updates',
-    'record-audio',
-    'backup-files',
-    'system-notifications',
-  ])
-    assert.ok(capabilities.includes(capability), capability);
-  for (const capability of ['account-login', 'transcribe-audio', 'system-calendar'])
-    assert.ok(!capabilities.includes(capability), capability);
-  assert.equal((await invoke('identity_status')).installed, false);
-  assert.equal(await invoke('native_sync_provider'), null);
-  assert.equal((await invoke('agenda_status')).calendar.installed, false);
-  report.checks.push('installed-drivers-and-unavailable-services-reported-truthfully');
-
-  await page.getByRole('button', { name: '设置', exact: true }).click();
-  await page.getByRole('button', { name: '深色', exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await openCase();
-  const name = page.getByLabel('案件名称', { exact: true });
-  await name.fill('尚未确认的名称');
-  for (const tag of ['Windows', '连续编辑']) {
-    const tags = page.getByLabel('案件标签', { exact: true });
-    await tags.fill(tag);
-    await tags.press('Enter');
-    await expect(tags).toBeEnabled();
+  assert.ok(original);
+  verifyData(join(data, 'migration-backups', original), 7);
+  assert.equal(readFileSync(archived, 'utf8'), evidence);
+  checked('original-schema-7-database-and-material-bytes-retained');
+  inspectWindow('native-startup');
+  checked('real-win32-window-and-rendered-webview2-production-ui');
+  const backups = join(data, 'backups');
+  const folder = readdirSync(backups).find((name) =>
+    existsSync(join(backups, name, 'manifest.json')),
+  );
+  assert.ok(folder);
+  const backup = join(backups, folder);
+  const manifest = JSON.parse(readFileSync(join(backup, 'manifest.json'), 'utf8'));
+  for (const [name, digest] of Object.entries(manifest.files)) {
+    assert.equal(
+      createHash('sha256')
+        .update(readFileSync(join(backup, name)))
+        .digest('hex'),
+      digest,
+    );
   }
-  await select(page.getByLabel('案件状态', { exact: true }), 'in_progress');
-  await expect(page.locator('.save-state')).toHaveText('名称待保存');
-  await page.getByRole('button', { name: '取消修改', exact: true }).click();
-  await expect(name).toHaveValue(title);
-  report.checks.push('continuous-header-edits-preserve-unconfirmed-title');
-
-  await page.locator('.case-focus-main').click();
-  const node = page.getByRole('dialog', { name: '节点详情', exact: true });
-  await node.getByRole('button', { name: '添加属性', exact: true }).click();
-  const property = page.getByRole('dialog', { name: '添加属性', exact: true });
-  await property.getByLabel('属性名称', { exact: true }).fill('审理结果');
-  await property.getByLabel('属性值', { exact: true }).fill('保留旧案，准备补充证据');
-  await property.getByRole('button', { name: '保存属性', exact: true }).click();
-  await expect(node).toContainText('保留旧案，准备补充证据');
-  await node.getByRole('button', { name: '添加关联', exact: true }).click();
-  const relation = page.getByRole('dialog', { name: '添加案件关联', exact: true });
-  await select(relation.getByLabel('关联对象类型', { exact: true }), 'person');
-  await expect(relation.getByLabel('选择 存量王律师（虚构）', { exact: true })).toHaveCount(0);
-  await select(relation.getByLabel('关联对象范围', { exact: true }), 'directory');
-  const person = relation.getByLabel('选择 存量王律师（虚构）', { exact: true });
-  await person.check();
-  await relation.getByLabel('关联说明', { exact: true }).fill('代理律师');
-  await relation.getByRole('button', { name: '新建人物并关联', exact: true }).click();
-  const create = page.getByRole('dialog', { name: '添加个人', exact: true });
-  await create.getByLabel('对象名称', { exact: true }).fill('放弃创建的人物');
-  await create.getByRole('button', { name: '取消', exact: true }).click();
-  await expect(person).toBeChecked();
-  await expect(relation.getByLabel('关联说明', { exact: true })).toHaveValue('代理律师');
-  await relation.getByRole('button', { name: '保存关联', exact: true }).click();
-  await expect(node).toContainText('存量王律师（虚构）');
-  await page.screenshot({ path: join(output, 'node.png') });
-  await node.getByRole('button', { name: '关闭', exact: true }).click();
-  report.checks.push('single-form-properties-and-scoped-association-with-draft-retention');
-
-  const source = join(root, '验收证据.txt');
-  writeFileSync(source, '虚构证据原件；不得被导入或恢复改写。');
-  const imported = await invoke('import_material_paths', {
-    target: { caseId: ids.case, proceedingId: null, parentId: null, recordId: null },
-    paths: [source],
-  });
-  assert.equal(imported.imported, 1);
-  await page.reload();
-  await openCase();
-  await page.getByRole('tab', { name: '材料', exact: true }).click();
-  await expect(page.locator('.material-row')).toContainText('验收证据.txt');
-  await page.getByRole('tab', { name: '脉络', exact: true }).click();
-  await page.screenshot({ path: join(output, 'timeline-dark.png') });
-  report.checks.push('native-material-import-and-bundled-timeline');
-
-  await page.getByRole('button', { name: '返回看板', exact: true }).click();
-  await page.getByRole('button', { name: '设置', exact: true }).click();
-  await page.getByRole('button', { name: '浅色', exact: true }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  await expect(
-    page.getByText('此平台暂不支持账号登录，可继续离线使用。', { exact: true }),
-  ).toBeVisible();
-  await openCase();
-  for (const [width, height] of [
-    [800, 600],
-    [1440, 960],
-  ]) {
-    powershell('tests/native/resize-owned-window.ps1', [
-      '-TaskPid',
-      String(pid),
-      '-ExpectedExecutable',
-      executable,
-      '-Width',
-      String(width),
-      '-Height',
-      String(height),
-    ]);
-    await expect.poll(() => page.evaluate(() => innerWidth)).toBe(width);
-    for (const tab of ['脉络', '材料', '人员', '费用']) {
-      await page.getByRole('tab', { name: tab, exact: true }).click();
-      const panel = page.getByRole('region', { name: '案件详情', exact: true });
-      assert.ok(await panel.evaluate((el) => el.scrollWidth - el.clientWidth <= 1));
-      await expect(
-        page.getByRole('navigation', { name: '案件快捷操作', exact: true }),
-      ).toBeInViewport();
-    }
-  }
-  await page.screenshot({ path: join(output, 'finance-light.png') });
-  report.checks.push('light-dark-themes-and-all-case-tabs-at-800-and-1440');
-
-  await invoke('set_setting', { key: 'backup_directory', value: join(root, 'backups') });
-  const backup = await invoke('run_backup');
-  await invoke('trash_case', { id: ids.case });
-  assert.equal((await invoke('load_workspace')).cases.filter((c) => !c.deletedAt).length, 0);
-  await invoke('apply_restore_backup', { path: backup.directory, confirmed: true });
-  await checkRetained();
+  verifyData(join(backup, 'workspace.sqlite3'), 9);
+  assert.ok(Object.keys(manifest.files).some((name) => name.startsWith('materials/')));
+  checked('real-background-complete-backup-database-materials-and-all-checksums');
+  powershell('tests/native/resize-owned-window.ps1', [
+    '-TaskPid',
+    String(child.pid),
+    '-ExpectedExecutable',
+    executable,
+    '-Width',
+    '800',
+    '-Height',
+    '600',
+  ]);
+  inspectWindow('native-800');
+  checked('owned-native-window-resize-and-rendering-at-800x600');
   await stop();
   await start();
-  await checkRetained();
-  assert.equal(readFileSync(source, 'utf8'), '虚构证据原件；不得被导入或恢复改写。');
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-  report.checks.push('backup-restore-and-real-process-restart-retain-all-objects-and-files');
-  assert.deepEqual(errors, []);
+  verifyData(dbPath, 9);
+  assert.equal(readFileSync(archived, 'utf8'), evidence);
+  inspectWindow('native-reopened');
+  checked('clean-exit-real-process-restart-and-business-file-persistence');
+  await stop();
   report.ok = true;
   console.log(JSON.stringify(report, null, 2));
 } catch (error) {
   report.error = String(error);
-  report.processExitCode = child?.exitCode ?? null;
-  if (pid) {
-    try {
-      console.log(
-        powershell('tests/native/inspect-startup.ps1', [
-          '-TaskPid',
-          String(pid),
-          '-ExpectedExecutable',
-          executable,
-          '-OutputDirectory',
-          output,
-        ]),
-      );
-    } catch (diagnosticError) {
-      console.log('Startup inspection:', String(diagnosticError));
-    }
-  }
-  for (let launch = 1; launch <= launches; launch++) {
-    for (const kind of ['stdout', 'stderr']) {
-      const path = join(root, `launch-${launch}.${kind}.log`);
-      if (existsSync(path)) {
-        const message = readFileSync(path, 'utf8');
-        console.log(`Launch ${launch} ${kind}:`, message);
-        writeFileSync(join(output, `launch-${launch}.${kind}.log`), message);
-      }
-    }
-  }
-  const current = new DatabaseSync(dbPath, { readOnly: true });
-  report.startupSchema = current.prepare('PRAGMA user_version').get().user_version;
-  current.close();
-  try {
-    await page?.screenshot({ path: join(output, 'failure.png') });
-  } catch {}
+  console.error(error);
   throw error;
 } finally {
-  report.pageErrors = errors;
   writeFileSync(join(output, 'verification.json'), JSON.stringify(report, null, 2) + '\n');
   await stop();
-  spawnSync('reg.exe', ['DELETE', browserPolicy, '/v', basename(executable), '/f'], {
-    windowsHide: true,
-  });
 }

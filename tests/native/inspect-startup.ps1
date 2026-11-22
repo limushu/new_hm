@@ -17,18 +17,7 @@ $children = @($all | Where-Object { $owned.Contains([int]$_.ProcessId) } |
 $listeners = @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue |
   Where-Object { $owned.Contains([int]$_.OwningProcess) } |
   Select-Object LocalAddress, LocalPort, OwningProcess)
-@{ processes = $children; listeners = $listeners; mainWindow = $process.MainWindowTitle } |
-  ConvertTo-Json -Depth 5 | Set-Content (Join-Path $OutputDirectory 'startup-processes.json')
-Add-Type -AssemblyName UIAutomationClient
-Add-Type -AssemblyName UIAutomationTypes
-if ($process.MainWindowHandle -ne [IntPtr]::Zero) {
-  $window = [System.Windows.Automation.AutomationElement]::FromHandle($process.MainWindowHandle)
-  $elements = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
-  $controls = @($elements | ForEach-Object {
-    @{ name = $_.Current.Name; kind = $_.Current.ControlType.ProgrammaticName; enabled = $_.Current.IsEnabled }
-  })
-  $controls | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $OutputDirectory 'startup-accessibility.json')
-}
+$state = @{ processes = $children; listeners = $listeners; mainWindow = $process.MainWindowTitle }
 Add-Type -AssemblyName System.Drawing
 Add-Type @'
 using System;
@@ -36,6 +25,8 @@ using System.Runtime.InteropServices;
 public static class StartupWindow {
  [StructLayout(LayoutKind.Sequential)] public struct Rect { public int Left, Top, Right, Bottom; }
  [DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr window, out Rect rect);
+ [DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr window, out Rect rect);
+ [DllImport("user32.dll")] public static extern uint GetDpiForWindow(IntPtr window);
  [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr window, IntPtr dc, uint flags);
 }
 '@
@@ -48,5 +39,20 @@ if ($process.MainWindowHandle -ne [IntPtr]::Zero) {
   try { [void][StartupWindow]::PrintWindow($process.MainWindowHandle, $dc, 2) }
   finally { $graphics.ReleaseHdc($dc); $graphics.Dispose() }
   $bitmap.Save((Join-Path $OutputDirectory 'startup-window.png'), [Drawing.Imaging.ImageFormat]::Png)
+  $colors = [Collections.Generic.HashSet[int]]::new()
+  for ($y = 100; $y -lt $bitmap.Height - 20; $y += 9) {
+    for ($x = 250; $x -lt $bitmap.Width - 20; $x += 9) {
+      [void]$colors.Add($bitmap.GetPixel($x, $y).ToArgb())
+    }
+  }
+  $client = New-Object StartupWindow+Rect
+  [void][StartupWindow]::GetClientRect($process.MainWindowHandle, [ref]$client)
+  $scale = [StartupWindow]::GetDpiForWindow($process.MainWindowHandle) / 96.0
+  $state.windowImage = @{
+    width = $bitmap.Width; height = $bitmap.Height; renderedColors = $colors.Count
+    clientWidth = [math]::Round($client.Right / $scale)
+    clientHeight = [math]::Round($client.Bottom / $scale)
+  }
   $bitmap.Dispose()
 }
+$state | ConvertTo-Json -Depth 5 | Set-Content (Join-Path $OutputDirectory 'startup-processes.json')
