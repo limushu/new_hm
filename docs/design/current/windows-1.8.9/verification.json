@@ -1,0 +1,18 @@
+{
+  "version": "1.8.9",
+  "source": "031c9c3fc435a863dcdab2ed2a5b492c501e989f",
+  "binarySource": "8858c045711d1011411df99ca79268704654c5ad",
+  "mode": "windows-sdk-startup-and-persistence",
+  "checks": [
+    "real-release-startup-schema-7-to-9-and-all-legacy-business-data",
+    "original-schema-7-database-and-material-bytes-retained",
+    "real-win32-window-and-rendered-webview2-production-ui",
+    "real-background-complete-backup-database-materials-and-all-checksums",
+    "owned-native-window-resize-and-rendering-at-800x600",
+    "clean-exit-real-process-restart-and-business-file-persistence"
+  ],
+  "ok": true,
+  "limitations": [
+    "Full native UI interaction automation is not covered; release WebView2 ignores the attempted debugger configuration. Shared browser interaction and Windows core suites are separate checks."
+  ]
+}

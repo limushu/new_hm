@@ -42,4 +42,16 @@
 
 ## 构建
 
-GitHub 的 `Windows release` 工作流在同一源码上完成核心测试、发布构建、升级签名验证和原生流程验收，成功后提供 `windows-release` 安装包及 `windows-verification` 截图/报告。手动触发仅生成测试产物，不变更现有稳定更新入口；发布版本标签仍沿用原有流程。
+GitHub 的 `Windows release` 工作流完成核心测试、发布构建、升级签名验证和原生启动/持久化检查，成功后提供 `windows-release` 安装包及 `windows-verification` 截图/报告。候选构建也可在产品源码不变时通过独立 `Windows candidate native checks` 复验，先校验来源、EXE 哈希和升级签名，再执行原生检查。手动触发仅生成测试产物，不变更现有稳定更新入口；发布版本标签仍沿用原有流程。
+
+## 2026-11-22 交付与验证
+
+[下载 Windows 1.8.9 测试包](https://github.com/limushu/new_hm/actions/runs/44982807798/artifacts/14738865848)，解压 `1.8.9/` 后运行安装程序。需要 GitHub 登录；也可将原始 ZIP 转发给其他测试员。当前公开稳定版仍为 1.4.3，测试包需手动覆盖安装。
+
+签名候选由[构建任务](https://github.com/limushu/new_hm/actions/runs/44980560412)生成，产品源码 `8858c045711d1011411df99ca79268704654c5ad`。安装包 SHA-256：`9032f63ee4e571f5ffede4381d0beb4084a2e70655ae86ab2bbebeb774ed288b`。已用现有升级公钥验证安装包签名、受保护版本和篡改拒绝；同包文件哈希全部通过，与 1.4.3 保持应用标识、升级公钥和稳定更新地址一致。
+
+[共用应用检查](https://github.com/limushu/new_hm/actions/runs/44979663650)通过 96 项单元、150 项 Chromium、46 项 WebKit 回归、Windows 核心测试和应用编译。后续改动只有验收工具、流程和文档；独立复验确认全部产品源码、依赖和资源不变，复用同一已签名候选。
+
+[Windows 原生复验](https://github.com/limushu/new_hm/actions/runs/44982807798)于 03:56:53 UTC 通过 6 组检查：真实发布 EXE 启动并将旧库由 7 升至 9；案件、流程、人员、待办、日程、记录、收支及材料完整；原数据库副本与材料字节保留；自动完整备份的数据库及材料哈希有效；真实 Win32/WebView2 窗口与 800×600 客户区渲染；干净退出并重启后数据保留。验收源码 `031c9c3fc435a863dcdab2ed2a5b492c501e989f`，二进制来源仍为上述候选。[原生报告](design/current/windows-1.8.9/verification.json) · [启动截图](design/current/windows-1.8.9/native-startup.png) · [800×600 截图](design/current/windows-1.8.9/native-800.png) · [重启截图](design/current/windows-1.8.9/native-reopened.png)。截图均为隔离的虚构数据，已目视核对。
+
+**验收边界：完整 Windows 原生界面操作尚未全量验收。** 当前 WebView2 没有接受尝试的调试连接配置，系统可访问性树也未提供可导航的页面控件，因此没有将这些原生交互尝试算作通过。详细操作由共用浏览器交互与 Windows Rust 核心回归覆盖；个人电脑上仍需按上方清单试用属性、关联、实际麦克风、通知、文件选择器及安装升级。本次未发布稳定更新，也未改动 iOS 版本或云服务配置。
