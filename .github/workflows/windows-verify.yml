@@ -1,0 +1,47 @@
+name: Windows candidate native checks
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_run:
+        description: Windows release run containing the windows-candidate artifact
+        required: true
+        type: string
+permissions:
+  contents: read
+  actions: read
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-candidate
+          run-id: ${{ inputs.candidate_run }}
+          github-token: ${{ github.token }}
+      - name: Verify binary, signatures and unchanged product sources
+        run: node scripts/verify-windows-candidate.mjs
+      - name: Prepare WebView2
+        shell: pwsh
+        run: ./scripts/setup-webview2.ps1
+      - name: Verify the retained production executable
+        run: npm run test:native:release
+        timeout-minutes: 10
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-verification
+          path: artifacts/windows-verification/*
+          if-no-files-found: ignore
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-release
+          path: artifacts/windows/*/*

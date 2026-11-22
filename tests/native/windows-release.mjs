@@ -74,6 +74,9 @@ const errors = [];
 const report = {
   version: JSON.parse(readFileSync('package.json')).version,
   source: process.env.GITHUB_SHA ?? null,
+  binarySource: existsSync('artifacts/windows-candidate.json')
+    ? JSON.parse(readFileSync('artifacts/windows-candidate.json', 'utf8')).source
+    : (process.env.GITHUB_SHA ?? null),
   checks: [],
   ok: false,
 };
