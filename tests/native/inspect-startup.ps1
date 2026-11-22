@@ -19,6 +19,16 @@ $listeners = @(Get-NetTCPConnection -State Listen -ErrorAction SilentlyContinue 
   Select-Object LocalAddress, LocalPort, OwningProcess)
 @{ processes = $children; listeners = $listeners; mainWindow = $process.MainWindowTitle } |
   ConvertTo-Json -Depth 5 | Set-Content (Join-Path $OutputDirectory 'startup-processes.json')
+Add-Type -AssemblyName UIAutomationClient
+Add-Type -AssemblyName UIAutomationTypes
+if ($process.MainWindowHandle -ne [IntPtr]::Zero) {
+  $window = [System.Windows.Automation.AutomationElement]::FromHandle($process.MainWindowHandle)
+  $elements = $window.FindAll([System.Windows.Automation.TreeScope]::Descendants, [System.Windows.Automation.Condition]::TrueCondition)
+  $controls = @($elements | ForEach-Object {
+    @{ name = $_.Current.Name; kind = $_.Current.ControlType.ProgrammaticName; enabled = $_.Current.IsEnabled }
+  })
+  $controls | ConvertTo-Json -Depth 4 | Set-Content (Join-Path $OutputDirectory 'startup-accessibility.json')
+}
 Add-Type -AssemblyName System.Drawing
 Add-Type @'
 using System;
