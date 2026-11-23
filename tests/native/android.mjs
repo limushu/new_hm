@@ -34,6 +34,41 @@ async function start() {
   page.on('pageerror', (error) => errors.push(error.message));
   await expect(page.getByRole('button', { name: '案件', exact: true })).toBeVisible();
 }
+function selectorPending(error) {
+  return /Timeout|Timed out waiting for selector/i.test(String(error));
+}
+async function nativeWait(selector) {
+  await expect
+    .poll(
+      async () => {
+        try {
+          await device.wait(selector, { timeout: 1000 });
+          return true;
+        } catch (error) {
+          if (!selectorPending(error)) throw error;
+          return false;
+        }
+      },
+      { timeout: 30000 },
+    )
+    .toBe(true);
+}
+async function nativeTap(selector) {
+  await expect
+    .poll(
+      async () => {
+        try {
+          await device.tap(selector, { timeout: 1000 });
+          return true;
+        } catch (error) {
+          if (!selectorPending(error)) throw error;
+          return false;
+        }
+      },
+      { timeout: 30000 },
+    )
+    .toBe(true);
+}
 async function back() {
   // A foreign launcher ANR can steal key events during a cold SDK boot.
   // Dismiss only that system fixture failure; never suppress an app ANR.
@@ -42,7 +77,7 @@ async function back() {
     await device.tap({ text: /^close app$/i });
     console.log('Dismissed SDK launcher ANR (application not involved)');
   } catch (error) {
-    if (!String(error).includes('Timeout')) throw error;
+    if (!selectorPending(error)) throw error;
   }
   await device.input.press('Back');
 }
@@ -53,9 +88,9 @@ async function hideKeyboard() {
 }
 async function chooseDownload(name) {
   // The system picker opens outside the WebView. Use its actual accessibility tree.
-  await device.tap({ desc: 'Show roots' });
-  await device.tap({ text: 'Downloads', res: 'android:id/title' });
-  await device.tap({ text: name });
+  await nativeTap({ desc: 'Show roots' });
+  await nativeTap({ text: 'Downloads', res: 'android:id/title' });
+  await nativeTap({ text: name });
 }
 async function record(name) {
   checks.push(name);
@@ -107,7 +142,7 @@ try {
   await page.getByRole('tab', { name: '材料', exact: true }).click();
   const materials = page.getByRole('region', { name: '案件材料' });
   await materials.getByRole('button', { name: '添加材料', exact: true }).click();
-  await device.wait({ pkg: /.*documentsui/ });
+  await nativeWait({ pkg: /.*documentsui/ });
   await back();
   await expect(materials.getByRole('button', { name: '添加材料', exact: true })).toBeEnabled();
   await device.push(Buffer.from(evidence), `/sdcard/Download/${evidenceName}`);
@@ -152,10 +187,10 @@ try {
 
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByRole('button', { name: '导出完整备份', exact: true }).click();
-  await device.wait({ pkg: /.*documentsui/ });
-  await device.tap({ desc: 'Show roots' });
-  await device.tap({ text: 'Downloads', res: 'android:id/title' });
-  await device.tap({ text: /^save$/i });
+  await nativeWait({ pkg: /.*documentsui/ });
+  await nativeTap({ desc: 'Show roots' });
+  await nativeTap({ text: 'Downloads', res: 'android:id/title' });
+  await nativeTap({ text: /^save$/i });
   await expect(page.getByRole('status').filter({ hasText: '已导出' })).toBeVisible();
   const exported = shell('ls', '/sdcard/Download')
     .split('\n')
