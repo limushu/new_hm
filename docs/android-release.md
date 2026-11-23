@@ -18,7 +18,7 @@ Android 原生工程由 `tauri android init` 生成，不提交生成文件。[�
 
 [Android 文件桥](../crates/tauri-plugin-hm-documents/android/src/main/java/com/limushu/hm/documents/DocumentsPlugin.kt)和[Android 宿主桥](../crates/tauri-plugin-hm-host/android/src/main/java/com/limushu/hm/host/HostPlugin.kt)分别实现已有接口；Rust 移动桥在 iOS/Android 共用，平台差异留在装配与 Kotlin/Swift 中。
 
-[APK 工作流](../.github/workflows/android.yml)准备 ARM64 发布候选及 Android SDK 检查。候选、模拟器验证、签名与 Redmi 真机试用分别记录；构建成功不等于真机兼容已经验证。当前候选仍在验证，下载与签名结果完成后补充。
+[APK 工作流](../.github/workflows/android.yml)准备 ARM64 发布候选及 Android SDK 检查。候选、模拟器验证、签名与 Redmi 真机试用分别记录；构建成功不等于真机兼容已经验证。ARM64 候选已完成构建、签名与安装包检查，9 项 Android 原生边界测试通过；模拟器实际流程仍在执行，Redmi 真机试用待用户安装后验收。
 
 
 ## 构建和更新身份
@@ -28,3 +28,16 @@ Android 原生工程由 `tauri android init` 生成，不提交生成文件。[�
 测试分发用 [本地签名脚本](../scripts/sign-android.mjs)处理 CI 生成的未签名候选：私钥与密码仅在被忽略的 `.local/android-signing/` 保存，不进入 Git、APK 或 CI 产物；公开证书指纹用于阻止误换签名。必须安全保留该目录，后续版本使用同一身份覆盖安装；缺少原密钥时脚本拒绝自动生成替代身份。这个身份不等于应用商店发布或 Google Play App Signing 配置。
 
 调试 x86_64 模拟器包只用于受控测试：通过实际 WebView/原生 SDK 验证交互，不注入预览仓库；发布 ARM64 包保持非调试。完整备份可用于与其他平台手动迁移，账号登录并不会自动替 Android 开启云同步。
+
+
+## 1.9.0 ARM64 安装包核对
+
+- 产品源码：`54e0a960f48f698db3e9b9d657896261eb05d480`；[APK 与 Kotlin SDK 测试](https://github.com/limushu/new_hm/actions/runs/45105511119)通过。系统文件流测试 4 项、主题/安全区/键盘布局测试 5 项，共 9 项。
+- 安装文件：`anjian-1.9.0-android-arm64.apk`，27,183,417 字节。包名 `com.limushu.hm`，版本码 `1009000`，min SDK 24、target/compile SDK 36。
+- 实际发布 APK 非调试，关闭系统云备份/设备迁移，未申请广泛存储、录音、日历或通知权限；材料访问由系统选择器按次授权。
+- APK Signature Scheme v2/v3 核验通过；实际 ARM64 原生库的所有 LOAD 段和未压缩 ZIP 偏移均满足 16 KiB 对齐。[公开核对记录](android-receipt-1.9.0.json)保存 APK 哈希、签名证书摘要与库信息；私钥不在仓库中。
+- [共用应用检查](https://github.com/limushu/new_hm/actions/runs/45105802602)通过 100 项单元、150 项 Chromium、46 项 WebKit 回归、Rust 测试/Clippy 及 Windows 应用构建。模拟器调试包和发布 ARM64 包分开记录，模拟器不等于 K60 真机验收。
+
+下载交付的 APK 后直接安装。系统询问时允许当前浏览器或文件管理器安装应用；不需要开启 USB 调试或关闭系统优化。之后使用相同签名覆盖更新；卸载会删除私有目录中的案件和材料。
+
+设置中的「导出完整备份」和「从文件恢复」可用于 Windows/iOS/Android 间手动迁移完整工作区，包含数据库与材料。Android 当前没有自动云同步；账号登录和系统云盘文件提供器也不等于双向实时同步。

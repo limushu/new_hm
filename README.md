@@ -4,7 +4,7 @@
 
 面向独立执业律师的本地工作应用：案件、办理流程、材料归档、日程、联系人和简单收支。无需登录，离线使用。技术栈为 Tauri 2、React/TypeScript、Rust、SQLite。
 
-当前共用功能版本为 **1.8.9**。iOS **1.8.9（44.1）** 已可供 TestFlight 内部测试员安装；[Windows 1.8.9 x64 测试安装包](docs/windows-release.md)已生成并通过签名、原生启动、旧库升级、完整备份校验和重启留存检查，需手动安装。公开稳定更新渠道仍为 1.4.3。对象、属性、关联、费用和界面改动共用代码；平台驱动能力分别说明。macOS、Android 尚未做发布验收。
+当前代码版本为 **1.9.0**，新增 [Android ARM64 测试版适配](docs/android-release.md)，目标设备 Redmi K60；APK 已构建签名，模拟器与真机验收分别记录。iOS **1.8.9（44.1）** 已可供 TestFlight 内部测试员安装；[Windows 1.8.9 x64 测试安装包](docs/windows-release.md)已生成并通过签名、原生启动、旧库升级、完整备份校验和重启留存检查，需手动安装。公开稳定更新渠道仍为 1.4.3。对象、属性、关联、费用和界面改动共用代码；平台驱动能力分别说明。macOS 尚未做发布验收。
 
 iOS 已提供可选 Apple 登录与前台 CloudKit 同步，真实个人账号双设备往返仍待验收；Windows 的登录、云同步、语音识别及系统日历驱动尚未接入。平台接入位置见[驱动地图](docs/design/platform-driver-map.md)，托管账号见[Supabase 准备说明](docs/managed-identity.md)，签名包与验证证据见 [App Store 发布记录](docs/app-store/README.md)。
 

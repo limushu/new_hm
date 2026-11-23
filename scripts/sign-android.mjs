@@ -86,8 +86,6 @@ execFileSync(
     alias,
     '--ks-pass',
     `file:${password}`,
-    '--key-pass',
-    `file:${password}`,
     '--min-sdk-version',
     '24',
     '--v1-signing-enabled',

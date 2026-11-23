@@ -1,0 +1,27 @@
+{
+  "source": "54e0a960f48f698db3e9b9d657896261eb05d480",
+  "workflowRun": 45105511119,
+  "package": "com.limushu.hm",
+  "version": "1.9.0",
+  "versionCode": 1009000,
+  "minSdk": 24,
+  "targetSdk": 36,
+  "debuggable": false,
+  "systemBackupEnabled": false,
+  "apkSha256": "7b29bd2efdfb044ccbb645b81113af406ea9c966497d35d25ba9b8d55bb85f53",
+  "bytes": 27183417,
+  "certificateSha256": "7f1939312c79a8c233d6a16907fc38949511aa55d137d032259ef29b20a74087",
+  "libraries": [
+    {
+      "name": "lib/arm64-v8a/libhm_app_lib.so",
+      "bytes": 25504752,
+      "zipOffset": 704512,
+      "elfLoadAlignments": [
+        16384,
+        16384,
+        16384,
+        16384
+      ]
+    }
+  ]
+}
