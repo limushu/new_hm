@@ -27,7 +27,7 @@ writeFileSync(
   JSON.stringify({ stage: 'connect-adb', source: process.env.ANDROID_APK_SOURCE_SHA }),
 );
 console.log('BOOTSTRAP connect-adb');
-const [device] = await android.devices();
+let [device] = await android.devices();
 if (!device) throw new Error('SDK emulator missing');
 device.setDefaultTimeout(20000);
 let page;
@@ -287,14 +287,12 @@ try {
   await expect(page.getByRole('status').filter({ hasText: '备份已恢复' })).toBeVisible();
   await record('SAF full ZIP export, validation and confirmed restore');
 
-  const previousPage = page;
+  // A new device client cannot retain a stale process's debugger discovery.
+  await device.close();
   shell('am', 'force-stop', pkg);
-  // Device discovery polls separately from Activity startup. Wait for the old
-  // socket and page to disappear before selecting the new WebView.
-  await expect.poll(() => previousPage.isClosed(), { timeout: 20000 }).toBe(true);
-  await expect
-    .poll(() => device.webViews().some((view) => view.pkg() === pkg), { timeout: 20000 })
-    .toBe(false);
+  [device] = await android.devices();
+  if (!device) throw new Error('SDK emulator disconnected during restart');
+  device.setDefaultTimeout(20000);
   await start();
   await expect(page.getByRole('dialog', { name: '欢迎使用案笺', exact: true })).toHaveCount(0);
   await page.getByRole('button', { name: '案件', exact: true }).click();
