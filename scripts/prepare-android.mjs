@@ -30,3 +30,13 @@ manifest = manifest.replace(
 );
 writeFileSync(path, manifest);
 console.log('Android private-cache, backup policy and host activity configured.');
+
+// Pin the generated host to the installed stable SDK rather than a CLI preview default.
+const gradlePath = 'src-tauri/gen/android/app/build.gradle.kts';
+const gradle = readFileSync(gradlePath, 'utf8');
+if (!/compileSdk = \d+/.test(gradle) || !/targetSdk = \d+/.test(gradle))
+  throw new Error('Unrecognized Android SDK template');
+writeFileSync(
+  gradlePath,
+  gradle.replace(/compileSdk = \d+/, 'compileSdk = 36').replace(/targetSdk = \d+/, 'targetSdk = 36'),
+);

@@ -6,7 +6,7 @@ plugins {
 }
 android {
     namespace = "com.limushu.hm.host"
-    compileSdk = 37
+    compileSdk = 36
     defaultConfig { minSdk = 24 }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
