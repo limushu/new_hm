@@ -108,6 +108,24 @@ async function touch(locator) {
     y: Math.round(bounds.y + (point.y - viewport.top) * ratio),
   });
 }
+async function closeDevice() {
+  let timer;
+  try {
+    await Promise.race([
+      device.close().catch((error) => console.log('Debugger disconnect:', String(error))),
+      new Promise((resolve) => {
+        timer = setTimeout(() => {
+          console.log(
+            'Debugger disconnect exceeded teardown budget; SDK runner will stop the emulator',
+          );
+          resolve();
+        }, 3000);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
 async function back() {
   // A foreign launcher ANR can steal key events during a cold SDK boot.
   // Dismiss only that system fixture failure; never suppress an app ANR.
@@ -193,7 +211,7 @@ try {
   await back();
   await expect(page.getByRole('button', { name: /记一笔收支/ })).toHaveCount(0);
   await expect(page.getByLabel('案件名称', { exact: true })).toBeVisible();
-  await record('Status persistence and Android Back dismisses popover');
+  await record('Status persistence and Android Back dismisses creation sheet');
 
   await page.getByRole('button', { name: '创建', exact: true }).click();
   await page.getByRole('button', { name: /记一笔收支/ }).click();
@@ -288,7 +306,7 @@ try {
   await record('SAF full ZIP export, validation and confirmed restore');
 
   // A new device client cannot retain a stale process's debugger discovery.
-  await device.close();
+  await closeDevice();
   shell('am', 'force-stop', pkg);
   [device] = await android.devices();
   if (!device) throw new Error('SDK emulator disconnected during restart');
@@ -349,5 +367,9 @@ try {
       2,
     ),
   );
-  await device.close();
+  await closeDevice();
 }
+
+// All assertions and synchronous evidence writes completed successfully. Some
+// Android debug transports keep a polling handle alive after disconnect.
+process.exit(0);
