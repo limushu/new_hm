@@ -38,5 +38,7 @@ if (!/compileSdk = \d+/.test(gradle) || !/targetSdk = \d+/.test(gradle))
   throw new Error('Unrecognized Android SDK template');
 writeFileSync(
   gradlePath,
-  gradle.replace(/compileSdk = \d+/, 'compileSdk = 36').replace(/targetSdk = \d+/, 'targetSdk = 36'),
+  gradle
+    .replace(/compileSdk = \d+/, 'compileSdk = 36')
+    .replace(/targetSdk = \d+/, 'targetSdk = 36'),
 );
