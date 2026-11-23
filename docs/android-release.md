@@ -18,7 +18,7 @@ Android 原生工程由 `tauri android init` 生成，不提交生成文件。[�
 
 [Android 文件桥](../crates/tauri-plugin-hm-documents/android/src/main/java/com/limushu/hm/documents/DocumentsPlugin.kt)和[Android 宿主桥](../crates/tauri-plugin-hm-host/android/src/main/java/com/limushu/hm/host/HostPlugin.kt)分别实现已有接口；Rust 移动桥在 iOS/Android 共用，平台差异留在装配与 Kotlin/Swift 中。
 
-[APK 工作流](../.github/workflows/android.yml)准备 ARM64 发布候选及 Android SDK 检查。候选、模拟器验证、签名与 Redmi 真机试用分别记录；构建成功不等于真机兼容已经验证。ARM64 候选已完成构建、签名与安装包检查，9 项 Android 原生边界测试通过；模拟器实际流程仍在执行，Redmi 真机试用待用户安装后验收。
+[APK 工作流](../.github/workflows/android.yml)准备 ARM64 发布候选及 Android SDK 检查。候选、模拟器验证、签名与 Redmi 真机试用分别记录；构建成功不等于真机兼容已经验证。ARM64 测试包已完成构建、签名与安装包检查，9 项 Android 原生边界测试与 7 项完整模拟器场景均通过。Redmi K60 真机仍需安装试用，不能将 SDK 模拟器写作真机验收。
 
 
 ## 构建和更新身份
@@ -32,12 +32,24 @@ Android 原生工程由 `tauri android init` 生成，不提交生成文件。[�
 
 ## 1.9.0 ARM64 安装包核对
 
-- 产品源码：`54e0a960f48f698db3e9b9d657896261eb05d480`；[APK 与 Kotlin SDK 测试](https://github.com/limushu/new_hm/actions/runs/45105511119)通过。系统文件流测试 4 项、主题/安全区/键盘布局测试 5 项，共 9 项。
-- 安装文件：`anjian-1.9.0-android-arm64.apk`，27,183,417 字节。包名 `com.limushu.hm`，版本码 `1009000`，min SDK 24、target/compile SDK 36。
+- 产品源码：`06b23deff4cd0cf5e071eae53dfe77059bc4aef0`；[APK 与 Kotlin SDK 测试](https://github.com/limushu/new_hm/actions/runs/45110297876)通过。系统文件流测试 4 项、主题/安全区/键盘布局测试 5 项，共 9 项。
+- 安装文件：`anjian-1.9.0-android-arm64.apk`，27,515,529 字节。包名 `com.limushu.hm`，版本码 `1009000`，min SDK 24、target/compile SDK 36。
 - 实际发布 APK 非调试，关闭系统云备份/设备迁移，未申请广泛存储、录音、日历或通知权限；材料访问由系统选择器按次授权。
+- 实际 APK 的普通/自适应图标与已确认的银灰色品牌逐像素核对一致，自适应底色为 `#191D21`；生成工程不再使用 Tauri 默认黄蓝图标。
 - APK Signature Scheme v2/v3 核验通过；实际 ARM64 原生库的所有 LOAD 段和未压缩 ZIP 偏移均满足 16 KiB 对齐。[公开核对记录](android-receipt-1.9.0.json)保存 APK 哈希、签名证书摘要与库信息；私钥不在仓库中。
-- [共用应用检查](https://github.com/limushu/new_hm/actions/runs/45105802602)通过 100 项单元、150 项 Chromium、46 项 WebKit 回归、Rust 测试/Clippy 及 Windows 应用构建。模拟器调试包和发布 ARM64 包分开记录，模拟器不等于 K60 真机验收。
+- [共用应用检查](https://github.com/limushu/new_hm/actions/runs/45110297272)通过 100 项单元、153 项 Chromium、49 项 WebKit 回归、Rust 测试/Clippy 及 Windows 应用构建。[完整 Android 模拟器流程](https://github.com/limushu/new_hm/actions/runs/45114753319)通过原生案件创建、状态保存与返回、费用/时间轴、SAF 取消与归档/预览、键盘及底栏、完整 ZIP 导出/校验/确认恢复、强制关闭后的数据库与材料留存，共 7 项。调试 APK 产品源码与发布包一致，脚本源码 `790f9a1`；模拟器不等于 K60 真机验收。
 
 下载交付的 APK 后直接安装。系统询问时允许当前浏览器或文件管理器安装应用；不需要开启 USB 调试或关闭系统优化。之后使用相同签名覆盖更新；卸载会删除私有目录中的案件和材料。
 
 设置中的「导出完整备份」和「从文件恢复」可用于 Windows/iOS/Android 间手动迁移完整工作区，包含数据库与材料。Android 当前没有自动云同步；账号登录和系统云盘文件提供器也不等于双向实时同步。
+
+
+## 返回与模拟器边界
+
+材料预览、日程编辑和欢迎页已与公共 Dialog 一样注册返回栈。预览使用 body 中的独立顶层容器，避免嵌在材料滚动区域中；关闭预览保留案件，第二次返回才离开案件。新增 3 项公共界面回归验证这些边界，Android 系统按键和触摸另由 SDK 流程验证。
+
+[完整模拟器工作流](../.github/workflows/android-emulator.yml)使用可检查的调试 APK，文件选择与保存经过真实系统文档界面。自动化可复用同一产品源码的调试包，但必须比较核心、前端、资源、平台配置和宿主准备脚本；结果分别记录 APK 源码与测试脚本源码。测试环境的桌面 ANR、系统通知和安装停滞不会写成应用功能通过。
+
+最终源码的 7 项场景已通过，实际导出的备份另行验证所有清单 SHA-256、材料原文、SQLite 完整性及 schema 9。强制关闭应用后，原生数据库记录与归档材料仍可读取。早期脚本曾因系统桌面 ANR、选择器完成后的过期元素、大小写标志、旧调试会话及工具退出未结束而失败/超时；最终通过作业单独记录，不把这些早期作业列为整体通过。
+
+iOS 共享移动桥在 [先前原生检查](https://github.com/limushu/new_hm/actions/runs/45105510499)通过 38 项 SDK 测试。当前源码的 [iOS 应用回归](https://github.com/limushu/new_hm/actions/runs/45110297295)首次在模拟器工作记录键盘输入断言失败，已重跑，不能沿用旧结果称为当前整套 iOS 验收通过；本轮交付 Android APK。

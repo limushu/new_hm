@@ -14,7 +14,7 @@
 | 系统通知 | [NotificationDriver](../../crates/hm-runtime/src/platform/agenda.rs)、[NotificationService](../../crates/hm-application/src/agenda/notifications.rs) | [Rust 桥](../../crates/tauri-plugin-hm-agenda/src/ios.rs) → [UserNotifications](../../crates/tauri-plugin-hm-agenda/ios/Sources/AgendaNotifications.swift)，未来通知由系统排程 | [桌面通知驱动](../../src-tauri/src/platforms/desktop/notifications.rs)使用同一用例处理到期即时提醒；Android 未接 |
 | 系统日历 | [CalendarDriver](../../crates/hm-runtime/src/platform/agenda.rs)、[CalendarService](../../crates/hm-application/src/agenda/calendar.rs) | 同一 Rust 桥 → [EventKit](../../crates/tauri-plugin-hm-agenda/ios/Sources/AgendaCalendar.swift)，用户选择日程与目标日历后维护单向副本 | 返回不可用；Windows / Mac / Android 日历驱动待接 |
 
-Android 系统返回接入公共 [返回栈](../../src/platform/backNavigation.ts)，菜单、编辑浮层、案件未保存确认和主导航按优先级处理；只有安装 `system-back` 能力的宿主注册原生返回监听。Android 的范围和 SDK/模拟器/真机验证分别见 [Android 测试版](../android-release.md)。
+Android 系统返回接入公共 [返回栈](../../src/platform/backNavigation.ts)，菜单、编辑浮层、案件未保存确认和主导航按优先级处理；只有安装 `system-back` 能力的宿主注册原生返回监听。新增浮层复用公共 Dialog；独立预览或编辑器也须注册其返回处理，不能让事件穿透到案件页。Android 的范围和 SDK/模拟器/真机验证分别见 [Android 测试版](../android-release.md)。
 
 新 CloudKit 插件由 [subsystems/mod.rs](../../src-tauri/src/subsystems/mod.rs) 注册，在平台装配中注入 `NativeDrivers.sync`。查询 `native_sync_provider` 只返回已安装的驱动名称，**不代表容器、登录或同步已可用**。驱动存在、服务已装配、具备发行权限和真实账号验收分别记录。
 
