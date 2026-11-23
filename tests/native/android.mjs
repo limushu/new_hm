@@ -77,6 +77,17 @@ async function pickerTap(selector) {
     )
     .toBe(true);
 }
+async function pickerCommit(selector, completed) {
+  await nativeWait({ ...selector, pkg: /.*documentsui/ });
+  try {
+    await device.tap({ ...selector, pkg: /.*documentsui/ }, { timeout: 1000 });
+  } catch (error) {
+    // UiAutomator can report a stale selector after its click closes the picker.
+    // Never retry a committed action against the underlying app; verify its result.
+    if (!selectorPending(error)) throw error;
+  }
+  await completed();
+}
 async function touch(locator) {
   await locator.scrollIntoViewIfNeeded();
   await expect(locator).toBeVisible();
@@ -130,11 +141,11 @@ async function hideKeyboard() {
   if (/mInputShown=true|isInputViewShown=true/.test(shell('dumpsys', 'input_method'))) await back();
   await page.locator('body').click({ position: { x: 3, y: 3 } });
 }
-async function chooseDownload(name) {
+async function chooseDownload(name, completed) {
   // The system picker opens outside the WebView. Use its actual accessibility tree.
   await pickerTap({ desc: 'Show roots' });
   await pickerTap({ text: 'Downloads', res: 'android:id/title' });
-  await pickerTap({ text: name });
+  await pickerCommit({ text: name }, completed);
 }
 async function record(name) {
   checks.push(name);
@@ -225,8 +236,9 @@ try {
     `file:///sdcard/Download/${evidenceName}`,
   );
   await materials.getByRole('button', { name: '添加材料', exact: true }).click();
-  await chooseDownload(evidenceName);
-  await expect(materials.getByRole('button', { name: evidenceName, exact: true })).toBeVisible();
+  await chooseDownload(evidenceName, () =>
+    expect(materials.getByRole('button', { name: evidenceName, exact: true })).toBeVisible(),
+  );
   await expect(page.getByRole('dialog')).toHaveCount(0);
   await touch(materials.getByRole('button', { name: evidenceName, exact: true }));
   await expect(page.locator('.text-document-preview')).toContainText(evidence.trim());
@@ -264,16 +276,17 @@ try {
   await nativeWait({ pkg: /.*documentsui/ });
   await pickerTap({ desc: 'Show roots' });
   await pickerTap({ text: 'Downloads', res: 'android:id/title' });
-  await pickerTap({ text: /^save$/i });
-  await expect(page.getByRole('status').filter({ hasText: '已导出' })).toBeVisible();
+  await pickerCommit({ text: /^save$/i }, () =>
+    expect(page.getByRole('status').filter({ hasText: '已导出' })).toBeVisible(),
+  );
   const exported = shell('ls', '/sdcard/Download')
     .split('\n')
     .find((name) => name.endsWith('.zip'));
   if (!exported) throw new Error('Exported backup missing');
   execFileSync('adb', ['pull', `/sdcard/Download/${exported}`, `${out}/backup.zip`]);
   await page.getByRole('button', { name: '从文件恢复', exact: true }).click();
-  await chooseDownload(exported);
   const restore = page.getByRole('dialog', { name: '恢复完整备份', exact: true });
+  await chooseDownload(exported, () => expect(restore).toBeVisible());
   await expect(restore).toContainText('1 个案件、1 份文件');
   await restore.getByRole('button', { name: '确认恢复', exact: true }).click();
   await expect(page.getByRole('status').filter({ hasText: '备份已恢复' })).toBeVisible();
