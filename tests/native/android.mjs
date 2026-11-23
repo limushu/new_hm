@@ -79,15 +79,31 @@ async function touch(locator) {
     if (!el.contains(document.elementFromPoint(x, y))) throw new Error('Touch target is obscured');
     return { x, y };
   });
-  // WebView connections do not expose Playwright's hasTouch context option.
-  // Send actual touch events through this owned debug WebView's SDK protocol.
-  const session = await page.context().newCDPSession(page);
-  try {
-    await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
-    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
-  } finally {
-    await session.detach();
-  }
+  // Use the real Android input driver, with the native WebView's screen bounds.
+  let bounds;
+  await expect
+    .poll(
+      async () => {
+        try {
+          bounds = (await device.info({ pkg, clazz: /.*WebView/ })).bounds;
+          return bounds.width > 0;
+        } catch (error) {
+          if (!selectorPending(error)) throw error;
+          return false;
+        }
+      },
+      { timeout: 20000 },
+    )
+    .toBe(true);
+  const viewport = await page.evaluate(() => ({
+    width: visualViewport.width,
+    top: visualViewport.offsetTop,
+  }));
+  const ratio = bounds.width / viewport.width;
+  await device.input.tap({
+    x: Math.round(bounds.x + point.x * ratio),
+    y: Math.round(bounds.y + (point.y - viewport.top) * ratio),
+  });
 }
 async function back() {
   // A foreign launcher ANR can steal key events during a cold SDK boot.
@@ -115,6 +131,19 @@ async function chooseDownload(name) {
 async function record(name) {
   checks.push(name);
   console.log(`PASS ${name}`);
+  writeFileSync(
+    `${out}/results.json`,
+    JSON.stringify(
+      {
+        apkSource: process.env.ANDROID_APK_SOURCE_SHA ?? process.env.GITHUB_SHA,
+        harnessSource: process.env.GITHUB_SHA,
+        checks,
+        errors,
+      },
+      null,
+      2,
+    ),
+  );
   await device.screenshot({ path: `${out}/${String(checks.length).padStart(2, '0')}.png` });
 }
 try {

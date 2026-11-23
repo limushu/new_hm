@@ -95,7 +95,7 @@ jobs:
             adb shell settings put global heads_up_notifications_enabled 0
             adb shell pm disable-user --user 0 com.google.android.gms
             adb shell am force-stop com.google.android.apps.nexuslauncher
-            node tests/native/android.mjs
+            timeout --signal=SIGINT --kill-after=20s 300s node tests/native/android.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
