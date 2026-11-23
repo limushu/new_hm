@@ -53,12 +53,12 @@ async function nativeWait(selector) {
     )
     .toBe(true);
 }
-async function nativeTap(selector) {
+async function pickerTap(selector) {
   await expect
     .poll(
       async () => {
         try {
-          await device.tap(selector, { timeout: 1000 });
+          await device.tap({ ...selector, pkg: /.*documentsui/ }, { timeout: 1000 });
           return true;
         } catch (error) {
           if (!selectorPending(error)) throw error;
@@ -68,6 +68,26 @@ async function nativeTap(selector) {
       { timeout: 30000 },
     )
     .toBe(true);
+}
+async function touch(locator) {
+  await locator.scrollIntoViewIfNeeded();
+  await expect(locator).toBeVisible();
+  const point = await locator.evaluate((el) => {
+    const r = el.getBoundingClientRect();
+    const x = r.left + r.width / 2,
+      y = r.top + r.height / 2;
+    if (!el.contains(document.elementFromPoint(x, y))) throw new Error('Touch target is obscured');
+    return { x, y };
+  });
+  // WebView connections do not expose Playwright's hasTouch context option.
+  // Send actual touch events through this owned debug WebView's SDK protocol.
+  const session = await page.context().newCDPSession(page);
+  try {
+    await session.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [point] });
+    await session.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+  } finally {
+    await session.detach();
+  }
 }
 async function back() {
   // A foreign launcher ANR can steal key events during a cold SDK boot.
@@ -88,9 +108,9 @@ async function hideKeyboard() {
 }
 async function chooseDownload(name) {
   // The system picker opens outside the WebView. Use its actual accessibility tree.
-  await nativeTap({ desc: 'Show roots' });
-  await nativeTap({ text: 'Downloads', res: 'android:id/title' });
-  await nativeTap({ text: name });
+  await pickerTap({ desc: 'Show roots' });
+  await pickerTap({ text: 'Downloads', res: 'android:id/title' });
+  await pickerTap({ text: name });
 }
 async function record(name) {
   checks.push(name);
@@ -157,7 +177,8 @@ try {
   await materials.getByRole('button', { name: '添加材料', exact: true }).click();
   await chooseDownload(evidenceName);
   await expect(materials.getByRole('button', { name: evidenceName, exact: true })).toBeVisible();
-  await materials.getByRole('button', { name: evidenceName, exact: true }).click();
+  await expect(page.getByRole('dialog')).toHaveCount(0);
+  await touch(materials.getByRole('button', { name: evidenceName, exact: true }));
   await expect(page.locator('.text-document-preview')).toContainText(evidence.trim());
   await back();
   await expect(page.getByRole('dialog')).toHaveCount(0);
@@ -191,9 +212,9 @@ try {
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByRole('button', { name: '导出完整备份', exact: true }).click();
   await nativeWait({ pkg: /.*documentsui/ });
-  await nativeTap({ desc: 'Show roots' });
-  await nativeTap({ text: 'Downloads', res: 'android:id/title' });
-  await nativeTap({ text: /^save$/i });
+  await pickerTap({ desc: 'Show roots' });
+  await pickerTap({ text: 'Downloads', res: 'android:id/title' });
+  await pickerTap({ text: /^save$/i });
   await expect(page.getByRole('status').filter({ hasText: '已导出' })).toBeVisible();
   const exported = shell('ls', '/sdcard/Download')
     .split('\n')
@@ -215,14 +236,38 @@ try {
   await expect(page.locator('.case-card')).toContainText(title);
   await page.locator('.case-card').first().click();
   await page.getByRole('tab', { name: '材料', exact: true }).click();
-  await page.getByRole('button', { name: evidenceName, exact: true }).click();
+  await touch(page.getByRole('button', { name: evidenceName, exact: true }));
   await expect(page.locator('.text-document-preview')).toContainText(evidence.trim());
   await record('Cold restart preserves SQLite and material bytes');
   expect(errors).toEqual([]);
 } catch (error) {
   await device.screenshot({ path: `${out}/failure.png` }).catch(() => {});
   writeFileSync(`${out}/failure.txt`, String(error.stack ?? error));
-  if (page) writeFileSync(`${out}/page.html`, await page.content().catch(() => ''));
+  if (page) {
+    writeFileSync(`${out}/page.html`, await page.content().catch(() => ''));
+    await page.screenshot({ path: `${out}/webview.png` }).catch(() => {});
+    const layout = await page
+      .evaluate(() => ({
+        height: innerHeight,
+        width: innerWidth,
+        dpr: devicePixelRatio,
+        viewport: {
+          height: visualViewport.height,
+          width: visualViewport.width,
+          offsetTop: visualViewport.offsetTop,
+          scale: visualViewport.scale,
+        },
+        dialogs: [...document.querySelectorAll('dialog')].map((el) => ({
+          open: el.open,
+          rect: el.getBoundingClientRect().toJSON(),
+          display: getComputedStyle(el).display,
+          position: getComputedStyle(el).position,
+          visibility: getComputedStyle(el).visibility,
+        })),
+      }))
+      .catch(() => null);
+    writeFileSync(`${out}/layout.json`, JSON.stringify(layout, null, 2));
+  }
   try {
     writeFileSync(`${out}/logcat.txt`, shell('logcat', '-d', '-t', '1200'));
   } catch {}

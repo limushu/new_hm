@@ -1,7 +1,9 @@
-import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 
 const root = 'src-tauri/gen/android/app/src/main';
+// CLI init emits Tauri starter icons; install the approved brand for every density.
+cpSync('src-tauri/icons/android', join(root, 'res'), { recursive: true });
 mkdirSync(join(root, 'java/com/limushu/hm'), { recursive: true });
 mkdirSync(join(root, 'res/xml'), { recursive: true });
 copyFileSync(

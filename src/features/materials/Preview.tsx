@@ -1,6 +1,7 @@
 import { useBackNavigation } from '../../components/useBackNavigation';
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
+import { createPortal } from 'react-dom';
 import type { Material, SaveAction } from '../../domain/types';
 import { isAudioMaterial } from '../../platform/speech';
 import MaterialContent from './MaterialContent';
@@ -24,7 +25,7 @@ export default function Preview({
     heading.current?.focus({ preventScroll: true });
     return () => dialog.current?.close();
   }, []);
-  return (
+  return createPortal(
     <dialog
       className={`material-preview ${isAudioMaterial(item.name) ? 'is-audio' : ''}`}
       aria-label={`预览 ${item.name}`}
@@ -44,6 +45,7 @@ export default function Preview({
         </button>
       </header>
       <MaterialContent item={item} save={save} />
-    </dialog>
+    </dialog>,
+    document.body,
   );
 }
