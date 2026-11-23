@@ -102,6 +102,14 @@ try {
   await back();
   await expect(materials.getByRole('button', { name: '添加材料', exact: true })).toBeEnabled();
   await device.push(Buffer.from(evidence), `/sdcard/Download/${evidenceName}`);
+  shell(
+    'am',
+    'broadcast',
+    '-a',
+    'android.intent.action.MEDIA_SCANNER_SCAN_FILE',
+    '-d',
+    `file:///sdcard/Download/${evidenceName}`,
+  );
   await materials.getByRole('button', { name: '添加材料', exact: true }).click();
   await chooseDownload(evidenceName);
   await expect(materials.getByRole('button', { name: evidenceName, exact: true })).toBeVisible();

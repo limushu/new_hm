@@ -33,6 +33,7 @@ jobs:
         run: |
           printf '%s\n' "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
       - run: npm ci
+      - run: npx playwright install android
       - name: Build the inspectable emulator application
         run: |
           npx tauri android init --ci --skip-targets-install
