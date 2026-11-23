@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { X } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import Button from './Button';
+import { useBackNavigation } from './useBackNavigation';
 export default function Dialog({
   title,
   children,
@@ -34,6 +35,9 @@ export default function Dialog({
   const inflight = useRef(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  useBackNavigation(() => {
+    if (!inflight.current) (cancelAction ?? onClose)();
+  }, 100);
   async function commit(action: () => Promise<void | false>) {
     if (inflight.current) return;
     inflight.current = true;

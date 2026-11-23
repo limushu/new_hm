@@ -29,14 +29,16 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
       - uses: android-actions/setup-android@v3
         with:
-          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;27.2.12479018'
+          packages: 'platform-tools platforms;android-37 build-tools;36.0.0 ndk;27.2.12479018'
           log-accepted-android-sdk-licenses: 'false'
       - name: Configure Android SDK
         run: |
           printf '%s\n' "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
       - run: npm ci
       - name: Generate the Android host project
-        run: npx tauri android init --ci --skip-targets-install
+        run: |
+          npx tauri android init --ci --skip-targets-install
+          node scripts/prepare-android.mjs
       - name: Preserve generated host source for inspection
         run: |
           mkdir -p artifacts/android
@@ -59,3 +61,14 @@ jobs:
             artifacts/android/*.apk
             artifacts/android/apksigner.jar
             artifacts/android/SHA256SUMS.txt
+      - name: Verify Android document and host boundaries
+        working-directory: src-tauri/gen/android
+        run: ./gradlew :tauri-plugin-hm-documents:testDebugUnitTest :tauri-plugin-hm-host:testDebugUnitTest --no-daemon
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-native-tests
+          path: |
+            crates/tauri-plugin-hm-documents/android/build/test-results/
+            crates/tauri-plugin-hm-host/android/build/test-results/
+          if-no-files-found: ignore

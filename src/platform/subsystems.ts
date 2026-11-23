@@ -2,6 +2,7 @@ export type Capability =
   | 'tray'
   | 'autostart'
   | 'window-theme'
+  | 'system-back'
   | 'native-drop'
   | 'signed-updates'
   | 'background-maintenance'

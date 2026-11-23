@@ -1,9 +1,10 @@
 use hm_runtime::platform::{DriverError, DriverResult, HostDriver};
 use serde::Deserialize;
 use tauri::{plugin::PluginHandle, Manager};
+#[cfg(target_os = "ios")]
 tauri::ios_plugin_binding!(init_plugin_hm_host);
 #[derive(Clone)]
-struct IosHost(PluginHandle<tauri::Wry>);
+struct MobileHost(PluginHandle<tauri::Wry>);
 #[derive(Deserialize)]
 struct Reply {
     error: Option<String>,
@@ -12,15 +13,19 @@ struct Reply {
 pub fn init() -> tauri::plugin::TauriPlugin<tauri::Wry> {
     tauri::plugin::Builder::new("hm-host")
         .setup(|app, api| {
-            app.manage(IosHost(api.register_ios_plugin(init_plugin_hm_host)?));
+            #[cfg(target_os = "ios")]
+            let handle = api.register_ios_plugin(init_plugin_hm_host)?;
+            #[cfg(target_os = "android")]
+            let handle = api.register_android_plugin("com.limushu.hm.host", "HostPlugin")?;
+            app.manage(MobileHost(handle));
             Ok(())
         })
         .build()
 }
 pub fn driver(app: &tauri::AppHandle) -> Box<dyn HostDriver> {
-    Box::new(app.state::<IosHost>().inner().clone())
+    Box::new(app.state::<MobileHost>().inner().clone())
 }
-impl HostDriver for IosHost {
+impl HostDriver for MobileHost {
     fn foreground(&self) -> DriverResult<Option<bool>> {
         let reply: Reply = self
             .0

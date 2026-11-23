@@ -1,4 +1,5 @@
 import Button from '../../components/Button';
+import { useBackNavigation } from '../../components/useBackNavigation';
 import Dialog from '../../components/Dialog';
 import RetainedView from '../../components/RetainedView';
 import Select from '../../components/Select';
@@ -278,6 +279,7 @@ export default function CasePage({
       setLeaving(true);
     else close();
   }
+  useBackNavigation(onClose, 20);
 
   return (
     <>

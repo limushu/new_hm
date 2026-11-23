@@ -1,0 +1,7 @@
+{
+  "identifier": "android-navigation",
+  "description": "用户在主页面按系统返回时结束 Android Activity",
+  "platforms": ["android"],
+  "windows": ["main"],
+  "permissions": ["core:app:allow-exit"]
+}

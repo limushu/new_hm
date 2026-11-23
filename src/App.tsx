@@ -31,8 +31,11 @@ import Calendar from './features/calendar/Calendar';
 import CaseBoard from './features/cases/CaseBoard';
 import MiniCalendar from './features/calendar/MiniCalendar';
 import { dateKey } from './domain/calendar';
+import { useSystemBack } from './platform/useSystemBack';
+import { useBackNavigation } from './components/useBackNavigation';
 
 export default function App() {
+  useSystemBack();
   useEffect(() => observeViewport(window, document.documentElement), []);
   const [data, setData] = useState<Workspace>(emptyWorkspace);
   const [page, setPage] = useState('today');
@@ -62,6 +65,13 @@ export default function App() {
   const [error, setError] = useState('');
   const [storage, setStorage] = useState<Commands['storage_info']['result'] | null>(null);
   const [syncGeneration, setSyncGeneration] = useState(0);
+  useBackNavigation(() => {
+    if (searchOpen) setSearchOpen(false);
+    else if (notificationsOpen) setNotificationsOpen(false);
+    else if (contactOpen) setContactOpen(null);
+    else if (page !== 'today') setPage('today');
+    else return false;
+  });
   const { register: registerSync } = useCloudSync();
   const { afterSave: afterAgendaSave } = useDeviceAgendaActions();
   const syncBlocked = useRef(true);

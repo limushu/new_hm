@@ -1,4 +1,4 @@
-#[cfg(target_os = "ios")]
-mod ios;
-#[cfg(target_os = "ios")]
-pub use ios::{driver, init};
+#[cfg(any(target_os = "ios", target_os = "android"))]
+mod mobile;
+#[cfg(any(target_os = "ios", target_os = "android"))]
+pub use mobile::{driver, init};

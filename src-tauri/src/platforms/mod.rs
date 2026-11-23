@@ -37,13 +37,15 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     let manifest = {
         #[allow(unused_mut)]
         let mut manifest = RuntimeManifest::mobile();
-        #[cfg(target_os = "ios")]
+        #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(host) = manifest
             .subsystems
             .iter_mut()
             .find(|s| s.id == hm_runtime::SubsystemId::Host)
         {
             host.capabilities.push(hm_runtime::Capability::WindowTheme);
+            #[cfg(target_os = "android")]
+            host.capabilities.push(hm_runtime::Capability::SystemBack);
         }
         #[cfg(target_os = "ios")]
         if let Some(identity) = manifest
@@ -54,7 +56,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             identity.state = hm_runtime::Availability::Ready;
             identity.capabilities = vec![hm_runtime::Capability::AccountLogin];
         }
-        #[cfg(target_os = "ios")]
+        #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(documents) = manifest
             .subsystems
             .iter_mut()
@@ -84,7 +86,7 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
             speech.state = hm_runtime::Availability::Ready;
             speech.capabilities = vec![hm_runtime::Capability::TranscribeAudio];
         }
-        #[cfg(target_os = "ios")]
+        #[cfg(any(target_os = "ios", target_os = "android"))]
         if let Some(backup) = manifest
             .subsystems
             .iter_mut()
@@ -99,16 +101,10 @@ pub fn setup(app: &mut tauri::App) -> Result<(), Box<dyn std::error::Error>> {
     #[cfg(mobile)]
     #[allow(unused_mut)]
     let mut drivers = NativeDrivers {
-        #[cfg(target_os = "ios")]
         host: Arc::from(tauri_plugin_hm_host::driver(app.handle())),
-        #[cfg(not(target_os = "ios"))]
-        host: Arc::new(mobile::SandboxPlatform),
         external_open: Box::new(mobile::SandboxPlatform),
         local_filesystem: Box::new(mobile::SandboxPlatform),
-        #[cfg(target_os = "ios")]
         documents: Arc::from(tauri_plugin_hm_documents::driver(app.handle())),
-        #[cfg(not(target_os = "ios"))]
-        documents: Arc::new(mobile::documents::UnavailableDocuments),
         #[cfg(target_os = "ios")]
         sync: Arc::from(tauri_plugin_hm_cloudkit::driver(app.handle())),
         #[cfg(not(target_os = "ios"))]

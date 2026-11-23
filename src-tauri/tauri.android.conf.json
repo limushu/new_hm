@@ -3,7 +3,9 @@
     "windows": [
       {
         "label": "main",
-        "title": "案笺"
+        "title": "案笺",
+        "useHttpsScheme": true,
+        "backgroundColor": "#191919"
       }
     ]
   },

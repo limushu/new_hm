@@ -9,6 +9,7 @@ pub enum Capability {
     Tray,
     Autostart,
     WindowTheme,
+    SystemBack,
     NativeDrop,
     SignedUpdates,
     BackgroundMaintenance,

@@ -1,12 +1,21 @@
 use hm_runtime::platform::{Document, DocumentDriver, DriverError, DriverErrorKind, DriverResult};
 use serde::Deserialize;
-use std::{fs::File, io::Read, path::Path, sync::Arc};
+use std::{
+    fs::File,
+    io::Read,
+    path::{Path, PathBuf},
+    sync::Arc,
+};
 use tauri::{plugin::PluginHandle, Manager};
 
+#[cfg(target_os = "ios")]
 tauri::ios_plugin_binding!(init_plugin_hm_documents);
 
 #[derive(Clone)]
-struct IosDocuments(PluginHandle<tauri::Wry>);
+struct MobileDocuments {
+    handle: PluginHandle<tauri::Wry>,
+    temporary_root: Option<PathBuf>,
+}
 
 #[derive(Deserialize)]
 struct Selected {
@@ -36,10 +45,18 @@ fn document_error(code: &str) -> DriverError {
     }
 }
 
-impl IosDocuments {
+impl MobileDocuments {
+    fn temporary(&self, prefix: &str) -> DriverResult<tempfile::TempDir> {
+        let mut builder = tempfile::Builder::new();
+        builder.prefix(prefix);
+        Ok(match &self.temporary_root {
+            Some(root) => builder.tempdir_in(root)?,
+            None => builder.tempdir()?,
+        })
+    }
     fn call(&self, command: &str, payload: serde_json::Value) -> DriverResult<Reply> {
         let reply: Reply = self
-            .0
+            .handle
             .run_mobile_plugin(command, payload)
             .map_err(DriverError::io)?;
         if let Some(code) = &reply.error {
@@ -52,15 +69,30 @@ impl IosDocuments {
 pub fn init() -> tauri::plugin::TauriPlugin<tauri::Wry> {
     tauri::plugin::Builder::new("hm-documents")
         .setup(|app, api| {
+            #[cfg(target_os = "ios")]
             let handle = api.register_ios_plugin(init_plugin_hm_documents)?;
-            app.manage(IosDocuments(handle));
+            #[cfg(target_os = "android")]
+            let handle =
+                api.register_android_plugin("com.limushu.hm.documents", "DocumentsPlugin")?;
+            #[cfg(target_os = "ios")]
+            let temporary_root = None;
+            #[cfg(target_os = "android")]
+            let temporary_root = {
+                let root = app.path().app_cache_dir()?;
+                std::fs::create_dir_all(&root)?;
+                Some(root)
+            };
+            app.manage(MobileDocuments {
+                handle,
+                temporary_root,
+            });
             Ok(())
         })
         .build()
 }
 
 pub fn driver(app: &tauri::AppHandle) -> Box<dyn DocumentDriver> {
-    Box::new(app.state::<IosDocuments>().inner().clone())
+    Box::new(app.state::<MobileDocuments>().inner().clone())
 }
 
 // Only opaque staging filenames cross this private bridge. Provider URLs and
@@ -90,9 +122,9 @@ impl Document for SelectedDocument {
     }
 }
 
-impl DocumentDriver for IosDocuments {
+impl DocumentDriver for MobileDocuments {
     fn pick(&self, title: &str, multiple: bool) -> DriverResult<Option<Vec<Box<dyn Document>>>> {
-        let directory = Arc::new(tempfile::Builder::new().prefix("hm-documents-").tempdir()?);
+        let directory = Arc::new(self.temporary("hm-documents-")?);
         let reply = self.call(
             "pick",
             serde_json::json!({
@@ -127,7 +159,7 @@ impl DocumentDriver for IosDocuments {
         {
             return Err(document_error("document_name_invalid"));
         }
-        let directory = tempfile::Builder::new().prefix("hm-export-").tempdir()?;
+        let directory = self.temporary("hm-export-")?;
         let path = directory.path().join(name);
         let mut file = File::create(&path)?;
         let size = std::io::copy(source, &mut file)?;

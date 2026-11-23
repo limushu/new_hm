@@ -1,9 +1,18 @@
 import { useLayoutEffect, useRef } from 'react';
+import { useBackNavigation } from './useBackNavigation';
 
 /** Keep menus in the browser top layer, including inside a modal dialog. */
 export function usePopover(open: boolean, close: () => void, minWidth = 180) {
   const anchor = useRef<HTMLDivElement>(null);
   const popup = useRef<HTMLDivElement>(null);
+  useBackNavigation(
+    () => {
+      close();
+      anchor.current?.querySelector<HTMLElement>('button, input')?.focus();
+    },
+    200,
+    open,
+  );
   useLayoutEffect(() => {
     if (!open || !anchor.current || !popup.current) return;
     const panel = popup.current;
