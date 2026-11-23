@@ -22,14 +22,22 @@ function files(root) {
 }
 const apk = files('src-tauri/gen/android/app/build/outputs/apk').find((p) => p.endsWith('.apk'));
 if (!apk) throw new Error('Debug emulator APK missing');
+writeFileSync(
+  `${out}/bootstrap.json`,
+  JSON.stringify({ stage: 'connect-adb', source: process.env.ANDROID_APK_SOURCE_SHA }),
+);
+console.log('BOOTSTRAP connect-adb');
 const [device] = await android.devices();
 if (!device) throw new Error('SDK emulator missing');
 device.setDefaultTimeout(20000);
 let page;
 async function start() {
   shell('am', 'start', '-n', `${pkg}/.MainActivity`);
+  console.log('BOOTSTRAP activity started; waiting for WebView');
   const view = await device.webView({ pkg }, { timeout: 45000 });
+  console.log('BOOTSTRAP WebView detected');
   page = await view.page();
+  console.log('BOOTSTRAP WebView connected');
   page.setDefaultTimeout(20000);
   page.on('pageerror', (error) => errors.push(error.message));
   await expect(page.getByRole('button', { name: '案件', exact: true })).toBeVisible();
@@ -147,7 +155,20 @@ async function record(name) {
   await device.screenshot({ path: `${out}/${String(checks.length).padStart(2, '0')}.png` });
 }
 try {
-  await device.installApk(apk);
+  writeFileSync(
+    `${out}/bootstrap.json`,
+    JSON.stringify({ stage: 'install', source: process.env.ANDROID_APK_SOURCE_SHA }),
+  );
+  console.log('BOOTSTRAP install using SDK adb');
+  execFileSync('adb', ['install', '--no-streaming', '-r', '-t', apk], {
+    stdio: 'inherit',
+    timeout: 120000,
+  });
+  writeFileSync(
+    `${out}/bootstrap.json`,
+    JSON.stringify({ stage: 'launch', source: process.env.ANDROID_APK_SOURCE_SHA }),
+  );
+  console.log('BOOTSTRAP launch');
   await start();
   const welcome = page.getByRole('dialog', { name: '欢迎使用案笺', exact: true });
   await welcome.getByRole('button', { name: '开始使用', exact: true }).click();

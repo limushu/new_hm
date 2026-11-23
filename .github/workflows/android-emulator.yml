@@ -93,6 +93,7 @@ jobs:
             adb shell wm size 720x1600
             adb shell wm density 280
             adb shell settings put global heads_up_notifications_enabled 0
+            adb shell settings put global verifier_verify_adb_installs 0
             adb shell pm disable-user --user 0 com.google.android.gms
             adb shell am force-stop com.google.android.apps.nexuslauncher
             timeout --signal=SIGINT --kill-after=20s 300s node tests/native/android.mjs
