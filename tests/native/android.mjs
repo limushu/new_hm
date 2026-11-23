@@ -61,22 +61,6 @@ async function nativeWait(selector) {
     )
     .toBe(true);
 }
-async function pickerTap(selector) {
-  await expect
-    .poll(
-      async () => {
-        try {
-          await device.tap({ ...selector, pkg: /.*documentsui/ }, { timeout: 1000 });
-          return true;
-        } catch (error) {
-          if (!selectorPending(error)) throw error;
-          return false;
-        }
-      },
-      { timeout: 30000 },
-    )
-    .toBe(true);
-}
 async function pickerCommit(selector, completed) {
   await nativeWait({ ...selector, pkg: /.*documentsui/ });
   try {
@@ -143,8 +127,12 @@ async function hideKeyboard() {
 }
 async function chooseDownload(name, completed) {
   // The system picker opens outside the WebView. Use its actual accessibility tree.
-  await pickerTap({ desc: 'Show roots' });
-  await pickerTap({ text: 'Downloads', res: 'android:id/title' });
+  await pickerCommit({ desc: 'Show roots' }, () =>
+    nativeWait({ text: 'Downloads', res: 'android:id/title', pkg: /.*documentsui/ }),
+  );
+  await pickerCommit({ text: 'Downloads', res: 'android:id/title' }, () =>
+    nativeWait({ text: name, pkg: /.*documentsui/ }),
+  );
   await pickerCommit({ text: name }, completed);
 }
 async function record(name) {
@@ -258,7 +246,6 @@ try {
   await page.getByLabel('案件名称', { exact: true }).click();
   await expect.poll(() => page.evaluate(() => innerHeight)).toBeLessThan(700);
   expect(await page.evaluate(() => innerHeight)).toBeGreaterThan(300);
-  await device.screenshot({ path: `${out}/keyboard.png` });
   await expect
     .poll(async () =>
       footer.evaluate(
@@ -266,6 +253,9 @@ try {
       ),
     )
     .toBe(true);
+  await expect(footer).toBeVisible();
+  await expect(footer).toBeInViewport();
+  await device.screenshot({ path: `${out}/keyboard.png` });
   await hideKeyboard();
   await back();
   await expect(page.locator('.case-card')).toContainText(title);
@@ -274,8 +264,12 @@ try {
   await page.getByRole('button', { name: '设置', exact: true }).click();
   await page.getByRole('button', { name: '导出完整备份', exact: true }).click();
   await nativeWait({ pkg: /.*documentsui/ });
-  await pickerTap({ desc: 'Show roots' });
-  await pickerTap({ text: 'Downloads', res: 'android:id/title' });
+  await pickerCommit({ desc: 'Show roots' }, () =>
+    nativeWait({ text: 'Downloads', res: 'android:id/title', pkg: /.*documentsui/ }),
+  );
+  await pickerCommit({ text: 'Downloads', res: 'android:id/title' }, () =>
+    nativeWait({ text: /^save$/i, pkg: /.*documentsui/ }),
+  );
   await pickerCommit({ text: /^save$/i }, () =>
     expect(page.getByRole('status').filter({ hasText: '已导出' })).toBeVisible(),
   );
