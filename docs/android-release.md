@@ -19,3 +19,12 @@ Android 原生工程由 `tauri android init` 生成，不提交生成文件。[�
 [Android 文件桥](../crates/tauri-plugin-hm-documents/android/src/main/java/com/limushu/hm/documents/DocumentsPlugin.kt)和[Android 宿主桥](../crates/tauri-plugin-hm-host/android/src/main/java/com/limushu/hm/host/HostPlugin.kt)分别实现已有接口；Rust 移动桥在 iOS/Android 共用，平台差异留在装配与 Kotlin/Swift 中。
 
 [APK 工作流](../.github/workflows/android.yml)准备 ARM64 发布候选及 Android SDK 检查。候选、模拟器验证、签名与 Redmi 真机试用分别记录；构建成功不等于真机兼容已经验证。当前候选仍在验证，下载与签名结果完成后补充。
+
+
+## 构建和更新身份
+
+使用 Node 22、JDK 17、SDK 36、NDK r27c。准备脚本将 CLI 生成工程的 compile/target SDK 固定为 36；主机和插件使用同一 SDK，避免依赖尚未在 SDK 仓库提供的预览版本。构建 ARM64 时为原生库设置 16 KiB ELF 页面兼容参数。
+
+测试分发用 [本地签名脚本](../scripts/sign-android.mjs)处理 CI 生成的未签名候选：私钥与密码仅在被忽略的 `.local/android-signing/` 保存，不进入 Git、APK 或 CI 产物；公开证书指纹用于阻止误换签名。必须安全保留该目录，后续版本使用同一身份覆盖安装；缺少原密钥时脚本拒绝自动生成替代身份。这个身份不等于应用商店发布或 Google Play App Signing 配置。
+
+调试 x86_64 模拟器包只用于受控测试：通过实际 WebView/原生 SDK 验证交互，不注入预览仓库；发布 ARM64 包保持非调试。完整备份可用于与其他平台手动迁移，账号登录并不会自动替 Android 开启云同步。

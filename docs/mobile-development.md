@@ -1,19 +1,14 @@
 # 移动端开发与验证
 
-更新于 2026-11-13。移动入口和平台依赖已拆分，iOS 1.4.3（9.1）已上传 TestFlight。本文的文件驱动为后续新增代码，需包含它的新构建验证，当前仍为开发阶段。
+更新于 2026-11-23。iOS 已交付 1.8.9（44.1）；Android 1.9.0 为 Redmi K60 准备首个 ARM64 测试版本。下载、能力边界与各阶段验证见 [Android 适配记录](android-release.md)，不能把 Rust 编译或模拟器检查写成真机验收。
 
-完整模拟器应用与签名流程见[iOS 构建与 TestFlight](ios-testflight.md)。构建产物、模拟器检查、签名与上传状态分别记录，不混为真机验收。
+完整模拟器应用与签名流程见 [iOS 构建与 TestFlight](ios-testflight.md)。iOS 和 Android 共用 Rust 移动桥；各自的 Kotlin/Swift SDK 驱动留在插件目录，接入地图见 [平台驱动](design/platform-driver-map.md)。
 
 ## 当前可验证范围
 
-| 项目                     | 当前结果                                                                      |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| 共享案件/SQLite/备份业务 | Linux 核心测试；沙盒路径写入案件并重开校验                                    |
-| Android 原生 Rust 库     | NDK r27c / API 24 / aarch64-linux-android 的 cargo check 和严格 Clippy 已通过 |
-| iOS 平台依赖边界         | 依赖树检查不包含桌面托盘、自启动、单实例和更新组件                            |
-| iOS 原生 Rust 库         | macOS CI 检查已配置；远端结果另行记录                                         |
-| 手机界面                 | 浏览器手机尺寸与模拟移动能力回归，不代替原生设备验收                          |
-| 安装包/系统权限/真机     | 尚未验证                                                                      |
+- 共享核心：案件、SQLite、材料、完整备份/校验/恢复及共用界面回归。
+- Android：独立 ARM64 APK 构建、Kotlin 文档/外观边界测试、可检查的 x86_64 SDK 模拟器流程分别执行；真实 Redmi 的系统栏、文件提供器、键盘和系统返回需试用。
+- iOS：完整模拟器应用启动、持久化和独立 SDK 测试；TestFlight 的个人账号与跨设备 CloudKit 往返另行验收。
 
 移动端使用 app_local_data_dir 私有持久目录，不访问可执行文件目录或 .portable 标记。启动、原生 Resumed 和 WebView 恢复可见时触发前台维护；重叠请求合并，按日期幂等检查备份，不创建后台轮询线程。应用被挂起或终止后不承诺继续执行。
 
@@ -21,7 +16,7 @@
 
 iOS 文件导入/导出通过独立的 `tauri-plugin-hm-documents` 驱动接入现有 `DocumentDriver`，点击「添加材料」调用系统文件选择器，支持多选和用户启用的文件提供器。Swift 在后台以安全作用域和 NSFileCoordinator 协调读取，将文件复制到 Rust 持有的临时目录，再由共享归档业务将 Document 流保存到当前案件/流程/文件夹。前端不接收文件提供器 URL 或路径；归档完成或失败后清理临时副本，原文件保留，单个读取失败按文件报告并继续处理其他文件。导出先生成私有副本，再通过系统导出选择器保存，取消不修改已归档材料。
 
-`file-picker` 表示提供器文档选择；依赖真实本地路径的旧凭据选择流程使用独立 `local-file-picker` 能力，暂仅桌面提供。iOS 收支可先导入材料再选择已有材料关联。Android 文件驱动、外部打开、设备外备份恢复和系统通知尚未接通；相关入口禁用或隐藏。本机副本不能防止设备丢失，卸载会删除沙盒。
+`file-picker` 表示提供器文档选择；依赖真实本地路径的旧凭据选择流程使用独立 `local-file-picker` 能力，暂仅桌面提供。iOS 收支可先导入材料再选择已有材料关联。Android 1.9.0 新增系统文件导入/导出和设备外完整 ZIP 备份/恢复，复用相同接口与校验；外部打开和系统通知仍未接通，相关入口按能力隐藏或说明不可用。本机副本不能防止设备丢失，卸载会删除沙盒。
 
 案件看板与案件内功能页首次访问才挂载，切换后使用 React Activity 保留 DOM/输入状态并暂停隐藏页面的 effects。手机卡片手势默认滚动，独立拖动手柄才改变案件状态；鼠标和键盘拖动继续可用。
 
@@ -66,7 +61,7 @@ rustup target add aarch64-apple-ios-sim
 cargo check --locked -p hm-app --lib --target aarch64-apple-ios-sim
 ```
 
-[移动 CI](../.github/workflows/mobile.yml)分别执行 Android Rust 和 iOS 模拟器目标 Rust 检查；iOS 检查不需要发布证书，也不产生可安装 IPA。其结果验证 Rust/原生依赖边界，不替代完整 Xcode 应用构建。
+[移动 CI](../.github/workflows/mobile.yml)分别执行 Android Rust 与完整 iOS 模拟器应用/SDK 检查，不需要发布证书，也不产生可安装 IPA。Android 发布 APK 使用独立 [APK 工作流](../.github/workflows/android.yml)，交互检查使用 [Android 模拟器工作流](../.github/workflows/android-emulator.yml)。调试模拟器包启用 WebView 检查，不作为用户分发包。
 
 ## 从编译检查到 iPhone 安装
 
