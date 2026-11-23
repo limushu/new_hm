@@ -227,7 +227,16 @@ try {
 } finally {
   writeFileSync(
     `${out}/results.json`,
-    JSON.stringify({ source: process.env.GITHUB_SHA, checks, errors }, null, 2),
+    JSON.stringify(
+      {
+        apkSource: process.env.ANDROID_APK_SOURCE_SHA ?? process.env.GITHUB_SHA,
+        harnessSource: process.env.GITHUB_SHA,
+        checks,
+        errors,
+      },
+      null,
+      2,
+    ),
   );
   await device.close();
 }
