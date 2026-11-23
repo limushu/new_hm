@@ -1,3 +1,4 @@
+import { useBackNavigation } from '../../components/useBackNavigation';
 import DateField from '../../components/DateField';
 import Button from '../../components/Button';
 import Select from '../../components/Select';
@@ -45,6 +46,9 @@ export default function EventEditor({
   const [systemCalendar, setSystemCalendar] = useState(false);
   const { manifest } = useSubsystems();
   const inFlight = useRef(false);
+  useBackNavigation(() => {
+    if (!inFlight.current) onClose();
+  }, 100);
   const dialog = useRef<HTMLDialogElement>(null);
   const title = useRef<HTMLInputElement>(null);
   useEffect(() => {

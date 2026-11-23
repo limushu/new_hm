@@ -1,3 +1,4 @@
+import { useBackNavigation } from '../../components/useBackNavigation';
 import { useEffect, useRef } from 'react';
 import { X } from 'lucide-react';
 import type { Material, SaveAction } from '../../domain/types';
@@ -15,6 +16,7 @@ export default function Preview({
   save?: SaveAction;
   closeLabel?: string;
 }) {
+  useBackNavigation(onClose, 100);
   const dialog = useRef<HTMLDialogElement>(null);
   const heading = useRef<HTMLElement>(null);
   useEffect(() => {

@@ -161,6 +161,7 @@ try {
   await expect(page.locator('.text-document-preview')).toContainText(evidence.trim());
   await back();
   await expect(page.getByRole('dialog')).toHaveCount(0);
+  await expect(page.getByLabel('案件名称', { exact: true })).toBeVisible();
   await record('SAF cancellation, scoped import and original preview');
 
   const footer = page.getByRole('navigation', { name: '案件快捷操作', exact: true });
@@ -173,6 +174,8 @@ try {
     .toBeLessThanOrEqual(2);
   await page.getByLabel('案件名称', { exact: true }).click();
   await expect.poll(() => page.evaluate(() => innerHeight)).toBeLessThan(700);
+  expect(await page.evaluate(() => innerHeight)).toBeGreaterThan(300);
+  await device.screenshot({ path: `${out}/keyboard.png` });
   await expect
     .poll(async () =>
       footer.evaluate(

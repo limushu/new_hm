@@ -94,8 +94,7 @@ export default function BackupFiles({
         </p>
       )}
       <p className="field-hint">
-        保存时可选择 iCloud
-        云盘、其他云盘或本机。云盘上传由系统完成；这是手动备份，不会自动同步多台设备。
+        保存时可选择本机或系统文件选择器提供的云盘。云盘上传由系统完成；这是手动备份，不会自动同步多台设备。
       </p>
       {candidate && (
         <Dialog

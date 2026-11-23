@@ -20,7 +20,7 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium webkit
       - run: npx playwright test
-      - run: npx playwright test tests/ui/dropdown-dismissal.spec.ts tests/ui/transcription.spec.ts tests/ui/voice-input.spec.ts tests/ui/appearance-layout.spec.ts tests/ui/core-flow-layout.spec.ts tests/ui/continuous-editing.spec.ts tests/ui/case-header.spec.ts tests/ui/case-contact-creation.spec.ts tests/ui/object-details.spec.ts tests/ui/today-navigation.spec.ts tests/ui/backup-files.spec.ts tests/ui/account-settings.spec.ts tests/ui/cloud-sync.spec.ts tests/ui/device-agenda.spec.ts --browser=webkit --timeout=60000
+      - run: npx playwright test tests/ui/dropdown-dismissal.spec.ts tests/ui/transcription.spec.ts tests/ui/voice-input.spec.ts tests/ui/appearance-layout.spec.ts tests/ui/core-flow-layout.spec.ts tests/ui/continuous-editing.spec.ts tests/ui/case-header.spec.ts tests/ui/case-contact-creation.spec.ts tests/ui/object-details.spec.ts tests/ui/today-navigation.spec.ts tests/ui/backup-files.spec.ts tests/ui/account-settings.spec.ts tests/ui/cloud-sync.spec.ts tests/ui/device-agenda.spec.ts tests/ui/system-back.spec.ts --browser=webkit --timeout=60000
   rust-core:
     runs-on: ubuntu-latest
     steps:

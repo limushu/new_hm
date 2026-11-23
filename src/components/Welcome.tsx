@@ -1,3 +1,4 @@
+import { useBackNavigation } from './useBackNavigation';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { command } from '../services/repository';
@@ -31,6 +32,9 @@ export default function Welcome({ onDone }: { onDone: () => void }) {
       setBusy(false);
     }
   }
+  useBackNavigation(() => {
+    void finish();
+  }, 100);
   return createPortal(
     <dialog
       ref={dialog}
