@@ -66,7 +66,7 @@ test('备份文件导出处理取消，恢复先显示摘要、显式确认并�
   const section = page
     .locator('.settings-section')
     .filter({ has: page.getByRole('heading', { name: '备份与恢复', exact: true }) });
-  await expect(section).toContainText('iCloud 云盘');
+  await expect(section).toContainText('系统文件选择器提供的云盘');
   await expect(section.getByRole('button', { name: '选择位置', exact: true })).toHaveCount(0);
   const exportButton = section.getByRole('button', { name: '导出完整备份', exact: true });
   await exportButton.tap();
