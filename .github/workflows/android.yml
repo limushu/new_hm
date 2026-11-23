@@ -1,0 +1,61 @@
+name: Android test build
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    env:
+      CARGO_TARGET_AARCH64_LINUX_ANDROID_RUSTFLAGS: '-C link-arg=-Wl,-z,max-page-size=16384 -C link-arg=-Wl,-z,common-page-size=16384'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: android-apk-v1
+          cache-on-failure: true
+      - uses: gradle/actions/setup-gradle@v4
+      - uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0 ndk;27.2.12479018'
+          log-accepted-android-sdk-licenses: 'false'
+      - name: Configure Android SDK
+        run: |
+          printf '%s\n' "NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/27.2.12479018" >> "$GITHUB_ENV"
+      - run: npm ci
+      - name: Generate the Android host project
+        run: npx tauri android init --ci --skip-targets-install
+      - name: Preserve generated host source for inspection
+        run: |
+          mkdir -p artifacts/android
+          zip -qr artifacts/android/android-scaffold.zip src-tauri/gen/android -x '*/.gradle/*' '*/build/*' '*/.tauri/*' '*/local.properties'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-scaffold
+          path: artifacts/android/android-scaffold.zip
+      - name: Build the ARM64 release candidate
+        run: npx tauri android build --target aarch64 --apk --ci
+      - name: Collect unsigned candidate and public signing tool
+        run: |
+          find src-tauri/gen/android/app/build/outputs/apk -name '*.apk' -exec cp {} artifacts/android/ \;
+          cp "$ANDROID_HOME/build-tools/36.0.0/lib/apksigner.jar" artifacts/android/
+          find artifacts/android -name '*.apk' -exec sha256sum {} \; > artifacts/android/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android-candidate
+          path: |
+            artifacts/android/*.apk
+            artifacts/android/apksigner.jar
+            artifacts/android/SHA256SUMS.txt

@@ -6,6 +6,9 @@ target/
 *.log
 src-tauri/gen/schemas/
 src-tauri/gen/apple/
+src-tauri/gen/android/
+crates/tauri-plugin-*/android/.gradle/
+crates/tauri-plugin-*/android/build/
 .DS_Store
 test-results/
 playwright-report/
