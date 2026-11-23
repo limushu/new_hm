@@ -1,8 +1,14 @@
 name: Android emulator checks
 on:
   workflow_dispatch:
+    inputs:
+      debug_run_id:
+        description: 'Optional prior run containing android-debug-apk (same product source)'
+        required: false
+        type: string
 permissions:
   contents: read
+  actions: read
 jobs:
   emulator:
     runs-on: ubuntu-latest
@@ -35,12 +41,26 @@ jobs:
       - run: npm ci
       - run: npx playwright install android
       - name: Build the inspectable emulator application
+        if: ${{ !inputs.debug_run_id }}
         run: |
           npx tauri android init --ci --skip-targets-install
           node scripts/prepare-android.mjs
           npx tauri android build --debug --target x86_64 --apk --ci
           cd src-tauri/gen/android
           ./gradlew --stop
+      - uses: actions/upload-artifact@v4
+        if: ${{ !inputs.debug_run_id }}
+        with:
+          name: android-debug-apk
+          path: src-tauri/gen/android/app/build/outputs/apk/**/*.apk
+          retention-days: 7
+      - uses: actions/download-artifact@v4
+        if: ${{ inputs.debug_run_id != '' }}
+        with:
+          name: android-debug-apk
+          run-id: ${{ inputs.debug_run_id }}
+          github-token: ${{ github.token }}
+          path: src-tauri/gen/android/app/build/outputs/apk
       - name: Enable KVM
         run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
@@ -53,10 +73,15 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_6
-          ram-size: 2048M
+          ram-size: 3072M
           disable-animations: true
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
-          script: node tests/native/android.mjs
+          script: |
+            adb shell wm size 720x1600
+            adb shell wm density 280
+            adb shell pm disable-user --user 0 com.google.android.gms
+            adb shell am force-stop com.google.android.apps.nexuslauncher
+            node tests/native/android.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:

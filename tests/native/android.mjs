@@ -35,6 +35,15 @@ async function start() {
   await expect(page.getByRole('button', { name: '案件', exact: true })).toBeVisible();
 }
 async function back() {
+  // A foreign launcher ANR can steal key events during a cold SDK boot.
+  // Dismiss only that system fixture failure; never suppress an app ANR.
+  try {
+    await device.wait({ text: /^Pixel Launcher isn't responding$/ }, { timeout: 300 });
+    await device.tap({ text: /^close app$/i });
+    console.log('Dismissed SDK launcher ANR (application not involved)');
+  } catch (error) {
+    if (!String(error).includes('Timeout')) throw error;
+  }
   await device.input.press('Back');
 }
 async function hideKeyboard() {
@@ -146,7 +155,7 @@ try {
   await device.wait({ pkg: /.*documentsui/ });
   await device.tap({ desc: 'Show roots' });
   await device.tap({ text: 'Downloads', res: 'android:id/title' });
-  await device.tap({ text: 'SAVE' });
+  await device.tap({ text: /^save$/i });
   await expect(page.getByRole('status').filter({ hasText: '已导出' })).toBeVisible();
   const exported = shell('ls', '/sdcard/Download')
     .split('\n')
