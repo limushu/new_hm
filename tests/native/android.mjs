@@ -113,7 +113,7 @@ async function back() {
   // Dismiss only that system fixture failure; never suppress an app ANR.
   try {
     await device.wait({ text: /^Pixel Launcher isn't responding$/ }, { timeout: 300 });
-    await device.tap({ text: /^close app$/i });
+    await device.tap({ text: /^[Cc]lose app$/ });
     console.log('Dismissed SDK launcher ANR (application not involved)');
   } catch (error) {
     if (!selectorPending(error)) throw error;
@@ -267,10 +267,11 @@ try {
   await pickerCommit({ desc: 'Show roots' }, () =>
     nativeWait({ text: 'Downloads', res: 'android:id/title', pkg: /.*documentsui/ }),
   );
+  // Android selectors forward RegExp.source but discard JavaScript flags.
   await pickerCommit({ text: 'Downloads', res: 'android:id/title' }, () =>
-    nativeWait({ text: /^save$/i, pkg: /.*documentsui/ }),
+    nativeWait({ text: /^[Ss][Aa][Vv][Ee]$/, pkg: /.*documentsui/ }),
   );
-  await pickerCommit({ text: /^save$/i }, () =>
+  await pickerCommit({ text: /^[Ss][Aa][Vv][Ee]$/ }, () =>
     expect(page.getByRole('status').filter({ hasText: '已导出' })).toBeVisible(),
   );
   const exported = shell('ls', '/sdcard/Download')
